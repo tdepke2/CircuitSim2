@@ -1,9 +1,7 @@
-#include <iostream>
+#include "Simulator.h"
 
 using namespace std;
 
 int main() {
-    cout << "neat" << endl;
-    cin.get();
-    return 0;
+    return Simulator::start();
 }
