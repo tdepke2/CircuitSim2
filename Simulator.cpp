@@ -64,8 +64,8 @@ int Simulator::start() {
                     mouseStart.x = event.mouseMove.x;
                     mouseStart.y = event.mouseMove.y;
                 } else if (event.type == Event::MouseWheelScrolled) {
-                    float zoomDelta = event.mouseWheelScroll.delta * -0.05f;
-                    if (zoomLevel + zoomDelta > 0.04f && zoomLevel + zoomDelta < 20.0f) {
+                    float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
+                    if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
                         zoomLevel += zoomDelta;
                         view.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                     }
