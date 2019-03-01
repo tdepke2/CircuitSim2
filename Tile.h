@@ -10,11 +10,11 @@ using namespace sf;
 
 class Tile {    // Generic tile that is stored in a Board.
     public:
-    Tile(const Vector2u& position, const Board& board);
+    Tile(const Vector2u& position, Board& board);
     virtual ~Tile();
-    virtual int getID() const;
+    virtual int getNumericID() const;
     const Vector2u& getPosition() const;
-    void setPosition(const Vector2u& position, const Board& board);
+    void setPosition(const Vector2u& position, Board& board);
     
     private:
     Vector2u _position;

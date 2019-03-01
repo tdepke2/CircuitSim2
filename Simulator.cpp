@@ -1,3 +1,4 @@
+#include "Board.h"
 #include "Simulator.h"
 #include <cassert>
 #include <chrono>
@@ -6,7 +7,6 @@
 #include <stdexcept>
 #include <string>
 
-using namespace std;
 using namespace sf;
 
 const float Simulator::FPS_CAP = 60.0f;
@@ -25,12 +25,14 @@ int Simulator::start() {
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
         
-        RectangleShape testRect(Vector2f(50, 30));
+        Board board;
+        board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        board.resize(Vector2u(5, 3));
         
         while (state != State::exiting) {
             window.clear ();
             window.setView(view);
-            window.draw(testRect);
+            window.draw(board);
             window.display();
             
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.

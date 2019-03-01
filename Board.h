@@ -16,12 +16,13 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Board();
     virtual ~Board();
     Tile*** getTileArray() const;
-    void loadTextures(const string& filenameNoGrid, const string& filenameGrid, const Vector2u& tileSize);
-    void resizeBoard(const Vector2u& boardSize);
+    void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
+    void resize(const Vector2u& boardSize);
+    void redrawTile(Tile* tile);
     
     private:
     VertexArray _vertices;
-    Texture _tilesetNoGrid, _tilesetGrid;
+    Texture _tilesetGrid, _tilesetNoGrid;
     Vector2u _tileSize, _boardSize;
     Tile*** _tileArray;
     
