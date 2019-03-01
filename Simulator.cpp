@@ -3,11 +3,8 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
-#include <SFML/Graphics.hpp>
 #include <stdexcept>
 #include <string>
-
-using namespace sf;
 
 const float Simulator::FPS_CAP = 60.0f;
 Simulator::State Simulator::state = State::uninitialized;
@@ -19,15 +16,17 @@ int Simulator::start() {
         assert(state == State::uninitialized);
         state = State::running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        window.create(VideoMode(500, 500), "CircuitSim2");
+        window.create(VideoMode(500, 500), "CircuitSim2", Style::Default, ContextSettings(0, 0, 4));
         
         View view(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
+        float zoomLevel = 1.0;
+        Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
         
         Board board;
         board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
-        board.resize(Vector2u(5, 3));
+        board.resize(Vector2u(500, 300));
         
         while (state != State::exiting) {
             window.clear ();
@@ -47,8 +46,35 @@ int Simulator::start() {
             
             Event event;
             while (window.pollEvent(event)) {    // Process events.
-                if (event.type == Event::Resized) {
-                    view.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
+                if (event.type == Event::MouseMoved) {
+                    if (Mouse::isButtonPressed(Mouse::Left)) {
+                        Vector2f newCenter(view.getCenter().x + (mouseStart.x - event.mouseMove.x) * zoomLevel, view.getCenter().y + (mouseStart.y - event.mouseMove.y) * zoomLevel);
+                        if (newCenter.x < 0.0) {
+                            newCenter.x = 0.0;
+                        } else if (newCenter.x > static_cast<float>(board.getSize().x * board.getTileSize().x)) {
+                            newCenter.x = static_cast<float>(board.getSize().x * board.getTileSize().x);
+                        }
+                        if (newCenter.y < 0.0) {
+                            newCenter.y = 0.0;
+                        } else if (newCenter.y > static_cast<float>(board.getSize().y * board.getTileSize().y)) {
+                            newCenter.y = static_cast<float>(board.getSize().y * board.getTileSize().y);
+                        }
+                        view.setCenter(newCenter);
+                    }
+                    mouseStart.x = event.mouseMove.x;
+                    mouseStart.y = event.mouseMove.y;
+                } else if (event.type == Event::MouseWheelScrolled) {
+                    float zoomDelta = event.mouseWheelScroll.delta * -0.05f;
+                    if (zoomLevel + zoomDelta > 0.04f && zoomLevel + zoomDelta < 20.0f) {
+                        zoomLevel += zoomDelta;
+                        view.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
+                    }
+                } else if (event.type == Event::KeyPressed) {
+                    if (event.key.code == Keyboard::G) {
+                        board.gridActive = !board.gridActive;
+                    }
+                } else if (event.type == Event::Resized) {
+                    view.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                 } else if (event.type == Event::Closed) {
                     window.close();
                     state = State::exiting;

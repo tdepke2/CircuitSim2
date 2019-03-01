@@ -2,8 +2,10 @@
 #define _SIMULATOR_H
 
 #include <random>
+#include <SFML/Graphics.hpp>
 
 using namespace std;
+using namespace sf;
 
 class Simulator {
     public:

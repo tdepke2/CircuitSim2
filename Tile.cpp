@@ -1,19 +1,15 @@
 #include "Board.h"
 #include "Tile.h"
-#include <iostream>
 
 Tile::Tile(const Vector2u& position, Board& board) {
     _position = position;
     board.redrawTile(this);
-    cout << "Tile (" << _position.x << ", " << _position.y << ") created." << endl;
 }
 
-Tile::~Tile() {
-    cout << "Tile (" << _position.x << ", " << _position.y << ") destroyed." << endl;
-}
+Tile::~Tile() {}
 
 int Tile::getNumericID() const {
-    return 1;
+    return (_position.x + _position.y) % 100;
 }
 
 const Vector2u& Tile::getPosition() const {
