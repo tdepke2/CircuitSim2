@@ -1,11 +1,27 @@
 #include "Board.h"
+#include "Tile.h"
 #include <stdexcept>
 
 using namespace std;
 using namespace sf;
 
 Board::Board() {
-    gridActive = false;
+    gridActive = true;
+    _tileArray = nullptr;
+}
+
+Board::~Board() {
+    for (unsigned int y = 0; y < _boardSize.y; ++y) {
+        for (unsigned int x = 0; x < _boardSize.x; ++x) {
+            delete _tileArray[y][x];
+        }
+        delete[] _tileArray[y];
+    }
+    delete[] _tileArray;
+}
+
+Tile*** Board::getTileArray() const {
+    return _tileArray;
 }
 
 void Board::loadTextures(const string& filenameNoGrid, const string& filenameGrid, const Vector2u& tileSize) {
@@ -18,6 +34,17 @@ void Board::loadTextures(const string& filenameNoGrid, const string& filenameGri
 }
 
 void Board::resizeBoard(const Vector2u& boardSize) {
+    //Tile*** newTileArray = new Tile**[];
+    
+    
+    for (unsigned int y = 0; y < _boardSize.y; ++y) {
+        for (unsigned int x = 0; x < _boardSize.x; ++x) {
+            delete _tileArray[y][x];
+        }
+        delete[] _tileArray[y];
+    }
+    delete[] _tileArray;
+    
     _boardSize = boardSize;
     _vertices.resize(boardSize.x * boardSize.y * 4);
 }

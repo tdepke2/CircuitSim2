@@ -1,6 +1,8 @@
 #ifndef _BOARD_H
 #define _BOARD_H
 
+class Tile;
+
 #include <SFML/Graphics.hpp>
 #include <string>
 
@@ -12,6 +14,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     bool gridActive;
     
     Board();
+    virtual ~Board();
+    Tile*** getTileArray() const;
     void loadTextures(const string& filenameNoGrid, const string& filenameGrid, const Vector2u& tileSize);
     void resizeBoard(const Vector2u& boardSize);
     
@@ -19,6 +23,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     VertexArray _vertices;
     Texture _tilesetNoGrid, _tilesetGrid;
     Vector2u _tileSize, _boardSize;
+    Tile*** _tileArray;
     
     virtual void draw (RenderTarget& target, RenderStates states) const;
 };
