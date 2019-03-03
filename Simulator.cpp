@@ -33,12 +33,6 @@ int Simulator::start() {
         
         Board board;
         board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
-        board.resize(Vector2u(5, 3));
-        board.replaceTile(new TileWire(Vector2u(0, 1), board));
-        board.replaceTile(new TileSwitch(Vector2u(1, 1), board));
-        board.replaceTile(new TileButton(Vector2u(2, 1), board));
-        board.replaceTile(new TileLED(Vector2u(3, 1), board));
-        board.replaceTile(new TileGate(Vector2u(4, 1), board));
         
         board.loadFile("boards/Computer.txt");
         

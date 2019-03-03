@@ -1,11 +1,11 @@
 #include "Board.h"
 #include "TileWire.h"
 
-TileWire::TileWire(const Vector2u& position, Board& board) {
+TileWire::TileWire(const Vector2u& position, Board& board, int typeID, bool active1, bool active2) {
     _position = position;
-    _typeID = 0;
-    _active1 = false;
-    _active2 = false;
+    _typeID = typeID;
+    _active1 = active1;
+    _active2 = active2;
     board.redrawTile(this);
 }
 

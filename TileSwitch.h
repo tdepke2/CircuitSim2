@@ -11,8 +11,12 @@ using namespace sf;
 
 class TileSwitch : public Tile {
     public:
-    TileSwitch(const Vector2u& position, Board& board);
+    TileSwitch(const Vector2u& position, Board& board, char charID, bool active);
     int getTextureID() const;
+    
+    private:
+    char _charID;
+    bool _active;
 };
 
 #endif

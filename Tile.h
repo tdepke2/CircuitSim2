@@ -8,7 +8,7 @@ class Board;
 using namespace std;
 using namespace sf;
 
-enum Direction {
+enum Direction : int {
     NORTH = 0, EAST, SOUTH, WEST
 };
 

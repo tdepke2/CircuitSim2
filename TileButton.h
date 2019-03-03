@@ -11,8 +11,12 @@ using namespace sf;
 
 class TileButton : public Tile {
     public:
-    TileButton(const Vector2u& position, Board& board);
+    TileButton(const Vector2u& position, Board& board, char charID, bool active);
     int getTextureID() const;
+    
+    private:
+    char _charID;
+    bool _active;
 };
 
 #endif

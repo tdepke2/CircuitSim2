@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 
-const string Board::SYMBOL_INFO_TABLE[97] = {
+const string Board::SYMBOL_INFO_TABLE[97] = {    // Should split this up into multiple tables ##################################################################################################
     "  ",
     "| ",  "[ ",  "--",  "==",
     "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
@@ -178,16 +178,18 @@ void Board::loadFile(const string& filename) {
                     
                     if (i == 0) {
                         _tileArray[posY][posX] = new Tile(Vector2u(posX, posY), *this);
+                    } else if (i < 23) {
+                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, (i - 1) / 2, i % 2 == 0, false);
                     } else if (i < 27) {
-                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, 11, i % 2 == 0, i >= 25);
                     } else if (i < 29) {
-                        _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this, line[posX * 2 + 2], i % 2 == 0);
                     } else if (i < 31) {
-                        _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this, line[posX * 2 + 2], i % 2 == 0);
                     } else if (i < 33) {
-                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this, i % 2 == 0);
                     } else if (i < 97) {
-                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this, static_cast<LogicGate>((i - 33) / 8), static_cast<Direction>((i - 33) / 2 % 4), i % 2 == 0);
                     } else {
                         throw runtime_error("Invalid symbols \"" + line.substr(posX * 2 + 1, 2) + "\" at position (" + to_string(posX) + ", " + to_string(posY) + ").");
                     }

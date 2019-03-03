@@ -11,7 +11,7 @@ using namespace sf;
 
 class TileWire : public Tile {
     public:
-    TileWire(const Vector2u& position, Board& board);
+    TileWire(const Vector2u& position, Board& board, int typeID, bool active1, bool active2);
     int getTextureID() const;
     void setActive(Direction d, bool state);
     bool isActive(Direction d) const;
