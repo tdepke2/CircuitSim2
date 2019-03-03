@@ -1,6 +1,8 @@
 #include "Board.h"
 #include "Tile.h"
 
+Tile::Tile() {}
+
 Tile::Tile(const Vector2u& position, Board& board) {
     _position = position;
     board.redrawTile(this);
@@ -8,8 +10,8 @@ Tile::Tile(const Vector2u& position, Board& board) {
 
 Tile::~Tile() {}
 
-int Tile::getNumericID() const {
-    return (_position.x + _position.y) % 100;
+int Tile::getTextureID() const {
+    return 0;
 }
 
 const Vector2u& Tile::getPosition() const {

@@ -17,7 +17,7 @@ class Simulator {
     
     private:
     enum class State {
-        uninitialized, running, exiting
+        Uninitialized, Running, Exiting
     };
     
     static State state;

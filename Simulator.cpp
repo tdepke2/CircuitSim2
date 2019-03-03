@@ -1,5 +1,7 @@
 #include "Board.h"
 #include "Simulator.h"
+#include "Tile.h"
+#include "TileWire.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -7,16 +9,17 @@
 #include <string>
 
 const float Simulator::FPS_CAP = 60.0f;
-Simulator::State Simulator::state = State::uninitialized;
+Simulator::State Simulator::state = State::Uninitialized;
 mt19937 Simulator::mainRNG;
 
 int Simulator::start() {
+    cout << "Initializing setup." << endl;
     RenderWindow window;
     try {
-        assert(state == State::uninitialized);
-        state = State::running;
+        assert(state == State::Uninitialized);
+        state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        window.create(VideoMode(500, 500), "CircuitSim2", Style::Default, ContextSettings(0, 0, 4));
+        window.create(VideoMode(500, 500), "[CircuitSim2]", Style::Default, ContextSettings(0, 0, 4));
         
         View view(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
         float zoomLevel = 1.0;
@@ -26,9 +29,14 @@ int Simulator::start() {
         
         Board board;
         board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
-        board.resize(Vector2u(500, 300));
+        board.resize(Vector2u(5, 3));
+        delete board.getTileArray()[1][1];
+        board.getTileArray()[1][1] = new TileWire(Vector2u(1, 1), board);
+        //board.getTileArray()[1][1]->setPosition(Vector2u(1, 0), board);
+        //board.redrawTile(board.getTileArray()[1][0]);
         
-        while (state != State::exiting) {
+        cout << "Loading completed." << endl;
+        while (state != State::Exiting) {
             window.clear ();
             window.setView(view);
             window.draw(board);
@@ -37,7 +45,7 @@ int Simulator::start() {
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
             float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
             if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-                window.setTitle("CircuitSim2 (FPS: " + to_string(fpsCounter));
+                window.setTitle("[CircuitSim2] [FPS: " + to_string(fpsCounter) + "]");
                 fpsClock.restart();
                 fpsCounter = 0;
             } else {
@@ -77,7 +85,7 @@ int Simulator::start() {
                     view.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                 } else if (event.type == Event::Closed) {
                     window.close();
-                    state = State::exiting;
+                    state = State::Exiting;
                 }
             }
         }

@@ -99,8 +99,8 @@ void Board::redrawTile(Tile* tile) {
     tileVertices[2].position = Vector2f(windowX + _tileSize.x, windowY + _tileSize.y);
     tileVertices[3].position = Vector2f(windowX, windowY + _tileSize.y);
     
-    float tileX = static_cast<float>((tile->getNumericID() % (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.x);
-    float tileY = static_cast<float>((tile->getNumericID() / (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.y);
+    float tileX = static_cast<float>((tile->getTextureID() % (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.x);
+    float tileY = static_cast<float>((tile->getTextureID() / (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.y);
     tileVertices[0].texCoords = Vector2f(tileX, tileY);
     tileVertices[1].texCoords = Vector2f(tileX + _tileSize.x, tileY);
     tileVertices[2].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
