@@ -21,6 +21,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     void resize(const Vector2u& size);
     void redrawTile(Tile* tile);
+    void replaceTile(Tile* tile);
     
     private:
     VertexArray _vertices;

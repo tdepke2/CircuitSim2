@@ -107,6 +107,11 @@ void Board::redrawTile(Tile* tile) {
     tileVertices[3].texCoords = Vector2f(tileX, tileY + _tileSize.y);
 }
 
+void Board::replaceTile(Tile* tile) {
+    delete _tileArray[tile->getPosition().y][tile->getPosition().x];
+    _tileArray[tile->getPosition().y][tile->getPosition().x] = tile;
+}
+
 void Board::draw (RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     if (gridActive) {
