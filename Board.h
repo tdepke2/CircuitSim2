@@ -22,8 +22,10 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void resize(const Vector2u& size);
     void redrawTile(Tile* tile);
     void replaceTile(Tile* tile);
+    void loadFile(const string& filename);
     
     private:
+    static const string SYMBOL_INFO_TABLE[];
     VertexArray _vertices;
     Texture _tilesetGrid, _tilesetNoGrid;
     Vector2u _size, _tileSize;

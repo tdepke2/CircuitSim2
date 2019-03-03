@@ -1,7 +1,33 @@
 #include "Board.h"
 #include "Tile.h"
+#include "TileButton.h"
+#include "TileGate.h"
+#include "TileLED.h"
+#include "TileSwitch.h"
+#include "TileWire.h"
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
+
+const string Board::SYMBOL_INFO_TABLE[97] = {
+    "  ",
+    "| ",  "[ ",  "--",  "==",
+    "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
+    ">-",  ">=",  "v-",  "v=",  "< ",  "<.",  "^-",  "^=",
+    "+-",  "#=",
+    "|-",  "[-",  "|=",  "[=",
+    "s",   "S",
+    "t",   "T",
+    "..",  "##",
+    "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
+    "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
+    "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
+    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
+    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
+    "^b",  "^B",  ">b",  ">B",  "vb",  "vB",  "<b",  "<B",
+    "^p",  "^P",  ">p",  ">P",  "vp",  "vP",  "<p",  "<P",
+    "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
+};
 
 Board::Board() {
     gridActive = true;
@@ -110,6 +136,113 @@ void Board::redrawTile(Tile* tile) {
 void Board::replaceTile(Tile* tile) {
     delete _tileArray[tile->getPosition().y][tile->getPosition().x];
     _tileArray[tile->getPosition().y][tile->getPosition().x] = tile;
+}
+
+void Board::loadFile(const string& filename) {
+    ifstream inputFile(filename);
+    if (!inputFile.is_open()) {
+        throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
+    }
+    
+    for (unsigned int y = 0; y < _size.y; ++y) {    // Delete _tileArray data completely.
+        for (unsigned int x = 0; x < _size.x; ++x) {
+            delete _tileArray[y][x];
+        }
+        delete[] _tileArray[y];
+    }
+    delete[] _tileArray;
+    _size = Vector2u(0, 0);
+    _tileArray = nullptr;
+    
+    string line;
+    int lineNumber = 0, numEntries = 0;
+    unsigned int posX = 0, posY = 0;
+    try {
+        while (getline(inputFile, line)) {
+            ++lineNumber;
+            if (line.length() == 0) {
+                continue;
+            } else if (numEntries == 3) {
+                if (line.length() != _size.x * 2 + 2) {
+                    throw runtime_error("Length of this line is incorrect.");
+                }
+                posX = 0;
+                while (posX < _size.x) {
+                    int i = 0;
+                    while (i < 97) {
+                        if (line[posX * 2 + 1] == SYMBOL_INFO_TABLE[i][0] && (i >= 27 && i <= 30 || line[posX * 2 + 2] == SYMBOL_INFO_TABLE[i][1])) {
+                            break;
+                        }
+                        ++i;
+                    }
+                    
+                    if (i == 0) {
+                        _tileArray[posY][posX] = new Tile(Vector2u(posX, posY), *this);
+                    } else if (i < 27) {
+                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this);
+                    } else if (i < 29) {
+                        _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this);
+                    } else if (i < 31) {
+                        _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this);
+                    } else if (i < 33) {
+                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this);
+                    } else if (i < 97) {
+                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this);
+                    } else {
+                        throw runtime_error("Invalid symbols \"" + line.substr(posX * 2 + 1, 2) + "\" at position (" + to_string(posX) + ", " + to_string(posY) + ").");
+                    }
+                    ++posX;
+                }
+                ++posY;
+                if (posY == _size.y) {
+                    ++numEntries;
+                }
+            } else if (numEntries == 0) {
+                _size.x = stoul(line);
+                ++numEntries;
+            } else if (numEntries == 1) {
+                _size.y = stoul(line);
+                _vertices.resize(_size.x * _size.y * 4);
+                _tileArray = new Tile**[_size.y];
+                for (unsigned int y = 0; y < _size.y; ++y) {
+                    _tileArray[y] = new Tile*[_size.x];
+                }
+                ++numEntries;
+            } else if (numEntries == 2 || numEntries == 4) {
+                if (line.length() != _size.x * 2 + 2) {
+                    throw runtime_error("Length of this line is incorrect.");
+                }
+                ++numEntries;
+            } else {
+                throw runtime_error("Invalid save file data.");
+            }
+        }
+        if (numEntries != 5) {
+            throw runtime_error("Missing data, end of file reached.");
+        }
+    } catch (exception& ex) {    // File error happened, need to clean up partially loaded board and make a new one.
+        for (unsigned int y = 0; y < _size.y; ++y) {
+            if (y < posY) {
+                for (unsigned int x = 0; x < _size.x; ++x) {
+                    delete _tileArray[y][x];
+                }
+            } else if (y == posY) {
+                for (unsigned int x = 0; x < posX; ++x) {
+                    delete _tileArray[y][x];
+                }
+            }
+            delete[] _tileArray[y];
+        }
+        delete[] _tileArray;
+        _vertices.resize(0);
+        _size = Vector2u(0, 0);
+        _tileArray = nullptr;
+        
+        // Make a new board ################################################################################################################################
+        inputFile.close();
+        throw runtime_error(filename + " at line " + to_string(lineNumber) + ": " + ex.what());
+    }
+    inputFile.close();
 }
 
 void Board::draw (RenderTarget& target, RenderStates states) const {

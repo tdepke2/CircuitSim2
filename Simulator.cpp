@@ -40,6 +40,8 @@ int Simulator::start() {
         board.replaceTile(new TileLED(Vector2u(3, 1), board));
         board.replaceTile(new TileGate(Vector2u(4, 1), board));
         
+        board.loadFile("boards/Computer.txt");
+        
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
             window.clear ();
@@ -95,7 +97,8 @@ int Simulator::start() {
             }
         }
     } catch (exception& ex) {
-        cout << "\nException thrown: " << ex.what() << endl;
+        window.close();
+        cout << "\nUnhandled exception thrown: " << ex.what() << endl;
         cout << "(Press enter)" << endl;
         cin.get();
         return -1;
