@@ -9,16 +9,21 @@
 #include <iostream>
 #include <stdexcept>
 
-const string Board::SYMBOL_INFO_TABLE[97] = {    // Should split this up into multiple tables ##################################################################################################
-    "  ",
+const vector<string> Board::WIRE_SYMBOL_TABLE = {
     "| ",  "[ ",  "--",  "==",
     "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
     ">-",  ">=",  "v-",  "v=",  "< ",  "<.",  "^-",  "^=",
     "+-",  "#=",
-    "|-",  "[-",  "|=",  "[=",
+    "|-",  "[-",  "|=",  "[="
+};
+const vector<string> Board::INPUT_SYMBOL_TABLE = {
     "s",   "S",
-    "t",   "T",
-    "..",  "##",
+    "t",   "T"
+};
+const vector<string> Board::OUTPUT_SYMBOL_TABLE = {
+    "..",  "##"
+};
+const vector<string> Board::GATE_SYMBOL_TABLE = {
     "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
     "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
     "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
@@ -168,30 +173,31 @@ void Board::loadFile(const string& filename) {
                 }
                 posX = 0;
                 while (posX < _size.x) {
-                    int i = 0;
-                    while (i < 97) {
-                        if (line[posX * 2 + 1] == SYMBOL_INFO_TABLE[i][0] && (i >= 27 && i <= 30 || line[posX * 2 + 2] == SYMBOL_INFO_TABLE[i][1])) {
-                            break;
-                        }
-                        ++i;
-                    }
-                    
-                    if (i == 0) {
+                    int i;
+                    char c1 = line[posX * 2 + 1], c2 = line[posX * 2 + 2];
+                    if (c1 == ' ' && c2 == ' ') {
                         _tileArray[posY][posX] = new Tile(Vector2u(posX, posY), *this);
-                    } else if (i < 23) {
-                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, (i - 1) / 2, i % 2 == 0, false);
-                    } else if (i < 27) {
-                        _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, 11, i % 2 == 0, i >= 25);
-                    } else if (i < 29) {
-                        _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this, line[posX * 2 + 2], i % 2 == 0);
-                    } else if (i < 31) {
-                        _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this, line[posX * 2 + 2], i % 2 == 0);
-                    } else if (i < 33) {
-                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this, i % 2 == 0);
-                    } else if (i < 97) {
-                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this, static_cast<LogicGate>((i - 33) / 8), static_cast<Direction>((i - 33) / 2 % 4), i % 2 == 0);
+                    } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {
+                        if (i < 22) {
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, i / 2, i % 2 == 1, false);
+                        } else {
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, 11, i % 2 == 1, i >= 24);
+                        }
+                    } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {
+                        if (i < 2) {
+                            _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this, c2, i % 2 == 1);
+                        } else {
+                            _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this, c2, i % 2 == 1);
+                        }
+                    } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {
+                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this, i % 2 == 1);
+                    } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {
+                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this, static_cast<LogicGate>(i / 8), static_cast<Direction>(i / 2 % 4), i % 2 == 1);
                     } else {
-                        throw runtime_error("Invalid symbols \"" + line.substr(posX * 2 + 1, 2) + "\" at position (" + to_string(posX) + ", " + to_string(posY) + ").");
+                        string s1, s2;
+                        s1.push_back(c1);
+                        s2.push_back(c2);
+                        throw runtime_error("Invalid symbols \"" + s1 + s2 + "\" at position (" + to_string(posX) + ", " + to_string(posY) + ").");
                     }
                     ++posX;
                 }
@@ -245,6 +251,24 @@ void Board::loadFile(const string& filename) {
         throw runtime_error(filename + " at line " + to_string(lineNumber) + ": " + ex.what());
     }
     inputFile.close();
+}
+
+int Board::_findSymbol(char c1, char c2, const vector<string>& symbolTable) const {
+    if (c2 == '\0') {
+        for (unsigned int i = 0; i < symbolTable.size(); ++i) {
+            if (c1 == symbolTable[i][0]) {
+                return i;
+            }
+        }
+        return -1;
+    } else {
+        for (unsigned int i = 0; i < symbolTable.size(); ++i) {
+            if (c1 == symbolTable[i][0] && c2 == symbolTable[i][1]) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
 
 void Board::draw (RenderTarget& target, RenderStates states) const {
