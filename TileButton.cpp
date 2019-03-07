@@ -3,11 +3,12 @@
 
 TileButton::TileButton(const Vector2u& position, Board& board, char charID, bool active) {
     _position = position;
+    _direction = NORTH;
     _charID = charID;
     _active = active;
     board.redrawTile(this);
 }
 
 int TileButton::getTextureID() const {
-    return 29 + _active;
+    return 17 + _active;
 }

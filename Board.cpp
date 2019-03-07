@@ -25,12 +25,13 @@ const vector<string> Board::OUTPUT_SYMBOL_TABLE = {
 };
 const vector<string> Board::GATE_SYMBOL_TABLE = {
     "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
+    "^m",  "^M",  ">m",  ">M",  "vm",  "vM",  "<m",  "<M",
     "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
     "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
-    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
-    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
     "^b",  "^B",  ">b",  ">B",  "vb",  "vB",  "<b",  "<B",
+    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
     "^p",  "^P",  ">p",  ">P",  "vp",  "vP",  "<p",  "<P",
+    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
     "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
 };
 
@@ -132,10 +133,11 @@ void Board::redrawTile(Tile* tile) {
     
     float tileX = static_cast<float>((tile->getTextureID() % (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.x);
     float tileY = static_cast<float>((tile->getTextureID() / (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.y);
-    tileVertices[0].texCoords = Vector2f(tileX, tileY);
-    tileVertices[1].texCoords = Vector2f(tileX + _tileSize.x, tileY);
-    tileVertices[2].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
-    tileVertices[3].texCoords = Vector2f(tileX, tileY + _tileSize.y);
+    int d = tile->getDirection();
+    tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
+    tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
+    tileVertices[(d + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
+    tileVertices[(d + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
 }
 
 void Board::replaceTile(Tile* tile) {
@@ -149,6 +151,7 @@ void Board::loadFile(const string& filename) {
         throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
     }
     
+    name = filename;
     for (unsigned int y = 0; y < _size.y; ++y) {    // Delete _tileArray data completely.
         for (unsigned int x = 0; x < _size.x; ++x) {
             delete _tileArray[y][x];
@@ -175,25 +178,29 @@ void Board::loadFile(const string& filename) {
                 while (posX < _size.x) {
                     int i;
                     char c1 = line[posX * 2 + 1], c2 = line[posX * 2 + 2];
-                    if (c1 == ' ' && c2 == ' ') {
+                    if (c1 == ' ' && c2 == ' ') {     // Check for blank tile.
                         _tileArray[posY][posX] = new Tile(Vector2u(posX, posY), *this);
-                    } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {
-                        if (i < 22) {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, i / 2, i % 2 == 1, false);
+                    } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {     // Check for wire tile.
+                        if (i < 4) {
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), NORTH, *this, static_cast<TileWire::Type>(i / 2), i % 2 == 1, false);
+                        } else if (i < 20) {
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), static_cast<Direction>((i - 4) / 2 % 4), *this, static_cast<TileWire::Type>((i + 12) / 8), i % 2 == 1, false);
+                        } else if (i < 22) {
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), NORTH, *this, TileWire::JUNCTION, i % 2 == 1, false);
                         } else {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, 11, i % 2 == 1, i >= 24);
+                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), NORTH, *this, TileWire::CROSSOVER, i % 2 == 1, i >= 24);
                         }
-                    } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {
+                    } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {     // Check for input tile.
                         if (i < 2) {
                             _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this, c2, i % 2 == 1);
                         } else {
                             _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this, c2, i % 2 == 1);
                         }
-                    } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {
+                    } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {    // Check for output tile.
                         _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this, i % 2 == 1);
-                    } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {
-                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this, static_cast<LogicGate>(i / 8), static_cast<Direction>(i / 2 % 4), i % 2 == 1);
-                    } else {
+                    } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {    // Check for gate tile.
+                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), *this, static_cast<TileGate::Type>(i / 8), i % 2 == 1);
+                    } else {    // Else, symbol is not valid.
                         string s1, s2;
                         s1.push_back(c1);
                         s2.push_back(c2);

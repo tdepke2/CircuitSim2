@@ -5,6 +5,7 @@ Tile::Tile() {}
 
 Tile::Tile(const Vector2u& position, Board& board) {
     _position = position;
+    _direction = NORTH;
     board.redrawTile(this);
 }
 
@@ -18,6 +19,10 @@ const Vector2u& Tile::getPosition() const {
     return _position;
 }
 
+Direction Tile::getDirection() const {
+    return _direction;
+}
+
 void Tile::setPosition(const Vector2u& position, Board& board) {
     if (board.getTileArray()[position.y][position.x] != this) {
         delete board.getTileArray()[position.y][position.x];
@@ -26,4 +31,9 @@ void Tile::setPosition(const Vector2u& position, Board& board) {
         _position = position;
         board.redrawTile(this);
     }
+}
+
+void Tile::setDirection(Direction direction, Board& board) {
+    _direction = direction;
+    board.redrawTile(this);
 }

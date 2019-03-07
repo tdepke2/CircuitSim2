@@ -19,10 +19,13 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual ~Tile();
     virtual int getTextureID() const;
     const Vector2u& getPosition() const;
+    Direction getDirection() const;
     void setPosition(const Vector2u& position, Board& board);
+    void setDirection(Direction direction, Board& board);
     
     protected:
     Vector2u _position;
+    Direction _direction;
 };
 
 #endif

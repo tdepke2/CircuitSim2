@@ -1,20 +1,17 @@
 #include "Board.h"
 #include "TileWire.h"
 
-TileWire::TileWire(const Vector2u& position, Board& board, int typeID, bool active1, bool active2) {
+TileWire::TileWire(const Vector2u& position, Direction direction, Board& board, Type type, bool active1, bool active2) {
     _position = position;
-    _typeID = typeID;
+    _direction = direction;
+    _type = type;
     _active1 = active1;
     _active2 = active2;
     board.redrawTile(this);
 }
 
 int TileWire::getTextureID() const {
-    if (_typeID <= 10) {
-        return _typeID * 2 + _active1 + 1;
-    } else {
-        return 23 + _active1 + _active2 * 2;
-    }
+    return 1 + _type * 2 + _active1 + _active2 * 2;
 }
 
 void TileWire::setActive(Direction d, bool state) {
@@ -25,7 +22,7 @@ bool TileWire::isActive(Direction d) const {
     return false;
 }
 
-bool TileWire::connectsNorth(Direction d) const {
+/*bool TileWire::connectsNorth(Direction d) const {
     return CONNECTION_INFO_NORTH[_typeID][d];
 }
 
@@ -39,4 +36,4 @@ bool TileWire::connectsSouth(Direction d) const {
 
 bool TileWire::connectsWest(Direction d) const {
     return CONNECTION_INFO_WEST[_typeID][d];
-}
+}*/

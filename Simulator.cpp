@@ -46,7 +46,7 @@ int Simulator::start() {
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
             float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
             if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-                window.setTitle("[CircuitSim2] [FPS: " + to_string(fpsCounter) + "]");
+                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
                 fpsClock.restart();
                 fpsCounter = 0;
             } else {

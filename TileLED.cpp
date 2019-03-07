@@ -3,10 +3,11 @@
 
 TileLED::TileLED(const Vector2u& position, Board& board, bool active) {
     _position = position;
+    _direction = NORTH;
     _active = active;
     board.redrawTile(this);
 }
 
 int TileLED::getTextureID() const {
-    return 31 + _active;
+    return 19 + _active;
 }

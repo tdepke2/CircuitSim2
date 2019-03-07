@@ -11,17 +11,21 @@ using namespace sf;
 
 class TileWire : public Tile {
     public:
-    TileWire(const Vector2u& position, Board& board, int typeID, bool active1, bool active2);
+    enum Type : int {
+        VERTICAL = 0, HORIZONTAL, CORNER, TEE, JUNCTION, CROSSOVER
+    };
+    
+    TileWire(const Vector2u& position, Direction direction, Board& board, Type type, bool active1, bool active2);
     int getTextureID() const;
     void setActive(Direction d, bool state);
     bool isActive(Direction d) const;
-    bool connectsNorth(Direction d) const;
-    bool connectsEast(Direction d) const;
-    bool connectsSouth(Direction d) const;
-    bool connectsWest(Direction d) const;
+    //bool connectsNorth(Direction d) const;
+    //bool connectsEast(Direction d) const;
+    //bool connectsSouth(Direction d) const;
+    //bool connectsWest(Direction d) const;
     
     private:
-    const bool CONNECTION_INFO_NORTH[12][4] = {
+    /*const bool CONNECTION_INFO_NORTH[12][4] = {
         {1, 0, 0, 0}, {0, 0, 0, 0},
         {0, 0, 0, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 1, 0, 0},
         {1, 0, 0, 1}, {0, 0, 0, 0}, {1, 1, 0, 0}, {0, 1, 0, 1},
@@ -48,8 +52,8 @@ class TileWire : public Tile {
         {0, 0, 0, 0}, {1, 0, 0, 1}, {1, 0, 1, 0}, {0, 0, 1, 1},
         {1, 0, 1, 1},
         {0, 0, 0, 1}
-    };
-    int _typeID;
+    };*/
+    Type _type;
     bool _active1, _active2;
 };
 

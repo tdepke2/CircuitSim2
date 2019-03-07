@@ -13,6 +13,7 @@ using namespace sf;
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
     public:
     bool gridActive;
+    string name;
     
     Board();
     virtual ~Board();
