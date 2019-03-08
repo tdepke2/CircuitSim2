@@ -145,13 +145,46 @@ void Board::replaceTile(Tile* tile) {
     _tileArray[tile->getPosition().y][tile->getPosition().x] = tile;
 }
 
+void Board::newBoard(const Vector2u& size, const string& filename) {
+    cout << "Creating new board with size " << size.x << " x " << size.y << "." << endl;
+    size_t dotPosition = filename.rfind('.');
+    if (dotPosition != string::npos) {
+        name = filename.substr(0, dotPosition);
+    } else {
+        name = filename;
+    }
+    for (unsigned int y = 0; y < _size.y; ++y) {    // Delete _tileArray data.
+        for (unsigned int x = 0; x < _size.x; ++x) {
+            delete _tileArray[y][x];
+        }
+        delete[] _tileArray[y];
+    }
+    delete[] _tileArray;
+    
+    _size = size;
+    _vertices.resize(size.x * size.y * 4);
+    _tileArray = new Tile**[size.y];
+    for (unsigned int y = 0; y < size.y; ++y) {    // Create new board of blank tiles.
+        _tileArray[y] = new Tile*[size.x];
+        for (unsigned int x = 0; x < size.x; ++x) {
+            _tileArray[y][x] = new Tile(Vector2u(x, y), *this);
+        }
+    }
+}
+
 void Board::loadFile(const string& filename) {
-    ifstream inputFile(filename);
+    cout << "Loading board file \"" << filename << "\"." << endl;
+    ifstream inputFile(filename + ".txt");
     if (!inputFile.is_open()) {
         throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
     }
     
-    name = filename;
+    size_t dotPosition = filename.rfind('.');
+    if (dotPosition != string::npos) {
+        name = filename.substr(0, dotPosition);
+    } else {
+        name = filename;
+    }
     for (unsigned int y = 0; y < _size.y; ++y) {    // Delete _tileArray data completely.
         for (unsigned int x = 0; x < _size.x; ++x) {
             delete _tileArray[y][x];
@@ -249,15 +282,15 @@ void Board::loadFile(const string& filename) {
             delete[] _tileArray[y];
         }
         delete[] _tileArray;
-        _vertices.resize(0);
         _size = Vector2u(0, 0);
         _tileArray = nullptr;
         
-        // Make a new board ################################################################################################################################
         inputFile.close();
+        newBoard();
         throw runtime_error(filename + " at line " + to_string(lineNumber) + ": " + ex.what());
     }
     inputFile.close();
+    cout << "Load completed." << endl;
 }
 
 int Board::_findSymbol(char c1, char c2, const vector<string>& symbolTable) const {

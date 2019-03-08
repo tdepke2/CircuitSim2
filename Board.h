@@ -24,6 +24,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void resize(const Vector2u& size);
     void redrawTile(Tile* tile);
     void replaceTile(Tile* tile);
+    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt");
     void loadFile(const string& filename);
     
     private:
