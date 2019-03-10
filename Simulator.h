@@ -14,6 +14,7 @@ class Simulator {
     static int start();
     static int randomInteger(int min, int max);
     static int randomInteger(int n);
+    static void doThing();
     
     private:
     enum class State {

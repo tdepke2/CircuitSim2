@@ -6,6 +6,7 @@
 #include "TileLED.h"
 #include "TileSwitch.h"
 #include "TileWire.h"
+#include "UserInterface.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -26,7 +27,7 @@ int Simulator::start() {
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         
         View boardView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize()))), windowView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
-        float zoomLevel = 1.0;
+        float zoomLevel = 1.0f;
         Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
@@ -36,8 +37,7 @@ int Simulator::start() {
         board.newBoard();
         
         //board.loadFile("boards/Computer.txt");
-        
-        RectangleShape rect(Vector2f(30, 40));
+        UserInterface userInterface;
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
@@ -45,7 +45,7 @@ int Simulator::start() {
             window.setView(boardView);
             window.draw(board);
             window.setView(windowView);
-            window.draw(rect);
+            window.draw(userInterface);
             window.display();
             
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
@@ -63,13 +63,13 @@ int Simulator::start() {
                 if (event.type == Event::MouseMoved) {
                     if (Mouse::isButtonPressed(Mouse::Left)) {
                         Vector2f newCenter(boardView.getCenter().x + (mouseStart.x - event.mouseMove.x) * zoomLevel, boardView.getCenter().y + (mouseStart.y - event.mouseMove.y) * zoomLevel);
-                        if (newCenter.x < 0.0) {
-                            newCenter.x = 0.0;
+                        if (newCenter.x < 0.0f) {
+                            newCenter.x = 0.0f;
                         } else if (newCenter.x > static_cast<float>(board.getSize().x * board.getTileSize().x)) {
                             newCenter.x = static_cast<float>(board.getSize().x * board.getTileSize().x);
                         }
-                        if (newCenter.y < 0.0) {
-                            newCenter.y = 0.0;
+                        if (newCenter.y < 0.0f) {
+                            newCenter.y = 0.0f;
                         } else if (newCenter.y > static_cast<float>(board.getSize().y * board.getTileSize().y)) {
                             newCenter.y = static_cast<float>(board.getSize().y * board.getTileSize().y);
                         }
@@ -77,6 +77,11 @@ int Simulator::start() {
                     }
                     mouseStart.x = event.mouseMove.x;
                     mouseStart.y = event.mouseMove.y;
+                    userInterface.update(event.mouseMove.x, event.mouseMove.y, false);
+                } else if (event.type == Event::MouseButtonPressed) {
+                    if (event.mouseButton.button == Mouse::Left) {
+                        userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
+                    }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
                     if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
@@ -114,4 +119,8 @@ int Simulator::randomInteger(int min, int max) {
 
 int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
+}
+
+void Simulator::doThing() {
+    cout << "Thing happened." << endl;
 }
