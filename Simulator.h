@@ -23,6 +23,7 @@ class Simulator {
     
     static State state;
     static mt19937 mainRNG;
+    static WindowHandle windowHandle;
 };
 
 #endif

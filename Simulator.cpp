@@ -12,10 +12,12 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <windows.h>
 
 const float Simulator::FPS_CAP = 60.0f;
 Simulator::State Simulator::state = State::Uninitialized;
 mt19937 Simulator::mainRNG;
+WindowHandle Simulator::windowHandle;
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
@@ -25,6 +27,7 @@ int Simulator::start() {
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        windowHandle = window.getSystemHandle();
         
         View boardView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize()))), windowView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
         float zoomLevel = 1.0f;
@@ -74,10 +77,11 @@ int Simulator::start() {
                             newCenter.y = static_cast<float>(board.getSize().y * board.getTileSize().y);
                         }
                         boardView.setCenter(newCenter);
+                    } else {
+                        userInterface.update(event.mouseMove.x, event.mouseMove.y, false);
                     }
                     mouseStart.x = event.mouseMove.x;
                     mouseStart.y = event.mouseMove.y;
-                    userInterface.update(event.mouseMove.x, event.mouseMove.y, false);
                 } else if (event.type == Event::MouseButtonPressed) {
                     if (event.mouseButton.button == Mouse::Left) {
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
@@ -121,6 +125,27 @@ int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
 }
 
-void Simulator::doThing() {
-    cout << "Thing happened." << endl;
+void Simulator::doThing() {    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
+    cout << "Doing the thing." << endl;
+    OPENFILENAME fileDialog;
+    char filename[260];
+    
+    ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
+    fileDialog.lStructSize = sizeof(fileDialog);
+    fileDialog.hwndOwner = windowHandle;
+    fileDialog.lpstrFile = filename;
+    fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
+    fileDialog.nMaxFile = sizeof(filename);
+    fileDialog.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    fileDialog.nFilterIndex = 1;
+    fileDialog.lpstrFileTitle = NULL;
+    fileDialog.nMaxFileTitle = 0;
+    fileDialog.lpstrInitialDir = NULL;
+    fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    
+    if (GetOpenFileName(&fileDialog) == TRUE) {
+        cout << "The user chose file: \"" << fileDialog.lpstrFile << "\"." << endl;
+    } else {
+        cout << "Something bad happened?" << endl;
+    }
 }

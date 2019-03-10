@@ -5,6 +5,7 @@ class Simulator;
 
 #include <functional>
 #include <SFML/Graphics.hpp>
+#include <windows.h>
 
 using namespace std;
 using namespace sf;

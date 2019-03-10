@@ -9,8 +9,9 @@ TextButton::TextButton(const Font& font, const string& buttonText, const Color& 
     text.setString(buttonText);
     text.setFillColor(textColor);
     text.setCharacterSize(charSize);
-    text.setPosition(x, y);
-    button.setSize(Vector2f(80.0f, 30.0f));
+    text.setPosition(x + 5.0f, y);
+    
+    button.setSize(Vector2f(text.getLocalBounds().width + 10.0f, charSize * 1.5f));
     button.setFillColor(color1);
     button.setPosition(x, y);
     this->color1 = color1;
@@ -45,7 +46,7 @@ UserInterface::UserInterface() {
     if (!font.loadFromFile("resources/arial.ttf")) {
         throw runtime_error("\"resources/arial.ttf\": Unable to load font file.");
     }
-    testButton = TextButton(font, "Button", Color::White, 20, 5.0f, 5.0f, Color::Black, Color::Blue, Simulator::doThing);
+    testButton = TextButton(font, "Open...        Ctrl+O", Color::White, 15, 5.0f, 5.0f, Color::Black, Color::Blue, Simulator::doThing);
     
     topBar.setSize(Vector2f(800.0f, 40.0f));
     topBar.setFillColor(Color(128, 128, 128));
