@@ -125,9 +125,9 @@ int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
 }
 
-void Simulator::doThing() {    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
+void Simulator::doThing() {
     cout << "Doing the thing." << endl;
-    OPENFILENAME fileDialog;
+    OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
     char filename[260];
     
     ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
@@ -140,12 +140,12 @@ void Simulator::doThing() {    // https://docs.microsoft.com/en-us/windows/deskt
     fileDialog.nFilterIndex = 1;
     fileDialog.lpstrFileTitle = NULL;
     fileDialog.nMaxFileTitle = 0;
-    fileDialog.lpstrInitialDir = NULL;
+    fileDialog.lpstrInitialDir = "boards";
     fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     
     if (GetOpenFileName(&fileDialog) == TRUE) {
         cout << "The user chose file: \"" << fileDialog.lpstrFile << "\"." << endl;
     } else {
-        cout << "Something bad happened?" << endl;
+        cout << "No file selected." << endl;
     }
 }
