@@ -18,10 +18,15 @@ const float Simulator::FPS_CAP = 60.0f;
 Simulator::State Simulator::state = State::Uninitialized;
 mt19937 Simulator::mainRNG;
 WindowHandle Simulator::windowHandle;
+View Simulator::boardView, Simulator::windowView;
+float Simulator::zoomLevel;
+RenderWindow* Simulator::windowPtr = nullptr;
+Board* Simulator::boardPtr = nullptr;
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
     RenderWindow window;
+    windowPtr = &window;
     try {
         assert(state == State::Uninitialized);
         state = State::Running;
@@ -29,18 +34,17 @@ int Simulator::start() {
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowHandle = window.getSystemHandle();
         
-        View boardView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize()))), windowView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
-        float zoomLevel = 1.0f;
+        //View boardView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize()))), windowView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
+        //boardView.setCenter(Vector2f(40.0f, 40.0f));
+        zoomReset();
+        Board board;
+        boardPtr = &board;
+        board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        board.newBoard();
+        UserInterface userInterface;
         Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
-        
-        Board board;
-        board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
-        board.newBoard();
-        
-        //board.loadFile("boards/Computer.txt");
-        UserInterface userInterface;
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
@@ -125,8 +129,12 @@ int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
 }
 
-void Simulator::doThing() {
-    cout << "Doing the thing." << endl;
+void Simulator::newBoard() {
+    boardPtr->newBoard();
+    zoomReset();
+}
+
+void Simulator::loadBoard() {
     OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
     char filename[260];
     
@@ -144,8 +152,32 @@ void Simulator::doThing() {
     fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     
     if (GetOpenFileName(&fileDialog) == TRUE) {
-        cout << "The user chose file: \"" << fileDialog.lpstrFile << "\"." << endl;
+        boardPtr->loadFile(string(fileDialog.lpstrFile));
+        zoomReset();
     } else {
         cout << "No file selected." << endl;
     }
+}
+
+void Simulator::saveBoard() {
+    
+}
+
+void Simulator::saveAsBoard() {
+    
+}
+
+void Simulator::renameBoard() {
+    
+}
+
+void Simulator::exitProgram() {
+    
+}
+
+void Simulator::zoomReset() {
+    zoomLevel = 1.0f;
+    boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+    windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
+    boardView.setCenter(0.5f * Vector2f(windowPtr->getSize()) - Vector2f(32.0f, 60.0f));
 }

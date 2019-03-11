@@ -174,7 +174,7 @@ void Board::newBoard(const Vector2u& size, const string& filename) {
 
 void Board::loadFile(const string& filename) {
     cout << "Loading board file \"" << filename << "\"." << endl;
-    ifstream inputFile(filename + ".txt");
+    ifstream inputFile(filename);
     if (!inputFile.is_open()) {
         throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
     }

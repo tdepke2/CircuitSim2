@@ -47,7 +47,7 @@ class UserInterface : public Drawable, public Transformable {
     public:
     Font font;
     RectangleShape topBar;
-    DropdownMenu fileMenu;
+    DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     
     UserInterface();
     void update(int mouseX, int mouseY, bool clicked);
