@@ -12,8 +12,7 @@ class Simulator;
 using namespace std;
 using namespace sf;
 
-class TextButton : public Drawable, public Transformable {
-    public:
+struct TextButton : public Drawable, public Transformable {
     Text text;
     RectangleShape button;
     Color color1, color2;
@@ -28,11 +27,11 @@ class TextButton : public Drawable, public Transformable {
     virtual void draw (RenderTarget& target, RenderStates states) const;
 };
 
-class DropdownMenu : public Drawable, public Transformable {
-    public:
+struct DropdownMenu : public Drawable, public Transformable {
     TextButton button;
     RectangleShape background;
     vector<TextButton> menuButtons;
+    float maxMenuButtonWidth;
     bool visible;
     
     DropdownMenu();
@@ -48,8 +47,7 @@ class UserInterface : public Drawable, public Transformable {
     public:
     Font font;
     RectangleShape topBar;
-    DropdownMenu test;
-    TextButton test2;
+    DropdownMenu fileMenu;
     
     UserInterface();
     void update(int mouseX, int mouseY, bool clicked);
