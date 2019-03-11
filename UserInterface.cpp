@@ -111,14 +111,14 @@ void DropdownMenu::draw (RenderTarget& target, RenderStates states) const {
 }
 
 UserInterface::UserInterface() {
-    if (!font.loadFromFile("resources/arial.ttf")) {
-        throw runtime_error("\"resources/arial.ttf\": Unable to load font file.");
+    if (!font.loadFromFile("resources/consolas.ttf")) {
+        throw runtime_error("\"resources/consolas.ttf\": Unable to load font file.");
     }
     
-    topBar.setSize(Vector2f(800.0f, 40.0f));
+    topBar.setSize(Vector2f(800.0f, 28.0f));
     topBar.setFillColor(Color::White);
     topBar.setPosition(0.0f, 0.0f);
-    fileMenu = DropdownMenu(TextButton(font, "File", Color::Black, 15, 10.0f, 10.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
+    fileMenu = DropdownMenu(TextButton(font, "File", Color::Black, 15, 10.0f, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     fileMenu.addMenuButton(TextButton(font, "Open...             Ctrl+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::doThing));
     fileMenu.addMenuButton(TextButton(font, "Cool button", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
     fileMenu.addMenuButton(TextButton(font, "Click here", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
