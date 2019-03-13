@@ -39,6 +39,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Vector2u _size, _tileSize;
     Tile*** _tileArray;
     
+    void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
+    void _buildTexture(const Image& source, Texture& target, const Vector2u& tileSize);
     void _setVertexCoords();
     int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
     virtual void draw (RenderTarget& target, RenderStates states) const;

@@ -66,19 +66,12 @@ Tile*** Board::getTileArray() const {
 }
 
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    Image tilesetImage, fullImage;
+    cout << "Clamping and stitching textures." << endl;
+    Image tilesetImage;
     if (!tilesetImage.loadFromFile(filenameGrid)) {
         throw runtime_error("\"" + filenameGrid + "\": Unable to load texture file.");
     }
-    fullImage.create(tilesetImage.getSize().x, tilesetImage.getSize().y * 2);
-    fullImage.copy(tilesetImage, 0, 0);
-    for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
-        for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
-            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(100, 100, 100));
-        }
-    }
-    fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);
-    _tilesetGrid.loadFromImage(fullImage);
+    _buildTexture(tilesetImage, _tilesetGrid, tileSize);
     _tilesetGrid.setSmooth(true);
     if (!_tilesetGrid.generateMipmap()) {
         cout << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture." << endl;
@@ -87,15 +80,7 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     if (!tilesetImage.loadFromFile(filenameNoGrid)) {
         throw runtime_error("\"" + filenameNoGrid + "\": Unable to load texture file.");
     }
-    fullImage.create(tilesetImage.getSize().x, tilesetImage.getSize().y * 2);
-    fullImage.copy(tilesetImage, 0, 0);
-    for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
-        for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
-            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(100, 100, 100));
-        }
-    }
-    fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);
-    _tilesetNoGrid.loadFromImage(fullImage);
+    _buildTexture(tilesetImage, _tilesetNoGrid, tileSize);
     _tilesetNoGrid.setSmooth(true);
     if (!_tilesetNoGrid.generateMipmap()) {
         cout << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture." << endl;
@@ -146,8 +131,8 @@ void Board::resize(const Vector2u& size) {
 void Board::redrawTile(Tile* tile, bool highlight) {
     Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
     int offsetID = highlight ? _textureIDMax : 0;
-    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGrid.getSize().x / _tileSize.x) * _tileSize.x);
-    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGrid.getSize().x / _tileSize.x) * _tileSize.y);
+    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGrid.getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
+    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGrid.getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
     int d = tile->getDirection();
     tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
     tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
@@ -312,6 +297,42 @@ void Board::loadFile(const string& filename) {
     }
     inputFile.close();
     cout << "Load completed." << endl;
+}
+
+void Board::_clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight) {
+    Vector2u tileTopLeft(topLeft + (bottomRight - topLeft) / 4u), tileBottomRight(tileTopLeft + (bottomRight - topLeft) / 2u);
+    for (unsigned int y = topLeft.y; y < bottomRight.y; ++y) {
+        for (unsigned int x = topLeft.x; x < bottomRight.x; ++x) {
+            unsigned int targetX = max(x, tileTopLeft.x), targetY = max(y, tileTopLeft.y);
+            if (targetX >= tileBottomRight.x) {
+                targetX = tileBottomRight.x - 1;
+            }
+            if (targetY >= tileBottomRight.y) {
+                targetY = tileBottomRight.y - 1;
+            }
+            if (x < tileTopLeft.x || x >= tileBottomRight.x || y < tileTopLeft.y || y >= tileBottomRight.y) {
+                image.setPixel(x, y, image.getPixel(targetX, targetY));
+            }
+        }
+    }
+}
+
+void Board::_buildTexture(const Image& source, Texture& target, const Vector2u& tileSize) {
+    Image fullImage;
+    fullImage.create(source.getSize().x * 2, source.getSize().y * 4, Color::Red);
+    for (unsigned int y = 0; y < source.getSize().y; y += tileSize.y) {
+        for (unsigned int x = 0; x < source.getSize().x; x += tileSize.x) {
+            fullImage.copy(source, x * 2 + tileSize.x / 2, y * 2 + tileSize.y / 2, IntRect(x, y, tileSize.x, tileSize.y));
+            _clampToSize(fullImage, Vector2u(x * 2, y * 2), Vector2u((x + tileSize.x) * 2, (y + tileSize.y) * 2));
+        }
+    }
+    fullImage.copy(fullImage, 0, source.getSize().y * 2);
+    for (unsigned int y = source.getSize().y * 2; y < fullImage.getSize().y; ++y) {
+        for (unsigned int x = 0; x < fullImage.getSize().x; ++x) {
+            fullImage.setPixel(x, y, fullImage.getPixel(x, y) + Color(100, 100, 100));
+        }
+    }
+    target.loadFromImage(fullImage);
 }
 
 void Board::_setVertexCoords() {

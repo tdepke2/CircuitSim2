@@ -110,7 +110,7 @@ int Simulator::start() {
             Vector2i newTileCursor(window.mapPixelToCoords(mouseStart, boardView));
             newTileCursor.x /= board.getTileSize().x;
             newTileCursor.y /= board.getTileSize().y;
-            if (newTileCursor.x >= 0 && newTileCursor.x < board.getSize().x && newTileCursor.y >= 0 && newTileCursor.y < board.getSize().y) {
+            if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
                 board.redrawTile(Vector2u(newTileCursor), true);
                 if (tileCursor != newTileCursor) {
                     if (tileCursor != Vector2i(-1, -1)) {
