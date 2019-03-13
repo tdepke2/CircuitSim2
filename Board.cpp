@@ -74,7 +74,7 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     fullImage.copy(tilesetImage, 0, 0);
     for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
         for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
-            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(60, 60, 60));
+            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(100, 100, 100));
         }
     }
     fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);
@@ -91,7 +91,7 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     fullImage.copy(tilesetImage, 0, 0);
     for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
         for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
-            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(60, 60, 60));
+            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(100, 100, 100));
         }
     }
     fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);

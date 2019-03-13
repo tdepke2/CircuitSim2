@@ -34,15 +34,13 @@ int Simulator::start() {
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowHandle = window.getSystemHandle();
         
-        //View boardView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize()))), windowView(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
-        //boardView.setCenter(Vector2f(40.0f, 40.0f));
         zoomReset();
         Board board;
         boardPtr = &board;
         board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         board.newBoard();
         UserInterface userInterface;
-        Vector2i mouseStart(0, 0);
+        Vector2i mouseStart(0, 0), tileCursor(-1, -1);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
         
@@ -108,6 +106,22 @@ int Simulator::start() {
                     state = State::Exiting;
                 }
             }
+            
+            Vector2i newTileCursor(window.mapPixelToCoords(mouseStart, boardView));
+            newTileCursor.x /= board.getTileSize().x;
+            newTileCursor.y /= board.getTileSize().y;
+            if (newTileCursor.x >= 0 && newTileCursor.x < board.getSize().x && newTileCursor.y >= 0 && newTileCursor.y < board.getSize().y) {
+                board.redrawTile(Vector2u(newTileCursor), true);
+                if (tileCursor != newTileCursor) {
+                    if (tileCursor != Vector2i(-1, -1)) {
+                        board.redrawTile(Vector2u(tileCursor), false);
+                    }
+                    tileCursor = newTileCursor;
+                }
+            } else if (tileCursor != Vector2i(-1, -1)) {
+                board.redrawTile(Vector2u(tileCursor), false);
+                tileCursor = Vector2i(-1, -1);
+            }
         }
     } catch (exception& ex) {
         window.close();
@@ -154,7 +168,6 @@ void Simulator::loadBoard() {
     if (GetOpenFileName(&fileDialog) == TRUE) {
         boardPtr->loadFile(string(fileDialog.lpstrFile));
         zoomReset();
-        boardPtr->redrawTile(Vector2u(5, 7), true);
     } else {
         cout << "No file selected." << endl;
     }
