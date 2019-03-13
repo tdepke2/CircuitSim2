@@ -154,6 +154,7 @@ void Simulator::loadBoard() {
     if (GetOpenFileName(&fileDialog) == TRUE) {
         boardPtr->loadFile(string(fileDialog.lpstrFile));
         zoomReset();
+        boardPtr->redrawTile(Vector2u(5, 7), true);
     } else {
         cout << "No file selected." << endl;
     }

@@ -22,7 +22,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Tile*** getTileArray() const;
     void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     void resize(const Vector2u& size);
-    void redrawTile(Tile* tile);
+    void redrawTile(Tile* tile, bool highlight = false);
+    void redrawTile(const Vector2u& position, bool highlight = false);
     void replaceTile(Tile* tile);
     void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt");
     void loadFile(const string& filename);
@@ -34,9 +35,11 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static const vector<string> GATE_SYMBOL_TABLE;
     VertexArray _vertices;
     Texture _tilesetGrid, _tilesetNoGrid;
+    int _textureIDMax;
     Vector2u _size, _tileSize;
     Tile*** _tileArray;
     
+    void _setVertexCoords();
     int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
     virtual void draw (RenderTarget& target, RenderStates states) const;
 };

@@ -5,6 +5,7 @@
 #include "TileLED.h"
 #include "TileSwitch.h"
 #include "TileWire.h"
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -65,22 +66,42 @@ Tile*** Board::getTileArray() const {
 }
 
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    if (!_tilesetGrid.loadFromFile(filenameGrid)) {
+    Image tilesetImage, fullImage;
+    if (!tilesetImage.loadFromFile(filenameGrid)) {
         throw runtime_error("\"" + filenameGrid + "\": Unable to load texture file.");
     }
+    fullImage.create(tilesetImage.getSize().x, tilesetImage.getSize().y * 2);
+    fullImage.copy(tilesetImage, 0, 0);
+    for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
+        for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
+            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(60, 60, 60));
+        }
+    }
+    fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);
+    _tilesetGrid.loadFromImage(fullImage);
     _tilesetGrid.setSmooth(true);
     if (!_tilesetGrid.generateMipmap()) {
         cout << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture." << endl;
     }
     
-    if (!_tilesetNoGrid.loadFromFile(filenameNoGrid)) {
+    if (!tilesetImage.loadFromFile(filenameNoGrid)) {
         throw runtime_error("\"" + filenameNoGrid + "\": Unable to load texture file.");
     }
+    fullImage.create(tilesetImage.getSize().x, tilesetImage.getSize().y * 2);
+    fullImage.copy(tilesetImage, 0, 0);
+    for (unsigned int y = 0; y < tilesetImage.getSize().y; ++y) {
+        for (unsigned int x = 0; x < tilesetImage.getSize().x; ++x) {
+            tilesetImage.setPixel(x, y, tilesetImage.getPixel(x, y) + Color(60, 60, 60));
+        }
+    }
+    fullImage.copy(tilesetImage, 0, tilesetImage.getSize().y);
+    _tilesetNoGrid.loadFromImage(fullImage);
     _tilesetNoGrid.setSmooth(true);
     if (!_tilesetNoGrid.generateMipmap()) {
         cout << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture." << endl;
     }
     
+    _textureIDMax = tilesetImage.getSize().x / tileSize.x * tilesetImage.getSize().y / tileSize.y;
     _tileSize = tileSize;
 }
 
@@ -88,6 +109,7 @@ void Board::resize(const Vector2u& size) {
     _vertices.resize(size.x * size.y * 4);
     Vector2u oldSize = _size;
     _size = size;
+    _setVertexCoords();
     
     Tile*** newTileArray = new Tile**[size.y];    // Create new array for the new size.
     unsigned int xStop = min(size.x, oldSize.x), yStop = min(size.y, oldSize.y);
@@ -121,23 +143,20 @@ void Board::resize(const Vector2u& size) {
     _tileArray = newTileArray;
 }
 
-void Board::redrawTile(Tile* tile) {
+void Board::redrawTile(Tile* tile, bool highlight) {
     Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
-    
-    float windowX = static_cast<float>(tile->getPosition().x * _tileSize.x);
-    float windowY = static_cast<float>(tile->getPosition().y * _tileSize.y);
-    tileVertices[0].position = Vector2f(windowX, windowY);
-    tileVertices[1].position = Vector2f(windowX + _tileSize.x, windowY);
-    tileVertices[2].position = Vector2f(windowX + _tileSize.x, windowY + _tileSize.y);
-    tileVertices[3].position = Vector2f(windowX, windowY + _tileSize.y);
-    
-    float tileX = static_cast<float>((tile->getTextureID() % (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.x);
-    float tileY = static_cast<float>((tile->getTextureID() / (_tilesetGrid.getSize().x / _tileSize.x)) * _tileSize.y);
+    int offsetID = highlight ? _textureIDMax : 0;
+    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGrid.getSize().x / _tileSize.x) * _tileSize.x);
+    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGrid.getSize().x / _tileSize.x) * _tileSize.y);
     int d = tile->getDirection();
     tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
     tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
     tileVertices[(d + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
     tileVertices[(d + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
+}
+
+void Board::redrawTile(const Vector2u& position, bool highlight) {
+    redrawTile(_tileArray[position.y][position.x], highlight);
 }
 
 void Board::replaceTile(Tile* tile) {
@@ -161,8 +180,9 @@ void Board::newBoard(const Vector2u& size, const string& filename) {
     }
     delete[] _tileArray;
     
-    _size = size;
     _vertices.resize(size.x * size.y * 4);
+    _size = size;
+    _setVertexCoords();
     _tileArray = new Tile**[size.y];
     for (unsigned int y = 0; y < size.y; ++y) {    // Create new board of blank tiles.
         _tileArray[y] = new Tile*[size.x];
@@ -251,6 +271,7 @@ void Board::loadFile(const string& filename) {
             } else if (numEntries == 1) {
                 _size.y = stoul(line);
                 _vertices.resize(_size.x * _size.y * 4);
+                _setVertexCoords();
                 _tileArray = new Tile**[_size.y];
                 for (unsigned int y = 0; y < _size.y; ++y) {
                     _tileArray[y] = new Tile*[_size.x];
@@ -291,6 +312,20 @@ void Board::loadFile(const string& filename) {
     }
     inputFile.close();
     cout << "Load completed." << endl;
+}
+
+void Board::_setVertexCoords() {
+    for (unsigned int y = 0; y < _size.y; ++y) {
+        for (unsigned int x = 0; x < _size.x; ++x) {
+            Vertex* tileVertices = &_vertices[(y * _size.x + x) * 4];
+            float windowX = static_cast<float>(x * _tileSize.x);
+            float windowY = static_cast<float>(y * _tileSize.y);
+            tileVertices[0].position = Vector2f(windowX, windowY);
+            tileVertices[1].position = Vector2f(windowX + _tileSize.x, windowY);
+            tileVertices[2].position = Vector2f(windowX + _tileSize.x, windowY + _tileSize.y);
+            tileVertices[3].position = Vector2f(windowX, windowY + _tileSize.y);
+        }
+    }
 }
 
 int Board::_findSymbol(char c1, char c2, const vector<string>& symbolTable) const {
