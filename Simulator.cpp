@@ -35,7 +35,7 @@ int Simulator::start() {
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowHandle = window.getSystemHandle();
         
-        zoomReset();
+        viewOption(2);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board board, bufferBoard;
         boardPtr = &board;
@@ -148,55 +148,65 @@ int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
 }
 
-void Simulator::newBoard() {
-    boardPtr->newBoard();
-    zoomReset();
-}
-
-void Simulator::loadBoard() {
-    OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
-    char filename[260];
-    
-    ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
-    fileDialog.lStructSize = sizeof(fileDialog);
-    fileDialog.hwndOwner = windowHandle;
-    fileDialog.lpstrFile = filename;
-    fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
-    fileDialog.nMaxFile = sizeof(filename);
-    fileDialog.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
-    fileDialog.nFilterIndex = 1;
-    fileDialog.lpstrFileTitle = NULL;
-    fileDialog.nMaxFileTitle = 0;
-    fileDialog.lpstrInitialDir = "boards";
-    fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-    
-    if (GetOpenFileName(&fileDialog) == TRUE) {
-        boardPtr->loadFile(string(fileDialog.lpstrFile));
-        zoomReset();
-    } else {
-        cout << "No file selected." << endl;
+void Simulator::fileOption(int option) {
+    if (option == 0) {    // New board.
+        boardPtr->newBoard();
+        viewOption(2);
+    } else if (option == 1) {    // Load board.
+        OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
+        char filename[260];
+        
+        ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
+        fileDialog.lStructSize = sizeof(fileDialog);
+        fileDialog.hwndOwner = windowHandle;
+        fileDialog.lpstrFile = filename;
+        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
+        fileDialog.nMaxFile = sizeof(filename);
+        fileDialog.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+        fileDialog.nFilterIndex = 1;
+        fileDialog.lpstrFileTitle = NULL;
+        fileDialog.nMaxFileTitle = 0;
+        fileDialog.lpstrInitialDir = "boards";
+        fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        
+        if (GetOpenFileName(&fileDialog) == TRUE) {
+            boardPtr->loadFile(string(fileDialog.lpstrFile));
+            viewOption(2);
+        } else {
+            cout << "No file selected." << endl;
+        }
+    } else if (option == 2) {    // Save board.
+        
+    } else if (option == 3) {    // Save as board.
+        
+    } else if (option == 4) {    // Rename board.
+        
+    } else if (option == 5) {    // Exit program.
+        state = State::Exiting;
     }
 }
 
-void Simulator::saveBoard() {
+void Simulator::viewOption(int option) {
+    if (option == 0) {    // Zoom in.
+        
+    } else if (option == 1) {    // Zoom out.
+        
+    } else if (option == 2) {    // Default zoom.
+        zoomLevel = 1.0f;
+        boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+        windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
+        boardView.setCenter(0.5f * Vector2f(windowPtr->getSize()) - Vector2f(32.0f, 60.0f));
+    }
+}
+
+void Simulator::runOption(int option) {
     
 }
 
-void Simulator::saveAsBoard() {
+void Simulator::toolsOption(int option) {
     
 }
 
-void Simulator::renameBoard() {
-    
-}
-
-void Simulator::exitProgram() {
-    
-}
-
-void Simulator::zoomReset() {
-    zoomLevel = 1.0f;
-    boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
-    windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
-    boardView.setCenter(0.5f * Vector2f(windowPtr->getSize()) - Vector2f(32.0f, 60.0f));
+void Simulator::placeTile(int option) {
+    cout << "Tile " << option << " selected." << endl;
 }

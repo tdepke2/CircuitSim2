@@ -16,13 +16,11 @@ class Simulator {
     static int start();
     static int randomInteger(int min, int max);
     static int randomInteger(int n);
-    static void newBoard();
-    static void loadBoard();
-    static void saveBoard();
-    static void saveAsBoard();
-    static void renameBoard();
-    static void exitProgram();
-    static void zoomReset();
+    static void fileOption(int option);
+    static void viewOption(int option);
+    static void runOption(int option);
+    static void toolsOption(int option);
+    static void placeTile(int option);
     
     private:
     enum class State {

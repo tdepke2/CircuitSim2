@@ -16,11 +16,12 @@ struct TextButton : public Drawable, public Transformable {
     Text text;
     RectangleShape button;
     Color color1, color2;
-    function<void(void)> action;
+    function<void(int)> action;
+    int actionOption;
     bool visible, selected;
     
     TextButton();
-    TextButton(const Font& font, const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(void)> action);
+    TextButton(const Font& font, const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption = 0);
     bool update(int mouseX, int mouseY, bool clicked);
     
     private:

@@ -4,7 +4,7 @@
 
 TextButton::TextButton() {}
 
-TextButton::TextButton(const Font& font, const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(void)> action) {
+TextButton::TextButton(const Font& font, const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption) {
     text.setFont(font);
     text.setString(buttonText);
     text.setFillColor(textColor);
@@ -18,6 +18,7 @@ TextButton::TextButton(const Font& font, const string& buttonText, const Color& 
     this->color1 = color1;
     this->color2 = color2;
     this->action = action;
+    this->actionOption = actionOption;
     visible = true;
     selected = false;
 }
@@ -31,7 +32,7 @@ bool TextButton::update(int mouseX, int mouseY, bool clicked) {
     if (button.getGlobalBounds().contains(static_cast<float>(mouseX), static_cast<float>(mouseY))) {
         if (clicked) {
             if (action != nullptr) {
-                action();
+                action(actionOption);
             }
             button.setFillColor(color1);
             selected = false;
@@ -120,48 +121,48 @@ UserInterface::UserInterface() {
     topBar.setPosition(0.0f, 0.0f);
     
     fileMenu = DropdownMenu(TextButton(font, " File ", Color::Black, 15, 10.0f, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    fileMenu.addMenuButton(TextButton(font, "  New          Ctrl+N", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::newBoard));
-    fileMenu.addMenuButton(TextButton(font, "  Open...      Ctrl+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::loadBoard));
-    fileMenu.addMenuButton(TextButton(font, "  Save         Ctrl+S", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::saveBoard));
-    fileMenu.addMenuButton(TextButton(font, "  Save As...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::saveAsBoard));
-    fileMenu.addMenuButton(TextButton(font, "  Rename...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::renameBoard));
-    fileMenu.addMenuButton(TextButton(font, "  Exit", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::exitProgram));
+    fileMenu.addMenuButton(TextButton(font, "  New          Ctrl+N", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 0));
+    fileMenu.addMenuButton(TextButton(font, "  Open...      Ctrl+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 1));
+    fileMenu.addMenuButton(TextButton(font, "  Save         Ctrl+S", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 2));
+    fileMenu.addMenuButton(TextButton(font, "  Save As...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 3));
+    fileMenu.addMenuButton(TextButton(font, "  Rename...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4));
+    fileMenu.addMenuButton(TextButton(font, "  Exit", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 5));
     
     viewMenu = DropdownMenu(TextButton(font, " View ", Color::Black, 15, fileMenu.getPosition().x + fileMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    viewMenu.addMenuButton(TextButton(font, "  Zoom In         Mouse Wheel Up", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    viewMenu.addMenuButton(TextButton(font, "  Zoom Out      Mouse Wheel Down", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    viewMenu.addMenuButton(TextButton(font, "  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    viewMenu.addMenuButton(TextButton(font, "  Zoom In         Mouse Wheel Up", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 0));
+    viewMenu.addMenuButton(TextButton(font, "  Zoom Out      Mouse Wheel Down", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 1));
+    viewMenu.addMenuButton(TextButton(font, "  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 2));
     
     runMenu = DropdownMenu(TextButton(font, " Run ", Color::Black, 15, viewMenu.getPosition().x + viewMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    runMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    runMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
     
     toolsMenu = DropdownMenu(TextButton(font, " Tools ", Color::Black, 15, runMenu.getPosition().x + runMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    toolsMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    toolsMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));
     
     wireMenu = DropdownMenu(TextButton(font, " Wire ", Color::Black, 15, toolsMenu.getPosition().x + toolsMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    wireMenu.addMenuButton(TextButton(font, "  Straight", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    wireMenu.addMenuButton(TextButton(font, "  Corner", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    wireMenu.addMenuButton(TextButton(font, "  Tee", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    wireMenu.addMenuButton(TextButton(font, "  Junction", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    wireMenu.addMenuButton(TextButton(font, "  Crossover", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    wireMenu.addMenuButton(TextButton(font, "  Straight", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 0));
+    wireMenu.addMenuButton(TextButton(font, "  Corner", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 1));
+    wireMenu.addMenuButton(TextButton(font, "  Tee", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 2));
+    wireMenu.addMenuButton(TextButton(font, "  Junction", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 3));
+    wireMenu.addMenuButton(TextButton(font, "  Crossover", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 4));
     
     inputMenu = DropdownMenu(TextButton(font, " Input ", Color::Black, 15, wireMenu.getPosition().x + wireMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    inputMenu.addMenuButton(TextButton(font, "  Switch", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    inputMenu.addMenuButton(TextButton(font, "  Button", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    inputMenu.addMenuButton(TextButton(font, "  Switch", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 5));
+    inputMenu.addMenuButton(TextButton(font, "  Button", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 6));
     
     outputMenu = DropdownMenu(TextButton(font, " Output ", Color::Black, 15, inputMenu.getPosition().x + inputMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    outputMenu.addMenuButton(TextButton(font, "  LED", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    outputMenu.addMenuButton(TextButton(font, "  LED", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 7));
     
     gateMenu = DropdownMenu(TextButton(font, " Gate ", Color::Black, 15, outputMenu.getPosition().x + outputMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    gateMenu.addMenuButton(TextButton(font, "  Diode                     D", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  Buffer                    B", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  NOT (Inverter)      Shift+B", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  AND                       A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  NAND                Shift+A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  OR                        O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  NOR                 Shift+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  XOR                       X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
-    gateMenu.addMenuButton(TextButton(font, "  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
+    gateMenu.addMenuButton(TextButton(font, "  Diode                     D", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 8));
+    gateMenu.addMenuButton(TextButton(font, "  Buffer                    B", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 9));
+    gateMenu.addMenuButton(TextButton(font, "  NOT (Inverter)      Shift+B", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 10));
+    gateMenu.addMenuButton(TextButton(font, "  AND                       A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 11));
+    gateMenu.addMenuButton(TextButton(font, "  NAND                Shift+A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 12));
+    gateMenu.addMenuButton(TextButton(font, "  OR                        O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 13));
+    gateMenu.addMenuButton(TextButton(font, "  NOR                 Shift+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 14));
+    gateMenu.addMenuButton(TextButton(font, "  XOR                       X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 15));
+    gateMenu.addMenuButton(TextButton(font, "  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 16));
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {
