@@ -36,6 +36,7 @@ class Simulator {
     static float zoomLevel;
     static RenderWindow* windowPtr;
     static Board* boardPtr;
+    static Board* bufferBoardPtr;
 };
 
 #endif

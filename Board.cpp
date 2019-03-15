@@ -36,6 +36,40 @@ const vector<string> Board::GATE_SYMBOL_TABLE = {
     "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
 };
 
+Texture* Board::_tilesetGridPtr = nullptr;
+Texture* Board::_tilesetNoGridPtr = nullptr;
+int Board::_textureIDMax;
+Vector2u Board::_tileSize;
+
+void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
+    cout << "Clamping and stitching textures." << endl;
+    delete _tilesetGridPtr;
+    delete _tilesetNoGridPtr;
+    _tilesetGridPtr = new Texture;
+    _tilesetNoGridPtr = new Texture;
+    Image tilesetImage;
+    if (!tilesetImage.loadFromFile(filenameGrid)) {
+        throw runtime_error("\"" + filenameGrid + "\": Unable to load texture file.");
+    }
+    _buildTexture(tilesetImage, _tilesetGridPtr, tileSize);
+    _tilesetGridPtr->setSmooth(true);
+    if (!_tilesetGridPtr->generateMipmap()) {
+        cout << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture." << endl;
+    }
+    
+    if (!tilesetImage.loadFromFile(filenameNoGrid)) {
+        throw runtime_error("\"" + filenameNoGrid + "\": Unable to load texture file.");
+    }
+    _buildTexture(tilesetImage, _tilesetNoGridPtr, tileSize);
+    _tilesetNoGridPtr->setSmooth(true);
+    if (!_tilesetNoGridPtr->generateMipmap()) {
+        cout << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture." << endl;
+    }
+    
+    _textureIDMax = tilesetImage.getSize().x / tileSize.x * tilesetImage.getSize().y / tileSize.y;
+    _tileSize = tileSize;
+}
+
 Board::Board() {
     gridActive = true;
     _vertices.setPrimitiveType(Quads);
@@ -63,31 +97,6 @@ const Vector2u& Board::getTileSize() const {
 
 Tile*** Board::getTileArray() const {
     return _tileArray;
-}
-
-void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    cout << "Clamping and stitching textures." << endl;
-    Image tilesetImage;
-    if (!tilesetImage.loadFromFile(filenameGrid)) {
-        throw runtime_error("\"" + filenameGrid + "\": Unable to load texture file.");
-    }
-    _buildTexture(tilesetImage, _tilesetGrid, tileSize);
-    _tilesetGrid.setSmooth(true);
-    if (!_tilesetGrid.generateMipmap()) {
-        cout << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture." << endl;
-    }
-    
-    if (!tilesetImage.loadFromFile(filenameNoGrid)) {
-        throw runtime_error("\"" + filenameNoGrid + "\": Unable to load texture file.");
-    }
-    _buildTexture(tilesetImage, _tilesetNoGrid, tileSize);
-    _tilesetNoGrid.setSmooth(true);
-    if (!_tilesetNoGrid.generateMipmap()) {
-        cout << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture." << endl;
-    }
-    
-    _textureIDMax = tilesetImage.getSize().x / tileSize.x * tilesetImage.getSize().y / tileSize.y;
-    _tileSize = tileSize;
 }
 
 void Board::resize(const Vector2u& size) {
@@ -131,8 +140,8 @@ void Board::resize(const Vector2u& size) {
 void Board::redrawTile(Tile* tile, bool highlight) {
     Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
     int offsetID = highlight ? _textureIDMax : 0;
-    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGrid.getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
-    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGrid.getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
+    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
+    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
     int d = tile->getDirection();
     tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
     tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
@@ -317,7 +326,7 @@ void Board::_clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& 
     }
 }
 
-void Board::_buildTexture(const Image& source, Texture& target, const Vector2u& tileSize) {
+void Board::_buildTexture(const Image& source, Texture* target, const Vector2u& tileSize) {
     Image fullImage;
     fullImage.create(source.getSize().x * 2, source.getSize().y * 4, Color::Red);
     for (unsigned int y = 0; y < source.getSize().y; y += tileSize.y) {
@@ -332,7 +341,7 @@ void Board::_buildTexture(const Image& source, Texture& target, const Vector2u& 
             fullImage.setPixel(x, y, fullImage.getPixel(x, y) + Color(100, 100, 100));
         }
     }
-    target.loadFromImage(fullImage);
+    target->loadFromImage(fullImage);
 }
 
 void Board::_setVertexCoords() {
@@ -370,9 +379,9 @@ int Board::_findSymbol(char c1, char c2, const vector<string>& symbolTable) cons
 void Board::draw (RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     if (gridActive) {
-        states.texture = &_tilesetGrid;
+        states.texture = _tilesetGridPtr;
     } else {
-        states.texture = &_tilesetNoGrid;
+        states.texture = _tilesetNoGridPtr;
     }
     target.draw(_vertices, states);
 }

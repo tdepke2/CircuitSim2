@@ -15,12 +15,12 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     bool gridActive;
     string name;
     
+    static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     Board();
     virtual ~Board();
     const Vector2u& getSize() const;
     const Vector2u& getTileSize() const;
     Tile*** getTileArray() const;
-    void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     void resize(const Vector2u& size);
     void redrawTile(Tile* tile, bool highlight = false);
     void redrawTile(const Vector2u& position, bool highlight = false);
@@ -33,14 +33,16 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static const vector<string> INPUT_SYMBOL_TABLE;
     static const vector<string> OUTPUT_SYMBOL_TABLE;
     static const vector<string> GATE_SYMBOL_TABLE;
+    static Texture* _tilesetGridPtr;
+    static Texture* _tilesetNoGridPtr;
+    static int _textureIDMax;
+    static Vector2u _tileSize;
     VertexArray _vertices;
-    Texture _tilesetGrid, _tilesetNoGrid;
-    int _textureIDMax;
-    Vector2u _size, _tileSize;
+    Vector2u _size;
     Tile*** _tileArray;
     
-    void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
-    void _buildTexture(const Image& source, Texture& target, const Vector2u& tileSize);
+    static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
+    static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);
     void _setVertexCoords();
     int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
     virtual void draw (RenderTarget& target, RenderStates states) const;

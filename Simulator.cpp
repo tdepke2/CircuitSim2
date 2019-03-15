@@ -22,6 +22,7 @@ View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
 Board* Simulator::boardPtr = nullptr;
+Board* Simulator::bufferBoardPtr = nullptr;
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
@@ -35,10 +36,13 @@ int Simulator::start() {
         windowHandle = window.getSystemHandle();
         
         zoomReset();
-        Board board;
+        Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        Board board, bufferBoard;
         boardPtr = &board;
-        board.loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        bufferBoardPtr = &bufferBoard;
         board.newBoard();
+        bufferBoard.newBoard();
+        bufferBoard.setPosition(100, 30);
         UserInterface userInterface;
         Vector2i mouseStart(0, 0), tileCursor(-1, -1);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
@@ -49,6 +53,7 @@ int Simulator::start() {
             window.clear ();
             window.setView(boardView);
             window.draw(board);
+            window.draw(bufferBoard);
             window.setView(windowView);
             window.draw(userInterface);
             window.display();
