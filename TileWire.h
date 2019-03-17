@@ -12,10 +12,10 @@ using namespace sf;
 class TileWire : public Tile {
     public:
     enum Type : int {
-        VERTICAL = 0, HORIZONTAL, CORNER, TEE, JUNCTION, CROSSOVER
+        STRAIGHT = 0, CORNER, TEE, JUNCTION, CROSSOVER
     };
     
-    TileWire(const Vector2u& position, Direction direction, Board& board, Type type, bool active1, bool active2);
+    TileWire(const Vector2u& position, Board& board, Direction direction = NORTH, Type type = STRAIGHT, bool active1 = false, bool active2 = false);
     int getTextureID() const;
     void setActive(Direction d, bool state);
     bool isActive(Direction d) const;

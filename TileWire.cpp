@@ -1,9 +1,13 @@
 #include "Board.h"
 #include "TileWire.h"
 
-TileWire::TileWire(const Vector2u& position, Direction direction, Board& board, Type type, bool active1, bool active2) {
+TileWire::TileWire(const Vector2u& position, Board& board, Direction direction, Type type, bool active1, bool active2) {
     _position = position;
-    _direction = direction;
+    if (type == STRAIGHT) {
+        _direction = static_cast<Direction>(direction % 2);
+    } else {
+        _direction = direction;
+    }
     _type = type;
     _active1 = active1;
     _active2 = active2;

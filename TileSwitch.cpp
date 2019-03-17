@@ -10,5 +10,5 @@ TileSwitch::TileSwitch(const Vector2u& position, Board& board, char charID, bool
 }
 
 int TileSwitch::getTextureID() const {
-    return 15 + _active;
+    return 13 + _active;
 }

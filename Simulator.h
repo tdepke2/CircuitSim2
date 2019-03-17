@@ -3,6 +3,7 @@
 
 class Board;
 
+#include "Tile.h"
 #include <random>
 #include <SFML/Graphics.hpp>
 
@@ -35,6 +36,8 @@ class Simulator {
     static RenderWindow* windowPtr;
     static Board* boardPtr;
     static Board* bufferBoardPtr;
+    static bool bufferSelected;
+    static Direction bufferDirection;
 };
 
 #endif

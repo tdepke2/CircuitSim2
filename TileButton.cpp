@@ -10,5 +10,5 @@ TileButton::TileButton(const Vector2u& position, Board& board, char charID, bool
 }
 
 int TileButton::getTextureID() const {
-    return 17 + _active;
+    return 15 + _active;
 }

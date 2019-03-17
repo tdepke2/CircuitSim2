@@ -17,7 +17,7 @@ class TileGate : public Tile {
         DIODE = 0, BUFFER, NOT, AND, NAND, OR, NOR, XOR, XNOR
     };
     
-    TileGate(const Vector2u& position, Direction direction, Board& board, Type type, bool active);
+    TileGate(const Vector2u& position, Board& board, Direction direction = NORTH, Type type = DIODE, bool active = false);
     int getTextureID() const;
     
     private:

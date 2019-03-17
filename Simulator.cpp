@@ -1,6 +1,5 @@
 #include "Board.h"
 #include "Simulator.h"
-#include "Tile.h"
 #include "TileButton.h"
 #include "TileGate.h"
 #include "TileLED.h"
@@ -23,6 +22,8 @@ float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
 Board* Simulator::boardPtr = nullptr;
 Board* Simulator::bufferBoardPtr = nullptr;
+bool Simulator::bufferSelected = false;
+Direction Simulator::bufferDirection = NORTH;
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
@@ -41,8 +42,6 @@ int Simulator::start() {
         boardPtr = &board;
         bufferBoardPtr = &bufferBoard;
         board.newBoard();
-        bufferBoard.newBoard();
-        bufferBoard.setPosition(100, 30);
         UserInterface userInterface;
         Vector2i mouseStart(0, 0), tileCursor(-1, -1);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
@@ -53,7 +52,9 @@ int Simulator::start() {
             window.clear ();
             window.setView(boardView);
             window.draw(board);
-            window.draw(bufferBoard);
+            if (bufferSelected && tileCursor != Vector2i(-1, -1)) {
+                window.draw(bufferBoard);
+            }
             window.setView(windowView);
             window.draw(userInterface);
             window.display();
@@ -112,7 +113,7 @@ int Simulator::start() {
                 }
             }
             
-            Vector2i newTileCursor(window.mapPixelToCoords(mouseStart, boardView));
+            Vector2i newTileCursor(window.mapPixelToCoords(mouseStart, boardView));    // Highlight tile over mouse.
             newTileCursor.x /= board.getTileSize().x;
             newTileCursor.y /= board.getTileSize().y;
             if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
@@ -126,6 +127,10 @@ int Simulator::start() {
             } else if (tileCursor != Vector2i(-1, -1)) {
                 board.redrawTile(Vector2u(tileCursor), false);
                 tileCursor = Vector2i(-1, -1);
+            }
+            
+            if (bufferSelected && tileCursor != Vector2i(-1, -1)) {
+                bufferBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
             }
         }
     } catch (exception& ex) {
@@ -151,6 +156,7 @@ int Simulator::randomInteger(int n) {
 void Simulator::fileOption(int option) {
     if (option == 0) {    // New board.
         boardPtr->newBoard();
+        cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
         viewOption(2);
     } else if (option == 1) {    // Load board.
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
@@ -208,5 +214,21 @@ void Simulator::toolsOption(int option) {
 }
 
 void Simulator::placeTile(int option) {
-    cout << "Tile " << option << " selected." << endl;
+    if (bufferBoardPtr->getSize() != Vector2u(1, 1)) {
+        bufferBoardPtr->newBoard(Vector2u(1, 1), "");
+    }
+    if (option < 5) {
+        bufferBoardPtr->replaceTile(new TileWire(Vector2u(0, 0), *bufferBoardPtr, bufferDirection, static_cast<TileWire::Type>(option)));
+        assert(bufferBoardPtr->getTileArray()[0][0]->getDirection() == NORTH || bufferBoardPtr->getTileArray()[0][0]->getDirection() == EAST);
+    } else if (option == 5) {
+        bufferBoardPtr->replaceTile(new TileSwitch(Vector2u(0, 0), *bufferBoardPtr));
+    } else if (option == 6) {
+        bufferBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *bufferBoardPtr));
+    } else if (option == 7) {
+        bufferBoardPtr->replaceTile(new TileLED(Vector2u(0, 0), *bufferBoardPtr));
+    } else {
+        bufferBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *bufferBoardPtr, bufferDirection, static_cast<TileGate::Type>(option - 8)));
+    }
+    bufferBoardPtr->redrawTile(Vector2u(0, 0), true);
+    bufferSelected = true;
 }

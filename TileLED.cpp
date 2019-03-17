@@ -9,5 +9,5 @@ TileLED::TileLED(const Vector2u& position, Board& board, bool active) {
 }
 
 int TileLED::getTextureID() const {
-    return 19 + _active;
+    return 17 + _active;
 }

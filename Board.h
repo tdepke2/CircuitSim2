@@ -16,15 +16,16 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     string name;
     
     static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
+    static const Vector2u& getTileSize();
     Board();
     virtual ~Board();
     const Vector2u& getSize() const;
-    const Vector2u& getTileSize() const;
     Tile*** getTileArray() const;
-    void resize(const Vector2u& size);
     void redrawTile(Tile* tile, bool highlight = false);
     void redrawTile(const Vector2u& position, bool highlight = false);
     void replaceTile(Tile* tile);
+    void clear();
+    void resize(const Vector2u& size);
     void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt");
     void loadFile(const string& filename);
     
