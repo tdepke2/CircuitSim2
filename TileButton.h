@@ -13,6 +13,7 @@ class TileButton : public Tile {
     public:
     TileButton(const Vector2u& position, Board& board, char charID = '\0', bool active = false);
     int getTextureID() const;
+    Tile* clone(const Vector2u& position, Board& board);
     
     private:
     char _charID;

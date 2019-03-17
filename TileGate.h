@@ -19,6 +19,8 @@ class TileGate : public Tile {
     
     TileGate(const Vector2u& position, Board& board, Direction direction = NORTH, Type type = DIODE, bool active = false);
     int getTextureID() const;
+    void setDirection(Direction direction, Board& board);
+    Tile* clone(const Vector2u& position, Board& board);
     
     private:
     Type _type;

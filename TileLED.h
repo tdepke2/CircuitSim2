@@ -13,6 +13,7 @@ class TileLED : public Tile {
     public:
     TileLED(const Vector2u& position, Board& board, bool active = false);
     int getTextureID() const;
+    Tile* clone(const Vector2u& position, Board& board);
     
     private:
     bool _active;

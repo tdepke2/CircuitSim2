@@ -3,10 +3,14 @@
 
 TileWire::TileWire(const Vector2u& position, Board& board, Direction direction, Type type, bool active1, bool active2) {
     _position = position;
-    if (type == STRAIGHT) {
-        _direction = static_cast<Direction>(direction % 2);
+    if (type != JUNCTION && type != CROSSOVER) {
+        if (type == STRAIGHT) {
+            _direction = static_cast<Direction>(direction % 2);
+        } else {
+            _direction = direction;
+        }
     } else {
-        _direction = direction;
+        _direction = NORTH;
     }
     _type = type;
     _active1 = active1;
@@ -18,8 +22,23 @@ int TileWire::getTextureID() const {
     return 1 + _type * 2 + _active1 + _active2 * 2;
 }
 
+void TileWire::setDirection(Direction direction, Board& board) {
+    if (_type != JUNCTION && _type != CROSSOVER) {
+        if (_type == STRAIGHT) {
+            _direction = static_cast<Direction>(direction % 2);
+        } else {
+            _direction = direction;
+        }
+        board.redrawTile(this);
+    }
+}
+
 void TileWire::setActive(Direction d, bool state) {
     
+}
+
+Tile* TileWire::clone(const Vector2u& position, Board& board) {
+    return new TileWire(position, board, _direction, _type, _active1, _active2);
 }
 
 bool TileWire::isActive(Direction d) const {

@@ -33,7 +33,8 @@ void Tile::setPosition(const Vector2u& position, Board& board) {
     }
 }
 
-void Tile::setDirection(Direction direction, Board& board) {
-    _direction = direction;
-    board.redrawTile(this);
+void Tile::setDirection(Direction direction, Board& board) {}
+
+Tile* Tile::clone(const Vector2u& position, Board& board) {
+    return new Tile(position, board);
 }

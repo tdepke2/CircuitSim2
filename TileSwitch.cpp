@@ -12,3 +12,7 @@ TileSwitch::TileSwitch(const Vector2u& position, Board& board, char charID, bool
 int TileSwitch::getTextureID() const {
     return 13 + _active;
 }
+
+Tile* TileSwitch::clone(const Vector2u& position, Board& board) {
+    return new TileSwitch(position, board, _charID, _active);
+}

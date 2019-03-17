@@ -21,7 +21,8 @@ class Tile {    // Generic tile that is stored in a Board.
     const Vector2u& getPosition() const;
     Direction getDirection() const;
     void setPosition(const Vector2u& position, Board& board);
-    void setDirection(Direction direction, Board& board);
+    virtual void setDirection(Direction direction, Board& board);
+    virtual Tile* clone(const Vector2u& position, Board& board);
     
     protected:
     Vector2u _position;

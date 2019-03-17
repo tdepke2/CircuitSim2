@@ -137,7 +137,9 @@ UserInterface::UserInterface() {
     runMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
     
     toolsMenu = DropdownMenu(TextButton(font, " Tools ", Color::Black, 15, runMenu.getPosition().x + runMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    toolsMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));
+    toolsMenu.addMenuButton(TextButton(font, "  Deselect All                  Esc", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));
+    toolsMenu.addMenuButton(TextButton(font, "  Rotate Selection CW             R", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 1));
+    toolsMenu.addMenuButton(TextButton(font, "  Rotate Selection CCW      Shift+R", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 2));
     
     wireMenu = DropdownMenu(TextButton(font, " Wire ", Color::Black, 15, toolsMenu.getPosition().x + toolsMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     wireMenu.addMenuButton(TextButton(font, "  Straight", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 0));

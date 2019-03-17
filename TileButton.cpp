@@ -12,3 +12,7 @@ TileButton::TileButton(const Vector2u& position, Board& board, char charID, bool
 int TileButton::getTextureID() const {
     return 15 + _active;
 }
+
+Tile* TileButton::clone(const Vector2u& position, Board& board) {
+    return new TileButton(position, board, _charID, _active);
+}

@@ -36,8 +36,9 @@ class Simulator {
     static RenderWindow* windowPtr;
     static Board* boardPtr;
     static Board* bufferBoardPtr;
-    static bool bufferSelected;
     static Direction bufferDirection;
+    
+    static void _copyBufferToBoard(const Vector2i& tileCursor);
 };
 
 #endif

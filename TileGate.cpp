@@ -17,3 +17,12 @@ int TileGate::getTextureID() const {
         return 13 + _type * 8 + connectRight * 2 + connectLeft * 4 + _active;
     }
 }
+
+void TileGate::setDirection(Direction direction, Board& board) {
+    _direction = direction;
+    board.redrawTile(this);
+}
+
+Tile* TileGate::clone(const Vector2u& position, Board& board) {
+    return new TileGate(position, board, _direction, _type, _active);
+}
