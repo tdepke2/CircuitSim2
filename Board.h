@@ -12,7 +12,7 @@ using namespace sf;
 
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
     public:
-    bool gridActive;
+    static bool gridActive;
     string name;
     
     static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);

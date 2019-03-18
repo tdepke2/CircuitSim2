@@ -35,10 +35,12 @@ class Simulator {
     static float zoomLevel;
     static RenderWindow* windowPtr;
     static Board* boardPtr;
-    static Board* bufferBoardPtr;
-    static Direction bufferDirection;
+    static Board* currentTileBoardPtr;
+    static Board* copyBufferBoardPtr;
+    static Direction currentTileDirection;
+    static bool copyBufferVisible;
     
-    static void _copyBufferToBoard(const Vector2i& tileCursor);
+    static void _pasteToBoard(const Vector2i& tileCursor);
 };
 
 #endif

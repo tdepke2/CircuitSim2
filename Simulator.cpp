@@ -21,8 +21,10 @@ View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
 Board* Simulator::boardPtr = nullptr;
-Board* Simulator::bufferBoardPtr = nullptr;
-Direction Simulator::bufferDirection = NORTH;
+Board* Simulator::currentTileBoardPtr = nullptr;
+Board* Simulator::copyBufferBoardPtr = nullptr;
+Direction Simulator::currentTileDirection = NORTH;
+bool Simulator::copyBufferVisible = false;
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
@@ -37,12 +39,12 @@ int Simulator::start() {
         
         viewOption(2);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
-        Board board, bufferBoard;
+        Board board, currentTileBoard, copyBufferBoard;
         boardPtr = &board;
-        bufferBoardPtr = &bufferBoard;
+        currentTileBoardPtr = &currentTileBoard;
+        copyBufferBoardPtr = &copyBufferBoard;
         board.newBoard();
-        bufferBoard.newBoard(Vector2u(1, 1), "");
-        bufferBoard.redrawTile(Vector2u(0, 0), true);
+        copyBufferBoard.newBoard(Vector2u(1, 1), "");
         UserInterface userInterface;
         Vector2i mouseStart(0, 0), tileCursor(-1, -1);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
@@ -54,7 +56,11 @@ int Simulator::start() {
             window.setView(boardView);
             window.draw(board);
             if (tileCursor != Vector2i(-1, -1)) {
-                window.draw(bufferBoard);
+                if (copyBufferVisible) {
+                    window.draw(copyBufferBoard);
+                } else {
+                    window.draw(currentTileBoard);
+                }
             }
             window.setView(windowView);
             window.draw(userInterface);
@@ -95,7 +101,7 @@ int Simulator::start() {
                     if (event.mouseButton.button == Mouse::Left) {
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
                     } else if (event.mouseButton.button == Mouse::Right) {
-                        _copyBufferToBoard(tileCursor);
+                        _pasteToBoard(tileCursor);
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
@@ -105,8 +111,7 @@ int Simulator::start() {
                     }
                 } else if (event.type == Event::KeyPressed) {
                     if (event.key.code == Keyboard::G) {
-                        board.gridActive = !board.gridActive;
-                        bufferBoard.gridActive = board.gridActive;
+                        Board::gridActive = !Board::gridActive;
                     } else if (event.key.code == Keyboard::Escape) {
                         toolsOption(0);
                     } else if (event.key.code == Keyboard::R) {
@@ -130,13 +135,19 @@ int Simulator::start() {
             newTileCursor.y /= board.getTileSize().y;
             if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
                 if (tileCursor != newTileCursor) {
+                    if (tileCursor != Vector2i(-1, -1)) {
+                        board.redrawTile(Vector2u(tileCursor), false);
+                    }
+                    board.redrawTile(Vector2u(newTileCursor), true);
                     tileCursor = newTileCursor;
                     if (Mouse::isButtonPressed(Mouse::Right)) {
-                        _copyBufferToBoard(tileCursor);
+                        _pasteToBoard(tileCursor);
                     }
-                    bufferBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
+                    currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
+                    copyBufferBoard.setPosition(currentTileBoard.getPosition());
                 }
-            } else {
+            } else if (tileCursor != Vector2i(-1, -1)) {
+                board.redrawTile(Vector2u(tileCursor), false);
                 tileCursor = Vector2i(-1, -1);
             }
         }
@@ -220,43 +231,50 @@ void Simulator::runOption(int option) {
 
 void Simulator::toolsOption(int option) {
     if (option == 0) {    // Deselect all.
-        bufferBoardPtr->newBoard(Vector2u(1, 1), "");
-        bufferBoardPtr->redrawTile(Vector2u(0, 0), true);
+        currentTileBoardPtr->clear();
+        copyBufferVisible = false;
     } else if (option == 1) {    // Rotate selection CW.
-        bufferDirection = static_cast<Direction>((bufferDirection + 1) % 4);
-        bufferBoardPtr->getTileArray()[0][0]->setDirection(bufferDirection, *bufferBoardPtr);
-        bufferBoardPtr->redrawTile(Vector2u(0, 0), true);
+        currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
+        if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
+            currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
+        }
     } else if (option == 2) {    // Rotate selection CCW.
-        bufferDirection = static_cast<Direction>((bufferDirection + 3) % 4);
-        bufferBoardPtr->getTileArray()[0][0]->setDirection(bufferDirection, *bufferBoardPtr);
-        bufferBoardPtr->redrawTile(Vector2u(0, 0), true);
+        currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
+        if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
+            currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
+        }
     }
 }
 
 void Simulator::placeTile(int option) {
-    if (bufferBoardPtr->getSize() != Vector2u(1, 1)) {
-        bufferBoardPtr->newBoard(Vector2u(1, 1), "");
+    if (currentTileBoardPtr->getSize() != Vector2u(1, 1)) {
+        currentTileBoardPtr->newBoard(Vector2u(1, 1), "");
     }
     if (option < 5) {
-        bufferBoardPtr->replaceTile(new TileWire(Vector2u(0, 0), *bufferBoardPtr, bufferDirection, static_cast<TileWire::Type>(option)));
+        currentTileBoardPtr->replaceTile(new TileWire(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileWire::Type>(option)));
     } else if (option == 5) {
-        bufferBoardPtr->replaceTile(new TileSwitch(Vector2u(0, 0), *bufferBoardPtr));
+        currentTileBoardPtr->replaceTile(new TileSwitch(Vector2u(0, 0), *currentTileBoardPtr));
     } else if (option == 6) {
-        bufferBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *bufferBoardPtr));
+        currentTileBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *currentTileBoardPtr));
     } else if (option == 7) {
-        bufferBoardPtr->replaceTile(new TileLED(Vector2u(0, 0), *bufferBoardPtr));
+        currentTileBoardPtr->replaceTile(new TileLED(Vector2u(0, 0), *currentTileBoardPtr));
     } else {
-        bufferBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *bufferBoardPtr, bufferDirection, static_cast<TileGate::Type>(option - 8)));
+        currentTileBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileGate::Type>(option - 8)));
     }
-    bufferBoardPtr->redrawTile(Vector2u(0, 0), true);
+    currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
 }
 
-void Simulator::_copyBufferToBoard(const Vector2i& tileCursor) {
+void Simulator::_pasteToBoard(const Vector2i& tileCursor) {
     if (tileCursor == Vector2i(-1, -1)) {
         return;
     }
-    if (bufferBoardPtr->getSize() == Vector2u(1, 1)) {
-        boardPtr->replaceTile(bufferBoardPtr->getTileArray()[0][0]->clone(Vector2u(tileCursor), *boardPtr));
+    if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {
+        boardPtr->replaceTile(new Tile(Vector2u(tileCursor), *boardPtr));
+        boardPtr->redrawTile(Vector2u(tileCursor), true);
+    } else if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
+        boardPtr->replaceTile(currentTileBoardPtr->getTileArray()[0][0]->clone(Vector2u(tileCursor), *boardPtr));
     } else {
         cout << "not yet implemented." << endl;
     }

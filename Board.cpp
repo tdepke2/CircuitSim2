@@ -10,6 +10,12 @@
 #include <iostream>
 #include <stdexcept>
 
+bool Board::gridActive = true;
+Texture* Board::_tilesetGridPtr = nullptr;
+Texture* Board::_tilesetNoGridPtr = nullptr;
+int Board::_textureIDMax;
+Vector2u Board::_tileSize;
+
 const vector<string> Board::WIRE_SYMBOL_TABLE = {
     "| ",  "[ ",  "--",  "==",
     "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
@@ -35,11 +41,6 @@ const vector<string> Board::GATE_SYMBOL_TABLE = {
     "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
     "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
 };
-
-Texture* Board::_tilesetGridPtr = nullptr;
-Texture* Board::_tilesetNoGridPtr = nullptr;
-int Board::_textureIDMax;
-Vector2u Board::_tileSize;
 
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
     cout << "Clamping and stitching textures." << endl;
@@ -75,7 +76,6 @@ const Vector2u& Board::getTileSize() {
 }
 
 Board::Board() {
-    gridActive = true;
     _vertices.setPrimitiveType(Quads);
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
@@ -122,6 +122,7 @@ void Board::clear() {
         delete[] _tileArray[y];
     }
     delete[] _tileArray;
+    _vertices.clear();
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
 }
