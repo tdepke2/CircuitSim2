@@ -165,7 +165,7 @@ void Board::resize(const Vector2u& size) {
     _tileArray = newTileArray;
 }
 
-void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination) {
+void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool keepOverwrittenTiles) {
     assert(region.left >= 0 && region.left + region.width <= static_cast<int>(source.getSize().x) && region.top >= 0 && region.top + region.height <= static_cast<int>(source.getSize().y));
     assert(destination.x >= 0 && destination.x + region.width <= static_cast<int>(_size.x) && destination.y >= 0 && destination.y + region.height <= static_cast<int>(_size.y));
     
@@ -174,13 +174,23 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
     while (ySource < yStop) {
         int xSource = region.left, xThis = destination.x;
         while (xSource < xStop) {
-            delete _tileArray[yThis][xThis];
+            if (!keepOverwrittenTiles) {
+                delete _tileArray[yThis][xThis];
+            }
             _tileArray[yThis][xThis] = source.getTileArray()[ySource][xSource]->clone(Vector2u(xThis, yThis), *this);
             ++xSource;
             ++xThis;
         }
         ++ySource;
         ++yThis;
+    }
+}
+
+void Board::highlightArea(const IntRect& region, bool highlight) {
+    for (int y = region.top + region.height - 1; y >= region.top; --y) {
+        for (int x = region.left + region.width - 1; x >= region.left; --x) {
+            redrawTile(Vector2u(x, y), highlight);
+        }
     }
 }
 

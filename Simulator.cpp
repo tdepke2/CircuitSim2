@@ -103,11 +103,7 @@ int Simulator::start() {
                     } else if (event.mouseButton.button == Mouse::Right) {
                         if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {    // If no tile to place is selected, start a new selection.
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
-                                for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
-                                    for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                                        board.redrawTile(Vector2u(x, y), false);
-                                    }
-                                }
+                                board.highlightArea(selectionArea, false);
                             }
                             selectionStart = tileCursor;
                             selectionArea = IntRect(tileCursor.x, tileCursor.y, 1, 1);
@@ -210,20 +206,12 @@ int Simulator::start() {
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
                     if (selectionStart != Vector2i(-1, -1)) {
-                        for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
-                            for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                                board.redrawTile(Vector2u(x, y), false);
-                            }
-                        }
+                        board.highlightArea(selectionArea, false);
                         selectionArea.left = min(selectionStart.x, newTileCursor.x);
                         selectionArea.top = min(selectionStart.y, newTileCursor.y);
                         selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
                         selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
-                        for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
-                            for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                                board.redrawTile(Vector2u(x, y), true);
-                            }
-                        }
+                        board.highlightArea(selectionArea, true);
                     } else {
                         if (Mouse::isButtonPressed(Mouse::Right)) {
                             pasteToBoard(newTileCursor);
@@ -331,11 +319,7 @@ void Simulator::toolsOption(int option) {
         currentTileBoardPtr->clear();
         copyBufferVisible = false;
         if (selectionArea != IntRect(0, 0, 0, 0)) {
-            for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
-                for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                    boardPtr->redrawTile(Vector2u(x, y), false);
-                }
-            }
+            boardPtr->highlightArea(selectionArea, false);
             selectionStart = Vector2i(-1, -1);
             selectionArea = IntRect(0, 0, 0, 0);
             if (tileCursor != Vector2i(-1, -1)) {
@@ -361,9 +345,13 @@ void Simulator::toolsOption(int option) {
     } else if (option == 6) {    // Cut selection.
         
     } else if (option == 7) {    // Copy selection.
-        //copyBufferBoardPtr->
+        copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
+        copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true);
+        copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        toolsOption(8);
     } else if (option == 8) {    // Paste selection.
-        
+        currentTileBoardPtr->clear();
+        copyBufferVisible = true;
     } else if (option == 9) {    // Delete selection.
         
     } else if (option == 10) {    // Wire tool.
