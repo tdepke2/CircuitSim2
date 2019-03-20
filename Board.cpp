@@ -165,7 +165,26 @@ void Board::resize(const Vector2u& size) {
     _tileArray = newTileArray;
 }
 
-void Board::newBoard(const Vector2u& size, const string& filename) {
+void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination) {
+    assert(region.left >= 0 && region.left + region.width <= static_cast<int>(source.getSize().x) && region.top >= 0 && region.top + region.height <= static_cast<int>(source.getSize().y));
+    assert(destination.x >= 0 && destination.x + region.width <= static_cast<int>(_size.x) && destination.y >= 0 && destination.y + region.height <= static_cast<int>(_size.y));
+    
+    int ySource = region.top, yThis = destination.y;
+    int yStop = region.top + region.height, xStop = region.left + region.width;
+    while (ySource < yStop) {
+        int xSource = region.left, xThis = destination.x;
+        while (xSource < xStop) {
+            delete _tileArray[yThis][xThis];
+            _tileArray[yThis][xThis] = source.getTileArray()[ySource][xSource]->clone(Vector2u(xThis, yThis), *this);
+            ++xSource;
+            ++xThis;
+        }
+        ++ySource;
+        ++yThis;
+    }
+}
+
+void Board::newBoard(const Vector2u& size, const string& filename, bool startEmpty) {
     size_t dotPosition = filename.rfind('.');
     if (dotPosition != string::npos) {
         name = filename.substr(0, dotPosition);
@@ -178,10 +197,12 @@ void Board::newBoard(const Vector2u& size, const string& filename) {
     _size = size;
     _setVertexCoords();
     _tileArray = new Tile**[size.y];
-    for (unsigned int y = 0; y < size.y; ++y) {    // Create new board of blank tiles.
+    for (unsigned int y = 0; y < size.y; ++y) {    // Create new board and add blank tiles if startEmpty is false.
         _tileArray[y] = new Tile*[size.x];
-        for (unsigned int x = 0; x < size.x; ++x) {
-            _tileArray[y][x] = new Tile(Vector2u(x, y), *this);
+        if (!startEmpty) {
+            for (unsigned int x = 0; x < size.x; ++x) {
+                _tileArray[y][x] = new Tile(Vector2u(x, y), *this);
+            }
         }
     }
 }

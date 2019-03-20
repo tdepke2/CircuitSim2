@@ -132,12 +132,12 @@ int Simulator::start() {
                         if (event.key.code == Keyboard::G) {
                             Board::gridActive = !Board::gridActive;
                         } else if (event.key.code == Keyboard::Escape) {
-                            toolsOption(0);
+                            toolsOption(1);
                         } else if (event.key.code == Keyboard::R) {
                             if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                toolsOption(1);
-                            } else {
                                 toolsOption(2);
+                            } else {
+                                toolsOption(3);
                             }
                         } else if (event.key.code == Keyboard::Space) {
                             placeTile(0);
@@ -209,17 +209,16 @@ int Simulator::start() {
                         board.redrawTile(Vector2u(tileCursor), false);
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
-                    tileCursor = newTileCursor;
                     if (selectionStart != Vector2i(-1, -1)) {
                         for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                             for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                                 board.redrawTile(Vector2u(x, y), false);
                             }
                         }
-                        selectionArea.left = min(selectionStart.x, tileCursor.x);
-                        selectionArea.top = min(selectionStart.y, tileCursor.y);
-                        selectionArea.width = max(selectionStart.x, tileCursor.x) - selectionArea.left + 1;
-                        selectionArea.height = max(selectionStart.y, tileCursor.y) - selectionArea.top + 1;
+                        selectionArea.left = min(selectionStart.x, newTileCursor.x);
+                        selectionArea.top = min(selectionStart.y, newTileCursor.y);
+                        selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
+                        selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
                         for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                             for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                                 board.redrawTile(Vector2u(x, y), true);
@@ -227,9 +226,10 @@ int Simulator::start() {
                         }
                     } else {
                         if (Mouse::isButtonPressed(Mouse::Right)) {
-                            pasteToBoard(tileCursor);
+                            pasteToBoard(newTileCursor);
                         }
                     }
+                    tileCursor = newTileCursor;
                     currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
                     copyBufferBoard.setPosition(currentTileBoard.getPosition());
                 }
@@ -292,8 +292,12 @@ void Simulator::fileOption(int option) {
         
     } else if (option == 4) {    // Rename board.
         
-    } else if (option == 5) {    // Exit program.
+    } else if (option == 5) {    // Resize board.
+        
+    } else if (option == 6) {    // Exit program.
         state = State::Exiting;
+    } else {
+        assert(false);
     }
 }
 
@@ -307,17 +311,23 @@ void Simulator::viewOption(int option) {
         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
         windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
         boardView.setCenter(0.5f * Vector2f(windowPtr->getSize()) - Vector2f(32.0f, 60.0f));
+    } else {
+        assert(false);
     }
 }
 
 void Simulator::runOption(int option) {
     if (option == 0) {
         
+    } else {
+        assert(false);
     }
 }
 
 void Simulator::toolsOption(int option) {
-    if (option == 0) {    // Deselect all.
+    if (option == 0) {    // Select all.
+        
+    } else if (option == 1) {    // Deselect all.
         currentTileBoardPtr->clear();
         copyBufferVisible = false;
         if (selectionArea != IntRect(0, 0, 0, 0)) {
@@ -328,20 +338,38 @@ void Simulator::toolsOption(int option) {
             }
             selectionStart = Vector2i(-1, -1);
             selectionArea = IntRect(0, 0, 0, 0);
-            boardPtr->redrawTile(Vector2u(tileCursor), true);
+            if (tileCursor != Vector2i(-1, -1)) {
+                boardPtr->redrawTile(Vector2u(tileCursor), true);
+            }
         }
-    } else if (option == 1) {    // Rotate selection CW.
+    } else if (option == 2) {    // Rotate selection CW.
         currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
             currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
         }
-    } else if (option == 2) {    // Rotate selection CCW.
+    } else if (option == 3) {    // Rotate selection CCW.
         currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
             currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
         }
+    } else if (option == 4) {    // Flip across vertical.
+        
+    } else if (option == 5) {    // Flip across horizontal.
+        
+    } else if (option == 6) {    // Cut selection.
+        
+    } else if (option == 7) {    // Copy selection.
+        //copyBufferBoardPtr->
+    } else if (option == 8) {    // Paste selection.
+        
+    } else if (option == 9) {    // Delete selection.
+        
+    } else if (option == 10) {    // Wire tool.
+        
+    } else {
+        assert(false);
     }
 }
 
@@ -359,8 +387,10 @@ void Simulator::placeTile(int option) {
         currentTileBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *currentTileBoardPtr));
     } else if (option == 8) {
         currentTileBoardPtr->replaceTile(new TileLED(Vector2u(0, 0), *currentTileBoardPtr));
-    } else {
+    } else if (option < 18) {
         currentTileBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileGate::Type>(option - 9)));
+    } else {
+        assert(false);
     }
     currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
 }

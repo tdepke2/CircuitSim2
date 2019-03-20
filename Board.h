@@ -26,7 +26,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void replaceTile(Tile* tile);
     void clear();
     void resize(const Vector2u& size);
-    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt");
+    void cloneArea(const Board& source, const IntRect& region, const Vector2i& destination);
+    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt", bool startEmpty = false);
     void loadFile(const string& filename);
     
     private:
