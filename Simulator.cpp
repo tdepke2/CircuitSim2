@@ -24,6 +24,8 @@ Board* Simulator::currentTileBoardPtr = nullptr;
 Board* Simulator::copyBufferBoardPtr = nullptr;
 Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::copyBufferVisible = false;
+Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
+IntRect Simulator::selectionArea(0, 0, 0, 0);
 
 int Simulator::start() {
     cout << "Initializing setup." << endl;
@@ -44,8 +46,7 @@ int Simulator::start() {
         board.newBoard();
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
         UserInterface userInterface;
-        Vector2i mouseStart(0, 0), tileCursor(-1, -1), selectionPoint1(-1, -1), selectionPoint2(-1, -1);
-        bool currentlySelecting = false;
+        Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
         
@@ -101,25 +102,23 @@ int Simulator::start() {
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
                     } else if (event.mouseButton.button == Mouse::Right) {
                         if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {    // If no tile to place is selected, start a new selection.
-                            if (selectionPoint1 != Vector2i(-1, -1)) {
-                                int yStop = max(selectionPoint1.y, selectionPoint2.y), xStop = max(selectionPoint1.x, selectionPoint2.x);
-                                for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
-                                    for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                            if (selectionArea != IntRect(0, 0, 0, 0)) {
+                                for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                                    for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                                         board.redrawTile(Vector2u(x, y), false);
                                     }
                                 }
                             }
-                            selectionPoint1 = tileCursor;
-                            selectionPoint2 = tileCursor;
+                            selectionStart = tileCursor;
+                            selectionArea = IntRect(tileCursor.x, tileCursor.y, 1, 1);
                             board.redrawTile(Vector2u(tileCursor), true);
-                            currentlySelecting = true;
                         } else {
                             pasteToBoard(tileCursor);
                         }
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
                     if (event.mouseButton.button == Mouse::Right) {
-                        currentlySelecting = false;
+                        selectionStart = Vector2i(-1, -1);
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
@@ -206,23 +205,23 @@ int Simulator::start() {
             newTileCursor.y /= board.getTileSize().y;
             if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
                 if (tileCursor != newTileCursor) {
-                    if (tileCursor != Vector2i(-1, -1) && (tileCursor.x < min(selectionPoint1.x, selectionPoint2.x) || tileCursor.x > max(selectionPoint1.x, selectionPoint2.x) || tileCursor.y < min(selectionPoint1.y, selectionPoint2.y) || tileCursor.y > max(selectionPoint1.y, selectionPoint2.y))) {
+                    if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
                         board.redrawTile(Vector2u(tileCursor), false);
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
                     tileCursor = newTileCursor;
-                    if (currentlySelecting) {
-                        int yStop = max(selectionPoint1.y, selectionPoint2.y), xStop = max(selectionPoint1.x, selectionPoint2.x);
-                        for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
-                            for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                    if (selectionStart != Vector2i(-1, -1)) {
+                        for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                            for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                                 board.redrawTile(Vector2u(x, y), false);
                             }
                         }
-                        selectionPoint2 = tileCursor;
-                        yStop = max(selectionPoint1.y, selectionPoint2.y);
-                        xStop = max(selectionPoint1.x, selectionPoint2.x);
-                        for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
-                            for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                        selectionArea.left = min(selectionStart.x, tileCursor.x);
+                        selectionArea.top = min(selectionStart.y, tileCursor.y);
+                        selectionArea.width = max(selectionStart.x, tileCursor.x) - selectionArea.left + 1;
+                        selectionArea.height = max(selectionStart.y, tileCursor.y) - selectionArea.top + 1;
+                        for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                            for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                                 board.redrawTile(Vector2u(x, y), true);
                             }
                         }
@@ -234,7 +233,7 @@ int Simulator::start() {
                     currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
                     copyBufferBoard.setPosition(currentTileBoard.getPosition());
                 }
-            } else if (tileCursor != Vector2i(-1, -1)) {
+            } else if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
                 board.redrawTile(Vector2u(tileCursor), false);
                 tileCursor = Vector2i(-1, -1);
             }
@@ -321,6 +320,16 @@ void Simulator::toolsOption(int option) {
     if (option == 0) {    // Deselect all.
         currentTileBoardPtr->clear();
         copyBufferVisible = false;
+        if (selectionArea != IntRect(0, 0, 0, 0)) {
+            for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
+                    boardPtr->redrawTile(Vector2u(x, y), false);
+                }
+            }
+            selectionStart = Vector2i(-1, -1);
+            selectionArea = IntRect(0, 0, 0, 0);
+            boardPtr->redrawTile(Vector2u(tileCursor), true);
+        }
     } else if (option == 1) {    // Rotate selection CW.
         currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {

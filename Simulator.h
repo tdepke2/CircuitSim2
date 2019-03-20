@@ -38,6 +38,8 @@ class Simulator {
     static Board* copyBufferBoardPtr;
     static Direction currentTileDirection;
     static bool copyBufferVisible;
+    static Vector2i tileCursor, selectionStart;
+    static IntRect selectionArea;
     
     static void pasteToBoard(const Vector2i& tileCursor);
 };
