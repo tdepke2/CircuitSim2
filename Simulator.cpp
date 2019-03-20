@@ -16,7 +16,6 @@
 const float Simulator::FPS_CAP = 60.0f;
 Simulator::State Simulator::state = State::Uninitialized;
 mt19937 Simulator::mainRNG;
-WindowHandle Simulator::windowHandle;
 View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
@@ -35,7 +34,6 @@ int Simulator::start() {
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
-        windowHandle = window.getSystemHandle();
         
         viewOption(2);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
@@ -46,7 +44,8 @@ int Simulator::start() {
         board.newBoard();
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
         UserInterface userInterface;
-        Vector2i mouseStart(0, 0), tileCursor(-1, -1);
+        Vector2i mouseStart(0, 0), tileCursor(-1, -1), selectionPoint1(-1, -1), selectionPoint2(-1, -1);
+        bool currentlySelecting = false;
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
         
@@ -101,7 +100,26 @@ int Simulator::start() {
                     if (event.mouseButton.button == Mouse::Left) {
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
                     } else if (event.mouseButton.button == Mouse::Right) {
-                        _pasteToBoard(tileCursor);
+                        if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {    // If no tile to place is selected, start a new selection.
+                            if (selectionPoint1 != Vector2i(-1, -1)) {
+                                int yStop = max(selectionPoint1.y, selectionPoint2.y), xStop = max(selectionPoint1.x, selectionPoint2.x);
+                                for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
+                                    for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                                        board.redrawTile(Vector2u(x, y), false);
+                                    }
+                                }
+                            }
+                            selectionPoint1 = tileCursor;
+                            selectionPoint2 = tileCursor;
+                            board.redrawTile(Vector2u(tileCursor), true);
+                            currentlySelecting = true;
+                        } else {
+                            pasteToBoard(tileCursor);
+                        }
+                    }
+                } else if (event.type == Event::MouseButtonReleased) {
+                    if (event.mouseButton.button == Mouse::Right) {
+                        currentlySelecting = false;
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
@@ -110,15 +128,68 @@ int Simulator::start() {
                         boardView.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                     }
                 } else if (event.type == Event::KeyPressed) {
-                    if (event.key.code == Keyboard::G) {
-                        Board::gridActive = !Board::gridActive;
-                    } else if (event.key.code == Keyboard::Escape) {
-                        toolsOption(0);
-                    } else if (event.key.code == Keyboard::R) {
-                        if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                            toolsOption(1);
-                        } else {
-                            toolsOption(2);
+                    // check for control key combos here.
+                    if (!Keyboard::isKeyPressed(Keyboard::LControl) && !Keyboard::isKeyPressed(Keyboard::RControl) && !Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
+                        if (event.key.code == Keyboard::G) {
+                            Board::gridActive = !Board::gridActive;
+                        } else if (event.key.code == Keyboard::Escape) {
+                            toolsOption(0);
+                        } else if (event.key.code == Keyboard::R) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                toolsOption(1);
+                            } else {
+                                toolsOption(2);
+                            }
+                        } else if (event.key.code == Keyboard::Space) {
+                            placeTile(0);
+                        } else if (event.key.code == Keyboard::T) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(1);
+                            } else {
+                                placeTile(3);
+                            }
+                        } else if (event.key.code == Keyboard::C) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(2);
+                            } else {
+                                placeTile(5);
+                            }
+                        } else if (event.key.code == Keyboard::J) {
+                            placeTile(4);
+                        } else if (event.key.code == Keyboard::S) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(6);
+                            } else {
+                                placeTile(7);
+                            }
+                        } else if (event.key.code == Keyboard::L) {
+                            placeTile(8);
+                        } else if (event.key.code == Keyboard::D) {
+                            placeTile(9);
+                        } else if (event.key.code == Keyboard::B) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(10);
+                            } else {
+                                placeTile(11);
+                            }
+                        } else if (event.key.code == Keyboard::A) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(12);
+                            } else {
+                                placeTile(13);
+                            }
+                        } else if (event.key.code == Keyboard::O) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(14);
+                            } else {
+                                placeTile(15);
+                            }
+                        } else if (event.key.code == Keyboard::X) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                placeTile(16);
+                            } else {
+                                placeTile(17);
+                            }
                         }
                     }
                 } else if (event.type == Event::Resized) {
@@ -135,13 +206,30 @@ int Simulator::start() {
             newTileCursor.y /= board.getTileSize().y;
             if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
                 if (tileCursor != newTileCursor) {
-                    if (tileCursor != Vector2i(-1, -1)) {
+                    if (tileCursor != Vector2i(-1, -1) && (tileCursor.x < min(selectionPoint1.x, selectionPoint2.x) || tileCursor.x > max(selectionPoint1.x, selectionPoint2.x) || tileCursor.y < min(selectionPoint1.y, selectionPoint2.y) || tileCursor.y > max(selectionPoint1.y, selectionPoint2.y))) {
                         board.redrawTile(Vector2u(tileCursor), false);
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
                     tileCursor = newTileCursor;
-                    if (Mouse::isButtonPressed(Mouse::Right)) {
-                        _pasteToBoard(tileCursor);
+                    if (currentlySelecting) {
+                        int yStop = max(selectionPoint1.y, selectionPoint2.y), xStop = max(selectionPoint1.x, selectionPoint2.x);
+                        for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
+                            for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                                board.redrawTile(Vector2u(x, y), false);
+                            }
+                        }
+                        selectionPoint2 = tileCursor;
+                        yStop = max(selectionPoint1.y, selectionPoint2.y);
+                        xStop = max(selectionPoint1.x, selectionPoint2.x);
+                        for (int y = min(selectionPoint1.y, selectionPoint2.y); y <= yStop; ++y) {
+                            for (int x = min(selectionPoint1.x, selectionPoint2.x); x <= xStop; ++x) {
+                                board.redrawTile(Vector2u(x, y), true);
+                            }
+                        }
+                    } else {
+                        if (Mouse::isButtonPressed(Mouse::Right)) {
+                            pasteToBoard(tileCursor);
+                        }
                     }
                     currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
                     copyBufferBoard.setPosition(currentTileBoard.getPosition());
@@ -182,7 +270,7 @@ void Simulator::fileOption(int option) {
         
         ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
         fileDialog.lStructSize = sizeof(fileDialog);
-        fileDialog.hwndOwner = windowHandle;
+        fileDialog.hwndOwner = windowPtr->getSystemHandle();
         fileDialog.lpstrFile = filename;
         fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
         fileDialog.nMaxFile = sizeof(filename);
@@ -252,28 +340,27 @@ void Simulator::placeTile(int option) {
     if (currentTileBoardPtr->getSize() != Vector2u(1, 1)) {
         currentTileBoardPtr->newBoard(Vector2u(1, 1), "");
     }
-    if (option < 5) {
-        currentTileBoardPtr->replaceTile(new TileWire(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileWire::Type>(option)));
-    } else if (option == 5) {
-        currentTileBoardPtr->replaceTile(new TileSwitch(Vector2u(0, 0), *currentTileBoardPtr));
+    if (option == 0) {
+        currentTileBoardPtr->replaceTile(new Tile(Vector2u(0, 0), *currentTileBoardPtr));
+    } else if (option < 6) {
+        currentTileBoardPtr->replaceTile(new TileWire(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileWire::Type>(option - 1)));
     } else if (option == 6) {
-        currentTileBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *currentTileBoardPtr));
+        currentTileBoardPtr->replaceTile(new TileSwitch(Vector2u(0, 0), *currentTileBoardPtr));
     } else if (option == 7) {
+        currentTileBoardPtr->replaceTile(new TileButton(Vector2u(0, 0), *currentTileBoardPtr));
+    } else if (option == 8) {
         currentTileBoardPtr->replaceTile(new TileLED(Vector2u(0, 0), *currentTileBoardPtr));
     } else {
-        currentTileBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileGate::Type>(option - 8)));
+        currentTileBoardPtr->replaceTile(new TileGate(Vector2u(0, 0), *currentTileBoardPtr, currentTileDirection, static_cast<TileGate::Type>(option - 9)));
     }
     currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
 }
 
-void Simulator::_pasteToBoard(const Vector2i& tileCursor) {
-    if (tileCursor == Vector2i(-1, -1)) {
+void Simulator::pasteToBoard(const Vector2i& tileCursor) {
+    if (tileCursor == Vector2i(-1, -1) || currentTileBoardPtr->getSize() == Vector2u(0, 0)) {
         return;
     }
-    if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {
-        boardPtr->replaceTile(new Tile(Vector2u(tileCursor), *boardPtr));
-        boardPtr->redrawTile(Vector2u(tileCursor), true);
-    } else if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
+    if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
         boardPtr->replaceTile(currentTileBoardPtr->getTileArray()[0][0]->clone(Vector2u(tileCursor), *boardPtr));
     } else {
         cout << "not yet implemented." << endl;

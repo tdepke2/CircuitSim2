@@ -30,7 +30,6 @@ class Simulator {
     
     static State state;
     static mt19937 mainRNG;
-    static WindowHandle windowHandle;
     static View boardView, windowView;
     static float zoomLevel;
     static RenderWindow* windowPtr;
@@ -40,7 +39,7 @@ class Simulator {
     static Direction currentTileDirection;
     static bool copyBufferVisible;
     
-    static void _pasteToBoard(const Vector2i& tileCursor);
+    static void pasteToBoard(const Vector2i& tileCursor);
 };
 
 #endif
