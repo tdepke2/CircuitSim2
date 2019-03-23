@@ -41,7 +41,7 @@ class Simulator {
     static Vector2i tileCursor, selectionStart;
     static IntRect selectionArea;
     
-    static void pasteToBoard(const Vector2i& tileCursor);
+    static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);
 };
 
 #endif

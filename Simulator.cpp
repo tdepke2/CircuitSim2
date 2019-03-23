@@ -98,10 +98,10 @@ int Simulator::start() {
                     mouseStart.x = event.mouseMove.x;
                     mouseStart.y = event.mouseMove.y;
                 } else if (event.type == Event::MouseButtonPressed) {
-                    if (event.mouseButton.button == Mouse::Left) {
+                    if (event.mouseButton.button == Mouse::Left) {    // Check if view is moved.
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
-                    } else if (event.mouseButton.button == Mouse::Right) {
-                        if (currentTileBoardPtr->getSize() == Vector2u(0, 0)) {    // If no tile to place is selected, start a new selection.
+                    } else if (event.mouseButton.button == Mouse::Right) {    // Check if tile/buffer will be placed or selection made.
+                        if (currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {    // If no tile to place is selected, start a new selection.
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
                                 board.highlightArea(selectionArea, false);
                             }
@@ -109,7 +109,7 @@ int Simulator::start() {
                             selectionArea = IntRect(tileCursor.x, tileCursor.y, 1, 1);
                             board.redrawTile(Vector2u(tileCursor), true);
                         } else {
-                            pasteToBoard(tileCursor);
+                            pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                         }
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
@@ -214,7 +214,7 @@ int Simulator::start() {
                         board.highlightArea(selectionArea, true);
                     } else {
                         if (Mouse::isButtonPressed(Mouse::Right)) {
-                            pasteToBoard(newTileCursor);
+                            pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                         }
                     }
                     tileCursor = newTileCursor;
@@ -381,15 +381,40 @@ void Simulator::placeTile(int option) {
         assert(false);
     }
     currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
+    copyBufferVisible = false;
 }
 
-void Simulator::pasteToBoard(const Vector2i& tileCursor) {
-    if (tileCursor == Vector2i(-1, -1) || currentTileBoardPtr->getSize() == Vector2u(0, 0)) {
+void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
+    if (tileCursor == Vector2i(-1, -1)) {
         return;
     }
     if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
         boardPtr->replaceTile(currentTileBoardPtr->getTileArray()[0][0]->clone(Vector2u(tileCursor), *boardPtr));
-    } else {
-        cout << "not yet implemented." << endl;
+    } else if (copyBufferVisible) {
+        IntRect pasteArea(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y);
+        if (tileCursor.x + pasteArea.width > static_cast<int>(boardPtr->getSize().x)) {
+            if (forcePaste) {
+                pasteArea.width = boardPtr->getSize().x - tileCursor.x;
+            } else {
+                return;
+            }
+        }
+        if (tileCursor.y + pasteArea.height > static_cast<int>(boardPtr->getSize().y)) {
+            if (forcePaste) {
+                pasteArea.height = boardPtr->getSize().y - tileCursor.y;
+            } else {
+                return;
+            }
+        }
+        if (!forcePaste) {
+            for (int y = tileCursor.y + pasteArea.height - 1; y >= tileCursor.y; --y) {
+                for (int x = tileCursor.x + pasteArea.width - 1; x >= tileCursor.x; --x) {
+                    if (boardPtr->getTileArray()[y][x]->getTextureID() != 0) {
+                        return;
+                    }
+                }
+            }
+        }
+        boardPtr->cloneArea(*copyBufferBoardPtr, pasteArea, tileCursor);
     }
 }
