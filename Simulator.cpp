@@ -100,25 +100,18 @@ int Simulator::start() {
                 } else if (event.type == Event::MouseButtonPressed) {
                     if (event.mouseButton.button == Mouse::Left) {    // Check if view is moved.
                         userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
-                    } else if (event.mouseButton.button == Mouse::Right) {    // Check if tile/buffer will be placed or selection made.
-                        if (currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {    // If no tile to place is selected, start a new selection.
-                            if (selectionArea != IntRect(0, 0, 0, 0)) {
-                                board.highlightArea(selectionArea, false);
-                            }
-                            if (tileCursor != Vector2i(-1, -1)) {
-                                selectionStart = tileCursor;
-                                selectionArea = IntRect(tileCursor.x, tileCursor.y, 1, 1);
-                                board.redrawTile(Vector2u(tileCursor), true);
-                            } else {
-                                selectionStart = Vector2i(-1, -1);
-                                selectionArea = IntRect(0, 0, 0, 0);
-                            }
-                        } else {
-                            pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
-                        }
+                    } else if (event.mouseButton.button == Mouse::Right && (currentTileBoard.getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
+                        pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
                     if (event.mouseButton.button == Mouse::Right) {
+                        if (selectionStart == Vector2i(-1, -1) && selectionArea != IntRect(0, 0, 0, 0)) {
+                            boardPtr->highlightArea(selectionArea, false);
+                            selectionArea = IntRect(0, 0, 0, 0);
+                            if (tileCursor != Vector2i(-1, -1)) {
+                                boardPtr->redrawTile(Vector2u(tileCursor), true);
+                            }
+                        }
                         selectionStart = Vector2i(-1, -1);
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
@@ -210,6 +203,17 @@ int Simulator::start() {
                         board.redrawTile(Vector2u(tileCursor), false);
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
+                    if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                        if (selectionArea != IntRect(0, 0, 0, 0)) {
+                            board.highlightArea(selectionArea, false);
+                        }
+                        if (tileCursor != Vector2i(-1, -1)) {
+                            selectionStart = tileCursor;
+                        } else {
+                            selectionStart = Vector2i(-1, -1);
+                        }
+                        selectionArea = IntRect(0, 0, 0, 0);
+                    }
                     if (selectionStart != Vector2i(-1, -1)) {
                         board.highlightArea(selectionArea, false);
                         selectionArea.left = min(selectionStart.x, newTileCursor.x);
@@ -217,10 +221,8 @@ int Simulator::start() {
                         selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
                         selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
                         board.highlightArea(selectionArea, true);
-                    } else {
-                        if (Mouse::isButtonPressed(Mouse::Right)) {
-                            pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
-                        }
+                    } else if (Mouse::isButtonPressed(Mouse::Right)) {
+                        pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                     tileCursor = newTileCursor;
                     currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
