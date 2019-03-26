@@ -104,15 +104,18 @@ int Simulator::start() {
                         pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
-                    if (event.mouseButton.button == Mouse::Right) {
-                        if (selectionStart == Vector2i(-1, -1) && selectionArea != IntRect(0, 0, 0, 0)) {
-                            boardPtr->highlightArea(selectionArea, false);
-                            selectionArea = IntRect(0, 0, 0, 0);
-                            if (tileCursor != Vector2i(-1, -1)) {
-                                boardPtr->redrawTile(Vector2u(tileCursor), true);
+                    if (event.mouseButton.button == Mouse::Right && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                        if (selectionStart == Vector2i(-1, -1)) {    // Check if selection was cancelled (right click made without dragging).
+                            if (selectionArea != IntRect(0, 0, 0, 0)) {
+                                boardPtr->highlightArea(selectionArea, false);
+                                selectionArea = IntRect(0, 0, 0, 0);
+                                if (tileCursor != Vector2i(-1, -1)) {
+                                    boardPtr->redrawTile(Vector2u(tileCursor), true);
+                                }
                             }
+                        } else {    // Else, finish the selection.
+                            selectionStart = Vector2i(-1, -1);
                         }
-                        selectionStart = Vector2i(-1, -1);
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
@@ -121,8 +124,23 @@ int Simulator::start() {
                         boardView.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                     }
                 } else if (event.type == Event::KeyPressed) {
-                    // check for control key combos here.
-                    if (!Keyboard::isKeyPressed(Keyboard::LControl) && !Keyboard::isKeyPressed(Keyboard::RControl) && !Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
+                    if (Keyboard::isKeyPressed(Keyboard::LControl) || Keyboard::isKeyPressed(Keyboard::RControl)) {
+                        if (event.key.code == Keyboard::N) {
+                            fileOption(0);
+                        } else if (event.key.code == Keyboard::O) {
+                            fileOption(1);
+                        } else if (event.key.code == Keyboard::S) {
+                            fileOption(2);
+                        } else if (event.key.code == Keyboard::A) {
+                            toolsOption(0);
+                        } else if (event.key.code == Keyboard::X) {
+                            toolsOption(6);
+                        } else if (event.key.code == Keyboard::C) {
+                            toolsOption(7);
+                        } else if (event.key.code == Keyboard::V) {
+                            toolsOption(8);
+                        }
+                    } else if (!Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
                         if (event.key.code == Keyboard::G) {
                             Board::gridActive = !Board::gridActive;
                         } else if (event.key.code == Keyboard::Escape) {
@@ -133,6 +151,14 @@ int Simulator::start() {
                             } else {
                                 toolsOption(3);
                             }
+                        } else if (event.key.code == Keyboard::F) {
+                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
+                                toolsOption(4);
+                            } else {
+                                toolsOption(5);
+                            }
+                        } else if (event.key.code == Keyboard::Delete) {
+                            toolsOption(9);
                         } else if (event.key.code == Keyboard::Space) {
                             placeTile(0);
                         } else if (event.key.code == Keyboard::T) {
@@ -204,13 +230,9 @@ int Simulator::start() {
                     }
                     board.redrawTile(Vector2u(newTileCursor), true);
                     if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
-                        if (selectionArea != IntRect(0, 0, 0, 0)) {
-                            board.highlightArea(selectionArea, false);
-                        }
+                        board.highlightArea(selectionArea, false);
                         if (tileCursor != Vector2i(-1, -1)) {
                             selectionStart = tileCursor;
-                        } else {
-                            selectionStart = Vector2i(-1, -1);
                         }
                         selectionArea = IntRect(0, 0, 0, 0);
                     }
@@ -323,7 +345,8 @@ void Simulator::runOption(int option) {
 
 void Simulator::toolsOption(int option) {
     if (option == 0) {    // Select all.
-        
+        selectionArea = IntRect(0, 0, boardPtr->getSize().x, boardPtr->getSize().y);
+        boardPtr->highlightArea(selectionArea, true);
     } else if (option == 1) {    // Deselect all.
         currentTileBoardPtr->clear();
         copyBufferVisible = false;
@@ -354,13 +377,17 @@ void Simulator::toolsOption(int option) {
     } else if (option == 6) {    // Cut selection.
         
     } else if (option == 7) {    // Copy selection.
-        copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
-        copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true);
-        copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
-        toolsOption(8);
+        if (selectionArea != IntRect(0, 0, 0, 0)) {
+            copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
+            copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true);
+            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+            toolsOption(8);
+        }
     } else if (option == 8) {    // Paste selection.
-        currentTileBoardPtr->clear();
-        copyBufferVisible = true;
+        if (copyBufferBoardPtr->getSize() != Vector2u(0, 0)) {
+            currentTileBoardPtr->clear();
+            copyBufferVisible = true;
+        }
     } else if (option == 9) {    // Delete selection.
         
     } else if (option == 10) {    // Wire tool.
