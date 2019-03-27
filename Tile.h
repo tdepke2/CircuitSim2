@@ -20,7 +20,7 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual int getTextureID() const;
     const Vector2u& getPosition() const;
     Direction getDirection() const;
-    void setPosition(const Vector2u& position, Board& board);
+    void setPosition(const Vector2u& position, Board& board, bool keepOverwrittenTile = false);
     virtual void setDirection(Direction direction, Board& board);
     virtual Tile* clone(const Vector2u& position, Board& board);
     

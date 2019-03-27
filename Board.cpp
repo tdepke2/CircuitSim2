@@ -194,6 +194,55 @@ void Board::highlightArea(const IntRect& region, bool highlight) {
     }
 }
 
+void Board::rotate(bool counterClockwise) {
+    /*
+    (r, c) format
+    2r 2c
+    (0, 0)->(0, 1)
+    (0, 1)->(1, 1)
+    (1, 1)->(1, 0)
+    (1, 0)->(0, 0)
+    
+    4r 3c
+     y  x    y  x
+    (0, 0)->(0, 3)
+    (0, 1)->(1, 3)
+    (0, 2)->(2, 3)
+    (1, 0)->(0, 2)
+    (1, 1)->(1, 2)
+    (1, 2)->(2, 2)
+    (2, 0)->(0, 1)
+    (2, 1)->(1, 1)
+    (2, 2)->(2, 1)
+    (3, 0)->(0, 0)
+    (3, 1)->(1, 0)
+    (3, 2)->(2, 0)
+    */
+    _size = Vector2u(_size.y, _size.x);
+    _setVertexCoords();
+    Tile*** oldTileArray = _tileArray;
+    _tileArray = new Tile**[_size.y];
+    for (unsigned int y = 0; y < _size.y; ++y) {    // Create new tile array that is same size but rows and columns are swapped.
+        _tileArray[y] = new Tile*[_size.x];
+    }
+    
+    for (unsigned int y = 0; y < _size.x; ++y) {    // Loop through each tile in old array and set its position in new array.
+        for (unsigned int x = 0; x < _size.y; ++x) {
+            oldTileArray[y][x]->setPosition(Vector2u(_size.x - 1 - y, x), *this, true);
+            oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 1) % 4), *this);
+        }
+    }
+    
+    for (unsigned int y = 0; y < _size.x; ++y) {    // Delete old tile array.
+        delete[] oldTileArray[y];
+    }
+    delete[] oldTileArray;
+}
+
+void Board::flip(bool acrossHorizontal) {
+    
+}
+
 void Board::newBoard(const Vector2u& size, const string& filename, bool startEmpty) {
     size_t dotPosition = filename.rfind('.');
     if (dotPosition != string::npos) {

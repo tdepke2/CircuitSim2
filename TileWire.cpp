@@ -23,13 +23,20 @@ int TileWire::getTextureID() const {
 }
 
 void TileWire::setDirection(Direction direction, Board& board) {
-    if (_type != JUNCTION && _type != CROSSOVER) {
-        if (_type == STRAIGHT) {
-            _direction = static_cast<Direction>(direction % 2);
+    if (_type != JUNCTION) {
+        if (_type != CROSSOVER) {
+            if (_type == STRAIGHT) {
+                _direction = static_cast<Direction>(direction % 2);
+            } else {
+                _direction = direction;
+            }
+            board.redrawTile(this);
         } else {
-            _direction = direction;
+            bool tempActive = _active1;
+            _active1 = _active2;
+            _active2 = tempActive;
+            board.redrawTile(this);
         }
-        board.redrawTile(this);
     }
 }
 

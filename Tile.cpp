@@ -23,11 +23,17 @@ Direction Tile::getDirection() const {
     return _direction;
 }
 
-void Tile::setPosition(const Vector2u& position, Board& board) {
-    if (board.getTileArray()[position.y][position.x] != this) {
-        delete board.getTileArray()[position.y][position.x];
-        board.getTileArray()[position.y][position.x] = board.getTileArray()[_position.y][_position.x];
-        board.getTileArray()[_position.y][_position.x] = new Tile(_position, board);
+void Tile::setPosition(const Vector2u& position, Board& board, bool keepOverwrittenTile) {
+    if (!keepOverwrittenTile) {
+        if (board.getTileArray()[position.y][position.x] != this) {
+            delete board.getTileArray()[position.y][position.x];
+            board.getTileArray()[position.y][position.x] = this;
+            board.getTileArray()[_position.y][_position.x] = new Tile(_position, board);
+            _position = position;
+            board.redrawTile(this);
+        }
+    } else {
+        board.getTileArray()[position.y][position.x] = this;
         _position = position;
         board.redrawTile(this);
     }

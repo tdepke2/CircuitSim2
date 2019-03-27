@@ -107,10 +107,10 @@ int Simulator::start() {
                     if (event.mouseButton.button == Mouse::Right && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
                         if (selectionStart == Vector2i(-1, -1)) {    // Check if selection was cancelled (right click made without dragging).
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
-                                boardPtr->highlightArea(selectionArea, false);
+                                board.highlightArea(selectionArea, false);
                                 selectionArea = IntRect(0, 0, 0, 0);
                                 if (tileCursor != Vector2i(-1, -1)) {
-                                    boardPtr->redrawTile(Vector2u(tileCursor), true);
+                                    board.redrawTile(Vector2u(tileCursor), true);
                                 }
                             }
                         } else {    // Else, finish the selection.
@@ -359,16 +359,26 @@ void Simulator::toolsOption(int option) {
             }
         }
     } else if (option == 2) {    // Rotate selection CW.
-        currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
             currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
             currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
+        } else if (copyBufferVisible) {
+            copyBufferBoardPtr->rotate(false);
+            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        } else if (selectionArea != IntRect(0, 0, 0, 0)) {
+            
         }
     } else if (option == 3) {    // Rotate selection CCW.
-        currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
             currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
             currentTileBoardPtr->redrawTile(Vector2u(0, 0), true);
+        } else if (copyBufferVisible) {
+            copyBufferBoardPtr->rotate(true);
+            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        } else if (selectionArea != IntRect(0, 0, 0, 0)) {
+            
         }
     } else if (option == 4) {    // Flip across vertical.
         
