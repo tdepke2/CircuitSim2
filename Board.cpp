@@ -195,29 +195,6 @@ void Board::highlightArea(const IntRect& region, bool highlight) {
 }
 
 void Board::rotate(bool counterClockwise) {
-    /*
-    (r, c) format
-    2r 2c
-    (0, 0)->(0, 1)
-    (0, 1)->(1, 1)
-    (1, 1)->(1, 0)
-    (1, 0)->(0, 0)
-    
-    4r 3c
-     y  x    y  x
-    (0, 0)->(0, 3)
-    (0, 1)->(1, 3)
-    (0, 2)->(2, 3)
-    (1, 0)->(0, 2)
-    (1, 1)->(1, 2)
-    (1, 2)->(2, 2)
-    (2, 0)->(0, 1)
-    (2, 1)->(1, 1)
-    (2, 2)->(2, 1)
-    (3, 0)->(0, 0)
-    (3, 1)->(1, 0)
-    (3, 2)->(2, 0)
-    */
     _size = Vector2u(_size.y, _size.x);
     _setVertexCoords();
     Tile*** oldTileArray = _tileArray;
@@ -228,8 +205,13 @@ void Board::rotate(bool counterClockwise) {
     
     for (unsigned int y = 0; y < _size.x; ++y) {    // Loop through each tile in old array and set its position in new array.
         for (unsigned int x = 0; x < _size.y; ++x) {
-            oldTileArray[y][x]->setPosition(Vector2u(_size.x - 1 - y, x), *this, true);
-            oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 1) % 4), *this);
+            if (!counterClockwise) {
+                oldTileArray[y][x]->setPosition(Vector2u(_size.x - 1 - y, x), *this, true);
+                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 1) % 4), *this);
+            } else {
+                oldTileArray[y][x]->setPosition(Vector2u(y, _size.y - 1 - x), *this, true);
+                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 3) % 4), *this);
+            }
         }
     }
     
@@ -240,7 +222,51 @@ void Board::rotate(bool counterClockwise) {
 }
 
 void Board::flip(bool acrossHorizontal) {
-    
+    if (!acrossHorizontal) {
+        for (unsigned int y = 0; y < _size.y; ++y) {
+            for (unsigned int x = 0; x < _size.x / 2; ++x) {
+                Tile* tempTile1 = _tileArray[y][x];
+                Tile* tempTile2 = _tileArray[y][_size.x - 1 - x];
+                tempTile1->setPosition(Vector2u(_size.x - 1 - x, y), *this, true);
+                if (tempTile1->getDirection() % 2 == 1) {
+                    tempTile1->setDirection(static_cast<Direction>((tempTile1->getDirection() + 2) % 4), *this);
+                }
+                tempTile2->setPosition(Vector2u(x, y), *this, true);
+                if (tempTile2->getDirection() % 2 == 1) {
+                    tempTile2->setDirection(static_cast<Direction>((tempTile2->getDirection() + 2) % 4), *this);
+                }
+            }
+            if (_size.x % 2 == 1) {
+                Tile* tempTile = _tileArray[y][_size.x / 2];
+                if (tempTile->getDirection() % 2 == 1) {
+                    tempTile->setDirection(static_cast<Direction>((tempTile->getDirection() + 2) % 4), *this);
+                }
+            }
+        }
+    } else {
+        for (unsigned int y = 0; y < _size.y / 2; ++y) {
+            for (unsigned int x = 0; x < _size.x; ++x) {
+                Tile* tempTile1 = _tileArray[y][x];
+                Tile* tempTile2 = _tileArray[_size.y - 1 - y][x];
+                tempTile1->setPosition(Vector2u(x, _size.y - 1 - y), *this, true);
+                if (tempTile1->getDirection() % 2 == 0) {
+                    tempTile1->setDirection(static_cast<Direction>((tempTile1->getDirection() + 2) % 4), *this);
+                }
+                tempTile2->setPosition(Vector2u(x, y), *this, true);
+                if (tempTile1->getDirection() % 2 == 0) {
+                    tempTile2->setDirection(static_cast<Direction>((tempTile2->getDirection() + 2) % 4), *this);
+                }
+            }
+        }
+        if (_size.y % 2 == 1) {
+            for (unsigned int x = 0; x < _size.x; ++x) {
+                Tile* tempTile = _tileArray[_size.y / 2][x];
+                if (tempTile->getDirection() % 2 == 0) {
+                    tempTile->setDirection(static_cast<Direction>((tempTile->getDirection() + 2) % 4), *this);
+                }
+            }
+        }
+    }
 }
 
 void Board::newBoard(const Vector2u& size, const string& filename, bool startEmpty) {

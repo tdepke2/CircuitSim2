@@ -381,9 +381,15 @@ void Simulator::toolsOption(int option) {
             
         }
     } else if (option == 4) {    // Flip across vertical.
-        
+        if (copyBufferVisible) {
+            copyBufferBoardPtr->flip(false);
+            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        }
     } else if (option == 5) {    // Flip across horizontal.
-        
+        if (copyBufferVisible) {
+            copyBufferBoardPtr->flip(true);
+            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        }
     } else if (option == 6) {    // Cut selection.
         
     } else if (option == 7) {    // Copy selection.
