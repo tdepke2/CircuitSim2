@@ -41,6 +41,8 @@ void Tile::setPosition(const Vector2u& position, Board& board, bool keepOverwrit
 
 void Tile::setDirection(Direction direction, Board& board) {}
 
+void Tile::flip(bool acrossHorizontal, Board& board) {}
+
 Tile* Tile::clone(const Vector2u& position, Board& board) {
     return new Tile(position, board);
 }

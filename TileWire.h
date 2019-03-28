@@ -19,6 +19,7 @@ class TileWire : public Tile {
     int getTextureID() const;
     void setDirection(Direction direction, Board& board);
     void setActive(Direction d, bool state);
+    void flip(bool acrossHorizontal, Board& board);
     Tile* clone(const Vector2u& position, Board& board);
     bool isActive(Direction d) const;
     //bool connectsNorth(Direction d) const;

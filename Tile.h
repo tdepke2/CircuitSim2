@@ -22,6 +22,7 @@ class Tile {    // Generic tile that is stored in a Board.
     Direction getDirection() const;
     void setPosition(const Vector2u& position, Board& board, bool keepOverwrittenTile = false);
     virtual void setDirection(Direction direction, Board& board);
+    virtual void flip(bool acrossHorizontal, Board& board);
     virtual Tile* clone(const Vector2u& position, Board& board);
     
     protected:

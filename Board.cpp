@@ -228,19 +228,13 @@ void Board::flip(bool acrossHorizontal) {
                 Tile* tempTile1 = _tileArray[y][x];
                 Tile* tempTile2 = _tileArray[y][_size.x - 1 - x];
                 tempTile1->setPosition(Vector2u(_size.x - 1 - x, y), *this, true);
-                if (tempTile1->getDirection() % 2 == 1) {
-                    tempTile1->setDirection(static_cast<Direction>((tempTile1->getDirection() + 2) % 4), *this);
-                }
+                tempTile1->flip(false, *this);
                 tempTile2->setPosition(Vector2u(x, y), *this, true);
-                if (tempTile2->getDirection() % 2 == 1) {
-                    tempTile2->setDirection(static_cast<Direction>((tempTile2->getDirection() + 2) % 4), *this);
-                }
+                tempTile2->flip(false, *this);
             }
             if (_size.x % 2 == 1) {
                 Tile* tempTile = _tileArray[y][_size.x / 2];
-                if (tempTile->getDirection() % 2 == 1) {
-                    tempTile->setDirection(static_cast<Direction>((tempTile->getDirection() + 2) % 4), *this);
-                }
+                tempTile->flip(false, *this);
             }
         }
     } else {
@@ -249,21 +243,15 @@ void Board::flip(bool acrossHorizontal) {
                 Tile* tempTile1 = _tileArray[y][x];
                 Tile* tempTile2 = _tileArray[_size.y - 1 - y][x];
                 tempTile1->setPosition(Vector2u(x, _size.y - 1 - y), *this, true);
-                if (tempTile1->getDirection() % 2 == 0) {
-                    tempTile1->setDirection(static_cast<Direction>((tempTile1->getDirection() + 2) % 4), *this);
-                }
+                tempTile1->flip(true, *this);
                 tempTile2->setPosition(Vector2u(x, y), *this, true);
-                if (tempTile1->getDirection() % 2 == 0) {
-                    tempTile2->setDirection(static_cast<Direction>((tempTile2->getDirection() + 2) % 4), *this);
-                }
+                tempTile2->flip(true, *this);
             }
         }
         if (_size.y % 2 == 1) {
             for (unsigned int x = 0; x < _size.x; ++x) {
                 Tile* tempTile = _tileArray[_size.y / 2][x];
-                if (tempTile->getDirection() % 2 == 0) {
-                    tempTile->setDirection(static_cast<Direction>((tempTile->getDirection() + 2) % 4), *this);
-                }
+                tempTile->flip(true, *this);
             }
         }
     }

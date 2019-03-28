@@ -31,7 +31,7 @@ void TileWire::setDirection(Direction direction, Board& board) {
                 _direction = direction;
             }
             board.redrawTile(this);
-        } else {
+        } else if (direction % 2 == 1) {    // If direction odd, assume 1 or 3 rotations were made to the crossover wire.
             bool tempActive = _active1;
             _active1 = _active2;
             _active2 = tempActive;
@@ -42,6 +42,22 @@ void TileWire::setDirection(Direction direction, Board& board) {
 
 void TileWire::setActive(Direction d, bool state) {
     
+}
+
+void TileWire::flip(bool acrossHorizontal, Board& board) {
+    if (_type == CORNER) {
+        if (!acrossHorizontal) {
+            _direction = static_cast<Direction>(3 - _direction);
+        } else if (_direction % 2 == 0) {
+            _direction = static_cast<Direction>(_direction + 1);
+        } else {
+            _direction = static_cast<Direction>(_direction - 1);
+        }
+        board.redrawTile(this);
+    } else if (_type == TEE && ((!acrossHorizontal && _direction % 2 == 0) || (acrossHorizontal && _direction % 2 == 1))) {
+        _direction = static_cast<Direction>((_direction + 2) % 4);
+        board.redrawTile(this);
+    }
 }
 
 Tile* TileWire::clone(const Vector2u& position, Board& board) {

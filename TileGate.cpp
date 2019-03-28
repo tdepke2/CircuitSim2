@@ -23,6 +23,13 @@ void TileGate::setDirection(Direction direction, Board& board) {
     board.redrawTile(this);
 }
 
+void TileGate::flip(bool acrossHorizontal, Board& board) {
+    if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
+        _direction = static_cast<Direction>((_direction + 2) % 4);
+        board.redrawTile(this);
+    }
+}
+
 Tile* TileGate::clone(const Vector2u& position, Board& board) {
     return new TileGate(position, board, _direction, _type, _active);
 }
