@@ -367,7 +367,13 @@ void Simulator::toolsOption(int option) {
             copyBufferBoardPtr->rotate(false);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
-            
+            for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
+                    Tile* targetTile = boardPtr->getTileArray()[y][x];
+                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1) % 4), *boardPtr);
+                    boardPtr->redrawTile(targetTile, true);
+                }
+            }
         }
     } else if (option == 3) {    // Rotate selection CCW.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
@@ -378,7 +384,13 @@ void Simulator::toolsOption(int option) {
             copyBufferBoardPtr->rotate(true);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
-            
+            for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
+                    Tile* targetTile = boardPtr->getTileArray()[y][x];
+                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 3) % 4), *boardPtr);
+                    boardPtr->redrawTile(targetTile, true);
+                }
+            }
         }
     } else if (option == 4) {    // Flip across vertical.
         if (copyBufferVisible) {
