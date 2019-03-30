@@ -89,8 +89,17 @@ void DropdownMenu::update(int mouseX, int mouseY, bool clicked) {
     mouseX -= static_cast<int>(getPosition().x);
     mouseY -= static_cast<int>(getPosition().y);
     if (visible) {
+        bool clickDone = clicked, buttonSelected = false;
         for (TextButton& b : menuButtons) {
-            b.update(mouseX, mouseY, clicked);
+            if (b.update(mouseX, mouseY, clickDone)) {    // Only one button in the menu can be pressed.
+                clickDone = false;
+            }
+            if (b.selected && !buttonSelected) {
+                buttonSelected = true;
+            } else if (b.selected) {
+                b.button.setFillColor(b.color1);
+                b.selected = false;
+            }
         }
     }
     if (button.update(mouseX, mouseY, clicked)) {
