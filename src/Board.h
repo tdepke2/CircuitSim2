@@ -5,6 +5,7 @@ class Tile;
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 using namespace std;
@@ -21,8 +22,9 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     virtual ~Board();
     const Vector2u& getSize() const;
     Tile*** getTileArray() const;
-    void redrawTile(Tile* tile, bool highlight = false);
-    void redrawTile(const Vector2u& position, bool highlight = false);
+    void addUpdate(Tile* tile, bool stateChanged);
+    void removeUpdate(Tile* tile);
+    void updateTiles();
     void replaceTile(Tile* tile);
     void clear();
     void resize(const Vector2u& size);
@@ -42,12 +44,14 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static Texture* _tilesetNoGridPtr;
     static int _textureIDMax;
     static Vector2u _tileSize;
+    unordered_set<Tile*> _tileUpdates;
     VertexArray _vertices;
     Vector2u _size;
     Tile*** _tileArray;
     
     static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
     static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);
+    void _redrawTile(Tile* tile);
     void _setVertexCoords();
     int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
     virtual void draw (RenderTarget& target, RenderStates states) const;

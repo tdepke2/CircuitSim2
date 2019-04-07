@@ -48,7 +48,7 @@ bool TextButton::update(int mouseX, int mouseY, bool clicked) {
     return false;
 }
 
-void TextButton::draw (RenderTarget& target, RenderStates states) const {
+void TextButton::draw(RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     if (visible) {
         target.draw(button, states);
@@ -109,7 +109,7 @@ void DropdownMenu::update(int mouseX, int mouseY, bool clicked) {
     }
 }
 
-void DropdownMenu::draw (RenderTarget& target, RenderStates states) const {
+void DropdownMenu::draw(RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     target.draw(button, states);
     if (visible) {
@@ -197,7 +197,7 @@ void UserInterface::update(int mouseX, int mouseY, bool clicked) {
     gateMenu.update(mouseX, mouseY, clicked);
 }
 
-void UserInterface::draw (RenderTarget& target, RenderStates states) const {
+void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     target.draw(topBar, states);
     target.draw(fileMenu, states);

@@ -11,9 +11,9 @@ using namespace sf;
 
 class TileLED : public Tile {
     public:
-    TileLED(const Vector2u& position, Board& board, bool active = false);
+    TileLED(Board* boardPtr, const Vector2u& position, bool active = false);
     int getTextureID() const;
-    Tile* clone(const Vector2u& position, Board& board);
+    Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     bool _active;

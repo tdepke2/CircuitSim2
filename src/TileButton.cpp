@@ -1,18 +1,15 @@
 #include "Board.h"
 #include "TileButton.h"
 
-TileButton::TileButton(const Vector2u& position, Board& board, char charID, bool active) {
-    _position = position;
-    _direction = NORTH;
+TileButton::TileButton(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position) {
     _charID = charID;
     _active = active;
-    board.redrawTile(this);
 }
 
 int TileButton::getTextureID() const {
     return 15 + _active;
 }
 
-Tile* TileButton::clone(const Vector2u& position, Board& board) {
-    return new TileButton(position, board, _charID, _active);
+Tile* TileButton::clone(Board* boardPtr, const Vector2u& position) {
+    return new TileButton(boardPtr, position, _charID, _active);
 }

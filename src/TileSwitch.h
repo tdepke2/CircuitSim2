@@ -11,9 +11,9 @@ using namespace sf;
 
 class TileSwitch : public Tile {
     public:
-    TileSwitch(const Vector2u& position, Board& board, char charID = '\0', bool active = false);
+    TileSwitch(Board* boardPtr, const Vector2u& position, char charID = '\0', bool active = false);
     int getTextureID() const;
-    Tile* clone(const Vector2u& position, Board& board);
+    Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     char _charID;

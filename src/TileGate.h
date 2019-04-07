@@ -9,19 +9,17 @@ class Board;
 using namespace std;
 using namespace sf;
 
-
-
 class TileGate : public Tile {
     public:
     enum Type : int {
         DIODE = 0, BUFFER, NOT, AND, NAND, OR, NOR, XOR, XNOR
     };
     
-    TileGate(const Vector2u& position, Board& board, Direction direction = NORTH, Type type = DIODE, bool active = false);
+    TileGate(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = DIODE, bool active = false);
     int getTextureID() const;
     void setDirection(Direction direction, Board& board);
     void flip(bool acrossHorizontal, Board& board);
-    Tile* clone(const Vector2u& position, Board& board);
+    Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     Type _type;

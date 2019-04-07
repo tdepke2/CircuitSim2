@@ -25,7 +25,7 @@ struct TextButton : public Drawable, public Transformable {
     bool update(int mouseX, int mouseY, bool clicked);
     
     private:
-    virtual void draw (RenderTarget& target, RenderStates states) const;
+    virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
 struct DropdownMenu : public Drawable, public Transformable {
@@ -41,7 +41,7 @@ struct DropdownMenu : public Drawable, public Transformable {
     void update(int mouseX, int mouseY, bool clicked);
     
     private:
-    virtual void draw (RenderTarget& target, RenderStates states) const;
+    virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
 class UserInterface : public Drawable, public Transformable {
@@ -54,7 +54,7 @@ class UserInterface : public Drawable, public Transformable {
     void update(int mouseX, int mouseY, bool clicked);
     
     private:
-    virtual void draw (RenderTarget& target, RenderStates states) const;
+    virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
 #endif

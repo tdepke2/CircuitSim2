@@ -15,12 +15,12 @@ class TileWire : public Tile {
         STRAIGHT = 0, CORNER, TEE, JUNCTION, CROSSOVER
     };
     
-    TileWire(const Vector2u& position, Board& board, Direction direction = NORTH, Type type = STRAIGHT, bool active1 = false, bool active2 = false);
+    TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, bool active1 = false, bool active2 = false);
     int getTextureID() const;
     void setDirection(Direction direction, Board& board);
     void setActive(Direction d, bool state);
     void flip(bool acrossHorizontal, Board& board);
-    Tile* clone(const Vector2u& position, Board& board);
+    Tile* clone(Board* boardPtr, const Vector2u& position);
     bool isActive(Direction d) const;
     //bool connectsNorth(Direction d) const;
     //bool connectsEast(Direction d) const;

@@ -1,18 +1,15 @@
 #include "Board.h"
 #include "TileSwitch.h"
 
-TileSwitch::TileSwitch(const Vector2u& position, Board& board, char charID, bool active) {
-    _position = position;
-    _direction = NORTH;
+TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position) {
     _charID = charID;
     _active = active;
-    board.redrawTile(this);
 }
 
 int TileSwitch::getTextureID() const {
     return 13 + _active;
 }
 
-Tile* TileSwitch::clone(const Vector2u& position, Board& board) {
-    return new TileSwitch(position, board, _charID, _active);
+Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position) {
+    return new TileSwitch(boardPtr, position, _charID, _active);
 }

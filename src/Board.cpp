@@ -93,20 +93,36 @@ Tile*** Board::getTileArray() const {
     return _tileArray;
 }
 
-void Board::redrawTile(Tile* tile, bool highlight) {
-    Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
-    int offsetID = highlight ? _textureIDMax : 0;
-    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
-    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
-    int d = tile->getDirection();
-    tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
-    tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
-    tileVertices[(d + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
-    tileVertices[(d + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
+void Board::addUpdate(Tile* tile, bool stateChanged) {
+    if (stateChanged) {
+        tile->stateChange = true;
+    }
+    _tileUpdates.insert(tile);
 }
 
-void Board::redrawTile(const Vector2u& position, bool highlight) {
-    redrawTile(_tileArray[position.y][position.x], highlight);
+void Board::removeUpdate(Tile* tile) {
+    _tileUpdates.erase(tile);
+}
+
+void Board::updateTiles() {
+    if (!_tileUpdates.empty()) {
+        cout << "Updates scheduled: " << _tileUpdates.size();
+    }
+    int counter = 0;
+    
+    for (auto setIter = _tileUpdates.begin(); setIter != _tileUpdates.end(); ++setIter) {
+        if ((*setIter)->stateChange) {
+            ++counter;
+            (*setIter)->stateChange = false;
+        }
+        _redrawTile(*setIter);
+    }
+    
+    if (!_tileUpdates.empty()) {
+        cout << " but only " << counter << " were tile updates." << endl;
+    }
+    
+    _tileUpdates.clear();
 }
 
 void Board::replaceTile(Tile* tile) {
@@ -141,7 +157,7 @@ void Board::resize(const Vector2u& size) {
             newTileArray[y][x] = _tileArray[y][x];
         }
         for (unsigned int x = xStop; x < size.x; ++x) {
-            newTileArray[y][x] = new Tile(Vector2u(x, y), *this);
+            newTileArray[y][x] = new Tile(this, Vector2u(x, y));
         }
         for (unsigned int x = xStop; x < oldSize.x; ++x) {
             delete _tileArray[y][x];
@@ -151,7 +167,7 @@ void Board::resize(const Vector2u& size) {
     for (unsigned int y = yStop; y < size.y; ++y) {    // Add extra rows if necessary.
         newTileArray[y] = new Tile*[size.x];
         for (unsigned int x = 0; x < size.x; ++x) {
-            newTileArray[y][x] = new Tile(Vector2u(x, y), *this);
+            newTileArray[y][x] = new Tile(this, Vector2u(x, y));
         }
     }
     for (unsigned int y = yStop; y < oldSize.y; ++y) {    // Delete extra rows if necessary.
@@ -177,7 +193,7 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
             if (!keepOverwrittenTiles) {
                 delete _tileArray[yThis][xThis];
             }
-            _tileArray[yThis][xThis] = source.getTileArray()[ySource][xSource]->clone(Vector2u(xThis, yThis), *this);
+            _tileArray[yThis][xThis] = source.getTileArray()[ySource][xSource]->clone(this, Vector2u(xThis, yThis));
             ++xSource;
             ++xThis;
         }
@@ -189,7 +205,7 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
 void Board::highlightArea(const IntRect& region, bool highlight) {
     for (int y = region.top + region.height - 1; y >= region.top; --y) {
         for (int x = region.left + region.width - 1; x >= region.left; --x) {
-            redrawTile(Vector2u(x, y), highlight);
+            _tileArray[y][x]->setHighlight(highlight);
         }
     }
 }
@@ -274,7 +290,7 @@ void Board::newBoard(const Vector2u& size, const string& filename, bool startEmp
         _tileArray[y] = new Tile*[size.x];
         if (!startEmpty) {
             for (unsigned int x = 0; x < size.x; ++x) {
-                _tileArray[y][x] = new Tile(Vector2u(x, y), *this);
+                _tileArray[y][x] = new Tile(this, Vector2u(x, y));
             }
         }
     }
@@ -312,27 +328,27 @@ void Board::loadFile(const string& filename) {
                     int i;
                     char c1 = line[posX * 2 + 1], c2 = line[posX * 2 + 2];
                     if (c1 == ' ' && c2 == ' ') {     // Check for blank tile.
-                        _tileArray[posY][posX] = new Tile(Vector2u(posX, posY), *this);
+                        _tileArray[posY][posX] = new Tile(this, Vector2u(posX, posY));
                     } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {     // Check for wire tile.
                         if (i < 4) {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, i % 2 == 1, false);
                         } else if (i < 20) {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), i % 2 == 1, false);
                         } else if (i < 22) {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, NORTH, TileWire::JUNCTION, i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::JUNCTION, i % 2 == 1, false);
                         } else {
-                            _tileArray[posY][posX] = new TileWire(Vector2u(posX, posY), *this, NORTH, TileWire::CROSSOVER, i % 2 == 1, i >= 24);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::CROSSOVER, i % 2 == 1, i >= 24);
                         }
                     } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {     // Check for input tile.
                         if (i < 2) {
-                            _tileArray[posY][posX] = new TileSwitch(Vector2u(posX, posY), *this, c2, i % 2 == 1);
+                            _tileArray[posY][posX] = new TileSwitch(this, Vector2u(posX, posY), c2, i % 2 == 1);
                         } else {
-                            _tileArray[posY][posX] = new TileButton(Vector2u(posX, posY), *this, c2, i % 2 == 1);
+                            _tileArray[posY][posX] = new TileButton(this, Vector2u(posX, posY), c2, i % 2 == 1);
                         }
                     } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {    // Check for output tile.
-                        _tileArray[posY][posX] = new TileLED(Vector2u(posX, posY), *this, i % 2 == 1);
+                        _tileArray[posY][posX] = new TileLED(this, Vector2u(posX, posY), i % 2 == 1);
                     } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {    // Check for gate tile.
-                        _tileArray[posY][posX] = new TileGate(Vector2u(posX, posY), *this, static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), i % 2 == 1);
+                        _tileArray[posY][posX] = new TileGate(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), i % 2 == 1);
                     } else {    // Else, symbol is not valid.
                         string s1, s2;
                         s1.push_back(c1);
@@ -430,6 +446,18 @@ void Board::_buildTexture(const Image& source, Texture* target, const Vector2u& 
     target->loadFromImage(fullImage);
 }
 
+void Board::_redrawTile(Tile* tile) {
+    Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
+    int offsetID = tile->getHighlight() ? _textureIDMax : 0;
+    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
+    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
+    int d = tile->getDirection();
+    tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
+    tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
+    tileVertices[(d + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
+    tileVertices[(d + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
+}
+
 void Board::_setVertexCoords() {
     for (unsigned int y = 0; y < _size.y; ++y) {
         for (unsigned int x = 0; x < _size.x; ++x) {
@@ -462,7 +490,7 @@ int Board::_findSymbol(char c1, char c2, const vector<string>& symbolTable) cons
     }
 }
 
-void Board::draw (RenderTarget& target, RenderStates states) const {
+void Board::draw(RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
     if (gridActive) {
         states.texture = _tilesetGridPtr;

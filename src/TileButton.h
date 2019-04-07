@@ -11,9 +11,9 @@ using namespace sf;
 
 class TileButton : public Tile {
     public:
-    TileButton(const Vector2u& position, Board& board, char charID = '\0', bool active = false);
+    TileButton(Board* boardPtr, const Vector2u& position, char charID = '\0', bool active = false);
     int getTextureID() const;
-    Tile* clone(const Vector2u& position, Board& board);
+    Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     char _charID;
