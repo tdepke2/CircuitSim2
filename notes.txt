@@ -1,0 +1,15 @@
+Notes:
+    - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
+    - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
+    - Implement the original wire algorithm first (without the additional states) for backwards compatibility.
+
+Simulation algorithm (version 1):
+    - Assume separate sets of updates for all objects that update (wireUpdates, switchUpdates, buttonUpdates, LEDUpdates, and gateUpdates).
+    - At start of frame, we already know every object that has received an update and may change state.
+    - Basic idea is to crawl along each wire and change the wire state (using breadth-first traversal).
+        * If a gate is found, updates to it are added/removed.
+        * If a different state is found then errors are fixed at the end.
+    1. Iterate each object that updated and has logic (gateUpdates only) first, mark the new state it will output (only off or on).
+        A. Push these as updates into gateUpdatesOld if state changed.
+        B. Clear gateUpdates when finished.
+    2. Iterate switchUpdates, buttonUpdates, and gateUpdatesOld, traverse outputs along wires using BFS.
