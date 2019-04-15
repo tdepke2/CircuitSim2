@@ -1,10 +1,11 @@
 #include "Board.h"
 #include "TileGate.h"
 
-TileGate::TileGate(Board* boardPtr, const Vector2u& position, Direction direction, Type type, bool active) : Tile(boardPtr, position) {
+TileGate::TileGate(Board* boardPtr, const Vector2u& position, Direction direction, Type type, bool active) : Tile(boardPtr, position, true) {
     _direction = direction;
     _type = type;
     _active = active;
+    _boardPtr->addUpdate(this, true);
 }
 
 int TileGate::getTextureID() const {

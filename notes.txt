@@ -4,12 +4,17 @@ Notes:
     - Implement the original wire algorithm first (without the additional states) for backwards compatibility.
 
 Simulation algorithm (version 1):
-    - Assume separate sets of updates for all objects that update (wireUpdates, switchUpdates, buttonUpdates, LEDUpdates, and gateUpdates).
+    - Assume one set of cosmetic and state updates for all objects that update (tileUpdates).
     - At start of frame, we already know every object that has received an update and may change state.
     - Basic idea is to crawl along each wire and change the wire state (using breadth-first traversal).
         * If a gate is found, updates to it are added/removed.
-        * If a different state is found then errors are fixed at the end.
-    1. Iterate each object that updated and has logic (gateUpdates only) first, mark the new state it will output (only off or on).
-        A. Push these as updates into gateUpdatesOld if state changed.
-        B. Clear gateUpdates when finished.
-    2. Iterate switchUpdates, buttonUpdates, and gateUpdatesOld, traverse outputs along wires using BFS.
+        * If a different state is found then new state is used from now on (when applicable) and errors are fixed at the end.
+    1. Start by iterating through all of the updates.
+        A. If this update is only cosmetic (stateChange is false), redraw the object and remove update.
+        B. Else if update is for a gate, remove update, mark the new state it will output (only off or on), and add to gateUpdates if state changed.
+        C. Else if update is for a switch, remove update and add to switchUpdates.
+        D. Else if update is for a button, remove update and add to buttonUpdates.
+        E. Else if update is for an LED, remove update and add to LEDUpdates.    // May not need to separate out all the updates like this! #############################
+        F. Else if update is for a blank tile, remove it.
+        G. Only wire updates from user edits will be left over, remember if any are left for later.
+    2. Iterate switchUpdates, buttonUpdates, and gateUpdates, traverse outputs along wires using BFS.

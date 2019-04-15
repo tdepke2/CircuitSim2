@@ -1,9 +1,10 @@
 #include "Board.h"
 #include "TileSwitch.h"
 
-TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position) {
+TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position, true) {
     _charID = charID;
     _active = active;
+    _boardPtr->addUpdate(this, true);
 }
 
 int TileSwitch::getTextureID() const {

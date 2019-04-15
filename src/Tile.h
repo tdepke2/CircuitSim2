@@ -14,10 +14,8 @@ enum Direction : int {
 
 class Tile {    // Generic tile that is stored in a Board.
     public:
-    bool stateChange;
-    
     Tile();
-    Tile(Board* boardPtr, const Vector2u& position);
+    Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate = false);
     virtual ~Tile();
     virtual int getTextureID() const;
     const Vector2u& getPosition() const;

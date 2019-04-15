@@ -1,8 +1,9 @@
 #include "Board.h"
 #include "TileLED.h"
 
-TileLED::TileLED(Board* boardPtr, const Vector2u& position, bool active) : Tile(boardPtr, position) {
+TileLED::TileLED(Board* boardPtr, const Vector2u& position, bool active) : Tile(boardPtr, position, true) {
     _active = active;
+    _boardPtr->addUpdate(this, true);
 }
 
 int TileLED::getTextureID() const {

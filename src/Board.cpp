@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <typeinfo>
 
 bool Board::gridActive = true;
 Texture* Board::_tilesetGridPtr = nullptr;
@@ -94,35 +95,56 @@ Tile*** Board::getTileArray() const {
 }
 
 void Board::addUpdate(Tile* tile, bool stateChanged) {
-    if (stateChanged) {
-        tile->stateChange = true;
+    if (!stateChanged) {
+        _cosmeticUpdates.insert(tile);
+    } else if (typeid(*tile) == typeid(TileGate)) {    // Type is checked as TileGate first as this is the common case.
+        _gateUpdates.insert(static_cast<TileGate*>(tile));
+    } else if (typeid(*tile) == typeid(TileWire)) {
+        _wireUpdates.insert(static_cast<TileWire*>(tile));
+    } else if (typeid(*tile) == typeid(TileSwitch)) {
+        _switchUpdates.insert(static_cast<TileSwitch*>(tile));
+    } else if (typeid(*tile) == typeid(TileButton)) {
+        _buttonUpdates.insert(static_cast<TileButton*>(tile));
+    } else if (typeid(*tile) == typeid(TileLED)) {
+        _LEDUpdates.insert(static_cast<TileLED*>(tile));
+    } else {    // Else it must be a blank tile during construction, add it as cosmetic.
+        _cosmeticUpdates.insert(tile);
     }
-    _tileUpdates.insert(tile);
 }
 
 void Board::removeUpdate(Tile* tile) {
-    _tileUpdates.erase(tile);
+    _cosmeticUpdates.erase(tile);
+    if (tile->getTextureID() != 0) {
+        if (typeid(*tile) == typeid(TileGate)) {
+            _gateUpdates.erase(static_cast<TileGate*>(tile));
+        } else if (typeid(*tile) == typeid(TileWire)) {
+            _wireUpdates.erase(static_cast<TileWire*>(tile));
+        } else if (typeid(*tile) == typeid(TileSwitch)) {
+            _switchUpdates.erase(static_cast<TileSwitch*>(tile));
+        } else if (typeid(*tile) == typeid(TileButton)) {
+            _buttonUpdates.erase(static_cast<TileButton*>(tile));
+        } else if (typeid(*tile) == typeid(TileLED)) {
+            _LEDUpdates.erase(static_cast<TileLED*>(tile));
+        }
+        cout << "removed non-cosmetic" << endl;
+    }
 }
 
 void Board::updateTiles() {
-    if (!_tileUpdates.empty()) {
-        cout << "Updates scheduled: " << _tileUpdates.size();
+    if (!_cosmeticUpdates.empty() || !_wireUpdates.empty() || !_gateUpdates.empty() || !_switchUpdates.empty() || !_buttonUpdates.empty() || !_LEDUpdates.empty()) {
+        cout << "Updates scheduled: c" << _cosmeticUpdates.size() << " w" << _wireUpdates.size() << " g" << _gateUpdates.size() << " s" << _switchUpdates.size() << " b" << _buttonUpdates.size() << " L" << _LEDUpdates.size() << endl;
     }
-    int counter = 0;
     
-    for (auto setIter = _tileUpdates.begin(); setIter != _tileUpdates.end(); ++setIter) {
-        if ((*setIter)->stateChange) {
-            ++counter;
-            (*setIter)->stateChange = false;
-        }
+    for (auto setIter = _cosmeticUpdates.begin(); setIter != _cosmeticUpdates.end(); ++setIter) {
         _redrawTile(*setIter);
     }
     
-    if (!_tileUpdates.empty()) {
-        cout << " but only " << counter << " were tile updates." << endl;
-    }
-    
-    _tileUpdates.clear();
+    _cosmeticUpdates.clear();
+    _wireUpdates.clear();
+    _gateUpdates.clear();
+    _switchUpdates.clear();
+    _buttonUpdates.clear();
+    _LEDUpdates.clear();
 }
 
 void Board::replaceTile(Tile* tile) {

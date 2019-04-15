@@ -1,7 +1,7 @@
 #include "Board.h"
 #include "TileWire.h"
 
-TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction direction, Type type, bool active1, bool active2) : Tile(boardPtr, position) {
+TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction direction, Type type, bool active1, bool active2) : Tile(boardPtr, position, true) {
     if (type != JUNCTION && type != CROSSOVER) {
         if (type == STRAIGHT) {
             _direction = static_cast<Direction>(direction % 2);
@@ -12,6 +12,7 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction directio
     _type = type;
     _active1 = active1;
     _active2 = active2;
+    _boardPtr->addUpdate(this, true);
 }
 
 int TileWire::getTextureID() const {

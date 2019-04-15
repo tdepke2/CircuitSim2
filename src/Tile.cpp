@@ -3,12 +3,14 @@
 
 Tile::Tile() {}
 
-Tile::Tile(Board* boardPtr, const Vector2u& position) {
+Tile::Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate) {
     _boardPtr = boardPtr;
     _position = position;
     _direction = NORTH;
     _highlight = false;
-    _boardPtr->addUpdate(this, true);
+    if (!suppressUpdate) {
+        _boardPtr->addUpdate(this, true);
+    }
 }
 
 Tile::~Tile() {
