@@ -5,7 +5,11 @@ TileGate::TileGate(Board* boardPtr, const Vector2u& position, Direction directio
     _direction = direction;
     _type = type;
     _active = active;
-    _boardPtr->addUpdate(this, true);
+    addUpdate();
+}
+
+TileGate::~TileGate() {
+    _boardPtr->gateUpdates.erase(this);
 }
 
 int TileGate::getTextureID() const {
@@ -19,13 +23,21 @@ int TileGate::getTextureID() const {
 
 void TileGate::setDirection(Direction direction, Board& board) {
     _direction = direction;
-    _boardPtr->addUpdate(this, true);
+    addUpdate();
 }
 
 void TileGate::flip(bool acrossHorizontal, Board& board) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
-        _boardPtr->addUpdate(this, true);
+        addUpdate();
+    }
+}
+
+void TileGate::addUpdate(bool isCosmetic) {
+    if (isCosmetic) {
+        _boardPtr->cosmeticUpdates.insert(this);
+    } else {
+        _boardPtr->gateUpdates.insert(this);
     }
 }
 

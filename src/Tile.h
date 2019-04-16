@@ -25,6 +25,7 @@ class Tile {    // Generic tile that is stored in a Board.
     void setHighlight(bool highlight);
     virtual void setDirection(Direction direction, Board& board);
     virtual void flip(bool acrossHorizontal, Board& board);
+    virtual void addUpdate(bool isCosmetic = false);
     virtual Tile* clone(Board* boardPtr, const Vector2u& position);
     
     protected:

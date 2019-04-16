@@ -9,12 +9,12 @@ Tile::Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate) {
     _direction = NORTH;
     _highlight = false;
     if (!suppressUpdate) {
-        _boardPtr->addUpdate(this, true);
+        addUpdate();
     }
 }
 
 Tile::~Tile() {
-    _boardPtr->removeUpdate(this);
+    _boardPtr->cosmeticUpdates.erase(this);
 }
 
 int Tile::getTextureID() const {
@@ -40,25 +40,29 @@ void Tile::setPosition(const Vector2u& position, Board& board, bool keepOverwrit
             board.getTileArray()[position.y][position.x] = this;
             board.getTileArray()[_position.y][_position.x] = new Tile(_boardPtr, _position);
             _position = position;
-            _boardPtr->addUpdate(this, true);
+            addUpdate();
         }
     } else {
         board.getTileArray()[position.y][position.x] = this;
         _position = position;
-        _boardPtr->addUpdate(this, true);
+        addUpdate();
     }
 }
 
 void Tile::setHighlight(bool highlight) {
     if (_highlight != highlight) {
         _highlight = highlight;
-        _boardPtr->addUpdate(this, false);
+        addUpdate(true);
     }
 }
 
 void Tile::setDirection(Direction direction, Board& board) {}
 
 void Tile::flip(bool acrossHorizontal, Board& board) {}
+
+void Tile::addUpdate(bool isCosmetic) {
+    _boardPtr->cosmeticUpdates.insert(this);
+}
 
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position) {
     return new Tile(boardPtr, position);

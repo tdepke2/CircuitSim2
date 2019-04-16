@@ -12,7 +12,11 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction directio
     _type = type;
     _active1 = active1;
     _active2 = active2;
-    _boardPtr->addUpdate(this, true);
+    addUpdate();
+}
+
+TileWire::~TileWire() {
+    _boardPtr->wireUpdates.erase(this);
 }
 
 int TileWire::getTextureID() const {
@@ -27,12 +31,12 @@ void TileWire::setDirection(Direction direction, Board& board) {
             } else {
                 _direction = direction;
             }
-            _boardPtr->addUpdate(this, true);
+            addUpdate();
         } else if (direction % 2 == 1) {    // If direction odd, assume 1 or 3 rotations were made to the crossover wire.
             bool tempActive = _active1;
             _active1 = _active2;
             _active2 = tempActive;
-            _boardPtr->addUpdate(this, true);
+            addUpdate();
         }
     }
 }
@@ -50,10 +54,18 @@ void TileWire::flip(bool acrossHorizontal, Board& board) {
         } else {
             _direction = static_cast<Direction>(_direction - 1);
         }
-        _boardPtr->addUpdate(this, true);
+        addUpdate();
     } else if (_type == TEE && ((!acrossHorizontal && _direction % 2 == 0) || (acrossHorizontal && _direction % 2 == 1))) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
-        _boardPtr->addUpdate(this, true);
+        addUpdate();
+    }
+}
+
+void TileWire::addUpdate(bool isCosmetic) {
+    if (isCosmetic) {
+        _boardPtr->cosmeticUpdates.insert(this);
+    } else {
+        _boardPtr->wireUpdates.insert(this);
     }
 }
 

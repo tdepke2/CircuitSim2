@@ -16,10 +16,12 @@ class TileWire : public Tile {
     };
     
     TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, bool active1 = false, bool active2 = false);
+    ~TileWire();
     int getTextureID() const;
     void setDirection(Direction direction, Board& board);
     void setActive(Direction d, bool state);
     void flip(bool acrossHorizontal, Board& board);
+    void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     bool isActive(Direction d) const;
     //bool connectsNorth(Direction d) const;

@@ -12,7 +12,9 @@ using namespace sf;
 class TileSwitch : public Tile {
     public:
     TileSwitch(Board* boardPtr, const Vector2u& position, char charID = '\0', bool active = false);
+    ~TileSwitch();
     int getTextureID() const;
+    void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:

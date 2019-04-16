@@ -20,6 +20,12 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     public:
     static bool gridActive;
     string name;
+    unordered_set<Tile*> cosmeticUpdates;
+    unordered_set<TileWire*> wireUpdates;
+    unordered_set<TileSwitch*> switchUpdates;
+    unordered_set<TileButton*> buttonUpdates;
+    unordered_set<TileLED*> LEDUpdates;
+    unordered_set<TileGate*> gateUpdates;
     
     static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     static const Vector2u& getTileSize();
@@ -27,8 +33,6 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     virtual ~Board();
     const Vector2u& getSize() const;
     Tile*** getTileArray() const;
-    void addUpdate(Tile* tile, bool stateChanged);
-    void removeUpdate(Tile* tile);
     void updateTiles();
     void replaceTile(Tile* tile);
     void clear();
@@ -49,12 +53,6 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static Texture* _tilesetNoGridPtr;
     static int _textureIDMax;
     static Vector2u _tileSize;
-    unordered_set<Tile*> _cosmeticUpdates;
-    unordered_set<TileWire*> _wireUpdates;
-    unordered_set<TileSwitch*> _switchUpdates;
-    unordered_set<TileButton*> _buttonUpdates;
-    unordered_set<TileLED*> _LEDUpdates;
-    unordered_set<TileGate*> _gateUpdates;
     VertexArray _vertices;
     Vector2u _size;
     Tile*** _tileArray;

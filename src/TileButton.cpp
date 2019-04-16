@@ -4,11 +4,23 @@
 TileButton::TileButton(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position, true) {
     _charID = charID;
     _active = active;
-    _boardPtr->addUpdate(this, true);
+    addUpdate();
+}
+
+TileButton::~TileButton() {
+    _boardPtr->buttonUpdates.erase(this);
 }
 
 int TileButton::getTextureID() const {
     return 15 + _active;
+}
+
+void TileButton::addUpdate(bool isCosmetic) {
+    if (isCosmetic) {
+        _boardPtr->cosmeticUpdates.insert(this);
+    } else {
+        _boardPtr->buttonUpdates.insert(this);
+    }
 }
 
 Tile* TileButton::clone(Board* boardPtr, const Vector2u& position) {
