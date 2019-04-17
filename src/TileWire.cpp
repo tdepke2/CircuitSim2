@@ -1,7 +1,7 @@
 #include "Board.h"
 #include "TileWire.h"
 
-TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction direction, Type type, bool active1, bool active2) : Tile(boardPtr, position, true) {
+TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction direction, Type type, State state1, State state2) : Tile(boardPtr, position, true) {
     if (type != JUNCTION && type != CROSSOVER) {
         if (type == STRAIGHT) {
             _direction = static_cast<Direction>(direction % 2);
@@ -10,8 +10,8 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction directio
         }
     }
     _type = type;
-    _active1 = active1;
-    _active2 = active2;
+    _state1 = state1;
+    _state2 = state2;
     addUpdate();
 }
 
@@ -20,7 +20,7 @@ TileWire::~TileWire() {
 }
 
 int TileWire::getTextureID() const {
-    return 1 + _type * 2 + _active1 + _active2 * 2;
+    return 1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2;
 }
 
 void TileWire::setDirection(Direction direction, Board& board) {
@@ -33,16 +33,12 @@ void TileWire::setDirection(Direction direction, Board& board) {
             }
             addUpdate();
         } else if (direction % 2 == 1) {    // If direction odd, assume 1 or 3 rotations were made to the crossover wire.
-            bool tempActive = _active1;
-            _active1 = _active2;
-            _active2 = tempActive;
+            State tempState = _state1;
+            _state1 = _state2;
+            _state2 = tempState;
             addUpdate();
         }
     }
-}
-
-void TileWire::setActive(Direction d, bool state) {
-    
 }
 
 void TileWire::flip(bool acrossHorizontal, Board& board) {
@@ -61,6 +57,10 @@ void TileWire::flip(bool acrossHorizontal, Board& board) {
     }
 }
 
+State TileWire::checkConnection(Direction direction) const {
+    return DISCONNECTED;
+}
+
 void TileWire::addUpdate(bool isCosmetic) {
     if (isCosmetic) {
         _boardPtr->cosmeticUpdates.insert(this);
@@ -70,7 +70,7 @@ void TileWire::addUpdate(bool isCosmetic) {
 }
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileWire(boardPtr, position, _direction, _type, _active1, _active2);
+    return new TileWire(boardPtr, position, _direction, _type, _state1, _state2);
 }
 
 bool TileWire::isActive(Direction d) const {

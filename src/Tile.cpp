@@ -60,6 +60,23 @@ void Tile::setDirection(Direction direction, Board& board) {}
 
 void Tile::flip(bool acrossHorizontal, Board& board) {}
 
+State Tile::checkConnection(Direction direction) const {
+    return DISCONNECTED;
+}
+
+pair<State, Tile*> Tile::checkState(Direction direction) const {
+    if (direction == NORTH) {
+        if (_position.y == 0) {
+            return pair<State, Tile*>(DISCONNECTED, nullptr);
+        } else {
+            Tile* targetTile = _boardPtr->getTileArray()[_position.y][_position.x];
+            return pair<State, Tile*>(targetTile->checkConnection(direction), targetTile);
+        }
+    } else {
+        return pair<State, Tile*>(DISCONNECTED, nullptr);
+    }
+}
+
 void Tile::addUpdate(bool isCosmetic) {
     _boardPtr->cosmeticUpdates.insert(this);
 }

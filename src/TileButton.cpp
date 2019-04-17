@@ -1,9 +1,9 @@
 #include "Board.h"
 #include "TileButton.h"
 
-TileButton::TileButton(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position, true) {
+TileButton::TileButton(Board* boardPtr, const Vector2u& position, char charID, State state) : Tile(boardPtr, position, true) {
     _charID = charID;
-    _active = active;
+    _state = state;
     addUpdate();
 }
 
@@ -12,7 +12,11 @@ TileButton::~TileButton() {
 }
 
 int TileButton::getTextureID() const {
-    return 15 + _active;
+    return 15 + (_state == HIGH);
+}
+
+State TileButton::checkConnection(Direction direction) const {
+    return _state;
 }
 
 void TileButton::addUpdate(bool isCosmetic) {
@@ -24,5 +28,5 @@ void TileButton::addUpdate(bool isCosmetic) {
 }
 
 Tile* TileButton::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileButton(boardPtr, position, _charID, _active);
+    return new TileButton(boardPtr, position, _charID, _state);
 }

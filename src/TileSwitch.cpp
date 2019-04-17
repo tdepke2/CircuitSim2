@@ -1,9 +1,9 @@
 #include "Board.h"
 #include "TileSwitch.h"
 
-TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, bool active) : Tile(boardPtr, position, true) {
+TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, State state) : Tile(boardPtr, position, true) {
     _charID = charID;
-    _active = active;
+    _state = state;
     addUpdate();
 }
 
@@ -12,7 +12,11 @@ TileSwitch::~TileSwitch() {
 }
 
 int TileSwitch::getTextureID() const {
-    return 13 + _active;
+    return 13 + (_state == HIGH);
+}
+
+State TileSwitch::checkConnection(Direction direction) const {
+    return _state;
 }
 
 void TileSwitch::addUpdate(bool isCosmetic) {
@@ -24,5 +28,5 @@ void TileSwitch::addUpdate(bool isCosmetic) {
 }
 
 Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileSwitch(boardPtr, position, _charID, _active);
+    return new TileSwitch(boardPtr, position, _charID, _state);
 }

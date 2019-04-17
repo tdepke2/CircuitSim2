@@ -1,8 +1,8 @@
 #include "Board.h"
 #include "TileLED.h"
 
-TileLED::TileLED(Board* boardPtr, const Vector2u& position, bool active) : Tile(boardPtr, position, true) {
-    _active = active;
+TileLED::TileLED(Board* boardPtr, const Vector2u& position, State state) : Tile(boardPtr, position, true) {
+    _state = state;
     addUpdate();
 }
 
@@ -11,7 +11,11 @@ TileLED::~TileLED() {
 }
 
 int TileLED::getTextureID() const {
-    return 17 + _active;
+    return 17 + (_state == HIGH);
+}
+
+State TileLED::checkConnection(Direction direction) const {
+    return _state;
 }
 
 void TileLED::addUpdate(bool isCosmetic) {
@@ -23,5 +27,5 @@ void TileLED::addUpdate(bool isCosmetic) {
 }
 
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileLED(boardPtr, position, _active);
+    return new TileLED(boardPtr, position, _state);
 }

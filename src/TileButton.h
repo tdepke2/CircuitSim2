@@ -11,15 +11,16 @@ using namespace sf;
 
 class TileButton : public Tile {
     public:
-    TileButton(Board* boardPtr, const Vector2u& position, char charID = '\0', bool active = false);
+    TileButton(Board* boardPtr, const Vector2u& position, char charID = '\0', State state = LOW);
     ~TileButton();
     int getTextureID() const;
+    State checkConnection(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     char _charID;
-    bool _active;
+    State _state;
 };
 
 #endif

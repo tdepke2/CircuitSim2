@@ -11,14 +11,15 @@ using namespace sf;
 
 class TileLED : public Tile {
     public:
-    TileLED(Board* boardPtr, const Vector2u& position, bool active = false);
+    TileLED(Board* boardPtr, const Vector2u& position, State state = LOW);
     ~TileLED();
     int getTextureID() const;
+    State checkConnection(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
-    bool _active;
+    State _state;
 };
 
 #endif

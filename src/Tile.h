@@ -12,6 +12,10 @@ enum Direction : int {
     NORTH = 0, EAST, SOUTH, WEST
 };
 
+enum State : int {
+    DISCONNECTED = 0, LOW, HIGH, HIGH_Z, INVALID
+};
+
 class Tile {    // Generic tile that is stored in a Board.
     public:
     Tile();
@@ -25,6 +29,8 @@ class Tile {    // Generic tile that is stored in a Board.
     void setHighlight(bool highlight);
     virtual void setDirection(Direction direction, Board& board);
     virtual void flip(bool acrossHorizontal, Board& board);
+    virtual State checkConnection(Direction direction) const;
+    pair<State, Tile*> checkState(Direction direction) const;
     virtual void addUpdate(bool isCosmetic = false);
     virtual Tile* clone(Board* boardPtr, const Vector2u& position);
     

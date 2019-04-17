@@ -102,12 +102,34 @@ void Board::updateTiles() {
     for (auto setIter = cosmeticUpdates.begin(); setIter != cosmeticUpdates.end(); ++setIter) {
         _redrawTile(*setIter);
     }
-    
     cosmeticUpdates.clear();
-    wireUpdates.clear();
+    
+    unordered_set<TileGate*> gateUpdatesOld;     // ####################################################################################################### May want to improve efficiency here.
+    for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end(); ++setIter) {
+        //(*setIter)->
+        gateUpdatesOld.insert(*setIter);
+        _redrawTile(*setIter);
+    }
     gateUpdates.clear();
+    
+    for (auto setIter = wireUpdates.begin(); setIter != wireUpdates.end(); ++setIter) {
+        _redrawTile(*setIter);
+    }
+    wireUpdates.clear();
+    
+    for (auto setIter = switchUpdates.begin(); setIter != switchUpdates.end(); ++setIter) {
+        _redrawTile(*setIter);
+    }
     switchUpdates.clear();
+    
+    for (auto setIter = buttonUpdates.begin(); setIter != buttonUpdates.end(); ++setIter) {
+        _redrawTile(*setIter);
+    }
     buttonUpdates.clear();
+    
+    for (auto setIter = LEDUpdates.begin(); setIter != LEDUpdates.end(); ++setIter) {
+        _redrawTile(*setIter);
+    }
     LEDUpdates.clear();
 }
 
@@ -317,24 +339,24 @@ void Board::loadFile(const string& filename) {
                         _tileArray[posY][posX] = new Tile(this, Vector2u(posX, posY));
                     } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {     // Check for wire tile.
                         if (i < 4) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, static_cast<State>(i % 2 + 1), LOW);
                         } else if (i < 20) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), static_cast<State>(i % 2 + 1), LOW);
                         } else if (i < 22) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::JUNCTION, i % 2 == 1, false);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::JUNCTION, static_cast<State>(i % 2 + 1), LOW);
                         } else {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::CROSSOVER, i % 2 == 1, i >= 24);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::CROSSOVER, static_cast<State>(i % 2 + 1), static_cast<State>((i >= 24) + 1));
                         }
                     } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {     // Check for input tile.
                         if (i < 2) {
-                            _tileArray[posY][posX] = new TileSwitch(this, Vector2u(posX, posY), c2, i % 2 == 1);
+                            _tileArray[posY][posX] = new TileSwitch(this, Vector2u(posX, posY), c2, static_cast<State>(i % 2 + 1));
                         } else {
-                            _tileArray[posY][posX] = new TileButton(this, Vector2u(posX, posY), c2, i % 2 == 1);
+                            _tileArray[posY][posX] = new TileButton(this, Vector2u(posX, posY), c2, static_cast<State>(i % 2 + 1));
                         }
                     } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {    // Check for output tile.
-                        _tileArray[posY][posX] = new TileLED(this, Vector2u(posX, posY), i % 2 == 1);
+                        _tileArray[posY][posX] = new TileLED(this, Vector2u(posX, posY), static_cast<State>(i % 2 + 1));
                     } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {    // Check for gate tile.
-                        _tileArray[posY][posX] = new TileGate(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), i % 2 == 1);
+                        _tileArray[posY][posX] = new TileGate(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), static_cast<State>(i % 2 + 1));
                     } else {    // Else, symbol is not valid.
                         string s1, s2;
                         s1.push_back(c1);

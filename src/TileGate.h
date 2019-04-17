@@ -15,17 +15,21 @@ class TileGate : public Tile {
         DIODE = 0, BUFFER, NOT, AND, NAND, OR, NOR, XOR, XNOR
     };
     
-    TileGate(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = DIODE, bool active = false);
+    TileGate(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = DIODE, State state = LOW);
     ~TileGate();
     int getTextureID() const;
+    bool getState() const;
+    bool getNextState() const;
     void setDirection(Direction direction, Board& board);
     void flip(bool acrossHorizontal, Board& board);
+    bool checkNextState();
+    State checkConnection(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     Type _type;
-    bool _active;
+    State _state, _nextState;
 };
 
 #endif
