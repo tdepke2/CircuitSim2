@@ -58,7 +58,16 @@ void TileWire::flip(bool acrossHorizontal, Board& board) {
 }
 
 State TileWire::checkConnection(Direction direction) const {
-    return DISCONNECTED;
+    const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];
+    if (exitDirections[0] || exitDirections[1] || exitDirections[2] || exitDirections[3]) {
+        if (_type == CROSSOVER && direction % 2 == 1) {
+            return _state2;
+        } else {
+            return _state1;
+        }
+    } else {
+        return DISCONNECTED;
+    }
 }
 
 void TileWire::addUpdate(bool isCosmetic) {
@@ -76,19 +85,3 @@ Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
 bool TileWire::isActive(Direction d) const {
     return false;
 }
-
-/*bool TileWire::connectsNorth(Direction d) const {
-    return CONNECTION_INFO_NORTH[_typeID][d];
-}
-
-bool TileWire::connectsEast(Direction d) const {
-    return CONNECTION_INFO_EAST[_typeID][d];
-}
-
-bool TileWire::connectsSouth(Direction d) const {
-    return CONNECTION_INFO_SOUTH[_typeID][d];
-}
-
-bool TileWire::connectsWest(Direction d) const {
-    return CONNECTION_INFO_WEST[_typeID][d];
-}*/

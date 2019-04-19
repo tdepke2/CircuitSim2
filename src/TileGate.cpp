@@ -51,7 +51,11 @@ bool TileGate::checkNextState() {
 }
 
 State TileGate::checkConnection(Direction direction) const {
-    return DISCONNECTED;
+    if ((_direction + 2) % 4 == direction) {
+        return _state;
+    } else {
+        return DISCONNECTED;
+    }
 }
 
 void TileGate::addUpdate(bool isCosmetic) {
