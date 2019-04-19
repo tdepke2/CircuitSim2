@@ -113,7 +113,7 @@ int Simulator::start() {
                                 board.highlightArea(selectionArea, false);
                                 selectionArea = IntRect(0, 0, 0, 0);
                                 if (tileCursor != Vector2i(-1, -1)) {
-                                    board.getTileArray()[tileCursor.y][tileCursor.x]->setHighlight(true);
+                                    board.getTile(tileCursor)->setHighlight(true);
                                 }
                             }
                         } else {    // Else, finish the selection.
@@ -229,9 +229,9 @@ int Simulator::start() {
             if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
                 if (tileCursor != newTileCursor) {
                     if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
-                        board.getTileArray()[tileCursor.y][tileCursor.x]->setHighlight(false);
+                        board.getTile(tileCursor)->setHighlight(false);
                     }
-                    board.getTileArray()[newTileCursor.y][newTileCursor.x]->setHighlight(true);
+                    board.getTile(newTileCursor)->setHighlight(true);
                     if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
                         board.highlightArea(selectionArea, false);
                         if (tileCursor != Vector2i(-1, -1)) {
@@ -255,7 +255,7 @@ int Simulator::start() {
                 }
             } else if (tileCursor != Vector2i(-1, -1)) {
                 if (!selectionArea.contains(tileCursor)) {
-                    board.getTileArray()[tileCursor.y][tileCursor.x]->setHighlight(false);
+                    board.getTile(tileCursor)->setHighlight(false);
                 }
                 tileCursor = Vector2i(-1, -1);
             }
@@ -358,22 +358,22 @@ void Simulator::toolsOption(int option) {
             selectionStart = Vector2i(-1, -1);
             selectionArea = IntRect(0, 0, 0, 0);
             if (tileCursor != Vector2i(-1, -1)) {
-                boardPtr->getTileArray()[tileCursor.y][tileCursor.x]->setHighlight(true);
+                boardPtr->getTile(tileCursor)->setHighlight(true);
             }
         }
     } else if (option == 2) {    // Rotate selection CW.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
-            currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
-            currentTileBoardPtr->getTileArray()[0][0]->setHighlight(true);
+            currentTileBoardPtr->getTile(Vector2u(0, 0))->setDirection(currentTileDirection);
+            currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
             copyBufferBoardPtr->rotate(false);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                    Tile* targetTile = boardPtr->getTileArray()[y][x];
-                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1) % 4), *boardPtr);
+                    Tile* targetTile = boardPtr->getTile(Vector2u(x, y));
+                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1) % 4));
                     targetTile->setHighlight(true);
                 }
             }
@@ -381,16 +381,16 @@ void Simulator::toolsOption(int option) {
     } else if (option == 3) {    // Rotate selection CCW.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
-            currentTileBoardPtr->getTileArray()[0][0]->setDirection(currentTileDirection, *currentTileBoardPtr);
-            currentTileBoardPtr->getTileArray()[0][0]->setHighlight(true);
+            currentTileBoardPtr->getTile(Vector2u(0, 0))->setDirection(currentTileDirection);
+            currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
             copyBufferBoardPtr->rotate(true);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                    Tile* targetTile = boardPtr->getTileArray()[y][x];
-                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 3) % 4), *boardPtr);
+                    Tile* targetTile = boardPtr->getTile(Vector2u(x, y));
+                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 3) % 4));
                     targetTile->setHighlight(true);
                 }
             }
@@ -447,7 +447,7 @@ void Simulator::placeTile(int option) {
     } else {
         assert(false);
     }
-    currentTileBoardPtr->getTileArray()[0][0]->setHighlight(true);
+    currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
     copyBufferVisible = false;
 }
 
@@ -457,7 +457,7 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
     }
     if (!selectionArea.contains(tileCursor)) {
         if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
-            boardPtr->replaceTile(currentTileBoardPtr->getTileArray()[0][0]->clone(boardPtr, Vector2u(tileCursor)));
+            boardPtr->replaceTile(currentTileBoardPtr->getTile(Vector2u(0, 0))->clone(boardPtr, Vector2u(tileCursor)));
         } else if (copyBufferVisible) {
             IntRect pasteArea(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y);
             if (tileCursor.x + pasteArea.width > static_cast<int>(boardPtr->getSize().x)) {
@@ -477,7 +477,7 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             if (!forcePaste) {
                 for (int y = tileCursor.y + pasteArea.height - 1; y >= tileCursor.y; --y) {
                     for (int x = tileCursor.x + pasteArea.width - 1; x >= tileCursor.x; --x) {
-                        if (boardPtr->getTileArray()[y][x]->getTextureID() != 0) {
+                        if (boardPtr->getTile(Vector2u(x, y))->getTextureID() != 0) {
                             return;
                         }
                     }
@@ -490,15 +490,15 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             selectionStart = Vector2i(-1, -1);
             selectionArea = IntRect(0, 0, 0, 0);
             if (tileCursor != Vector2i(-1, -1)) {
-                boardPtr->getTileArray()[tileCursor.y][tileCursor.x]->setHighlight(true);
+                boardPtr->getTile(tileCursor)->setHighlight(true);
             }
         }
     } else {
         if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                    boardPtr->replaceTile(currentTileBoardPtr->getTileArray()[0][0]->clone(boardPtr, Vector2u(x, y)));
-                    boardPtr->getTileArray()[y][x]->setHighlight(true);
+                    boardPtr->replaceTile(currentTileBoardPtr->getTile(Vector2u(0, 0))->clone(boardPtr, Vector2u(x, y)));
+                    boardPtr->getTile(Vector2u(x, y))->setHighlight(true);
                 }
             }
         } else if (copyBufferVisible) {

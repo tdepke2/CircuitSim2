@@ -23,7 +23,7 @@ int TileWire::getTextureID() const {
     return 1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2;
 }
 
-void TileWire::setDirection(Direction direction, Board& board) {
+void TileWire::setDirection(Direction direction) {
     if (_type != JUNCTION) {
         if (_type != CROSSOVER) {
             if (_type == STRAIGHT) {
@@ -41,7 +41,7 @@ void TileWire::setDirection(Direction direction, Board& board) {
     }
 }
 
-void TileWire::flip(bool acrossHorizontal, Board& board) {
+void TileWire::flip(bool acrossHorizontal) {
     if (_type == CORNER) {
         if (!acrossHorizontal) {
             _direction = static_cast<Direction>(3 - _direction);

@@ -9,19 +9,19 @@ TileLED::TileLED(Board* boardPtr, const Vector2u& position, State state) : Tile(
     
     cout << "New LED:\n  North ";
     if (_position.y > 0) {
-        cout << _boardPtr->getTileArray()[_position.y - 1][_position.x]->checkOutput(NORTH);
+        cout << _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(NORTH);
     }
     cout << "\n  East ";
     if (_position.x < _boardPtr->getSize().x - 1) {
-        cout << _boardPtr->getTileArray()[_position.y][_position.x + 1]->checkOutput(EAST);
+        cout << _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(EAST);
     }
     cout << "\n  South ";
     if (_position.y < _boardPtr->getSize().y - 1) {
-        cout << _boardPtr->getTileArray()[_position.y + 1][_position.x]->checkOutput(SOUTH);
+        cout << _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->checkOutput(SOUTH);
     }
     cout << "\n  West ";
     if (_position.x > 0) {
-        cout << _boardPtr->getTileArray()[_position.y][_position.x - 1]->checkOutput(WEST);
+        cout << _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->checkOutput(WEST);
     }
     cout << endl;
 }

@@ -20,8 +20,8 @@ class TileGate : public Tile {
     int getTextureID() const;
     bool getState() const;
     bool getNextState() const;
-    void setDirection(Direction direction, Board& board);
-    void flip(bool acrossHorizontal, Board& board);
+    void setDirection(Direction direction);
+    void flip(bool acrossHorizontal);
     bool checkNextState();
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);

@@ -33,17 +33,17 @@ bool Tile::getHighlight() const {
     return _highlight;
 }
 
-void Tile::setPosition(const Vector2u& position, Board& board, bool keepOverwrittenTile) {
+void Tile::setPosition(const Vector2u& position, bool keepOverwrittenTile) {
     if (!keepOverwrittenTile) {
-        if (board.getTileArray()[position.y][position.x] != this) {
-            delete board.getTileArray()[position.y][position.x];
-            board.getTileArray()[position.y][position.x] = this;
-            board.getTileArray()[_position.y][_position.x] = new Tile(_boardPtr, _position);
+        if (_boardPtr->getTile(position) != this) {
+            delete _boardPtr->getTile(position);
+            _boardPtr->setTile(position, this);
+            _boardPtr->setTile(_position, new Tile(_boardPtr, _position));
             _position = position;
             addUpdate();
         }
     } else {
-        board.getTileArray()[position.y][position.x] = this;
+        _boardPtr->setTile(position, this);
         _position = position;
         addUpdate();
     }
@@ -56,9 +56,9 @@ void Tile::setHighlight(bool highlight) {
     }
 }
 
-void Tile::setDirection(Direction direction, Board& board) {}
+void Tile::setDirection(Direction direction) {}
 
-void Tile::flip(bool acrossHorizontal, Board& board) {}
+void Tile::flip(bool acrossHorizontal) {}
 
 State Tile::checkOutput(Direction direction) const {
     return DISCONNECTED;
@@ -69,7 +69,7 @@ pair<State, Tile*> Tile::checkState(Direction direction) const {
         if (_position.y == 0) {
             return pair<State, Tile*>(DISCONNECTED, nullptr);
         } else {
-            Tile* targetTile = _boardPtr->getTileArray()[_position.y][_position.x];
+            Tile* targetTile = _boardPtr->getTile(_position);
             return pair<State, Tile*>(targetTile->checkOutput(direction), targetTile);
         }
     } else {

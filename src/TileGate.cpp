@@ -29,12 +29,12 @@ bool TileGate::getNextState() const {
     return _nextState;
 }
 
-void TileGate::setDirection(Direction direction, Board& board) {
+void TileGate::setDirection(Direction direction) {
     _direction = direction;
     addUpdate();
 }
 
-void TileGate::flip(bool acrossHorizontal, Board& board) {
+void TileGate::flip(bool acrossHorizontal) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
         addUpdate();
@@ -42,7 +42,7 @@ void TileGate::flip(bool acrossHorizontal, Board& board) {
 }
 
 bool TileGate::checkNextState() {
-    //_boardPtr->getTileArray()[_position.y][_position.x]->
+    //_boardPtr->getTile(_position)->
     
     if (_type == DIODE) {
         

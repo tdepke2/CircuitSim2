@@ -90,8 +90,20 @@ const Vector2u& Board::getSize() const {
     return _size;
 }
 
-Tile*** Board::getTileArray() const {
-    return _tileArray;
+Tile* Board::getTile(const Vector2i& position) const {
+    return _tileArray[position.y][position.x];
+}
+
+Tile* Board::getTile(const Vector2u& position) const {
+    return _tileArray[position.y][position.x];
+}
+
+void Board::setTile(const Vector2i& position, Tile* tile) {
+    _tileArray[position.y][position.x] = tile;
+}
+
+void Board::setTile(const Vector2u& position, Tile* tile) {
+    _tileArray[position.y][position.x] = tile;
 }
 
 void Board::updateTiles() {
@@ -201,7 +213,7 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
             if (!keepOverwrittenTiles) {
                 delete _tileArray[yThis][xThis];
             }
-            _tileArray[yThis][xThis] = source.getTileArray()[ySource][xSource]->clone(this, Vector2u(xThis, yThis));
+            _tileArray[yThis][xThis] = source.getTile(Vector2u(xSource, ySource))->clone(this, Vector2u(xThis, yThis));
             ++xSource;
             ++xThis;
         }
@@ -230,11 +242,11 @@ void Board::rotate(bool counterClockwise) {
     for (unsigned int y = 0; y < _size.x; ++y) {    // Loop through each tile in old array and set its position in new array.
         for (unsigned int x = 0; x < _size.y; ++x) {
             if (!counterClockwise) {
-                oldTileArray[y][x]->setPosition(Vector2u(_size.x - 1 - y, x), *this, true);
-                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 1) % 4), *this);
+                oldTileArray[y][x]->setPosition(Vector2u(_size.x - 1 - y, x), true);
+                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 1) % 4));
             } else {
-                oldTileArray[y][x]->setPosition(Vector2u(y, _size.y - 1 - x), *this, true);
-                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 3) % 4), *this);
+                oldTileArray[y][x]->setPosition(Vector2u(y, _size.y - 1 - x), true);
+                oldTileArray[y][x]->setDirection(static_cast<Direction>((oldTileArray[y][x]->getDirection() + 3) % 4));
             }
         }
     }
@@ -251,14 +263,14 @@ void Board::flip(bool acrossHorizontal) {
             for (unsigned int x = 0; x < _size.x / 2; ++x) {
                 Tile* tempTile1 = _tileArray[y][x];
                 Tile* tempTile2 = _tileArray[y][_size.x - 1 - x];
-                tempTile1->setPosition(Vector2u(_size.x - 1 - x, y), *this, true);
-                tempTile1->flip(false, *this);
-                tempTile2->setPosition(Vector2u(x, y), *this, true);
-                tempTile2->flip(false, *this);
+                tempTile1->setPosition(Vector2u(_size.x - 1 - x, y), true);
+                tempTile1->flip(false);
+                tempTile2->setPosition(Vector2u(x, y), true);
+                tempTile2->flip(false);
             }
             if (_size.x % 2 == 1) {
                 Tile* tempTile = _tileArray[y][_size.x / 2];
-                tempTile->flip(false, *this);
+                tempTile->flip(false);
             }
         }
     } else {
@@ -266,16 +278,16 @@ void Board::flip(bool acrossHorizontal) {
             for (unsigned int x = 0; x < _size.x; ++x) {
                 Tile* tempTile1 = _tileArray[y][x];
                 Tile* tempTile2 = _tileArray[_size.y - 1 - y][x];
-                tempTile1->setPosition(Vector2u(x, _size.y - 1 - y), *this, true);
-                tempTile1->flip(true, *this);
-                tempTile2->setPosition(Vector2u(x, y), *this, true);
-                tempTile2->flip(true, *this);
+                tempTile1->setPosition(Vector2u(x, _size.y - 1 - y), true);
+                tempTile1->flip(true);
+                tempTile2->setPosition(Vector2u(x, y), true);
+                tempTile2->flip(true);
             }
         }
         if (_size.y % 2 == 1) {
             for (unsigned int x = 0; x < _size.x; ++x) {
                 Tile* tempTile = _tileArray[_size.y / 2][x];
-                tempTile->flip(true, *this);
+                tempTile->flip(true);
             }
         }
     }

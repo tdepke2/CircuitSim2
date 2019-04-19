@@ -32,7 +32,10 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Board();
     virtual ~Board();
     const Vector2u& getSize() const;
-    Tile*** getTileArray() const;
+    Tile* getTile(const Vector2i& position) const;
+    Tile* getTile(const Vector2u& position) const;
+    void setTile(const Vector2i& position, Tile* tile);
+    void setTile(const Vector2u& position, Tile* tile);
     void updateTiles();
     void replaceTile(Tile* tile);
     void clear();

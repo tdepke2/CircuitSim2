@@ -18,8 +18,8 @@ class TileWire : public Tile {
     TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
     ~TileWire();
     int getTextureID() const;
-    void setDirection(Direction direction, Board& board);
-    void flip(bool acrossHorizontal, Board& board);
+    void setDirection(Direction direction);
+    void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
