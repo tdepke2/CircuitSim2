@@ -14,7 +14,7 @@ class TileButton : public Tile {
     TileButton(Board* boardPtr, const Vector2u& position, char charID = '\0', State state = LOW);
     ~TileButton();
     int getTextureID() const;
-    State checkConnection(Direction direction) const;
+    State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     

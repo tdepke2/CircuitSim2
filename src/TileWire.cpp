@@ -57,7 +57,7 @@ void TileWire::flip(bool acrossHorizontal, Board& board) {
     }
 }
 
-State TileWire::checkConnection(Direction direction) const {
+State TileWire::checkOutput(Direction direction) const {
     const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];
     if (exitDirections[0] || exitDirections[1] || exitDirections[2] || exitDirections[3]) {
         if (_type == CROSSOVER && direction % 2 == 1) {

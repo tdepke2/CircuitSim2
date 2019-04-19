@@ -14,7 +14,7 @@ class TileLED : public Tile {
     TileLED(Board* boardPtr, const Vector2u& position, State state = LOW);
     ~TileLED();
     int getTextureID() const;
-    State checkConnection(Direction direction) const;
+    State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     

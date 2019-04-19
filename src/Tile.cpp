@@ -60,7 +60,7 @@ void Tile::setDirection(Direction direction, Board& board) {}
 
 void Tile::flip(bool acrossHorizontal, Board& board) {}
 
-State Tile::checkConnection(Direction direction) const {
+State Tile::checkOutput(Direction direction) const {
     return DISCONNECTED;
 }
 
@@ -70,7 +70,7 @@ pair<State, Tile*> Tile::checkState(Direction direction) const {
             return pair<State, Tile*>(DISCONNECTED, nullptr);
         } else {
             Tile* targetTile = _boardPtr->getTileArray()[_position.y][_position.x];
-            return pair<State, Tile*>(targetTile->checkConnection(direction), targetTile);
+            return pair<State, Tile*>(targetTile->checkOutput(direction), targetTile);
         }
     } else {
         return pair<State, Tile*>(DISCONNECTED, nullptr);

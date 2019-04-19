@@ -15,7 +15,7 @@ int TileButton::getTextureID() const {
     return 15 + (_state == HIGH);
 }
 
-State TileButton::checkConnection(Direction direction) const {
+State TileButton::checkOutput(Direction direction) const {
     return _state;
 }
 

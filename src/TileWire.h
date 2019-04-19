@@ -20,7 +20,7 @@ class TileWire : public Tile {
     int getTextureID() const;
     void setDirection(Direction direction, Board& board);
     void flip(bool acrossHorizontal, Board& board);
-    State checkConnection(Direction direction) const;
+    State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     bool isActive(Direction d) const;

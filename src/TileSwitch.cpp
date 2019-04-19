@@ -15,7 +15,7 @@ int TileSwitch::getTextureID() const {
     return 13 + (_state == HIGH);
 }
 
-State TileSwitch::checkConnection(Direction direction) const {
+State TileSwitch::checkOutput(Direction direction) const {
     return _state;
 }
 

@@ -50,7 +50,7 @@ bool TileGate::checkNextState() {
     return false;
 }
 
-State TileGate::checkConnection(Direction direction) const {
+State TileGate::checkOutput(Direction direction) const {
     if ((_direction + 2) % 4 == direction) {
         return _state;
     } else {
