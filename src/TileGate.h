@@ -22,7 +22,7 @@ class TileGate : public Tile {
     bool getNextState() const;
     void setDirection(Direction direction);
     void flip(bool acrossHorizontal);
-    bool checkNextState();
+    bool updateNextState();
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
     Tile* clone(Board* boardPtr, const Vector2u& position);

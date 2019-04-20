@@ -118,11 +118,12 @@ void Board::updateTiles() {
     
     unordered_set<TileGate*> gateUpdatesOld;     // ####################################################################################################### May want to improve efficiency here.
     for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end(); ++setIter) {
-        //(*setIter)->
-        gateUpdatesOld.insert(*setIter);
+        if ((*setIter)->updateNextState()) {
+            gateUpdatesOld.insert(*setIter);
+        }
         _redrawTile(*setIter);
     }
-    gateUpdates.clear();
+    gateUpdates.clear();    // Using erase might be faster but need to test this ##############################################################################################
     
     for (auto setIter = wireUpdates.begin(); setIter != wireUpdates.end(); ++setIter) {
         _redrawTile(*setIter);
