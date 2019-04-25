@@ -81,6 +81,8 @@ void Tile::addUpdate(bool isCosmetic) {
     _boardPtr->cosmeticUpdates.insert(this);
 }
 
+void Tile::followWire(Direction direction, State state) {}
+
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position) {
     return new Tile(boardPtr, position);
 }

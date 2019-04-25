@@ -5,6 +5,9 @@ class Board;
 
 #include "Tile.h"
 #include <SFML/Graphics.hpp>
+#include <stack>
+#include <utility>
+#include <vector>
 
 using namespace std;
 using namespace sf;
@@ -15,6 +18,11 @@ class TileWire : public Tile {
         STRAIGHT = 0, CORNER, TEE, JUNCTION, CROSSOVER
     };
     
+    static unsigned int currentUpdateTime;
+    static vector<TileWire*> traversedWires;
+    static stack<pair<TileWire*, Direction>> wireNodes;
+    static vector<pair<Tile*, Direction>> endpointTiles;
+    
     TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
     ~TileWire();
     int getTextureID() const;
@@ -22,8 +30,8 @@ class TileWire : public Tile {
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
+    void followWire(Direction direction, State state);
     Tile* clone(Board* boardPtr, const Vector2u& position);
-    bool isActive(Direction d) const;
     
     private:
     const bool CONNECTION_INFO[4][5][4][4] = {    // Checks for wire path given direction of object, type, direction of entry, and direction of exit.
@@ -52,9 +60,11 @@ class TileWire : public Tile {
          {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}},   // CROSSOVER  "│─"
     };
     
-    
     Type _type;
     State _state1, _state2;
+    unsigned int _updateTimestamp;
+    
+    void _addNextTile(Tile* nextTile, Direction direction);
 };
 
 #endif

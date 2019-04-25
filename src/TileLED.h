@@ -16,6 +16,7 @@ class TileLED : public Tile {
     int getTextureID() const;
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
+    void followWire(Direction direction, State state);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:

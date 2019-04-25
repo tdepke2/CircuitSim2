@@ -36,6 +36,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Tile* getTile(const Vector2u& position) const;
     void setTile(const Vector2i& position, Tile* tile);
     void setTile(const Vector2u& position, Tile* tile);
+    void updateCosmetics();
     void updateTiles();
     void replaceTile(Tile* tile);
     void clear();

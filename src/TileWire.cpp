@@ -1,5 +1,14 @@
 #include "Board.h"
 #include "TileWire.h"
+#include <cassert>
+#include <typeinfo>
+
+#include <iostream>
+
+unsigned int TileWire::currentUpdateTime = 1;
+vector<TileWire*> TileWire::traversedWires;
+stack<pair<TileWire*, Direction>> TileWire::wireNodes;
+vector<pair<Tile*, Direction>> TileWire::endpointTiles;
 
 TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction direction, Type type, State state1, State state2) : Tile(boardPtr, position, true) {
     if (type != JUNCTION && type != CROSSOVER) {
@@ -12,6 +21,7 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction directio
     _type = type;
     _state1 = state1;
     _state2 = state2;
+    _updateTimestamp = 0;
     addUpdate();
 }
 
@@ -71,17 +81,64 @@ State TileWire::checkOutput(Direction direction) const {
 }
 
 void TileWire::addUpdate(bool isCosmetic) {
-    if (isCosmetic) {
-        _boardPtr->cosmeticUpdates.insert(this);
-    } else {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
         _boardPtr->wireUpdates.insert(this);
     }
+}
+
+void TileWire::followWire(Direction direction, State state) {
+    assert(endpointTiles.empty());
+    assert(traversedWires.empty());
+    assert(wireNodes.empty());
+    
+    cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
+    
+    wireNodes.push(pair<TileWire*, Direction>(this, direction));
+    while (!wireNodes.empty()) {
+        TileWire* currentWire = wireNodes.top().first;
+        Direction currentDirection = wireNodes.top().second;
+        wireNodes.pop();
+        
+        cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+        
+        if (currentWire->_updateTimestamp != currentUpdateTime || currentWire->_type == CROSSOVER) {    // If wire not traversed yet or its a crossover.
+            currentWire->_updateTimestamp = currentUpdateTime;
+            traversedWires.push_back(currentWire);
+            _boardPtr->wireUpdates.erase(currentWire);    // ###################################################################### may be too costly need to optimize
+            
+            const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];
+            if (exitDirections[0] && currentWire->_position.y > 0) {
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH);
+            }
+            if (exitDirections[1] && currentWire->_position.x < _boardPtr->getSize().x - 1) {
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST);
+            }
+            if (exitDirections[2] && currentWire->_position.y < _boardPtr->getSize().y - 1) {
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH);
+            }
+            if (exitDirections[3] && currentWire->_position.x > 0) {
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST);
+            }
+        }
+    }
+    
+    cout << "Finished, endpoints found:" << endl;
+    for (auto e : endpointTiles) {
+        cout << "  (" << e.first->getPosition().x << ", " << e.first->getPosition().y << ") with direction " << e.second << endl;
+    }
+    endpointTiles.clear();
+    traversedWires.clear();
 }
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
     return new TileWire(boardPtr, position, _direction, _type, _state1, _state2);
 }
 
-bool TileWire::isActive(Direction d) const {
-    return false;
+void TileWire::_addNextTile(Tile* nextTile, Direction direction) {
+    if (typeid(*nextTile) == typeid(TileWire)) {
+        wireNodes.push(pair<TileWire*, Direction>(static_cast<TileWire*>(nextTile), direction));
+    } else {
+        endpointTiles.push_back(pair<Tile*, Direction>(nextTile, direction));
+    }
 }

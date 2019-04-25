@@ -32,6 +32,7 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual State checkOutput(Direction direction) const;
     pair<State, Tile*> checkState(Direction direction) const;
     virtual void addUpdate(bool isCosmetic = false);
+    virtual void followWire(Direction direction, State state);
     virtual Tile* clone(Board* boardPtr, const Vector2u& position);
     
     protected:

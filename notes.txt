@@ -18,3 +18,10 @@ Simulation algorithm (version 1):
         F. Else if update is for a blank tile, remove it.
         G. Only wire updates from user edits will be left over, remember if any are left for later.
     2. Iterate switchUpdates, buttonUpdates, and gateUpdates, traverse outputs along wires using BFS.
+    3. If wire updates remain, need to update these and adjacent tiles (because the wire could break a connection, broken wires default to low or tri-state where applicable).
+
+Where we're at:
+    - Working on wire path following. In order to check if a wire has already been visited for DFS we use a set of traversed wire.
+    - In DFS loop, check if wire already visited. If wire is not a junction then we just skip to the next wire after updating state.
+    - Otherwise if junction not visited then push it and its remaining paths to a stack, if junction was visited then remove this path from its remaining ones.
+    - This will have pretty bad worst case time complexity, might be better to go with timestamp idea

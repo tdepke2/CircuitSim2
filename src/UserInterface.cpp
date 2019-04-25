@@ -144,7 +144,8 @@ UserInterface::UserInterface() {
     viewMenu.addMenuButton(TextButton(font, "  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 2));
     
     runMenu = DropdownMenu(TextButton(font, " Run ", Color::Black, 15, viewMenu.getPosition().x + viewMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    runMenu.addMenuButton(TextButton(font, "  Sample text", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
+    runMenu.addMenuButton(TextButton(font, "  Step Frame                 Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
+    runMenu.addMenuButton(TextButton(font, "  Change Run Mode      Shift+Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 1));
     
     toolsMenu = DropdownMenu(TextButton(font, " Tools ", Color::Black, 15, runMenu.getPosition().x + runMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     toolsMenu.addMenuButton(TextButton(font, "  Select All                   Ctrl+A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));

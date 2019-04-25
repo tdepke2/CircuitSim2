@@ -20,9 +20,8 @@ State TileSwitch::checkOutput(Direction direction) const {
 }
 
 void TileSwitch::addUpdate(bool isCosmetic) {
-    if (isCosmetic) {
-        _boardPtr->cosmeticUpdates.insert(this);
-    } else {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
         _boardPtr->switchUpdates.insert(this);
     }
 }

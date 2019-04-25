@@ -20,9 +20,8 @@ State TileButton::checkOutput(Direction direction) const {
 }
 
 void TileButton::addUpdate(bool isCosmetic) {
-    if (isCosmetic) {
-        _boardPtr->cosmeticUpdates.insert(this);
-    } else {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
         _boardPtr->buttonUpdates.insert(this);
     }
 }

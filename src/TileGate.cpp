@@ -46,10 +46,10 @@ void TileGate::flip(bool acrossHorizontal) {
 
 bool TileGate::updateNextState() {
     State adjacentStates [4];
-    adjacentStates[0] = _position.y > 0 ?                          _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(static_cast<Direction>(0)) : DISCONNECTED;
+    adjacentStates[0] = _position.y > 0 ? _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(static_cast<Direction>(0)) : DISCONNECTED;
     adjacentStates[1] = _position.x < _boardPtr->getSize().x - 1 ? _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(static_cast<Direction>(1)) : DISCONNECTED;
     adjacentStates[2] = _position.y < _boardPtr->getSize().y - 1 ? _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->checkOutput(static_cast<Direction>(2)) : DISCONNECTED;
-    adjacentStates[3] = _position.x > 0 ?                          _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->checkOutput(static_cast<Direction>(3)) : DISCONNECTED;
+    adjacentStates[3] = _position.x > 0 ? _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->checkOutput(static_cast<Direction>(3)) : DISCONNECTED;
     
     int numInputs = 0, numHigh = 0;
     for (int i = 0; i < 4; ++i) {
@@ -127,11 +127,15 @@ State TileGate::checkOutput(Direction direction) const {
 }
 
 void TileGate::addUpdate(bool isCosmetic) {
-    if (isCosmetic) {
-        _boardPtr->cosmeticUpdates.insert(this);
-    } else {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
         _boardPtr->gateUpdates.insert(this);
     }
+}
+
+void TileGate::followWire(Direction direction, State state) {
+    addUpdate();
+    // nah its not that easy
 }
 
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position) {

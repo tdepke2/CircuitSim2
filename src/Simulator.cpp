@@ -52,9 +52,9 @@ int Simulator::start() {
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
-            board.updateTiles();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
-            copyBufferBoard.updateTiles();
-            currentTileBoard.updateTiles();
+            board.updateCosmetics();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
+            copyBufferBoard.updateCosmetics();
+            currentTileBoard.updateCosmetics();
             window.clear();
             window.setView(boardView);
             window.draw(board);
@@ -146,6 +146,8 @@ int Simulator::start() {
                     } else if (!Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
                         if (event.key.code == Keyboard::G) {
                             Board::gridActive = !Board::gridActive;
+                        } else if (event.key.code == Keyboard::Tab) {
+                            runOption(0);
                         } else if (event.key.code == Keyboard::Escape) {
                             toolsOption(1);
                         } else if (event.key.code == Keyboard::R) {
@@ -339,7 +341,9 @@ void Simulator::viewOption(int option) {
 }
 
 void Simulator::runOption(int option) {
-    if (option == 0) {
+    if (option == 0) {    // Step frame.
+        boardPtr->updateTiles();
+    } else if (option == 1) {    // Change run mode.
         
     } else {
         assert(false);

@@ -106,15 +106,23 @@ void Board::setTile(const Vector2u& position, Tile* tile) {
     _tileArray[position.y][position.x] = tile;
 }
 
-void Board::updateTiles() {
-    if (!cosmeticUpdates.empty() || !wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
-        cout << "Updates scheduled: c" << cosmeticUpdates.size() << " w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
+void Board::updateCosmetics() {
+    if (!cosmeticUpdates.empty()) {
+        cout << "Updates scheduled: c" << cosmeticUpdates.size() << endl;
     }
-    
     for (auto setIter = cosmeticUpdates.begin(); setIter != cosmeticUpdates.end(); ++setIter) {
         _redrawTile(*setIter);
     }
     cosmeticUpdates.clear();
+}
+
+void Board::updateTiles() {
+    if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
+        cout << "Updates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
+    }
+    if (TileWire::currentUpdateTime > 100) {
+        cout << "Thats a lot of updates, remember to check for integer rollover with TileWire::currentUpdateTime." << endl;
+    }
     
     unordered_set<TileGate*> gateUpdatesOld;     // ####################################################################################################### May want to improve efficiency here.
     for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end(); ++setIter) {
@@ -125,8 +133,9 @@ void Board::updateTiles() {
     }
     gateUpdates.clear();    // Using erase might be faster but need to test this ##############################################################################################
     
-    for (auto setIter = wireUpdates.begin(); setIter != wireUpdates.end(); ++setIter) {
-        _redrawTile(*setIter);
+    while (!wireUpdates.empty()) {
+        _redrawTile(*wireUpdates.begin());
+        (*wireUpdates.begin())->followWire(NORTH, HIGH);    // Just for testing right now ###############################################################################
     }
     wireUpdates.clear();
     
@@ -144,6 +153,8 @@ void Board::updateTiles() {
         _redrawTile(*setIter);
     }
     LEDUpdates.clear();
+    
+    ++TileWire::currentUpdateTime;
 }
 
 void Board::replaceTile(Tile* tile) {

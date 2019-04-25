@@ -19,11 +19,14 @@ State TileLED::checkOutput(Direction direction) const {
 }
 
 void TileLED::addUpdate(bool isCosmetic) {
-    if (isCosmetic) {
-        _boardPtr->cosmeticUpdates.insert(this);
-    } else {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
         _boardPtr->LEDUpdates.insert(this);
     }
+}
+
+void TileLED::followWire(Direction direction, State state) {
+    
 }
 
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position) {
