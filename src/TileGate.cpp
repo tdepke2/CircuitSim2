@@ -44,7 +44,22 @@ void TileGate::flip(bool acrossHorizontal) {
     }
 }
 
-bool TileGate::updateNextState() {
+State TileGate::checkOutput(Direction direction) const {
+    if ((_direction + 2) % 4 == direction) {
+        return _state;
+    } else {
+        return DISCONNECTED;
+    }
+}
+
+void TileGate::addUpdate(bool isCosmetic) {
+    _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic) {
+        _boardPtr->gateUpdates.insert(this);
+    }
+}
+
+void TileGate::updateOutput() {
     State adjacentStates [4];
     adjacentStates[0] = _position.y > 0 ? _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(static_cast<Direction>(0)) : DISCONNECTED;
     adjacentStates[1] = _position.x < _boardPtr->getSize().x - 1 ? _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(static_cast<Direction>(1)) : DISCONNECTED;
@@ -115,21 +130,20 @@ bool TileGate::updateNextState() {
     cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
     cout << "  current = " << _state << ", next = " << _nextState << endl;
     
-    return _nextState != _state;
-}
-
-State TileGate::checkOutput(Direction direction) const {
-    if ((_direction + 2) % 4 == direction) {
-        return _state;
-    } else {
-        return DISCONNECTED;
-    }
-}
-
-void TileGate::addUpdate(bool isCosmetic) {
-    _boardPtr->cosmeticUpdates.insert(this);
-    if (!isCosmetic) {
-        _boardPtr->gateUpdates.insert(this);
+    _boardPtr->gateUpdates.erase(this);
+    if (_nextState != _state) {
+        addUpdate(true);
+        if (adjacentStates[_direction] != DISCONNECTED) {
+            if (_direction == NORTH) {
+                _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(_direction, _nextState);
+            } else if (_direction == EAST) {
+                _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->followWire(_direction, _nextState);
+            } else if (_direction == SOUTH) {
+                _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->followWire(_direction, _nextState);
+            } else {
+                _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(_direction, _nextState);
+            }
+        }
     }
 }
 

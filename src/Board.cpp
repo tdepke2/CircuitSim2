@@ -107,9 +107,6 @@ void Board::setTile(const Vector2u& position, Tile* tile) {
 }
 
 void Board::updateCosmetics() {
-    if (!cosmeticUpdates.empty()) {
-        cout << "Updates scheduled: c" << cosmeticUpdates.size() << endl;
-    }
     for (auto setIter = cosmeticUpdates.begin(); setIter != cosmeticUpdates.end(); ++setIter) {
         _redrawTile(*setIter);
     }
@@ -118,26 +115,20 @@ void Board::updateCosmetics() {
 
 void Board::updateTiles() {
     if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
-        cout << "Updates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
+        cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
     }
     if (TileWire::currentUpdateTime > 100) {
         cout << "Thats a lot of updates, remember to check for integer rollover with TileWire::currentUpdateTime." << endl;
     }
     
-    unordered_set<TileGate*> gateUpdatesOld;     // ####################################################################################################### May want to improve efficiency here.
-    for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end(); ++setIter) {
-        if ((*setIter)->updateNextState()) {
-            gateUpdatesOld.insert(*setIter);
-        }
-        _redrawTile(*setIter);
+    while (!gateUpdates.empty()) {
+        (*gateUpdates.begin())->updateOutput();
     }
-    gateUpdates.clear();    // Using erase might be faster but need to test this ##############################################################################################
     
     while (!wireUpdates.empty()) {
-        _redrawTile(*wireUpdates.begin());
+        cout << "Found a remaining wire update." << endl;
         (*wireUpdates.begin())->followWire(NORTH, HIGH);    // Just for testing right now ###############################################################################
     }
-    wireUpdates.clear();
     
     for (auto setIter = switchUpdates.begin(); setIter != switchUpdates.end(); ++setIter) {
         _redrawTile(*setIter);

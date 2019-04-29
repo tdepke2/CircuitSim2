@@ -101,6 +101,12 @@ void TileWire::followWire(Direction direction, State state) {
         wireNodes.pop();
         
         cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+        if (currentWire->_state1 == LOW) {
+            currentWire->_state1 = HIGH;
+        } else {
+            currentWire->_state1 = LOW;
+        }
+        currentWire->addUpdate(true);
         
         if (currentWire->_updateTimestamp != currentUpdateTime || currentWire->_type == CROSSOVER) {    // If wire not traversed yet or its a crossover.
             currentWire->_updateTimestamp = currentUpdateTime;
@@ -137,7 +143,10 @@ Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
 
 void TileWire::_addNextTile(Tile* nextTile, Direction direction) {
     if (typeid(*nextTile) == typeid(TileWire)) {
-        wireNodes.push(pair<TileWire*, Direction>(static_cast<TileWire*>(nextTile), direction));
+        TileWire* nextWire = static_cast<TileWire*>(nextTile);
+        //if (CONNECTION_INFO[currentWire->_direction][currentWire->_type]) {
+            wireNodes.push(pair<TileWire*, Direction>(nextWire, direction));
+        //}
     } else {
         endpointTiles.push_back(pair<Tile*, Direction>(nextTile, direction));
     }
