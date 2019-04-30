@@ -22,7 +22,7 @@ Simulation algorithm (version 1):
             C. Positions of wires are kept track of as wire is traversed in case an error is made and we need to fix the previous wires.
             D. If an endpoint is found and it outputs, then the state is checked for an error and updates to the endpoint are removed from gateUpdates if it is a gate (switches/buttons have outputs on four sides).
                 1. If the endpoint inputs instead, then it is saved for later.
-            E. After all wires traversed in this path, check if original wire state changed. If it didn't then remove the last n endpoints from memory as these won't need updates.
+            ------------------------ Removed (E. After all wires traversed in this path, check if original wire state changed. If it didn't then remove the last n endpoints from memory as these won't need updates.)
         3. If wire updates remain that were not removed during traversal, need to update these (same steps as above).
         4. When traversal done for all wires, send updates to the endpoints (should only be LEDs and gates).
             A. In the case of an LED, perform a recursive trace through connected LEDs if the state changed.

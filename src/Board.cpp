@@ -130,21 +130,7 @@ void Board::updateTiles() {
         (*wireUpdates.begin())->followWire(NORTH, HIGH);    // Just for testing right now ###############################################################################
     }
     
-    for (auto setIter = switchUpdates.begin(); setIter != switchUpdates.end(); ++setIter) {
-        _redrawTile(*setIter);
-    }
-    switchUpdates.clear();
-    
-    for (auto setIter = buttonUpdates.begin(); setIter != buttonUpdates.end(); ++setIter) {
-        _redrawTile(*setIter);
-    }
-    buttonUpdates.clear();
-    
-    for (auto setIter = LEDUpdates.begin(); setIter != LEDUpdates.end(); ++setIter) {
-        _redrawTile(*setIter);
-    }
-    LEDUpdates.clear();
-    
+    TileWire::updateEndpointTiles();
     ++TileWire::currentUpdateTime;
 }
 
