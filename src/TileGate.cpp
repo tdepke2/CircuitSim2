@@ -1,5 +1,6 @@
 #include "Board.h"
 #include "TileGate.h"
+#include "TileWire.h"
 
 #include <iostream>
 
@@ -155,8 +156,11 @@ void TileGate::updateOutput() {
 }
 
 void TileGate::followWire(Direction direction, State state) {
-    //add to endpoint tiles?
-    // nah its not that easy #############################################################################################
+    if ((_direction + 2) % 4 == direction) {
+        _boardPtr->gateUpdates.erase(this);
+    } else {
+        TileWire::endpointTiles.push_back(this);
+    }
 }
 
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position) {

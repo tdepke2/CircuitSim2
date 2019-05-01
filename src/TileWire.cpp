@@ -154,7 +154,8 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
             wireNodes.push(pair<TileWire*, Direction>(nextWire, direction));
         }
     } else if (typeid(*nextTile) == typeid(TileGate)) {
-        State gateState = nextTile->checkOutput(direction);
+        TileGate* nextGate = static_cast<TileGate*>(nextTile);
+        State gateState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;
         if (gateState != DISCONNECTED) {
             if (gateState == HIGH && *statePtr == LOW) {
                 cout << "Found a state conflict." << endl;
@@ -167,7 +168,7 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
                     }
                 }
             }
-            _boardPtr->gateUpdates.erase(static_cast<TileGate*>(nextTile));
+            _boardPtr->gateUpdates.erase(nextGate);
         } else {
             endpointTiles.push_back(nextTile);
         }
