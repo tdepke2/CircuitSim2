@@ -18,18 +18,20 @@ class TileGate : public Tile {
     TileGate(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = DIODE, State state = LOW);
     ~TileGate();
     int getTextureID() const;
-    bool getState() const;
+    State getState() const;
+    State getNextState() const;
     void setDirection(Direction direction);
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false);
+    bool updateNextState();
     void updateOutput();
     void followWire(Direction direction, State state);
     Tile* clone(Board* boardPtr, const Vector2u& position);
     
     private:
     Type _type;
-    State _state;
+    State _state, _nextState;
 };
 
 #endif

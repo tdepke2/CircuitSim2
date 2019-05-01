@@ -121,14 +121,26 @@ void Board::updateTiles() {
         cout << "Thats a lot of updates, remember to check for integer rollover with TileWire::currentUpdateTime." << endl;
     }
     
+    for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {
+        if ((*setIter)->updateNextState()) {
+            ++setIter;
+        } else {
+            setIter = gateUpdates.erase(setIter);
+        }
+    }
+    
+    // update switches
+    
+    // update buttons
+    
     while (!gateUpdates.empty()) {
         (*gateUpdates.begin())->updateOutput();
     }
     
-    while (!wireUpdates.empty()) {
-        cout << "Found a remaining wire update." << endl;
+    /*while (!wireUpdates.empty()) {
+        cout << "Found a remaining wire update." <<  << endl;
         (*wireUpdates.begin())->followWire(NORTH, HIGH);    // Just for testing right now ###############################################################################
-    }
+    }*/
     
     TileWire::updateEndpointTiles();
     ++TileWire::currentUpdateTime;

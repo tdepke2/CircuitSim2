@@ -7,6 +7,7 @@ TileGate::TileGate(Board* boardPtr, const Vector2u& position, Direction directio
     _direction = direction;
     _type = type;
     _state = state;
+    _nextState = state;
     addUpdate();
 }
 
@@ -23,8 +24,12 @@ int TileGate::getTextureID() const {
     }
 }
 
-bool TileGate::getState() const {
+State TileGate::getState() const {
     return _state;
+}
+
+State TileGate::getNextState() const {
+    return _nextState;
 }
 
 void TileGate::setDirection(Direction direction) {
@@ -54,7 +59,7 @@ void TileGate::addUpdate(bool isCosmetic) {
     }
 }
 
-void TileGate::updateOutput() {
+bool TileGate::updateNextState() {
     State adjacentStates [4];
     adjacentStates[0] = _position.y > 0 ? _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(static_cast<Direction>(0)) : DISCONNECTED;
     adjacentStates[1] = _position.x < _boardPtr->getSize().x - 1 ? _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(static_cast<Direction>(1)) : DISCONNECTED;
@@ -71,81 +76,87 @@ void TileGate::updateOutput() {
         }
     }
     
-    const State oldState = _state;
     if (_type == DIODE || _type == BUFFER) {
         if (numInputs == 1 && numHigh == 1) {
-            _state = HIGH;
+            _nextState = HIGH;
         } else {
-            _state = LOW;
+            _nextState = LOW;
         }
     } else if (_type == NOT) {
         if (numInputs == 1 && numHigh == 1) {
-            _state = LOW;
+            _nextState = LOW;
         } else {
-            _state = HIGH;
+            _nextState = HIGH;
         }
     } else if (_type == AND) {
         if (numInputs >= 2 && numHigh == numInputs) {
-            _state = HIGH;
+            _nextState = HIGH;
         } else {
-            _state = LOW;
+            _nextState = LOW;
         }
     } else if (_type == NAND) {
         if (numInputs >= 2 && numHigh == numInputs) {
-            _state = LOW;
+            _nextState = LOW;
         } else {
-            _state = HIGH;
+            _nextState = HIGH;
         }
     } else if (_type == OR) {
         if (numInputs >= 2 && numHigh >= 1) {
-            _state = HIGH;
+            _nextState = HIGH;
         } else {
-            _state = LOW;
+            _nextState = LOW;
         }
     } else if (_type == NOR) {
         if (numInputs >= 2 && numHigh >= 1) {
-            _state = LOW;
+            _nextState = LOW;
         } else {
-            _state = HIGH;
+            _nextState = HIGH;
         }
     } else if (_type == XOR) {
         if (numInputs >= 2 && numHigh % 2 == 1) {
-            _state = HIGH;
+            _nextState = HIGH;
         } else {
-            _state = LOW;
+            _nextState = LOW;
         }
     } else if (_type == XNOR) {
         if (numInputs >= 2 && numHigh % 2 == 1) {
-            _state = LOW;
+            _nextState = LOW;
         } else {
-            _state = HIGH;
+            _nextState = HIGH;
         }
     }
     
-    cout << "Gate of type " << _type << " updated:" << endl;
+    cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
     cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
-    cout << "  old = " << oldState << ", new = " << _state << endl;
+    cout << "  state = " << _state << ", next = " << _nextState << endl;
     
+    return _nextState != _state;
+}
+
+void TileGate::updateOutput() {
+    cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
     _boardPtr->gateUpdates.erase(this);
-    if (_state != oldState) {
-        addUpdate(true);
-        if (adjacentStates[_direction] != DISCONNECTED) {
-            if (_direction == NORTH) {
-                _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(_direction, _state);
-            } else if (_direction == EAST) {
-                _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->followWire(_direction, _state);
-            } else if (_direction == SOUTH) {
-                _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->followWire(_direction, _state);
-            } else {
-                _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(_direction, _state);
-            }
-        }
+    _state = _nextState;
+    addUpdate(true);
+    
+    Vector2u targetPosition;
+    if (_direction == NORTH) {
+        targetPosition = Vector2u(_position.x, _position.y - 1);
+    } else if (_direction == EAST) {
+        targetPosition = Vector2u(_position.x + 1, _position.y);
+    } else if (_direction == SOUTH) {
+        targetPosition = Vector2u(_position.x, _position.y + 1);
+    } else {
+        targetPosition = Vector2u(_position.x - 1, _position.y);
+    }
+    if (targetPosition.x < _boardPtr->getSize().x && targetPosition.y < _boardPtr->getSize().y) {
+        _boardPtr->getTile(targetPosition)->followWire(_direction, _state);
     }
 }
 
 void TileGate::followWire(Direction direction, State state) {
-    addUpdate();
-    // nah its not that easy
+    //add to endpoint tiles?
+    // nah its not that easy #############################################################################################
 }
 
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position) {

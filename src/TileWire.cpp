@@ -121,7 +121,9 @@ void TileWire::followWire(Direction direction, State state) {
         if (currentWire->_updateTimestamp != currentUpdateTime || currentWire->_type == CROSSOVER) {    // If wire not traversed yet or its a crossover.
             currentWire->_updateTimestamp = currentUpdateTime;
             traversedWires.push_back(pair<TileWire*, Direction>(currentWire, currentDirection));
-            _boardPtr->wireUpdates.erase(currentWire);    // ###################################################################### may be too costly need to optimize
+            if (!_boardPtr->wireUpdates.empty() && currentWire->_type != CROSSOVER) {    // Can't just erase updates for a crossover, probably need 2 timestamps for each wire ############################################################
+                _boardPtr->wireUpdates.erase(currentWire);
+            }
             
             const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];
             if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
