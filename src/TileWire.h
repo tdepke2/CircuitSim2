@@ -19,7 +19,7 @@ class TileWire : public Tile {
     };
     
     static unsigned int currentUpdateTime;
-    static vector<TileWire*> traversedWires;
+    static vector<pair<TileWire*, Direction>> traversedWires;
     static stack<pair<TileWire*, Direction>> wireNodes;
     static vector<Tile*> endpointTiles;
     
@@ -65,7 +65,7 @@ class TileWire : public Tile {
     State _state1, _state2;
     unsigned int _updateTimestamp;
     
-    void _addNextTile(Tile* nextTile, Direction direction);
+    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);
 };
 
 #endif

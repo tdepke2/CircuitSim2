@@ -8,7 +8,7 @@
 #include <iostream>
 
 unsigned int TileWire::currentUpdateTime = 1;
-vector<TileWire*> TileWire::traversedWires;
+vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
 vector<Tile*> TileWire::endpointTiles;
 
@@ -120,21 +120,21 @@ void TileWire::followWire(Direction direction, State state) {
         
         if (currentWire->_updateTimestamp != currentUpdateTime || currentWire->_type == CROSSOVER) {    // If wire not traversed yet or its a crossover.
             currentWire->_updateTimestamp = currentUpdateTime;
-            traversedWires.push_back(currentWire);
+            traversedWires.push_back(pair<TileWire*, Direction>(currentWire, currentDirection));
             _boardPtr->wireUpdates.erase(currentWire);    // ###################################################################### may be too costly need to optimize
             
             const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];
             if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
-                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH);
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH, &state);
             }
             if (exitDirections[1] && currentDirection != WEST && currentWire->_position.x < _boardPtr->getSize().x - 1) {
-                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST);
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST, &state);
             }
             if (exitDirections[2] && currentDirection != NORTH && currentWire->_position.y < _boardPtr->getSize().y - 1) {
-                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH);
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH, &state);
             }
             if (exitDirections[3] && currentDirection != EAST && currentWire->_position.x > 0) {
-                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST);
+                _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST, &state);
             }
         }
     }
@@ -145,7 +145,7 @@ Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
     return new TileWire(boardPtr, position, _direction, _type, _state1, _state2);
 }
 
-void TileWire::_addNextTile(Tile* nextTile, Direction direction) {
+void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
     if (typeid(*nextTile) == typeid(TileWire)) {
         TileWire* nextWire = static_cast<TileWire*>(nextTile);
         if (CONNECTION_INFO[nextWire->_direction][nextWire->_type][direction][(direction + 2) % 4]) {
@@ -154,7 +154,18 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction) {
     } else if (typeid(*nextTile) == typeid(TileGate)) {
         State gateState = nextTile->checkOutput(direction);
         if (gateState != DISCONNECTED) {
-            cout << "Gate found that outputs to wire." << endl;
+            if (gateState == HIGH && *statePtr == LOW) {
+                cout << "Found a state conflict." << endl;
+                *statePtr = HIGH;
+                for (pair<TileWire*, Direction>& wire : traversedWires) {
+                    if (wire.first->_type == CROSSOVER && wire.second % 2 == 1) {
+                        wire.first->_state2 = *statePtr;
+                    } else {
+                        wire.first->_state1 = *statePtr;
+                    }
+                }
+            }
+            _boardPtr->gateUpdates.erase(static_cast<TileGate*>(nextTile));
         } else {
             endpointTiles.push_back(nextTile);
         }

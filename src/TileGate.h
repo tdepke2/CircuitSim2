@@ -19,7 +19,6 @@ class TileGate : public Tile {
     ~TileGate();
     int getTextureID() const;
     bool getState() const;
-    bool getNextState() const;
     void setDirection(Direction direction);
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
@@ -30,7 +29,7 @@ class TileGate : public Tile {
     
     private:
     Type _type;
-    State _state, _nextState;
+    State _state;
 };
 
 #endif

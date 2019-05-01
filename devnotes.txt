@@ -3,7 +3,7 @@ Notes:
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
     - Implement the original wire algorithm first (without the additional states) for backwards compatibility.
 
-Simulation algorithm (version 1):
+Simulation algorithm version 1:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
     - When the state of an object changes, it is given a cosmetic and state update in the appropriate sets and updates adjacent tiles.
         * During board loading, do not update adjacent tiles.
@@ -27,3 +27,6 @@ Simulation algorithm (version 1):
         4. When traversal done for all wires, send updates to the endpoints (should only be LEDs and gates).
             A. In the case of an LED, perform a recursive trace through connected LEDs if the state changed.
     - The first frame simulated after loading a board or making edits will have some performance impact but additional frame simulations should not.
+
+Simulation algorithm version 2 (features tri-state and invalid state wires):
+    
