@@ -31,7 +31,8 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, Direction directio
     _type = type;
     _state1 = state1;
     _state2 = state2;
-    _updateTimestamp = 0;
+    _updateTimestamp1 = 0;
+    _updateTimestamp2 = 0;
     addUpdate();
 }
 
@@ -110,18 +111,24 @@ void TileWire::followWire(Direction direction, State state) {
         Direction currentDirection = wireNodes.top().second;
         wireNodes.pop();
         
-        cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+        bool traverseWire = false;
         if (currentWire->_type == CROSSOVER && currentDirection % 2 == 1) {
-            currentWire->_state2 = state;
-        } else {
+            if (currentWire->_updateTimestamp2 != currentUpdateTime) {
+                currentWire->_state2 = state;
+                currentWire->_updateTimestamp2 = currentUpdateTime;
+                traverseWire = true;
+            }
+        } else if (currentWire->_updateTimestamp1 != currentUpdateTime) {
             currentWire->_state1 = state;
+            currentWire->_updateTimestamp1 = currentUpdateTime;
+            traverseWire = true;
         }
-        currentWire->addUpdate(true);
         
-        if (currentWire->_updateTimestamp != currentUpdateTime || currentWire->_type == CROSSOVER) {    // If wire not traversed yet or its a crossover.
-            currentWire->_updateTimestamp = currentUpdateTime;
+        if (traverseWire) {
+            cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+            currentWire->addUpdate(true);
             traversedWires.push_back(pair<TileWire*, Direction>(currentWire, currentDirection));
-            if (!_boardPtr->wireUpdates.empty() && currentWire->_type != CROSSOVER) {    // Can't just erase updates for a crossover, probably need 2 timestamps for each wire ############################################################
+            if (!_boardPtr->wireUpdates.empty() && (currentWire->_type != CROSSOVER || currentWire->_updateTimestamp1 == currentWire->_updateTimestamp2)) {
                 _boardPtr->wireUpdates.erase(currentWire);
             }
             

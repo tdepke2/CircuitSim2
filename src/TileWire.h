@@ -63,7 +63,7 @@ class TileWire : public Tile {
     
     Type _type;
     State _state1, _state2;
-    unsigned int _updateTimestamp;
+    unsigned int _updateTimestamp1, _updateTimestamp2;
     
     void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);
 };
