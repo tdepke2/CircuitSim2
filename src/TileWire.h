@@ -33,6 +33,7 @@ class TileWire : public Tile {
     void addUpdate(bool isCosmetic = false);
     void followWire(Direction direction, State state);
     Tile* clone(Board* boardPtr, const Vector2u& position);
+    void updateWire(State state);
     
     private:
     const bool CONNECTION_INFO[4][5][4][4] = {    // Checks for wire path given direction of object, type, direction of entry, and direction of exit.

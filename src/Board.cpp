@@ -137,10 +137,10 @@ void Board::updateTiles() {
         (*gateUpdates.begin())->updateOutput();
     }
     
-    /*while (!wireUpdates.empty()) {
-        cout << "Found a remaining wire update." <<  << endl;
-        (*wireUpdates.begin())->followWire(NORTH, HIGH);    // Just for testing right now ###############################################################################
-    }*/
+    while (!wireUpdates.empty()) {
+        cout << "Found a remaining wire update." << endl;
+        (*wireUpdates.begin())->updateWire(LOW);
+    }
     
     TileWire::updateEndpointTiles();
     ++TileWire::currentUpdateTime;

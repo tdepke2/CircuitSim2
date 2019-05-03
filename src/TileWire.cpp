@@ -104,15 +104,41 @@ void TileWire::followWire(Direction direction, State state) {
     
     cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
-    const State originalState = state;
-    wireNodes.push(pair<TileWire*, Direction>(this, direction));
+    if (_type == CROSSOVER && direction % 2 == 1) {    // Update state of the wire and timestamp.
+        _state2 = state;
+        _updateTimestamp2 = currentUpdateTime;
+    } else {
+        _state1 = state;
+        _updateTimestamp1 = currentUpdateTime;
+    }
+    
+    addUpdate(true);
+    traversedWires.push_back(pair<TileWire*, Direction>(this, direction));
+    if (!_boardPtr->wireUpdates.empty() && (_type != CROSSOVER || _updateTimestamp1 == _updateTimestamp2)) {
+        _boardPtr->wireUpdates.erase(this);
+    }
+    
+    const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];    // Check for connection with all adjacent tiles.
+    if (exitDirections[0] && _position.y > 0) {
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y - 1)), NORTH, &state);
+    }
+    if (exitDirections[1] && _position.x < _boardPtr->getSize().x - 1) {
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x + 1, _position.y)), EAST, &state);
+    }
+    if (exitDirections[2] && _position.y < _boardPtr->getSize().y - 1) {
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y + 1)), SOUTH, &state);
+    }
+    if (exitDirections[3] && _position.x > 0) {
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x - 1, _position.y)), WEST, &state);
+    }
+    
     while (!wireNodes.empty()) {
         TileWire* currentWire = wireNodes.top().first;
         Direction currentDirection = wireNodes.top().second;
         wireNodes.pop();
         
         bool traverseWire = false;
-        if (currentWire->_type == CROSSOVER && currentDirection % 2 == 1) {
+        if (currentWire->_type == CROSSOVER && currentDirection % 2 == 1) {    // Update state of the wire and timestamp if this wire has not been traversed yet.
             if (currentWire->_updateTimestamp2 != currentUpdateTime) {
                 currentWire->_state2 = state;
                 currentWire->_updateTimestamp2 = currentUpdateTime;
@@ -132,7 +158,7 @@ void TileWire::followWire(Direction direction, State state) {
                 _boardPtr->wireUpdates.erase(currentWire);
             }
             
-            const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];
+            const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];    // Check for connection with adjacent tiles that do not point back to source wire.
             if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
                 _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH, &state);
             }
@@ -152,6 +178,26 @@ void TileWire::followWire(Direction direction, State state) {
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position) {
     return new TileWire(boardPtr, position, _direction, _type, _state1, _state2);
+}
+
+void TileWire::updateWire(State state) {
+    if (_type == CROSSOVER) {
+        if (_updateTimestamp1 != currentUpdateTime) {
+            followWire(NORTH, state);
+        } else {
+            followWire(EAST, state);
+        }
+    } else {
+        for (int i = 0; i < 4; ++i) {
+            const bool* exitDirections = CONNECTION_INFO[_direction][_type][i];
+            for (int j = 0; j < 4; ++j) {
+                if (exitDirections[j] == true) {
+                    followWire(static_cast<Direction>(i), state);
+                    return;
+                }
+            }
+        }
+    }
 }
 
 void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
@@ -175,6 +221,7 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
                     }
                 }
             }
+            cout << "Gate encountered, removing update." << endl;
             _boardPtr->gateUpdates.erase(nextGate);
         } else {
             endpointTiles.push_back(nextTile);
