@@ -12,10 +12,17 @@ vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
 vector<Tile*> TileWire::endpointTiles;
 
-void TileWire::updateEndpointTiles() {
+void TileWire::updateEndpointTiles(Board* boardPtr) {
     cout << "Endpoints list:" << endl;
-    for (const Tile* tile : endpointTiles) {
+    for (Tile* tile : endpointTiles) {
         cout << "  (" << tile->getPosition().x << ", " << tile->getPosition().y << ")" << endl;
+        if (typeid(*tile) == typeid(TileGate)) {
+            boardPtr->gateUpdates.insert(static_cast<TileGate*>(tile));
+        } else if (typeid(*tile) == typeid(TileLED)) {
+            tile->followWire(NORTH, LOW);
+        } else {
+            assert(false);
+        }
     }
     endpointTiles.clear();
 }

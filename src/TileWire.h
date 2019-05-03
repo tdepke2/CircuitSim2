@@ -23,7 +23,7 @@ class TileWire : public Tile {
     static stack<pair<TileWire*, Direction>> wireNodes;
     static vector<Tile*> endpointTiles;
     
-    static void updateEndpointTiles();
+    static void updateEndpointTiles(Board* boardPtr);
     TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
     ~TileWire();
     int getTextureID() const;

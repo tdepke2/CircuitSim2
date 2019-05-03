@@ -142,7 +142,7 @@ void Board::updateTiles() {
         (*wireUpdates.begin())->updateWire(LOW);
     }
     
-    TileWire::updateEndpointTiles();
+    TileWire::updateEndpointTiles(this);
     ++TileWire::currentUpdateTime;
 }
 
