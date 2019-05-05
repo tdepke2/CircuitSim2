@@ -5,12 +5,17 @@ class Board;
 
 #include "Tile.h"
 #include <SFML/Graphics.hpp>
+#include <stack>
+#include <vector>
 
 using namespace std;
 using namespace sf;
 
 class TileLED : public Tile {
     public:
+    static vector<TileLED*> traversedLEDs;
+    static stack<TileLED*> LEDNodes;
+    
     TileLED(Board* boardPtr, const Vector2u& position, State state = LOW);
     ~TileLED();
     int getTextureID() const;
@@ -21,6 +26,9 @@ class TileLED : public Tile {
     
     private:
     State _state;
+    unsigned int _updateTimestamp;
+    
+    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);
 };
 
 #endif

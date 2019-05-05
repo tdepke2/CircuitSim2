@@ -18,6 +18,8 @@ enum State : int {
 
 class Tile {    // Generic tile that is stored in a Board.
     public:
+    static unsigned int currentUpdateTime;
+    
     Tile();
     Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate = false);
     virtual ~Tile();

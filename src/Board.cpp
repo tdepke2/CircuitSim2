@@ -44,7 +44,7 @@ const vector<string> Board::GATE_SYMBOL_TABLE = {
 };
 
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    cout << "Clamping and stitching textures." << endl;
+    cout << "Stitching textures." << endl;
     delete _tilesetGridPtr;
     delete _tilesetNoGridPtr;
     _tilesetGridPtr = new Texture;
@@ -117,8 +117,8 @@ void Board::updateTiles() {
     if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
         cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
     }
-    if (TileWire::currentUpdateTime > 100) {
-        cout << "Thats a lot of updates, remember to check for integer rollover with TileWire::currentUpdateTime." << endl;
+    if (Tile::currentUpdateTime > 100) {
+        cout << "Thats a lot of updates, remember to check for integer rollover with Tile::currentUpdateTime." << endl;
     }
     
     for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {
@@ -142,8 +142,13 @@ void Board::updateTiles() {
         (*wireUpdates.begin())->updateWire(LOW);
     }
     
+    while (!LEDUpdates.empty()) {
+        cout << "Found a remaining LED update." << endl;
+        (*LEDUpdates.begin())->followWire(NORTH, LOW);
+    }
+    
     TileWire::updateEndpointTiles(this);
-    ++TileWire::currentUpdateTime;
+    ++Tile::currentUpdateTime;
 }
 
 void Board::replaceTile(Tile* tile) {

@@ -18,7 +18,6 @@ class TileWire : public Tile {
         STRAIGHT = 0, CORNER, TEE, JUNCTION, CROSSOVER
     };
     
-    static unsigned int currentUpdateTime;
     static vector<pair<TileWire*, Direction>> traversedWires;
     static stack<pair<TileWire*, Direction>> wireNodes;
     static vector<Tile*> endpointTiles;

@@ -1,6 +1,8 @@
 #include "Board.h"
 #include "Tile.h"
 
+unsigned int Tile::currentUpdateTime = 1;
+
 Tile::Tile() {}
 
 Tile::Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate) {
