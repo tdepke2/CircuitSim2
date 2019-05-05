@@ -22,10 +22,6 @@ int TileLED::getTextureID() const {
     return 17 + (_state == HIGH);
 }
 
-State TileLED::checkOutput(Direction direction) const {
-    return _state;
-}
-
 void TileLED::addUpdate(bool isCosmetic) {
     _boardPtr->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
@@ -39,7 +35,9 @@ void TileLED::followWire(Direction direction, State state) {
     
     cout << "Follow LED started at (" << _position.x << ", " << _position.y << ")." << endl;
     
-    LEDNodes.push(this);
+    if (_updateTimestamp != Tile::currentUpdateTime) {
+        LEDNodes.push(this);
+    }
     while (!LEDNodes.empty()) {
         TileLED* currentLED = LEDNodes.top();
         LEDNodes.pop();

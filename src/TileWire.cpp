@@ -110,6 +110,9 @@ void TileWire::followWire(Direction direction, State state) {
     
     cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
+    if (!CONNECTION_INFO[_direction][_type][direction][(direction + 2) % 4]) {
+        return;
+    }
     if (_type == CROSSOVER && direction % 2 == 1) {    // Update state of the wire and timestamp.
         _state2 = state;
         _updateTimestamp2 = Tile::currentUpdateTime;

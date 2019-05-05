@@ -142,12 +142,13 @@ void Board::updateTiles() {
         (*wireUpdates.begin())->updateWire(LOW);
     }
     
+    TileWire::updateEndpointTiles(this);
+    
     while (!LEDUpdates.empty()) {
         cout << "Found a remaining LED update." << endl;
         (*LEDUpdates.begin())->followWire(NORTH, LOW);
     }
     
-    TileWire::updateEndpointTiles(this);
     ++Tile::currentUpdateTime;
 }
 
