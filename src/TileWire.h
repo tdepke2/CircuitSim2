@@ -23,15 +23,15 @@ class TileWire : public Tile {
     static vector<Tile*> endpointTiles;
     
     static void updateEndpointTiles(Board* boardPtr);
-    TileWire(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
+    TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
     ~TileWire();
     int getTextureID() const;
     void setDirection(Direction direction);
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
-    void addUpdate(bool isCosmetic = false);
+    void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
     void followWire(Direction direction, State state);
-    Tile* clone(Board* boardPtr, const Vector2u& position);
+    Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     void updateWire(State state);
     
     private:

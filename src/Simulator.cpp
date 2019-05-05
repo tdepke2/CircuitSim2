@@ -437,17 +437,17 @@ void Simulator::placeTile(int option) {
         currentTileBoardPtr->newBoard(Vector2u(1, 1), "");
     }
     if (option == 0) {
-        currentTileBoardPtr->replaceTile(new Tile(currentTileBoardPtr, Vector2u(0, 0)));
+        currentTileBoardPtr->replaceTile(new Tile(currentTileBoardPtr, Vector2u(0, 0), true));
     } else if (option < 6) {
-        currentTileBoardPtr->replaceTile(new TileWire(currentTileBoardPtr, Vector2u(0, 0), currentTileDirection, static_cast<TileWire::Type>(option - 1)));
+        currentTileBoardPtr->replaceTile(new TileWire(currentTileBoardPtr, Vector2u(0, 0), true, currentTileDirection, static_cast<TileWire::Type>(option - 1)));
     } else if (option == 6) {
-        currentTileBoardPtr->replaceTile(new TileSwitch(currentTileBoardPtr, Vector2u(0, 0)));
+        currentTileBoardPtr->replaceTile(new TileSwitch(currentTileBoardPtr, Vector2u(0, 0), true));
     } else if (option == 7) {
-        currentTileBoardPtr->replaceTile(new TileButton(currentTileBoardPtr, Vector2u(0, 0)));
+        currentTileBoardPtr->replaceTile(new TileButton(currentTileBoardPtr, Vector2u(0, 0), true));
     } else if (option == 8) {
-        currentTileBoardPtr->replaceTile(new TileLED(currentTileBoardPtr, Vector2u(0, 0)));
+        currentTileBoardPtr->replaceTile(new TileLED(currentTileBoardPtr, Vector2u(0, 0), true));
     } else if (option < 18) {
-        currentTileBoardPtr->replaceTile(new TileGate(currentTileBoardPtr, Vector2u(0, 0), currentTileDirection, static_cast<TileGate::Type>(option - 9)));
+        currentTileBoardPtr->replaceTile(new TileGate(currentTileBoardPtr, Vector2u(0, 0), true, currentTileDirection, static_cast<TileGate::Type>(option - 9)));
     } else {
         assert(false);
     }

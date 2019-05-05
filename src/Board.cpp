@@ -138,14 +138,14 @@ void Board::updateTiles() {
     }
     
     while (!wireUpdates.empty()) {
-        cout << "Found a remaining wire update." << endl;
+        //cout << "Found a remaining wire update." << endl;
         (*wireUpdates.begin())->updateWire(LOW);
     }
     
     TileWire::updateEndpointTiles(this);
     
     while (!LEDUpdates.empty()) {
-        cout << "Found a remaining LED update." << endl;
+        //cout << "Found a remaining LED update." << endl;
         (*LEDUpdates.begin())->followWire(NORTH, LOW);
     }
     
@@ -184,7 +184,7 @@ void Board::resize(const Vector2u& size) {
             newTileArray[y][x] = _tileArray[y][x];
         }
         for (unsigned int x = xStop; x < size.x; ++x) {
-            newTileArray[y][x] = new Tile(this, Vector2u(x, y));
+            newTileArray[y][x] = new Tile(this, Vector2u(x, y), true);
         }
         for (unsigned int x = xStop; x < oldSize.x; ++x) {
             delete _tileArray[y][x];
@@ -194,7 +194,7 @@ void Board::resize(const Vector2u& size) {
     for (unsigned int y = yStop; y < size.y; ++y) {    // Add extra rows if necessary.
         newTileArray[y] = new Tile*[size.x];
         for (unsigned int x = 0; x < size.x; ++x) {
-            newTileArray[y][x] = new Tile(this, Vector2u(x, y));
+            newTileArray[y][x] = new Tile(this, Vector2u(x, y), true);
         }
     }
     for (unsigned int y = yStop; y < oldSize.y; ++y) {    // Delete extra rows if necessary.
@@ -317,7 +317,7 @@ void Board::newBoard(const Vector2u& size, const string& filename, bool startEmp
         _tileArray[y] = new Tile*[size.x];
         if (!startEmpty) {
             for (unsigned int x = 0; x < size.x; ++x) {
-                _tileArray[y][x] = new Tile(this, Vector2u(x, y));
+                _tileArray[y][x] = new Tile(this, Vector2u(x, y), true);
             }
         }
     }
@@ -355,27 +355,27 @@ void Board::loadFile(const string& filename) {
                     int i;
                     char c1 = line[posX * 2 + 1], c2 = line[posX * 2 + 2];
                     if (c1 == ' ' && c2 == ' ') {     // Check for blank tile.
-                        _tileArray[posY][posX] = new Tile(this, Vector2u(posX, posY));
+                        _tileArray[posY][posX] = new Tile(this, Vector2u(posX, posY), true);
                     } else if ((i = _findSymbol(c1, c2, WIRE_SYMBOL_TABLE)) != -1) {     // Check for wire tile.
                         if (i < 4) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, static_cast<State>(i % 2 + 1), LOW);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), true, static_cast<Direction>(i / 2 % 4), TileWire::STRAIGHT, static_cast<State>(i % 2 + 1), LOW);
                         } else if (i < 20) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), static_cast<State>(i % 2 + 1), LOW);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), true, static_cast<Direction>((i - 4) / 2 % 4), static_cast<TileWire::Type>((i + 4) / 8), static_cast<State>(i % 2 + 1), LOW);
                         } else if (i < 22) {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::JUNCTION, static_cast<State>(i % 2 + 1), LOW);
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), true, NORTH, TileWire::JUNCTION, static_cast<State>(i % 2 + 1), LOW);
                         } else {
-                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), NORTH, TileWire::CROSSOVER, static_cast<State>(i % 2 + 1), static_cast<State>((i >= 24) + 1));
+                            _tileArray[posY][posX] = new TileWire(this, Vector2u(posX, posY), true, NORTH, TileWire::CROSSOVER, static_cast<State>(i % 2 + 1), static_cast<State>((i >= 24) + 1));
                         }
                     } else if ((i = _findSymbol(c1, '\0', INPUT_SYMBOL_TABLE)) != -1) {     // Check for input tile.
                         if (i < 2) {
-                            _tileArray[posY][posX] = new TileSwitch(this, Vector2u(posX, posY), c2, static_cast<State>(i % 2 + 1));
+                            _tileArray[posY][posX] = new TileSwitch(this, Vector2u(posX, posY), true, c2, static_cast<State>(i % 2 + 1));
                         } else {
-                            _tileArray[posY][posX] = new TileButton(this, Vector2u(posX, posY), c2, static_cast<State>(i % 2 + 1));
+                            _tileArray[posY][posX] = new TileButton(this, Vector2u(posX, posY), true, c2, static_cast<State>(i % 2 + 1));
                         }
                     } else if ((i = _findSymbol(c1, c2, OUTPUT_SYMBOL_TABLE)) != -1) {    // Check for output tile.
-                        _tileArray[posY][posX] = new TileLED(this, Vector2u(posX, posY), static_cast<State>(i % 2 + 1));
+                        _tileArray[posY][posX] = new TileLED(this, Vector2u(posX, posY), true, static_cast<State>(i % 2 + 1));
                     } else if ((i = _findSymbol(c1, c2, GATE_SYMBOL_TABLE)) != -1) {    // Check for gate tile.
-                        _tileArray[posY][posX] = new TileGate(this, Vector2u(posX, posY), static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), static_cast<State>(i % 2 + 1));
+                        _tileArray[posY][posX] = new TileGate(this, Vector2u(posX, posY), true, static_cast<Direction>(i / 2 % 4), static_cast<TileGate::Type>(i / 8), static_cast<State>(i % 2 + 1));
                     } else {    // Else, symbol is not valid.
                         string s1, s2;
                         s1.push_back(c1);

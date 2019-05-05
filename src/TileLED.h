@@ -16,12 +16,12 @@ class TileLED : public Tile {
     static vector<TileLED*> traversedLEDs;
     static stack<TileLED*> LEDNodes;
     
-    TileLED(Board* boardPtr, const Vector2u& position, State state = LOW);
+    TileLED(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, State state = LOW);
     ~TileLED();
     int getTextureID() const;
-    void addUpdate(bool isCosmetic = false);
+    void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
     void followWire(Direction direction, State state);
-    Tile* clone(Board* boardPtr, const Vector2u& position);
+    Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     
     private:
     State _state;

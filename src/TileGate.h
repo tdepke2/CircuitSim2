@@ -15,7 +15,7 @@ class TileGate : public Tile {
         DIODE = 0, BUFFER, NOT, AND, NAND, OR, NOR, XOR, XNOR
     };
     
-    TileGate(Board* boardPtr, const Vector2u& position, Direction direction = NORTH, Type type = DIODE, State state = LOW);
+    TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = DIODE, State state = LOW);
     ~TileGate();
     int getTextureID() const;
     State getState() const;
@@ -23,11 +23,11 @@ class TileGate : public Tile {
     void setDirection(Direction direction);
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
-    void addUpdate(bool isCosmetic = false);
+    void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
     bool updateNextState();
     void updateOutput();
     void followWire(Direction direction, State state);
-    Tile* clone(Board* boardPtr, const Vector2u& position);
+    Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     
     private:
     Type _type;

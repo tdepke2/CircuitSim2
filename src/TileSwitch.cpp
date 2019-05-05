@@ -1,10 +1,10 @@
 #include "Board.h"
 #include "TileSwitch.h"
 
-TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, char charID, State state) : Tile(boardPtr, position, true) {
+TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, char charID, State state) : Tile(boardPtr, position, true, true) {
     _charID = charID;
     _state = state;
-    addUpdate();
+    addUpdate(false, noAdjacentUpdates);
 }
 
 TileSwitch::~TileSwitch() {
@@ -19,13 +19,16 @@ State TileSwitch::checkOutput(Direction direction) const {
     return _state;
 }
 
-void TileSwitch::addUpdate(bool isCosmetic) {
+void TileSwitch::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     _boardPtr->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
         _boardPtr->switchUpdates.insert(this);
+        if (!noAdjacentUpdates) {
+            _updateAdjacentTiles();
+        }
     }
 }
 
-Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileSwitch(boardPtr, position, _charID, _state);
+Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
+    return new TileSwitch(boardPtr, position, noAdjacentUpdates, _charID, _state);
 }

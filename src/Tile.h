@@ -21,7 +21,7 @@ class Tile {    // Generic tile that is stored in a Board.
     static unsigned int currentUpdateTime;
     
     Tile();
-    Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate = false);
+    Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);
     virtual ~Tile();
     virtual int getTextureID() const;
     const Vector2u& getPosition() const;
@@ -33,15 +33,17 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual void flip(bool acrossHorizontal);
     virtual State checkOutput(Direction direction) const;
     pair<State, Tile*> checkState(Direction direction) const;
-    virtual void addUpdate(bool isCosmetic = false);
+    virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
     virtual void followWire(Direction direction, State state);
-    virtual Tile* clone(Board* boardPtr, const Vector2u& position);
+    virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     
     protected:
     Board* _boardPtr;
     Vector2u _position;
     Direction _direction;
     bool _highlight;
+    
+    void _updateAdjacentTiles();
 };
 
 #endif

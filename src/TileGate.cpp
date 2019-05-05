@@ -2,14 +2,14 @@
 #include "TileGate.h"
 #include "TileWire.h"
 
-#include <iostream>
+//#include <iostream>
 
-TileGate::TileGate(Board* boardPtr, const Vector2u& position, Direction direction, Type type, State state) : Tile(boardPtr, position, true) {
+TileGate::TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, Direction direction, Type type, State state) : Tile(boardPtr, position, true, true) {
     _direction = direction;
     _type = type;
     _state = state;
     _nextState = state;
-    addUpdate();
+    addUpdate(false, noAdjacentUpdates);
 }
 
 TileGate::~TileGate() {
@@ -53,10 +53,13 @@ State TileGate::checkOutput(Direction direction) const {
     }
 }
 
-void TileGate::addUpdate(bool isCosmetic) {
+void TileGate::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     _boardPtr->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
         _boardPtr->gateUpdates.insert(this);
+        if (!noAdjacentUpdates) {
+            _updateAdjacentTiles();
+        }
     }
 }
 
@@ -127,15 +130,15 @@ bool TileGate::updateNextState() {
         }
     }
     
-    cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
-    cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
-    cout << "  state = " << _state << ", next = " << _nextState << endl;
+    //cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
+    //cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
+    //cout << "  state = " << _state << ", next = " << _nextState << endl;
     
     return _nextState != _state;
 }
 
 void TileGate::updateOutput() {
-    cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
+    //cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
     _boardPtr->gateUpdates.erase(this);
     _state = _nextState;
     addUpdate(true);
@@ -163,6 +166,6 @@ void TileGate::followWire(Direction direction, State state) {
     }
 }
 
-Tile* TileGate::clone(Board* boardPtr, const Vector2u& position) {
-    return new TileGate(boardPtr, position, _direction, _type, _state);
+Tile* TileGate::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
+    return new TileGate(boardPtr, position, noAdjacentUpdates, _direction, _type, _state);
 }

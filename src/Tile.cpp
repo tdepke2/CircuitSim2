@@ -1,17 +1,19 @@
 #include "Board.h"
 #include "Tile.h"
 
+#include <iostream>
+
 unsigned int Tile::currentUpdateTime = 1;
 
 Tile::Tile() {}
 
-Tile::Tile(Board* boardPtr, const Vector2u& position, bool suppressUpdate) {
+Tile::Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, bool suppressUpdate) {
     _boardPtr = boardPtr;
     _position = position;
     _direction = NORTH;
     _highlight = false;
     if (!suppressUpdate) {
-        addUpdate();
+        addUpdate(false, noAdjacentUpdates);
     }
 }
 
@@ -79,12 +81,30 @@ pair<State, Tile*> Tile::checkState(Direction direction) const {
     }
 }
 
-void Tile::addUpdate(bool isCosmetic) {
+void Tile::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     _boardPtr->cosmeticUpdates.insert(this);
+    if (!isCosmetic && !noAdjacentUpdates) {
+        _updateAdjacentTiles();
+    }
 }
 
 void Tile::followWire(Direction direction, State state) {}
 
-Tile* Tile::clone(Board* boardPtr, const Vector2u& position) {
-    return new Tile(boardPtr, position);
+Tile* Tile::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
+    return new Tile(boardPtr, position, noAdjacentUpdates);
+}
+
+void Tile::_updateAdjacentTiles() {
+    if (_position.y > 0) {
+        _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->addUpdate(false, true);
+    }
+    if (_position.x < _boardPtr->getSize().x - 1) {
+        _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->addUpdate(false, true);
+    }
+    if (_position.y < _boardPtr->getSize().y - 1) {
+        _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->addUpdate(false, true);
+    }
+    if (_position.x > 0) {
+        _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->addUpdate(false, true);
+    }
 }
