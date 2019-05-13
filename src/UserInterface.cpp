@@ -139,9 +139,10 @@ UserInterface::UserInterface() {
     fileMenu.addMenuButton(TextButton(font, "  Exit", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6));
     
     viewMenu = DropdownMenu(TextButton(font, " View ", Color::Black, 15, fileMenu.getPosition().x + fileMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    viewMenu.addMenuButton(TextButton(font, "  Zoom In         Mouse Wheel Up", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 0));
-    viewMenu.addMenuButton(TextButton(font, "  Zoom Out      Mouse Wheel Down", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 1));
-    viewMenu.addMenuButton(TextButton(font, "  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 2));
+    viewMenu.addMenuButton(TextButton(font, "  Toggle View/Edit Mode      Enter", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 0));
+    viewMenu.addMenuButton(TextButton(font, "  Zoom In           Mouse Wheel Up", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 1));
+    viewMenu.addMenuButton(TextButton(font, "  Zoom Out        Mouse Wheel Down", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 2));
+    viewMenu.addMenuButton(TextButton(font, "  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 3));
     
     runMenu = DropdownMenu(TextButton(font, " Run ", Color::Black, 15, viewMenu.getPosition().x + viewMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     runMenu.addMenuButton(TextButton(font, "  Step Frame                 Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));

@@ -23,7 +23,7 @@ Board* Simulator::boardPtr = nullptr;
 Board* Simulator::currentTileBoardPtr = nullptr;
 Board* Simulator::copyBufferBoardPtr = nullptr;
 Direction Simulator::currentTileDirection = NORTH;
-bool Simulator::copyBufferVisible = false;
+bool Simulator::editMode = true, Simulator::copyBufferVisible = false;
 Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 
@@ -37,7 +37,7 @@ int Simulator::start() {
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         
-        viewOption(2);
+        viewOption(3);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board board, currentTileBoard, copyBufferBoard;
         boardPtr = &board;
@@ -144,8 +144,8 @@ int Simulator::start() {
                             toolsOption(8);
                         }
                     } else if (!Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
-                        if (event.key.code == Keyboard::G) {
-                            Board::gridActive = !Board::gridActive;
+                        if (event.key.code == Keyboard::Enter) {
+                            viewOption(0);
                         } else if (event.key.code == Keyboard::Tab) {
                             runOption(0);
                         } else if (event.key.code == Keyboard::Escape) {
@@ -286,7 +286,7 @@ void Simulator::fileOption(int option) {
     if (option == 0) {    // New board.
         boardPtr->newBoard();
         cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
-        viewOption(2);
+        viewOption(3);
     } else if (option == 1) {    // Load board.
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
         char filename[260];
@@ -306,7 +306,7 @@ void Simulator::fileOption(int option) {
         
         if (GetOpenFileName(&fileDialog) == TRUE) {
             boardPtr->loadFile(string(fileDialog.lpstrFile));
-            viewOption(2);
+            viewOption(3);
         } else {
             cout << "No file selected." << endl;
         }
@@ -326,11 +326,26 @@ void Simulator::fileOption(int option) {
 }
 
 void Simulator::viewOption(int option) {
-    if (option == 0) {    // Zoom in.
-        
-    } else if (option == 1) {    // Zoom out.
-        
-    } else if (option == 2) {    // Default zoom.
+    if (option == 0) {    // Toggle view/edit mode.
+        if (editMode) {
+            currentTileBoardPtr->clear();
+            copyBufferVisible = false;
+        }
+        editMode = !editMode;
+        Board::gridActive = editMode;
+    } else if (option == 1) {    // Zoom in.
+        float zoomDelta = 10.0f * zoomLevel * -0.04f;
+        if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
+            zoomLevel += zoomDelta;
+            boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+        }
+    } else if (option == 2) {    // Zoom out.
+        float zoomDelta = -10.0f * zoomLevel * -0.04f;
+        if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
+            zoomLevel += zoomDelta;
+            boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+        }
+    } else if (option == 3) {    // Default zoom.
         zoomLevel = 1.0f;
         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
         windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
@@ -351,6 +366,9 @@ void Simulator::runOption(int option) {
 }
 
 void Simulator::toolsOption(int option) {
+    if (!editMode) {
+        return;
+    }
     if (option == 0) {    // Select all.
         selectionArea = IntRect(0, 0, boardPtr->getSize().x, boardPtr->getSize().y);
         boardPtr->highlightArea(selectionArea, true);
@@ -433,6 +451,9 @@ void Simulator::toolsOption(int option) {
 }
 
 void Simulator::placeTile(int option) {
+    if (!editMode) {
+        return;
+    }
     if (currentTileBoardPtr->getSize() != Vector2u(1, 1)) {
         currentTileBoardPtr->newBoard(Vector2u(1, 1), "");
     }

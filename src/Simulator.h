@@ -37,7 +37,7 @@ class Simulator {
     static Board* currentTileBoardPtr;
     static Board* copyBufferBoardPtr;
     static Direction currentTileDirection;
-    static bool copyBufferVisible;
+    static bool editMode, copyBufferVisible;
     static Vector2i tileCursor, selectionStart;
     static IntRect selectionArea;
     
