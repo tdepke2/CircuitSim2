@@ -143,77 +143,91 @@ int Simulator::start() {
                         } else if (event.key.code == Keyboard::V) {
                             toolsOption(8);
                         }
-                    } else if (!Keyboard::isKeyPressed(Keyboard::LAlt) && !Keyboard::isKeyPressed(Keyboard::RAlt)) {
+                    } else {
                         if (event.key.code == Keyboard::Enter) {
                             viewOption(0);
                         } else if (event.key.code == Keyboard::Tab) {
-                            runOption(0);
+                            if (!event.key.shift) {
+                                runOption(0);
+                            } else {
+                                //runOption(1);
+                            }
                         } else if (event.key.code == Keyboard::Escape) {
                             toolsOption(1);
-                        } else if (event.key.code == Keyboard::R) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                toolsOption(2);
-                            } else {
-                                toolsOption(3);
+                        }
+                        if (editMode) {
+                            if (event.key.code == Keyboard::R) {
+                                if (!event.key.shift) {
+                                    toolsOption(2);
+                                } else {
+                                    toolsOption(3);
+                                }
+                            } else if (event.key.code == Keyboard::F) {
+                                if (!event.key.shift) {
+                                    toolsOption(4);
+                                } else {
+                                    toolsOption(5);
+                                }
+                            } else if (event.key.code == Keyboard::Delete) {
+                                toolsOption(9);
+                            } else if (event.key.code == Keyboard::Space) {
+                                placeTile(0);
+                            } else if (event.key.code == Keyboard::T) {
+                                if (!event.key.shift) {
+                                    placeTile(1);
+                                } else {
+                                    placeTile(3);
+                                }
+                            } else if (event.key.code == Keyboard::C) {
+                                if (!event.key.shift) {
+                                    placeTile(2);
+                                } else {
+                                    placeTile(5);
+                                }
+                            } else if (event.key.code == Keyboard::J) {
+                                placeTile(4);
+                            } else if (event.key.code == Keyboard::S) {
+                                if (!event.key.shift) {
+                                    placeTile(6);
+                                } else {
+                                    placeTile(7);
+                                }
+                            } else if (event.key.code == Keyboard::L) {
+                                placeTile(8);
+                            } else if (event.key.code == Keyboard::D) {
+                                placeTile(9);
+                            } else if (event.key.code == Keyboard::B) {
+                                if (!event.key.shift) {
+                                    placeTile(10);
+                                } else {
+                                    placeTile(11);
+                                }
+                            } else if (event.key.code == Keyboard::A) {
+                                if (!event.key.shift) {
+                                    placeTile(12);
+                                } else {
+                                    placeTile(13);
+                                }
+                            } else if (event.key.code == Keyboard::O) {
+                                if (!event.key.shift) {
+                                    placeTile(14);
+                                } else {
+                                    placeTile(15);
+                                }
+                            } else if (event.key.code == Keyboard::X) {
+                                if (!event.key.shift) {
+                                    placeTile(16);
+                                } else {
+                                    placeTile(17);
+                                }
                             }
-                        } else if (event.key.code == Keyboard::F) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                toolsOption(4);
-                            } else {
-                                toolsOption(5);
+                        } else if (event.key.code >= 0) {
+                            cout << "Got key " << event.key.code << " [";
+                            char c = keyEventToChar(event.key);
+                            if (c != 0) {
+                                cout << c;
                             }
-                        } else if (event.key.code == Keyboard::Delete) {
-                            toolsOption(9);
-                        } else if (event.key.code == Keyboard::Space) {
-                            placeTile(0);
-                        } else if (event.key.code == Keyboard::T) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(1);
-                            } else {
-                                placeTile(3);
-                            }
-                        } else if (event.key.code == Keyboard::C) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(2);
-                            } else {
-                                placeTile(5);
-                            }
-                        } else if (event.key.code == Keyboard::J) {
-                            placeTile(4);
-                        } else if (event.key.code == Keyboard::S) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(6);
-                            } else {
-                                placeTile(7);
-                            }
-                        } else if (event.key.code == Keyboard::L) {
-                            placeTile(8);
-                        } else if (event.key.code == Keyboard::D) {
-                            placeTile(9);
-                        } else if (event.key.code == Keyboard::B) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(10);
-                            } else {
-                                placeTile(11);
-                            }
-                        } else if (event.key.code == Keyboard::A) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(12);
-                            } else {
-                                placeTile(13);
-                            }
-                        } else if (event.key.code == Keyboard::O) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(14);
-                            } else {
-                                placeTile(15);
-                            }
-                        } else if (event.key.code == Keyboard::X) {
-                            if (!Keyboard::isKeyPressed(Keyboard::LShift) && !Keyboard::isKeyPressed(Keyboard::RShift)) {
-                                placeTile(16);
-                            } else {
-                                placeTile(17);
-                            }
+                            cout << "]" << endl;
                         }
                     }
                 } else if (event.type == Event::Resized) {
@@ -366,9 +380,6 @@ void Simulator::runOption(int option) {
 }
 
 void Simulator::toolsOption(int option) {
-    if (!editMode) {
-        return;
-    }
     if (option == 0) {    // Select all.
         selectionArea = IntRect(0, 0, boardPtr->getSize().x, boardPtr->getSize().y);
         boardPtr->highlightArea(selectionArea, true);
@@ -383,6 +394,8 @@ void Simulator::toolsOption(int option) {
                 boardPtr->getTile(tileCursor)->setHighlight(true);
             }
         }
+    } else if (!editMode) {
+        return;
     } else if (option == 2) {    // Rotate selection CW.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
@@ -536,4 +549,120 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             }
         }
     }
+}
+
+char Simulator::keyEventToChar(Event::KeyEvent key) {
+    if (!key.shift) {
+        if (key.code < 0) {
+            return '\0';
+        } else if (key.code < 26) {
+            return 'a' + key.code;
+        } else if (key.code < 36) {
+            return '0' - 26 + key.code;
+        } else if (key.code < 46) {
+            return '\0';
+        } else if (key.code == 46) {
+            return '[';
+        } else if (key.code == 47) {
+            return ']';
+        } else if (key.code == 48) {
+            return ';';
+        } else if (key.code == 49) {
+            return ',';
+        } else if (key.code == 50) {
+            return '.';
+        } else if (key.code == 51) {
+            return '\'';
+        } else if (key.code == 52) {
+            return '/';
+        } else if (key.code == 53) {
+            return '\\';
+        } else if (key.code == 54) {
+            return '`';
+        } else if (key.code == 55) {
+            return '=';
+        } else if (key.code == 56) {
+            return '-';
+        } else if (key.code == 57) {
+            return ' ';
+        } else if (key.code < 67) {
+            return '\0';
+        } else if (key.code == 67) {
+            return '+';
+        } else if (key.code == 68) {
+            return '-';
+        } else if (key.code == 69) {
+            return '*';
+        } else if (key.code == 70) {
+            return '/';
+        } else if (key.code < 75) {
+            return '\0';
+        } else if (key.code < 85) {
+            return '0' - 75 + key.code;
+        }
+    } else {
+        if (key.code < 0) {
+            return '\0';
+        } else if (key.code < 26) {
+            return 'A' + key.code;
+        } else if (key.code == 26) {
+            return ')';
+        } else if (key.code == 27) {
+            return '!';
+        } else if (key.code == 28) {
+            return '@';
+        } else if (key.code == 29) {
+            return '#';
+        } else if (key.code == 30) {
+            return '$';
+        } else if (key.code == 31) {
+            return '%';
+        } else if (key.code == 32) {
+            return '^';
+        } else if (key.code == 33) {
+            return '&';
+        } else if (key.code == 34) {
+            return '*';
+        } else if (key.code == 35) {
+            return '(';
+        } else if (key.code < 46) {
+            return '\0';
+        } else if (key.code == 46) {
+            return '{';
+        } else if (key.code == 47) {
+            return '}';
+        } else if (key.code == 48) {
+            return ':';
+        } else if (key.code == 49) {
+            return '<';
+        } else if (key.code == 50) {
+            return '>';
+        } else if (key.code == 51) {
+            return '\"';
+        } else if (key.code == 52) {
+            return '?';
+        } else if (key.code == 53) {
+            return '|';
+        } else if (key.code == 54) {
+            return '~';
+        } else if (key.code == 55) {
+            return '+';
+        } else if (key.code == 56) {
+            return '_';
+        } else if (key.code == 57) {
+            return ' ';
+        } else if (key.code < 67) {
+            return '\0';
+        } else if (key.code == 67) {
+            return '+';
+        } else if (key.code == 68) {
+            return '-';
+        } else if (key.code == 69) {
+            return '*';
+        } else if (key.code == 70) {
+            return '/';
+        }
+    }
+    
+    return '\0';
 }
