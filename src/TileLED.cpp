@@ -22,6 +22,15 @@ int TileLED::getTextureID() const {
     return 17 + (_state == HIGH);
 }
 
+State TileLED::getState() const {
+    return _state;
+}
+
+void TileLED::setState(State state) {
+    _state = state;
+    addUpdate();
+}
+
 void TileLED::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     _boardPtr->cosmeticUpdates.insert(this);
     if (!isCosmetic) {

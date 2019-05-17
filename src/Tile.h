@@ -28,8 +28,9 @@ class Tile {    // Generic tile that is stored in a Board.
     Direction getDirection() const;
     bool getHighlight() const;
     void setPosition(const Vector2u& position, bool keepOverwrittenTile = false);
-    void setHighlight(bool highlight);
     virtual void setDirection(Direction direction);
+    void setHighlight(bool highlight);
+    virtual void setState(State state);
     virtual void flip(bool acrossHorizontal);
     virtual State checkOutput(Direction direction) const;
     pair<State, Tile*> checkState(Direction direction) const;

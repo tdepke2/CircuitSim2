@@ -38,6 +38,11 @@ void TileGate::setDirection(Direction direction) {
     addUpdate();
 }
 
+void TileGate::setState(State state) {
+    _state = state;
+    addUpdate();
+}
+
 void TileGate::flip(bool acrossHorizontal) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);

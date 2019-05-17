@@ -223,11 +223,33 @@ int Simulator::start() {
                             }
                         } else if (event.key.code >= 0) {
                             cout << "Got key " << event.key.code << " [";
-                            char c = keyEventToChar(event.key);
-                            if (c != 0) {
-                                cout << c;
+                            char keyChar = keyEventToChar(event.key);
+                            if (keyChar != 0) {
+                                cout << keyChar;
                             }
                             cout << "]" << endl;
+                            if (keyChar != '\0') {
+                                auto mapIter = board.switchKeybinds.find(keyChar);
+                                if (mapIter != board.switchKeybinds.end() && !mapIter->second.empty()) {
+                                    for (TileSwitch* switchPtr : mapIter->second) {
+                                        if (switchPtr->getState() == LOW) {
+                                            switchPtr->setState(HIGH);
+                                        } else {
+                                            switchPtr->setState(LOW);
+                                        }
+                                    }
+                                }
+                                auto mapIter2 = board.buttonKeybinds.find(keyChar);
+                                if (mapIter2 != board.buttonKeybinds.end() && !mapIter2->second.empty()) {
+                                    for (TileButton* buttonPtr : mapIter2->second) {
+                                        if (buttonPtr->getState() == LOW) {
+                                            buttonPtr->setState(HIGH);
+                                        } else {
+                                            buttonPtr->setState(LOW);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 } else if (event.type == Event::Resized) {
@@ -551,115 +573,115 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
     }
 }
 
-char Simulator::keyEventToChar(Event::KeyEvent key) {
-    if (!key.shift) {
-        if (key.code < 0) {
+char Simulator::keyEventToChar(Event::KeyEvent keyEvent) {
+    if (!keyEvent.shift) {
+        if (keyEvent.code < 0) {
             return '\0';
-        } else if (key.code < 26) {
-            return 'a' + key.code;
-        } else if (key.code < 36) {
-            return '0' - 26 + key.code;
-        } else if (key.code < 46) {
+        } else if (keyEvent.code < 26) {
+            return 'a' + keyEvent.code;
+        } else if (keyEvent.code < 36) {
+            return '0' - 26 + keyEvent.code;
+        } else if (keyEvent.code < 46) {
             return '\0';
-        } else if (key.code == 46) {
+        } else if (keyEvent.code == 46) {
             return '[';
-        } else if (key.code == 47) {
+        } else if (keyEvent.code == 47) {
             return ']';
-        } else if (key.code == 48) {
+        } else if (keyEvent.code == 48) {
             return ';';
-        } else if (key.code == 49) {
+        } else if (keyEvent.code == 49) {
             return ',';
-        } else if (key.code == 50) {
+        } else if (keyEvent.code == 50) {
             return '.';
-        } else if (key.code == 51) {
+        } else if (keyEvent.code == 51) {
             return '\'';
-        } else if (key.code == 52) {
+        } else if (keyEvent.code == 52) {
             return '/';
-        } else if (key.code == 53) {
+        } else if (keyEvent.code == 53) {
             return '\\';
-        } else if (key.code == 54) {
+        } else if (keyEvent.code == 54) {
             return '`';
-        } else if (key.code == 55) {
+        } else if (keyEvent.code == 55) {
             return '=';
-        } else if (key.code == 56) {
+        } else if (keyEvent.code == 56) {
             return '-';
-        } else if (key.code == 57) {
+        } else if (keyEvent.code == 57) {
             return ' ';
-        } else if (key.code < 67) {
+        } else if (keyEvent.code < 67) {
             return '\0';
-        } else if (key.code == 67) {
+        } else if (keyEvent.code == 67) {
             return '+';
-        } else if (key.code == 68) {
+        } else if (keyEvent.code == 68) {
             return '-';
-        } else if (key.code == 69) {
+        } else if (keyEvent.code == 69) {
             return '*';
-        } else if (key.code == 70) {
+        } else if (keyEvent.code == 70) {
             return '/';
-        } else if (key.code < 75) {
+        } else if (keyEvent.code < 75) {
             return '\0';
-        } else if (key.code < 85) {
-            return '0' - 75 + key.code;
+        } else if (keyEvent.code < 85) {
+            return '0' - 75 + keyEvent.code;
         }
     } else {
-        if (key.code < 0) {
+        if (keyEvent.code < 0) {
             return '\0';
-        } else if (key.code < 26) {
-            return 'A' + key.code;
-        } else if (key.code == 26) {
+        } else if (keyEvent.code < 26) {
+            return 'A' + keyEvent.code;
+        } else if (keyEvent.code == 26) {
             return ')';
-        } else if (key.code == 27) {
+        } else if (keyEvent.code == 27) {
             return '!';
-        } else if (key.code == 28) {
+        } else if (keyEvent.code == 28) {
             return '@';
-        } else if (key.code == 29) {
+        } else if (keyEvent.code == 29) {
             return '#';
-        } else if (key.code == 30) {
+        } else if (keyEvent.code == 30) {
             return '$';
-        } else if (key.code == 31) {
+        } else if (keyEvent.code == 31) {
             return '%';
-        } else if (key.code == 32) {
+        } else if (keyEvent.code == 32) {
             return '^';
-        } else if (key.code == 33) {
+        } else if (keyEvent.code == 33) {
             return '&';
-        } else if (key.code == 34) {
+        } else if (keyEvent.code == 34) {
             return '*';
-        } else if (key.code == 35) {
+        } else if (keyEvent.code == 35) {
             return '(';
-        } else if (key.code < 46) {
+        } else if (keyEvent.code < 46) {
             return '\0';
-        } else if (key.code == 46) {
+        } else if (keyEvent.code == 46) {
             return '{';
-        } else if (key.code == 47) {
+        } else if (keyEvent.code == 47) {
             return '}';
-        } else if (key.code == 48) {
+        } else if (keyEvent.code == 48) {
             return ':';
-        } else if (key.code == 49) {
+        } else if (keyEvent.code == 49) {
             return '<';
-        } else if (key.code == 50) {
+        } else if (keyEvent.code == 50) {
             return '>';
-        } else if (key.code == 51) {
+        } else if (keyEvent.code == 51) {
             return '\"';
-        } else if (key.code == 52) {
+        } else if (keyEvent.code == 52) {
             return '?';
-        } else if (key.code == 53) {
+        } else if (keyEvent.code == 53) {
             return '|';
-        } else if (key.code == 54) {
+        } else if (keyEvent.code == 54) {
             return '~';
-        } else if (key.code == 55) {
+        } else if (keyEvent.code == 55) {
             return '+';
-        } else if (key.code == 56) {
+        } else if (keyEvent.code == 56) {
             return '_';
-        } else if (key.code == 57) {
+        } else if (keyEvent.code == 57) {
             return ' ';
-        } else if (key.code < 67) {
+        } else if (keyEvent.code < 67) {
             return '\0';
-        } else if (key.code == 67) {
+        } else if (keyEvent.code == 67) {
             return '+';
-        } else if (key.code == 68) {
+        } else if (keyEvent.code == 68) {
             return '-';
-        } else if (key.code == 69) {
+        } else if (keyEvent.code == 69) {
             return '*';
-        } else if (key.code == 70) {
+        } else if (keyEvent.code == 70) {
             return '/';
         }
     }

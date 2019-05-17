@@ -53,6 +53,8 @@ void Tile::setPosition(const Vector2u& position, bool keepOverwrittenTile) {
     }
 }
 
+void Tile::setDirection(Direction direction) {}
+
 void Tile::setHighlight(bool highlight) {
     if (_highlight != highlight) {
         _highlight = highlight;
@@ -60,7 +62,7 @@ void Tile::setHighlight(bool highlight) {
     }
 }
 
-void Tile::setDirection(Direction direction) {}
+void Tile::setState(State state) {}
 
 void Tile::flip(bool acrossHorizontal) {}
 

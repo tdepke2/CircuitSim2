@@ -4,15 +4,45 @@
 TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, char charID, State state) : Tile(boardPtr, position, true, true) {
     _charID = charID;
     _state = state;
+    boardPtr->switchKeybinds[charID].push_back(this);
     addUpdate(false, noAdjacentUpdates);
 }
 
 TileSwitch::~TileSwitch() {
     _boardPtr->switchUpdates.erase(this);
+    auto mapIter = _boardPtr->switchKeybinds.find(_charID);
+    for (auto vectorIter = mapIter->second.begin(); vectorIter != mapIter->second.end(); ++vectorIter) {
+        if (*vectorIter == this) {
+            mapIter->second.erase(vectorIter);
+            break;
+        }
+    }
 }
 
 int TileSwitch::getTextureID() const {
     return 13 + (_state == HIGH);
+}
+
+State TileSwitch::getState() const {
+    return _state;
+}
+
+void TileSwitch::setCharID(char charID) {
+    auto mapIter = _boardPtr->switchKeybinds.find(_charID);
+    for (auto vectorIter = mapIter->second.begin(); vectorIter != mapIter->second.end(); ++vectorIter) {
+        if (*vectorIter == this) {
+            mapIter->second.erase(vectorIter);
+            break;
+        }
+    }
+    _charID = charID;
+    _boardPtr->switchKeybinds[_charID].push_back(this);
+    addUpdate(true);
+}
+
+void TileSwitch::setState(State state) {
+    _state = state;
+    addUpdate();
 }
 
 State TileSwitch::checkOutput(Direction direction) const {

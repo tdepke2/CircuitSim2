@@ -68,6 +68,14 @@ void TileWire::setDirection(Direction direction) {
     }
 }
 
+void TileWire::setState(State state) {
+    _state1 = state;
+    if (_type == CROSSOVER) {
+        _state2 = state;
+    }
+    addUpdate();
+}
+
 void TileWire::flip(bool acrossHorizontal) {
     if (_type == CORNER) {
         if (!acrossHorizontal) {

@@ -27,6 +27,7 @@ class TileWire : public Tile {
     ~TileWire();
     int getTextureID() const;
     void setDirection(Direction direction);
+    void setState(State state);
     void flip(bool acrossHorizontal);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);

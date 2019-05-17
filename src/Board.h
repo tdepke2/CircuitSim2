@@ -10,6 +10,7 @@ class TileWire;
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -26,6 +27,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     unordered_set<TileButton*> buttonUpdates;
     unordered_set<TileLED*> LEDUpdates;
     unordered_set<TileGate*> gateUpdates;
+    unordered_map<char, vector<TileSwitch*>> switchKeybinds;
+    unordered_map<char, vector<TileButton*>> buttonKeybinds;
     
     static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
     static const Vector2u& getTileSize();

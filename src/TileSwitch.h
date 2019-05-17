@@ -14,6 +14,9 @@ class TileSwitch : public Tile {
     TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, char charID = '\0', State state = LOW);
     ~TileSwitch();
     int getTextureID() const;
+    State getState() const;
+    void setCharID(char charID);
+    void setState(State state);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
