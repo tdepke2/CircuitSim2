@@ -129,10 +129,12 @@ void Board::updateTiles() {
         }
     }
     
-    // update switches
-    
-    // update buttons
-    
+    while (!switchUpdates.empty()) {
+        (*switchUpdates.begin())->updateOutput();
+    }
+    while (!buttonUpdates.empty()) {
+        (*buttonUpdates.begin())->updateOutput();
+    }
     while (!gateUpdates.empty()) {
         (*gateUpdates.begin())->updateOutput();
     }

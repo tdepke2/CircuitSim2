@@ -37,6 +37,10 @@ bool Tile::getHighlight() const {
     return _highlight;
 }
 
+State Tile::getState() const {
+    return DISCONNECTED;
+}
+
 void Tile::setPosition(const Vector2u& position, bool keepOverwrittenTile) {
     if (!keepOverwrittenTile) {
         if (_boardPtr->getTile(position) != this) {

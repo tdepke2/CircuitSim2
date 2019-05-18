@@ -59,6 +59,23 @@ void TileSwitch::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     }
 }
 
+void TileSwitch::updateOutput() {
+    _boardPtr->switchUpdates.erase(this);
+    
+    if (_position.y > 0) {
+        _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(NORTH, _state);
+    }
+    if (_position.x < _boardPtr->getSize().x - 1) {
+        _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->followWire(EAST, _state);
+    }
+    if (_position.y < _boardPtr->getSize().y - 1) {
+        _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->followWire(SOUTH, _state);
+    }
+    if (_position.x > 0) {
+        _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
+    }
+}
+
 Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileSwitch(boardPtr, position, noAdjacentUpdates, _charID, _state);
 }

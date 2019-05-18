@@ -3,7 +3,7 @@
 #include <cassert>
 #include <typeinfo>
 
-//#include <iostream>
+#include <iostream>
 
 vector<TileLED*> TileLED::traversedLEDs;
 stack<TileLED*> TileLED::LEDNodes;
@@ -45,7 +45,7 @@ void TileLED::followWire(Direction direction, State state) {
     assert(traversedLEDs.empty());
     assert(LEDNodes.empty());
     
-    //cout << "Follow LED started at (" << _position.x << ", " << _position.y << ")." << endl;
+    cout << "Follow LED started at (" << _position.x << ", " << _position.y << ")." << endl;
     
     if (_updateTimestamp != Tile::currentUpdateTime) {
         LEDNodes.push(this);

@@ -19,6 +19,7 @@ class TileSwitch : public Tile {
     void setState(State state);
     State checkOutput(Direction direction) const;
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
+    void updateOutput();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     
     private:

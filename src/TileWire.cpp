@@ -1,6 +1,8 @@
 #include "Board.h"
+#include "TileButton.h"
 #include "TileGate.h"
 #include "TileLED.h"
+#include "TileSwitch.h"
 #include "TileWire.h"
 #include <cassert>
 #include <typeinfo>
@@ -48,6 +50,10 @@ TileWire::~TileWire() {
 
 int TileWire::getTextureID() const {
     return 1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2;
+}
+
+State TileWire::getState() const {
+    return _state1;
 }
 
 void TileWire::setDirection(Direction direction) {
@@ -221,18 +227,27 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
             if (gateState == HIGH && *statePtr == LOW) {
                 //cout << "  Found a state conflict." << endl;
                 *statePtr = HIGH;
-                for (pair<TileWire*, Direction>& wire : traversedWires) {
-                    if (wire.first->_type == CROSSOVER && wire.second % 2 == 1) {
-                        wire.first->_state2 = *statePtr;
-                    } else {
-                        wire.first->_state1 = *statePtr;
-                    }
-                }
+                _fixTraversedWires(*statePtr);
             }
         } else {
             endpointTiles.push_back(nextTile);
         }
     } else if (typeid(*nextTile) == typeid(TileLED)) {
         endpointTiles.push_back(nextTile);
+    } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {
+        if (nextTile->getState() == HIGH && *statePtr == LOW) {
+            *statePtr = HIGH;
+            _fixTraversedWires(*statePtr);
+        }
+    }
+}
+
+void TileWire::_fixTraversedWires(State state) {
+    for (pair<TileWire*, Direction>& wire : traversedWires) {
+        if (wire.first->_type == CROSSOVER && wire.second % 2 == 1) {
+            wire.first->_state2 = state;
+        } else {
+            wire.first->_state1 = state;
+        }
     }
 }

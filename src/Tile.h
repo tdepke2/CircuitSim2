@@ -27,6 +27,7 @@ class Tile {    // Generic tile that is stored in a Board.
     const Vector2u& getPosition() const;
     Direction getDirection() const;
     bool getHighlight() const;
+    virtual State getState() const;
     void setPosition(const Vector2u& position, bool keepOverwrittenTile = false);
     virtual void setDirection(Direction direction);
     void setHighlight(bool highlight);

@@ -26,6 +26,7 @@ class TileWire : public Tile {
     TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);
     ~TileWire();
     int getTextureID() const;
+    State getState() const;
     void setDirection(Direction direction);
     void setState(State state);
     void flip(bool acrossHorizontal);
@@ -67,6 +68,7 @@ class TileWire : public Tile {
     unsigned int _updateTimestamp1, _updateTimestamp2;
     
     void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);
+    void _fixTraversedWires(State state);
 };
 
 #endif
