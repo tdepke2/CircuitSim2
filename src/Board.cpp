@@ -117,7 +117,7 @@ void Board::updateTiles() {
     if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
         cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
     }
-    if (Tile::currentUpdateTime > 100) {
+    if (Tile::currentUpdateTime % 100 == 99) {
         cout << "Thats a lot of updates, remember to check for integer rollover with Tile::currentUpdateTime." << endl;
     }
     
@@ -132,8 +132,12 @@ void Board::updateTiles() {
     while (!switchUpdates.empty()) {
         (*switchUpdates.begin())->updateOutput();
     }
-    while (!buttonUpdates.empty()) {
-        (*buttonUpdates.begin())->updateOutput();
+    for (auto setIter = buttonUpdates.begin(); setIter != buttonUpdates.end();) {
+        if ((*setIter)->updateOutput()) {
+            ++setIter;
+        } else {
+            setIter = buttonUpdates.erase(setIter);
+        }
     }
     while (!gateUpdates.empty()) {
         (*gateUpdates.begin())->updateOutput();

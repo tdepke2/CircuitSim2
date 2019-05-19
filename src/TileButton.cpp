@@ -61,7 +61,7 @@ void TileButton::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     }
 }
 
-void TileButton::updateOutput() {
+bool TileButton::updateOutput() {
     if (_position.y > 0) {
         _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(NORTH, _state);
     }
@@ -75,11 +75,12 @@ void TileButton::updateOutput() {
         _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
     }
     
+    addUpdate(true);
     if (_state == LOW) {
-        _boardPtr->buttonUpdates.erase(this);
-        cout << "Update removed." << endl;
+        return false;
     } else {
         _state = LOW;
+        return true;
     }
 }
 

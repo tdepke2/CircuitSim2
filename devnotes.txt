@@ -5,12 +5,16 @@ Notes:
 
     - May need to optimize copy/paste functionality so that middle tiles do not update adjacent tiles.
 
+Potential bugs to test:
+    - Update time rolls over and not all objects reset.
+    - Activating gate pointing into LED, wire turns off LED but LED does not check transitioning state of the gate.
+
 Simulation algorithm version 1:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
     - When the state of an object changes, it is given a cosmetic and state update in the appropriate sets and updates adjacent tiles.
         * During board loading, do not update adjacent tiles.
     - At start of frame, we already know every object that has received an update and may change state.
-    - Basic idea is to crawl along each wire and change the wire state (using breadth-first traversal).
+    - Basic idea is to crawl along each wire and change the wire state (using depth-first traversal).
         * If a gate is found, updates to it are added/removed.
         * If a different state is found then new state is used from now on (when applicable) and errors are fixed.
     - In the background, we are constantly running cosmetic updates to keep the editor running.
