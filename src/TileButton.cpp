@@ -1,8 +1,6 @@
 #include "Board.h"
 #include "TileButton.h"
 
-#include <iostream>
-
 TileButton::TileButton(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, char charID, State state) : Tile(boardPtr, position, true, true) {
     _charID = charID;
     _state = state;
@@ -75,11 +73,11 @@ bool TileButton::updateOutput() {
         _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
     }
     
-    addUpdate(true);
     if (_state == LOW) {
         return false;
     } else {
         _state = LOW;
+        addUpdate(true);
         return true;
     }
 }

@@ -55,7 +55,7 @@ void TileLED::followWire(Direction direction, State state) {
         LEDNodes.pop();
         currentLED->_state = state;
         currentLED->_updateTimestamp = Tile::currentUpdateTime;
-        //cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
+        cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
         currentLED->addUpdate(true);
         traversedLEDs.push_back(currentLED);
         if (!_boardPtr->LEDUpdates.empty()) {
@@ -89,9 +89,9 @@ void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr)
             LEDNodes.push(nextLED);
         }
     } else if (*statePtr == LOW) {
-        //cout << "  Found an output from a tile at (" << nextTile->getPosition().x << ", " << nextTile->getPosition().y << "), state = " << tileState << endl;
+        cout << "  Found an output from a tile at (" << nextTile->getPosition().x << ", " << nextTile->getPosition().y << "), state = " << *statePtr << endl;
         if (nextTile->checkOutput(direction) == HIGH) {
-            //cout << "  Conflict detected, fixing LEDs." << endl;
+            cout << "  Conflict detected, fixing LEDs." << endl;
             *statePtr = HIGH;
             for (TileLED* LED : traversedLEDs) {
                 LED->_state = *statePtr;

@@ -121,7 +121,8 @@ void Board::updateTiles() {
         cout << "Thats a lot of updates, remember to check for integer rollover with Tile::currentUpdateTime." << endl;
     }
     
-    for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {
+    cout << "---- GATE STATE CHECKS ----" << endl;
+    for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {    // Check state transitions for all gates (keep update only if gate changed).
         if ((*setIter)->updateNextState()) {
             ++setIter;
         } else {
@@ -129,32 +130,37 @@ void Board::updateTiles() {
         }
     }
     
-    while (!switchUpdates.empty()) {
+    cout << "---- SWITCH UPDATES ----" << endl;
+    while (!switchUpdates.empty()) {    // Update all pending switches.
         (*switchUpdates.begin())->updateOutput();
     }
-    for (auto setIter = buttonUpdates.begin(); setIter != buttonUpdates.end();) {
+    cout << "---- BUTTON UPDATES ----" << endl;
+    for (auto setIter = buttonUpdates.begin(); setIter != buttonUpdates.end();) {    // Update all pending buttons (buttons that have a remaining update are not removed).
         if ((*setIter)->updateOutput()) {
             ++setIter;
         } else {
             setIter = buttonUpdates.erase(setIter);
         }
     }
-    while (!gateUpdates.empty()) {
+    cout << "---- GATE UPDATES ----" << endl;
+    while (!gateUpdates.empty()) {    // Update all pending gates that were left over from before.
         (*gateUpdates.begin())->updateOutput();
     }
     
-    while (!wireUpdates.empty()) {
-        //cout << "Found a remaining wire update." << endl;
+    cout << "---- REMAINING WIRES AND LEDS ----" << endl;
+    while (!wireUpdates.empty()) {    // 
+        cout << "Found a remaining wire update." << endl;
         (*wireUpdates.begin())->updateWire(LOW);
     }
     
     TileWire::updateEndpointTiles(this);
     
     while (!LEDUpdates.empty()) {
-        //cout << "Found a remaining LED update." << endl;
+        cout << "Found a remaining LED update." << endl;
         (*LEDUpdates.begin())->followWire(NORTH, LOW);
     }
     
+    cout << endl;
     ++Tile::currentUpdateTime;
 }
 

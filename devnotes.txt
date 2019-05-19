@@ -8,6 +8,8 @@ Notes:
 Potential bugs to test:
     - Update time rolls over and not all objects reset.
     - Activating gate pointing into LED, wire turns off LED but LED does not check transitioning state of the gate.
+    
+    ############### Need to dig into followWire, followLED, and gate::updateOutput a bit more (there is a bug with test08), left off at step 2 in algorithm below. ####################
 
 Simulation algorithm version 1:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
@@ -20,7 +22,8 @@ Simulation algorithm version 1:
     - In the background, we are constantly running cosmetic updates to keep the editor running.
     - When a transition to the next frame happens:
         1. Start by iterating through all of the gateUpdates.
-            A. Check the new state of the gate (only off or on) and save it, remove the update if state did not change.
+            A. Check the new state of the gate (only off or on) based on current states of surrounding elements and save it, remove the update if state did not change.
+            B. The new state is saved as a transitioning state and does not affect current gate state (for now).
         2. Iterate switchUpdates, buttonUpdates, and gateUpdates, traverse outputs along wires using depth-first search.
             A. First, the update to this object is removed (unless it is a button that is currently high).
             B. For DFS to work, every wire is given a timestamp of when it was last updated and this is used to check if the wire has been traversed.
