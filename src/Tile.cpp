@@ -74,19 +74,6 @@ State Tile::checkOutput(Direction direction) const {
     return DISCONNECTED;
 }
 
-pair<State, Tile*> Tile::checkState(Direction direction) const {
-    if (direction == NORTH) {
-        if (_position.y == 0) {
-            return pair<State, Tile*>(DISCONNECTED, nullptr);
-        } else {
-            Tile* targetTile = _boardPtr->getTile(_position);
-            return pair<State, Tile*>(targetTile->checkOutput(direction), targetTile);
-        }
-    } else {
-        return pair<State, Tile*>(DISCONNECTED, nullptr);
-    }
-}
-
 void Tile::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     _boardPtr->cosmeticUpdates.insert(this);
     if (!isCosmetic && !noAdjacentUpdates) {

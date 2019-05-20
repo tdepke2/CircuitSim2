@@ -15,20 +15,20 @@ class TileGate : public Tile {
         DIODE = 0, BUFFER, NOT, AND, NAND, OR, NOR, XOR, XNOR
     };
     
-    TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = DIODE, State state = LOW);
+    TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = DIODE, State state = LOW);    // Construct a gate tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileGate();
-    int getTextureID() const;
+    int getTextureID() const;    // Get numeric ID of this tile that corresponds to its position in the tilemap.
     State getState() const;
     State getNextState() const;
     void setDirection(Direction direction);
     void setState(State state);
-    void flip(bool acrossHorizontal);
-    State checkOutput(Direction direction) const;
-    void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
-    bool updateNextState();
-    void updateOutput();
-    void followWire(Direction direction, State state);
-    Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
+    void flip(bool acrossHorizontal);    // Flips the tile across the vertical/horizontal axis.
+    State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
+    void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
+    bool updateNextState();    // Checks adjacent tile states (only inputs) and sets the next state of this gate, returns true if state changed. Does not set the actual state of this gate.
+    void updateOutput();    // Updates this gate and starts wire traversal on the output tile.
+    void followWire(Direction direction, State state);    // Used in wire path following algorithm, just adds this gate to the list of endpoints if the gate does not point back to the source in the direction.
+    Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:
     Type _type;

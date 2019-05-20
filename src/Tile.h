@@ -21,23 +21,22 @@ class Tile {    // Generic tile that is stored in a Board.
     static unsigned int currentUpdateTime;
     
     Tile();
-    Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);
+    Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);    // Construct tile with parent board and position, noAdjacentUpdates stops updates to adjacent tiles, suppressUpdate stops the initial update to this tile.
     virtual ~Tile();
-    virtual int getTextureID() const;
+    virtual int getTextureID() const;    // Get numeric ID of this tile that corresponds to its position in the tilemap.
     const Vector2u& getPosition() const;
     Direction getDirection() const;
     bool getHighlight() const;
     virtual State getState() const;
-    void setPosition(const Vector2u& position, bool keepOverwrittenTile = false);
+    void setPosition(const Vector2u& position, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
     virtual void setDirection(Direction direction);
     void setHighlight(bool highlight);
     virtual void setState(State state);
-    virtual void flip(bool acrossHorizontal);
-    virtual State checkOutput(Direction direction) const;
-    pair<State, Tile*> checkState(Direction direction) const;
-    virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
-    virtual void followWire(Direction direction, State state);
-    virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
+    virtual void flip(bool acrossHorizontal);    // Flips the tile across the vertical/horizontal axis.
+    virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
+    virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
+    virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
+    virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:
     Board* _boardPtr;
@@ -45,7 +44,7 @@ class Tile {    // Generic tile that is stored in a Board.
     Direction _direction;
     bool _highlight;
     
-    void _updateAdjacentTiles();
+    void _updateAdjacentTiles();    // Send a single state update to each of the tiles adjacent to this one, this does not cascade to other tiles.
 };
 
 #endif

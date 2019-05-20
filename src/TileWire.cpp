@@ -105,6 +105,27 @@ void TileWire::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     }
 }
 
+void TileWire::updateWire(State state) {
+    if (_type == CROSSOVER) {
+        if (_updateTimestamp1 != Tile::currentUpdateTime) {    // For crossover, check both paths for update time mismatch.
+            followWire(NORTH, state);
+        }
+        if (_updateTimestamp2 != Tile::currentUpdateTime) {
+            followWire(EAST, state);
+        }
+    } else {
+        for (int i = 0; i < 4; ++i) {    // Check combinations of entry and exit directions through this wire until one works out.
+            const bool* exitDirections = CONNECTION_INFO[_direction][_type][i];
+            for (int j = 0; j < 4; ++j) {
+                if (exitDirections[j] == true) {
+                    followWire(static_cast<Direction>(i), state);
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void TileWire::followWire(Direction direction, State state) {
     assert(traversedWires.empty());
     assert(wireNodes.empty());
@@ -156,27 +177,6 @@ void TileWire::followWire(Direction direction, State state) {
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileWire(boardPtr, position, noAdjacentUpdates, _direction, _type, _state1, _state2);
-}
-
-void TileWire::updateWire(State state) {
-    if (_type == CROSSOVER) {
-        if (_updateTimestamp1 != Tile::currentUpdateTime) {    // For crossover, check both paths for update time mismatch.
-            followWire(NORTH, state);
-        }
-        if (_updateTimestamp2 != Tile::currentUpdateTime) {
-            followWire(EAST, state);
-        }
-    } else {
-        for (int i = 0; i < 4; ++i) {    // Check combinations of entry and exit directions through this wire until one works out.
-            const bool* exitDirections = CONNECTION_INFO[_direction][_type][i];
-            for (int j = 0; j < 4; ++j) {
-                if (exitDirections[j] == true) {
-                    followWire(static_cast<Direction>(i), state);
-                    return;
-                }
-            }
-        }
-    }
 }
 
 void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
