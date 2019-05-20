@@ -1,5 +1,4 @@
 #include "Board.h"
-#include "Tile.h"
 #include "TileButton.h"
 #include "TileGate.h"
 #include "TileLED.h"
@@ -108,9 +107,20 @@ void Board::setTile(const Vector2u& position, Tile* tile) {
     _tileArray[position.y][position.x] = tile;
 }
 
+void Board::redrawTileVertices(int textureID, const Vector2u& position, Direction direction, bool highlight) {
+    Vertex* tileVertices = &_vertices[(position.y * _size.x + position.x) * 4];
+    int offsetID = highlight ? _textureIDMax : 0;
+    float tileX = static_cast<float>((textureID + offsetID) % (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
+    float tileY = static_cast<float>((textureID + offsetID) / (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
+    tileVertices[direction % 4].texCoords = Vector2f(tileX, tileY);
+    tileVertices[(direction + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
+    tileVertices[(direction + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
+    tileVertices[(direction + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
+}
+
 void Board::updateCosmetics() {
     for (auto setIter = cosmeticUpdates.begin(); setIter != cosmeticUpdates.end(); ++setIter) {
-        _redrawTile(*setIter);
+        (*setIter)->redrawTile();
     }
     cosmeticUpdates.clear();
 }
@@ -495,18 +505,6 @@ void Board::_buildTexture(const Image& source, Texture* target, const Vector2u& 
         }
     }
     target->loadFromImage(fullImage);
-}
-
-void Board::_redrawTile(Tile* tile) {
-    Vertex* tileVertices = &_vertices[(tile->getPosition().y * _size.x + tile->getPosition().x) * 4];
-    int offsetID = tile->getHighlight() ? _textureIDMax : 0;
-    float tileX = static_cast<float>((tile->getTextureID() + offsetID) % (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.x * 2 + _tileSize.x / 2);
-    float tileY = static_cast<float>((tile->getTextureID() + offsetID) / (_tilesetGridPtr->getSize().x / 2 / _tileSize.x) * _tileSize.y * 2 + _tileSize.y / 2);
-    int d = tile->getDirection();
-    tileVertices[d % 4].texCoords = Vector2f(tileX, tileY);
-    tileVertices[(d + 1) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY);
-    tileVertices[(d + 2) % 4].texCoords = Vector2f(tileX + _tileSize.x, tileY + _tileSize.y);
-    tileVertices[(d + 3) % 4].texCoords = Vector2f(tileX, tileY + _tileSize.y);
 }
 
 void Board::_setVertexCoords() {

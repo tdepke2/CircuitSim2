@@ -32,10 +32,6 @@ TileWire::~TileWire() {
     _boardPtr->wireUpdates.erase(this);
 }
 
-int TileWire::getTextureID() const {
-    return 1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2;
-}
-
 State TileWire::getState() const {
     return _state1;
 }
@@ -173,6 +169,10 @@ void TileWire::followWire(Direction direction, State state) {
         }
     }
     traversedWires.clear();
+}
+
+void TileWire::redrawTile() {
+    _boardPtr->redrawTileVertices(1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2, _position, _direction, _highlight);
 }
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

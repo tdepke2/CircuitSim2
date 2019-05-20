@@ -11,6 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <windows.h>
 
 const float Simulator::FPS_CAP = 60.0f;
@@ -537,7 +538,7 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             if (!forcePaste) {
                 for (int y = tileCursor.y + pasteArea.height - 1; y >= tileCursor.y; --y) {
                     for (int x = tileCursor.x + pasteArea.width - 1; x >= tileCursor.x; --x) {
-                        if (boardPtr->getTile(Vector2u(x, y))->getTextureID() != 0) {
+                        if (typeid(*boardPtr->getTile(Vector2u(x, y))) != typeid(Tile)) {
                             return;
                         }
                     }

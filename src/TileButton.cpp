@@ -29,10 +29,6 @@ TileButton::~TileButton() {
     }
 }
 
-int TileButton::getTextureID() const {
-    return 15 + (_state == HIGH);
-}
-
 State TileButton::getState() const {
     return _state;
 }
@@ -87,6 +83,10 @@ void TileButton::updateOutput() {
     if (_position.x > 0) {
         _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
     }
+}
+
+void TileButton::redrawTile() {
+    _boardPtr->redrawTileVertices(15 + (_state == HIGH), _position, _direction, _highlight);
 }
 
 Tile* TileButton::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

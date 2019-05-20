@@ -16,15 +16,6 @@ TileGate::~TileGate() {
     _boardPtr->gateUpdates.erase(this);
 }
 
-int TileGate::getTextureID() const {
-    bool connectRight = false, connectLeft = false;
-    if (_type < 3) {
-        return 19 + _type * 6 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
-    } else {
-        return 13 + _type * 8 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
-    }
-}
-
 State TileGate::getState() const {
     return _state;
 }
@@ -167,6 +158,17 @@ void TileGate::followWire(Direction direction, State state) {
     if ((_direction + 2) % 4 != direction) {
         Board::endpointGates.push_back(this);
     }
+}
+
+void TileGate::redrawTile() {
+    int textureID;
+    bool connectRight = false, connectLeft = false;
+    if (_type < 3) {
+        textureID = 19 + _type * 6 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
+    } else {
+        textureID = 13 + _type * 8 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
+    }
+    _boardPtr->redrawTileVertices(textureID, _position, _direction, _highlight);
 }
 
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

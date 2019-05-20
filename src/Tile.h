@@ -23,7 +23,6 @@ class Tile {    // Generic tile that is stored in a Board.
     Tile();
     Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);    // Construct tile with parent board and position, noAdjacentUpdates stops updates to adjacent tiles, suppressUpdate stops the initial update to this tile.
     virtual ~Tile();
-    virtual int getTextureID() const;    // Get numeric ID of this tile that corresponds to its position in the tilemap.
     const Vector2u& getPosition() const;
     Direction getDirection() const;
     bool getHighlight() const;
@@ -36,6 +35,7 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
     virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
+    virtual void redrawTile();
     virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:

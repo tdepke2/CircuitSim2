@@ -18,10 +18,6 @@ TileLED::~TileLED() {
     _boardPtr->LEDUpdates.erase(this);
 }
 
-int TileLED::getTextureID() const {
-    return 17 + (_state == HIGH);
-}
-
 State TileLED::getState() const {
     return _state;
 }
@@ -72,6 +68,10 @@ void TileLED::updateLED(State state) {
 
 void TileLED::followWire(Direction direction, State state) {
     Board::endpointLEDs.push_back(this);
+}
+
+void TileLED::redrawTile() {
+    _boardPtr->redrawTileVertices(17 + (_state == HIGH), _position, _direction, _highlight);
 }
 
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

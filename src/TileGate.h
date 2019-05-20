@@ -17,7 +17,6 @@ class TileGate : public Tile {
     
     TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = DIODE, State state = LOW);    // Construct a gate tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileGate();
-    int getTextureID() const;    // Get numeric ID of this tile that corresponds to its position in the tilemap.
     State getState() const;
     State getNextState() const;
     void setDirection(Direction direction);
@@ -28,6 +27,7 @@ class TileGate : public Tile {
     bool updateNextState();    // Checks adjacent tile states (only inputs) and sets the next state of this gate, returns true if state changed. Does not set the actual state of this gate.
     void updateOutput();    // Updates this gate and starts wire traversal on the output tile.
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, just adds this gate to the list of endpoints if the gate does not point back to the source in the direction.
+    void redrawTile();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

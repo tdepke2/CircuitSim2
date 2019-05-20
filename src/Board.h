@@ -1,13 +1,13 @@
 #ifndef _BOARD_H
 #define _BOARD_H
 
-class Tile;
 class TileButton;
 class TileGate;
 class TileLED;
 class TileSwitch;
 class TileWire;
 
+#include "Tile.h"
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <unordered_map>
@@ -41,6 +41,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Tile* getTile(const Vector2u& position) const;
     void setTile(const Vector2i& position, Tile* tile);
     void setTile(const Vector2u& position, Tile* tile);
+    void redrawTileVertices(int textureID, const Vector2u& position, Direction direction, bool highlight);
     void updateCosmetics();
     void updateTiles();
     void replaceTile(Tile* tile);
@@ -68,7 +69,6 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     
     static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
     static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);
-    void _redrawTile(Tile* tile);
     void _setVertexCoords();
     int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
     virtual void draw (RenderTarget& target, RenderStates states) const;

@@ -21,10 +21,6 @@ Tile::~Tile() {
     _boardPtr->cosmeticUpdates.erase(this);
 }
 
-int Tile::getTextureID() const {
-    return 0;
-}
-
 const Vector2u& Tile::getPosition() const {
     return _position;
 }
@@ -82,6 +78,10 @@ void Tile::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
 }
 
 void Tile::followWire(Direction direction, State state) {}
+
+void Tile::redrawTile() {
+    _boardPtr->redrawTileVertices(0, _position, _direction, _highlight);
+}
 
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new Tile(boardPtr, position, noAdjacentUpdates);

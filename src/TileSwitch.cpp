@@ -19,10 +19,6 @@ TileSwitch::~TileSwitch() {
     }
 }
 
-int TileSwitch::getTextureID() const {
-    return 13 + (_state == HIGH);
-}
-
 State TileSwitch::getState() const {
     return _state;
 }
@@ -74,6 +70,10 @@ void TileSwitch::updateOutput() {
     if (_position.x > 0) {
         _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
     }
+}
+
+void TileSwitch::redrawTile() {
+    _boardPtr->redrawTileVertices(13 + (_state == HIGH), _position, _direction, _highlight);
 }
 
 Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
