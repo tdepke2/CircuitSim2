@@ -71,11 +71,11 @@ void TileButton::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
 
 void TileButton::updateOutput() {
     _boardPtr->buttonUpdates.erase(this);
-    if (_state != LOW) {
+    if (_state == HIGH) {
         _transitioningButtons.push_back(this);
     }
     
-    if (_position.y > 0) {
+    if (_position.y > 0) {    // Follow wire on all adjacent sides.
         _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(NORTH, _state);
     }
     if (_position.x < _boardPtr->getSize().x - 1) {

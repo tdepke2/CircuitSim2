@@ -1,4 +1,4 @@
-Notes:
+Todo:
     - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
     - Implement the original wire algorithm first (without the additional states) for backwards compatibility.
@@ -7,10 +7,6 @@ Notes:
 
 Potential bugs to test:
     - Update time rolls over and not all objects reset.
-    - Activating gate pointing into LED, wire turns off LED but LED does not check transitioning state of the gate.
-    - followWire checks wrong state of button when checking for conflict after button updated.
-    
-    ############### Need to dig into followWire, followLED, and gate::updateOutput a bit more (there is a bug with test08), left off at step 2 in algorithm below. ####################
 
 Simulation algorithm version 1:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
@@ -26,16 +22,15 @@ Simulation algorithm version 1:
             A. Check the new state of the gate (only off or on) based on current states of surrounding elements and save it, remove the update if state did not change.
             B. The new state is saved as a transitioning state and does not affect current gate state (for now).
         2. Iterate switchUpdates, buttonUpdates, and gateUpdates, traverse outputs along wires using depth-first search.
-            A. First, the update to this object is removed (unless it is a button that is currently high).
+            A. First, the update to this object is removed (in the case of an active button, the update gets added back later).
             B. For DFS to work, every wire is given a timestamp of when it was last updated and this is used to check if the wire has been traversed.
                 1. Note that an integer overflow is possible here at approximately four billion updates, if it happens then need to reset timestamps of ALL wires back to zero (big overhead but basically never happens).
             C. Positions of wires are kept track of as wire is traversed in case an error is made and we need to fix the previous wires.
-            D. If an endpoint is found and it outputs, then the state is checked for an error and updates to the endpoint are removed from gateUpdates if it is a gate (switches/buttons have outputs on four sides).
-                1. If the endpoint inputs instead, then it is saved for later.
-            ------------------------ Removed (E. After all wires traversed in this path, check if original wire state changed. If it didn't then remove the last n endpoints from memory as these won't need updates.)
-        3. If wire updates remain that were not removed during traversal, need to update these (same steps as above).
-        4. When traversal done for all wires, send updates to the endpoints (should only be LEDs and gates).
-            A. In the case of an LED, perform a recursive trace through connected LEDs if the state changed.
+            D. If a switch/button/gate is found and it outputs, then the state is checked for an error (note that if it is a gate, we cannot remove updates to it because then the gate state will not change).
+                1. For a gate that inputs or an LED, it is saved for later instead.
+        3. If wire updates remain that were not removed during traversal, need to update these (same steps as above). Similar thing for remaining LED updates.
+        4. Update all of the endpoints (LEDs and gates). LEDs are updated by DFS traversal on connected LEDs that assumes LOW state and gates just receive a state update.
+        5. Last step is to update all of the buttons that are transitioning to LOW and increment the current update time.
     - The first frame simulated after loading a board or making edits will have some performance impact but additional frame simulations should not.
 
 Simulation algorithm version 2 (features tri-state and invalid state wires):

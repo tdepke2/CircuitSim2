@@ -160,13 +160,14 @@ Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacent
 
 void TileWire::updateWire(State state) {
     if (_type == CROSSOVER) {
-        if (_updateTimestamp1 != Tile::currentUpdateTime) {
+        if (_updateTimestamp1 != Tile::currentUpdateTime) {    // For crossover, check both paths for update time mismatch.
             followWire(NORTH, state);
-        } else {
+        }
+        if (_updateTimestamp2 != Tile::currentUpdateTime) {
             followWire(EAST, state);
         }
     } else {
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4; ++i) {    // Check combinations of entry and exit directions through this wire until one works out.
             const bool* exitDirections = CONNECTION_INFO[_direction][_type][i];
             for (int j = 0; j < 4; ++j) {
                 if (exitDirections[j] == true) {
