@@ -20,6 +20,8 @@ using namespace sf;
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
     public:
     static bool gridActive;
+    static vector<TileLED*> endpointLEDs;
+    static vector<TileGate*> endpointGates;
     string name;
     unordered_set<Tile*> cosmeticUpdates;
     unordered_set<TileWire*> wireUpdates;

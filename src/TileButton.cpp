@@ -1,6 +1,16 @@
 #include "Board.h"
 #include "TileButton.h"
 
+vector<TileButton*> TileButton::_transitioningButtons;
+
+void TileButton::updateTransitioningButtons() {
+    for (TileButton* button : _transitioningButtons) {
+        button->_state = LOW;
+        button->addUpdate();
+    }
+    _transitioningButtons.clear();
+}
+
 TileButton::TileButton(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, char charID, State state) : Tile(boardPtr, position, true, true) {
     _charID = charID;
     _state = state;
@@ -59,7 +69,12 @@ void TileButton::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     }
 }
 
-bool TileButton::updateOutput() {
+void TileButton::updateOutput() {
+    _boardPtr->buttonUpdates.erase(this);
+    if (_state != LOW) {
+        _transitioningButtons.push_back(this);
+    }
+    
     if (_position.y > 0) {
         _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(NORTH, _state);
     }
@@ -71,14 +86,6 @@ bool TileButton::updateOutput() {
     }
     if (_position.x > 0) {
         _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
-    }
-    
-    if (_state == LOW) {
-        return false;
-    } else {
-        _state = LOW;
-        addUpdate(true);
-        return true;
     }
 }
 

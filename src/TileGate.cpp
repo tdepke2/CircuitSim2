@@ -144,11 +144,11 @@ bool TileGate::updateNextState() {
 
 void TileGate::updateOutput() {
     cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
-    _boardPtr->gateUpdates.erase(this);
+    _boardPtr->gateUpdates.erase(this);    // Remove this gate update and transition to next state.
     _state = _nextState;
     addUpdate(true);
     
-    Vector2u targetPosition;
+    Vector2u targetPosition;    // Start followWire at the output (the object at output could be anything, not just a wire).
     if (_direction == NORTH) {
         targetPosition = Vector2u(_position.x, _position.y - 1);
     } else if (_direction == EAST) {
@@ -164,10 +164,8 @@ void TileGate::updateOutput() {
 }
 
 void TileGate::followWire(Direction direction, State state) {
-    if ((_direction + 2) % 4 == direction) {
-        _boardPtr->gateUpdates.erase(this);
-    } else {
-        TileWire::endpointTiles.push_back(this);
+    if ((_direction + 2) % 4 != direction) {
+        Board::endpointGates.push_back(this);
     }
 }
 

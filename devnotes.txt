@@ -8,6 +8,7 @@ Notes:
 Potential bugs to test:
     - Update time rolls over and not all objects reset.
     - Activating gate pointing into LED, wire turns off LED but LED does not check transitioning state of the gate.
+    - followWire checks wrong state of button when checking for conflict after button updated.
     
     ############### Need to dig into followWire, followLED, and gate::updateOutput a bit more (there is a bug with test08), left off at step 2 in algorithm below. ####################
 

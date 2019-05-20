@@ -41,26 +41,18 @@ void TileLED::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
     }
 }
 
-void TileLED::followWire(Direction direction, State state) {
+void TileLED::updateLED(State state) {
     assert(traversedLEDs.empty());
     assert(LEDNodes.empty());
     
-    cout << "Follow LED started at (" << _position.x << ", " << _position.y << ")." << endl;
+    cout << "Update LED started at (" << _position.x << ", " << _position.y << ")." << endl;
     
-    if (_updateTimestamp != Tile::currentUpdateTime) {
-        LEDNodes.push(this);
-    }
-    while (!LEDNodes.empty()) {
+    _addNextTile(this, NORTH, &state);
+    while (!LEDNodes.empty()) {    // Start a depth-first traversal on the connected LEDs.
         TileLED* currentLED = LEDNodes.top();
         LEDNodes.pop();
-        currentLED->_state = state;
-        currentLED->_updateTimestamp = Tile::currentUpdateTime;
+        
         cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
-        currentLED->addUpdate(true);
-        traversedLEDs.push_back(currentLED);
-        if (!_boardPtr->LEDUpdates.empty()) {
-            _boardPtr->LEDUpdates.erase(currentLED);
-        }
         
         if (currentLED->_position.y > 0) {
             _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y - 1)), NORTH, &state);
@@ -78,18 +70,28 @@ void TileLED::followWire(Direction direction, State state) {
     traversedLEDs.clear();
 }
 
+void TileLED::followWire(Direction direction, State state) {
+    Board::endpointLEDs.push_back(this);
+}
+
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileLED(boardPtr, position, noAdjacentUpdates, _state);
 }
 
 void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
-    if (typeid(*nextTile) == typeid(TileLED)) {
+    if (typeid(*nextTile) == typeid(TileLED)) {    // Check if nextTile is an LED (most common case).
         TileLED* nextLED = static_cast<TileLED*>(nextTile);
         if (nextLED->_updateTimestamp != Tile::currentUpdateTime) {
+            nextLED->_state = *statePtr;
+            nextLED->_updateTimestamp = Tile::currentUpdateTime;
+            nextLED->addUpdate(true);
+            traversedLEDs.push_back(nextLED);
             LEDNodes.push(nextLED);
+            if (!_boardPtr->LEDUpdates.empty()) {
+                _boardPtr->LEDUpdates.erase(nextLED);
+            }
         }
     } else if (*statePtr == LOW) {
-        cout << "  Found an output from a tile at (" << nextTile->getPosition().x << ", " << nextTile->getPosition().y << "), state = " << *statePtr << endl;
         if (nextTile->checkOutput(direction) == HIGH) {
             cout << "  Conflict detected, fixing LEDs." << endl;
             *statePtr = HIGH;

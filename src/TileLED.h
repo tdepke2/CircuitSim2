@@ -22,6 +22,7 @@ class TileLED : public Tile {
     State getState() const;
     void setState(State state);
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);
+    void updateLED(State state);
     void followWire(Direction direction, State state);
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);
     

@@ -11,22 +11,6 @@
 
 vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
-vector<Tile*> TileWire::endpointTiles;
-
-void TileWire::updateEndpointTiles(Board* boardPtr) {
-    cout << "Endpoints list:" << endl;
-    for (Tile* tile : endpointTiles) {
-        cout << "  (" << tile->getPosition().x << ", " << tile->getPosition().y << ")" << endl;
-        if (typeid(*tile) == typeid(TileGate)) {
-            boardPtr->gateUpdates.insert(static_cast<TileGate*>(tile));
-        } else if (typeid(*tile) == typeid(TileLED)) {
-            tile->followWire(NORTH, LOW);
-        } else {
-            assert(false);
-        }
-    }
-    endpointTiles.clear();
-}
 
 TileWire::TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, Direction direction, Type type, State state1, State state2) : Tile(boardPtr, position, true, true) {
     if (type != JUNCTION && type != CROSSOVER) {
@@ -127,17 +111,13 @@ void TileWire::followWire(Direction direction, State state) {
     
     cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
-    _addNextTile(this, direction, &state);
+    _addNextTile(this, direction, &state);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
     if (wireNodes.empty()) {
         return;
     }
     wireNodes.pop();
-    addUpdate(true);
-    if (!_boardPtr->wireUpdates.empty() && (_type != CROSSOVER || _updateTimestamp1 == _updateTimestamp2)) {
-        _boardPtr->wireUpdates.erase(this);
-    }
     
-    const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];    // Check for connection with all adjacent tiles.
+    const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];    // Check for connection with all adjacent tiles (in the case that this is some arbitrary wire chosen and did not come from a source gate).
     if (exitDirections[0] && _position.y > 0) {
         _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y - 1)), NORTH, &state);
     }
@@ -151,15 +131,11 @@ void TileWire::followWire(Direction direction, State state) {
         _addNextTile(_boardPtr->getTile(Vector2u(_position.x - 1, _position.y)), WEST, &state);
     }
     
-    while (!wireNodes.empty()) {
+    while (!wireNodes.empty()) {    // Perform depth-first traversal on remaining connected wires.
         TileWire* currentWire = wireNodes.top().first;
         Direction currentDirection = wireNodes.top().second;
         wireNodes.pop();
         cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
-        currentWire->addUpdate(true);
-        if (!_boardPtr->wireUpdates.empty() && (currentWire->_type != CROSSOVER || currentWire->_updateTimestamp1 == currentWire->_updateTimestamp2)) {
-            _boardPtr->wireUpdates.erase(currentWire);
-        }
         
         const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];    // Check for connection with adjacent tiles that do not point back to source wire.
         if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
@@ -203,39 +179,47 @@ void TileWire::updateWire(State state) {
 }
 
 void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
-    if (typeid(*nextTile) == typeid(TileWire)) {
+    if (typeid(*nextTile) == typeid(TileWire)) {    // Check if nextTile is a wire (most common case).
         TileWire* nextWire = static_cast<TileWire*>(nextTile);
-        if (CONNECTION_INFO[nextWire->_direction][nextWire->_type][direction][(direction + 2) % 4]) {
+        if (CONNECTION_INFO[nextWire->_direction][nextWire->_type][direction][(direction + 2) % 4]) {    // Check if we have a connection back to the source.
+            bool wireUpdated = false;
             if (nextWire->_type == CROSSOVER && direction % 2 == 1) {    // Update state of the wire and timestamp if this wire has not been traversed yet.
                 if (nextWire->_updateTimestamp2 != Tile::currentUpdateTime) {
                     nextWire->_state2 = *statePtr;
                     nextWire->_updateTimestamp2 = Tile::currentUpdateTime;
-                    traversedWires.push_back(pair<TileWire*, Direction>(nextWire, direction));
-                    wireNodes.push(pair<TileWire*, Direction>(nextWire, direction));
+                    wireUpdated = true;
                 }
             } else if (nextWire->_updateTimestamp1 != Tile::currentUpdateTime) {
                 nextWire->_state1 = *statePtr;
                 nextWire->_updateTimestamp1 = Tile::currentUpdateTime;
+                wireUpdated = true;
+            }
+            
+            if (wireUpdated) {    // If wire updated in last step, give it a cosmetic update and add it to traversal structures.
+                nextWire->addUpdate(true);
                 traversedWires.push_back(pair<TileWire*, Direction>(nextWire, direction));
                 wireNodes.push(pair<TileWire*, Direction>(nextWire, direction));
+                if (!_boardPtr->wireUpdates.empty() && (nextWire->_type != CROSSOVER || nextWire->_updateTimestamp1 == nextWire->_updateTimestamp2)) {    // Attempt to remove update if scheduled and wire has been fully updated.
+                    _boardPtr->wireUpdates.erase(nextWire);
+                }
             }
         }
-    } else if (typeid(*nextTile) == typeid(TileGate)) {
+    } else if (typeid(*nextTile) == typeid(TileGate)) {    // Else check if it is a gate.
         TileGate* nextGate = static_cast<TileGate*>(nextTile);
-        State gateState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;
-        if (gateState != DISCONNECTED) {
-            if (gateState == HIGH && *statePtr == LOW) {
+        State gateNextState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;    // If the gate outputs into previous wire, there may be a state conflict.
+        if (gateNextState != DISCONNECTED) {
+            if (gateNextState == HIGH && *statePtr == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
                 cout << "  Found a state conflict." << endl;
                 *statePtr = HIGH;
                 _fixTraversedWires(*statePtr);
             }
-        } else {
-            endpointTiles.push_back(nextTile);
+        } else {    // This gate is an endpoint, no need to check for conflict.
+            Board::endpointGates.push_back(nextGate);
         }
-    } else if (typeid(*nextTile) == typeid(TileLED)) {
-        endpointTiles.push_back(nextTile);
-    } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {
-        if (nextTile->getState() == HIGH && *statePtr == LOW) {
+    } else if (typeid(*nextTile) == typeid(TileLED)) {    // Else check if it is an LED.
+        Board::endpointLEDs.push_back(static_cast<TileLED*>(nextTile));
+    } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {    // Else check if switch/button.
+        if (nextTile->getState() == HIGH && *statePtr == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
             *statePtr = HIGH;
             _fixTraversedWires(*statePtr);
         }
