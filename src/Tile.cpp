@@ -1,8 +1,6 @@
 #include "Board.h"
 #include "Tile.h"
 
-#include <iostream>
-
 unsigned int Tile::currentUpdateTime = 1;
 
 Tile::Tile() {}

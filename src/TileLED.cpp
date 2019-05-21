@@ -3,7 +3,7 @@
 #include <cassert>
 #include <typeinfo>
 
-#include <iostream>
+//#include <iostream>
 
 vector<TileLED*> TileLED::traversedLEDs;
 stack<TileLED*> TileLED::LEDNodes;
@@ -41,14 +41,14 @@ void TileLED::updateLED(State state) {
     assert(traversedLEDs.empty());
     assert(LEDNodes.empty());
     
-    cout << "Update LED started at (" << _position.x << ", " << _position.y << ")." << endl;
+    //cout << "Update LED started at (" << _position.x << ", " << _position.y << ")." << endl;
     
     _addNextTile(this, NORTH, &state);
     while (!LEDNodes.empty()) {    // Start a depth-first traversal on the connected LEDs.
         TileLED* currentLED = LEDNodes.top();
         LEDNodes.pop();
         
-        cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
+        //cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
         
         if (currentLED->_position.y > 0) {
             _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y - 1)), NORTH, &state);
@@ -93,7 +93,7 @@ void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr)
         }
     } else if (*statePtr == LOW) {
         if (nextTile->checkOutput(direction) == HIGH) {
-            cout << "  Conflict detected, fixing LEDs." << endl;
+            //cout << "  Conflict detected, fixing LEDs." << endl;
             *statePtr = HIGH;
             for (TileLED* LED : traversedLEDs) {
                 LED->_state = *statePtr;

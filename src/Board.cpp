@@ -141,14 +141,14 @@ void Board::updateCosmetics() {
 void Board::updateTiles() {
     assert(endpointLEDs.empty());
     assert(endpointGates.empty());
-    if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
+    /*if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
         cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
-    }
+    }*/
     if (Tile::currentUpdateTime % 100 == 99) {
         cout << "Thats a lot of updates, remember to check for integer rollover with Tile::currentUpdateTime." << endl;
     }
     
-    cout << "---- GATE STATE CHECKS ----" << endl;
+    //cout << "---- GATE STATE CHECKS ----" << endl;
     for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {    // Check state transitions for all gates (keep update only if gate changed).
         if ((*setIter)->updateNextState()) {
             ++setIter;
@@ -157,45 +157,45 @@ void Board::updateTiles() {
         }
     }
     
-    cout << "---- SWITCH UPDATES ----" << endl;
+    //cout << "---- SWITCH UPDATES ----" << endl;
     while (!switchUpdates.empty()) {    // Update all pending switches.
         (*switchUpdates.begin())->updateOutput();
     }
-    cout << "---- BUTTON UPDATES ----" << endl;
+    //cout << "---- BUTTON UPDATES ----" << endl;
     while (!buttonUpdates.empty()) {    // Update all pending buttons.
         (*buttonUpdates.begin())->updateOutput();
     }
-    cout << "---- GATE UPDATES ----" << endl;
+    //cout << "---- GATE UPDATES ----" << endl;
     while (!gateUpdates.empty()) {    // Update all pending gates that were left over from before.
         (*gateUpdates.begin())->updateOutput();
     }
     
-    cout << "---- REMAINING WIRES AND LEDS ----" << endl;
+    //cout << "---- REMAINING WIRES AND LEDS ----" << endl;
     while (!wireUpdates.empty()) {
-        cout << "Found a remaining wire update." << endl;
+        //cout << "Found a remaining wire update." << endl;
         (*wireUpdates.begin())->updateWire(LOW);
     }
     while (!LEDUpdates.empty()) {
-        cout << "Found a remaining LED update." << endl;
+        //cout << "Found a remaining LED update." << endl;
         (*LEDUpdates.begin())->updateLED(LOW);
     }
     
-    cout << "LED endpoints:" << endl;
+    //cout << "LED endpoints:" << endl;
     for (TileLED* LED : endpointLEDs) {
-        cout << "  (" << LED->getPosition().x << ", " << LED->getPosition().y << ")" << endl;
+        //cout << "  (" << LED->getPosition().x << ", " << LED->getPosition().y << ")" << endl;
         LED->updateLED(LOW);
     }
     endpointLEDs.clear();
-    cout << "Gate endpoints:" << endl;
+    //cout << "Gate endpoints:" << endl;
     for (TileGate* gate : endpointGates) {
-        cout << "  (" << gate->getPosition().x << ", " << gate->getPosition().y << ")" << endl;
+        //cout << "  (" << gate->getPosition().x << ", " << gate->getPosition().y << ")" << endl;
         gateUpdates.insert(gate);
     }
     endpointGates.clear();
     
     TileButton::updateTransitioningButtons();
     
-    cout << endl;
+    //cout << endl;
     ++Tile::currentUpdateTime;
 }
 

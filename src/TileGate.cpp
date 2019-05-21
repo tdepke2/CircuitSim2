@@ -2,7 +2,7 @@
 #include "TileGate.h"
 #include "TileWire.h"
 
-#include <iostream>
+//#include <iostream>
 
 TileGate::TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, Direction direction, Type type, State state) : Tile(boardPtr, position, true, true) {
     _direction = direction;
@@ -126,15 +126,15 @@ bool TileGate::updateNextState() {
         }
     }
     
-    cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
-    cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
-    cout << "  state = " << _state << ", next = " << _nextState << endl;
+    //cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
+    //cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
+    //cout << "  state = " << _state << ", next = " << _nextState << endl;
     
     return _nextState != _state;
 }
 
 void TileGate::updateOutput() {
-    cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
+    //cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
     _boardPtr->gateUpdates.erase(this);    // Remove this gate update and transition to next state.
     _state = _nextState;
     addUpdate(true);

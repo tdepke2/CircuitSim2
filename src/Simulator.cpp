@@ -224,12 +224,7 @@ int Simulator::start() {
                                 }
                             }
                         } else if (event.key.code >= 0) {
-                            cout << "Got key " << event.key.code << " [";
                             char keyChar = keyEventToChar(event.key);
-                            if (keyChar != 0) {
-                                cout << keyChar;
-                            }
-                            cout << "]" << endl;
                             if (keyChar != '\0') {
                                 auto mapIter = board.switchKeybinds.find(keyChar);
                                 if (mapIter != board.switchKeybinds.end() && !mapIter->second.empty()) {
@@ -302,7 +297,10 @@ int Simulator::start() {
         }
     } catch (exception& ex) {
         window.close();
-        cout << "\nUnhandled exception thrown: " << ex.what() << endl;
+        cout << "\n****************************************************" << endl;
+        cout << "* A fatal error has occurred, terminating program. *" << endl;
+        cout << "****************************************************" << endl;
+        cout << "Exception details: " << ex.what() << endl;
         cout << "(Press enter)" << endl;
         cin.get();
         return -1;

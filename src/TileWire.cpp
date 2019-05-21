@@ -7,7 +7,7 @@
 #include <cassert>
 #include <typeinfo>
 
-#include <iostream>
+//#include <iostream>
 
 vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
@@ -126,7 +126,7 @@ void TileWire::followWire(Direction direction, State state) {
     assert(traversedWires.empty());
     assert(wireNodes.empty());
     
-    cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
+    //cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
     _addNextTile(this, direction, &state);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
     if (wireNodes.empty()) {
@@ -152,7 +152,7 @@ void TileWire::followWire(Direction direction, State state) {
         TileWire* currentWire = wireNodes.top().first;
         Direction currentDirection = wireNodes.top().second;
         wireNodes.pop();
-        cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+        //cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
         
         const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];    // Check for connection with adjacent tiles that do not point back to source wire.
         if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
@@ -210,7 +210,7 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
         State gateNextState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;    // If the gate outputs into previous wire, there may be a state conflict.
         if (gateNextState != DISCONNECTED) {
             if (gateNextState == HIGH && *statePtr == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
-                cout << "  Found a state conflict." << endl;
+                //cout << "  Found a state conflict." << endl;
                 *statePtr = HIGH;
                 _fixTraversedWires(*statePtr);
             }
