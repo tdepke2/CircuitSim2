@@ -77,8 +77,12 @@ void Tile::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
 
 void Tile::followWire(Direction direction, State state) {}
 
-void Tile::redrawTile() {
+void Tile::redrawTile() const {
     _boardPtr->redrawTileVertices(0, _position, _direction, _highlight);
+}
+
+string Tile::toString() const {
+    return "  ";
 }
 
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

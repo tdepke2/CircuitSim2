@@ -5,6 +5,7 @@ class Board;
 
 #include "Tile.h"
 #include <SFML/Graphics.hpp>
+#include <string>
 
 using namespace std;
 using namespace sf;
@@ -12,7 +13,7 @@ using namespace sf;
 class TileButton : public Tile {
     public:
     static void updateTransitioningButtons();    // Updates the states of all buttons in _transitioningButtons.
-    TileButton(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, char charID = '\0', State state = LOW);    // Construct a button tile, noAdjacentUpdates stops updates to adjacent tiles.
+    TileButton(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, char charID = ' ', State state = LOW);    // Construct a button tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileButton();
     State getState() const;
     void setCharID(char charID);
@@ -20,7 +21,8 @@ class TileButton : public Tile {
     State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     void updateOutput();    // Updates this button and starts wire traversal on connected tiles (does not change state).
-    void redrawTile();
+    void redrawTile() const;
+    string toString() const;
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

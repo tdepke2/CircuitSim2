@@ -5,6 +5,7 @@ class Board;
 
 #include "Tile.h"
 #include <SFML/Graphics.hpp>
+#include <string>
 
 using namespace std;
 using namespace sf;
@@ -27,7 +28,8 @@ class TileGate : public Tile {
     bool updateNextState();    // Checks adjacent tile states (only inputs) and sets the next state of this gate, returns true if state changed. Does not set the actual state of this gate.
     void updateOutput();    // Updates this gate and starts wire traversal on the output tile.
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, just adds this gate to the list of endpoints if the gate does not point back to the source in the direction.
-    void redrawTile();
+    void redrawTile() const;
+    string toString() const;
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

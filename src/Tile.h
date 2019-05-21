@@ -4,6 +4,7 @@
 class Board;
 
 #include <SFML/Graphics.hpp>
+#include <string>
 
 using namespace std;
 using namespace sf;
@@ -35,7 +36,8 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
     virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
-    virtual void redrawTile();
+    virtual void redrawTile() const;
+    virtual string toString() const;
     virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:

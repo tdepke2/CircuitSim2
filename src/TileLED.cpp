@@ -70,8 +70,12 @@ void TileLED::followWire(Direction direction, State state) {
     Board::endpointLEDs.push_back(this);
 }
 
-void TileLED::redrawTile() {
+void TileLED::redrawTile() const {
     _boardPtr->redrawTileVertices(17 + (_state == HIGH), _position, _direction, _highlight);
+}
+
+string TileLED::toString() const {
+    return OUTPUT_SYMBOL_TABLE[(_state == HIGH)];
 }
 
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

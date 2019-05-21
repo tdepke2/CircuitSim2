@@ -6,6 +6,7 @@
 #include "TileWire.h"
 #include <cassert>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <typeinfo>
@@ -18,32 +19,6 @@ Texture* Board::_tilesetNoGridPtr = nullptr;
 Font* Board::_fontPtr = nullptr;
 int Board::_textureIDMax;
 Vector2u Board::_tileSize;
-
-const vector<string> Board::WIRE_SYMBOL_TABLE = {
-    "| ",  "[ ",  "--",  "==",
-    "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
-    ">-",  ">=",  "v-",  "v=",  "< ",  "<.",  "^-",  "^=",
-    "+-",  "#=",
-    "|-",  "[-",  "|=",  "[="
-};
-const vector<string> Board::INPUT_SYMBOL_TABLE = {
-    "s",   "S",
-    "t",   "T"
-};
-const vector<string> Board::OUTPUT_SYMBOL_TABLE = {
-    "..",  "##"
-};
-const vector<string> Board::GATE_SYMBOL_TABLE = {
-    "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
-    "^m",  "^M",  ">m",  ">M",  "vm",  "vM",  "<m",  "<M",
-    "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
-    "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
-    "^b",  "^B",  ">b",  ">B",  "vb",  "vB",  "<b",  "<B",
-    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
-    "^p",  "^P",  ">p",  ">P",  "vp",  "vP",  "<p",  "<P",
-    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
-    "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
-};
 
 const Font& Board::getFont() {
     return *_fontPtr;
@@ -482,6 +457,29 @@ void Board::loadFile(const string& filename) {
     }
     inputFile.close();
     cout << "Load completed." << endl;
+}
+
+void Board::saveFile(const string& filename) {
+    cout << "Saving board file \"" << filename << "\"..." << endl;
+    ofstream outputFile(filename);
+    if (!outputFile.is_open()) {
+        throw runtime_error("\"" + filename + "\": Unable to open file for writing.");
+    }
+    
+    outputFile << _size.x << endl;
+    outputFile << _size.y << endl;
+    outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ') << endl;
+    for (unsigned int y = 0; y < _size.y; ++y) {
+        outputFile << "*";
+        for (unsigned int x = 0; x < _size.x; ++x) {
+            outputFile << _tileArray[y][x]->toString();
+        }
+        outputFile << "*" << endl;
+    }
+    outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ');
+    
+    outputFile.close();
+    cout << "Save completed." << endl;
 }
 
 void Board::_clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight) {

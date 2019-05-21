@@ -171,8 +171,20 @@ void TileWire::followWire(Direction direction, State state) {
     traversedWires.clear();
 }
 
-void TileWire::redrawTile() {
-    _boardPtr->redrawTileVertices(1 + _type * 2 + _state1 - 1 + (_state2 - 1) * 2, _position, _direction, _highlight);
+void TileWire::redrawTile() const {
+    _boardPtr->redrawTileVertices(1 + _type * 2 + (_state2 == HIGH) * 2 + (_state1 == HIGH), _position, _direction, _highlight);
+}
+
+string TileWire::toString() const {
+    if (_type == STRAIGHT) {
+        return WIRE_SYMBOL_TABLE[(_direction % 2) * 2 + (_state1 == HIGH)];
+    } else if (_type < JUNCTION) {
+        return WIRE_SYMBOL_TABLE[-4 + _type * 8 + _direction * 2 + (_state1 == HIGH)];
+    } else if (_type == JUNCTION) {
+        return WIRE_SYMBOL_TABLE[20 + (_state1 == HIGH)];
+    } else {
+        return WIRE_SYMBOL_TABLE[22 + (_state2 == HIGH) * 2 + (_state1 == HIGH)];
+    }
 }
 
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

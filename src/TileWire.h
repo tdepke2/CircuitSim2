@@ -6,6 +6,7 @@ class Board;
 #include "Tile.h"
 #include <SFML/Graphics.hpp>
 #include <stack>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -31,7 +32,8 @@ class TileWire : public Tile {
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     void updateWire(State state);    // Attempts to update this wire and all connected wires with a given predicted state, travels all paths through the wire.
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
-    void redrawTile();
+    void redrawTile() const;
+    string toString() const;
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

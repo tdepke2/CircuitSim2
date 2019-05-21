@@ -225,7 +225,7 @@ int Simulator::start() {
                             }
                         } else if (event.key.code >= 0) {
                             char keyChar = keyEventToChar(event.key);
-                            if (keyChar != '\0') {
+                            if (keyChar != '\0' && keyChar != ' ') {
                                 auto mapIter = board.switchKeybinds.find(keyChar);
                                 if (mapIter != board.switchKeybinds.end() && !mapIter->second.empty()) {
                                     for (TileSwitch* switchPtr : mapIter->second) {

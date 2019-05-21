@@ -160,15 +160,19 @@ void TileGate::followWire(Direction direction, State state) {
     }
 }
 
-void TileGate::redrawTile() {
+void TileGate::redrawTile() const {
     int textureID;
     bool connectRight = false, connectLeft = false;
     if (_type < 3) {
-        textureID = 19 + _type * 6 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
+        textureID = 19 + _type * 6 + connectLeft * 4 + connectRight * 2 + (_state == HIGH);
     } else {
-        textureID = 13 + _type * 8 + connectRight * 2 + connectLeft * 4 + (_state == HIGH);
+        textureID = 13 + _type * 8 + connectLeft * 4 + connectRight * 2 + (_state == HIGH);
     }
     _boardPtr->redrawTileVertices(textureID, _position, _direction, _highlight);
+}
+
+string TileGate::toString() const {
+    return GATE_SYMBOL_TABLE[_type * 8 + _direction * 2 + (_state == HIGH)];
 }
 
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {

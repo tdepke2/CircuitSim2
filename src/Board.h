@@ -17,6 +17,32 @@ class TileWire;
 using namespace std;
 using namespace sf;
 
+const vector<string> WIRE_SYMBOL_TABLE = {
+    "| ",  "[ ",  "--",  "==",
+    "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
+    ">-",  ">=",  "v-",  "v=",  "< ",  "<.",  "^-",  "^=",
+    "+-",  "#=",
+    "|-",  "[-",  "|=",  "[="
+};
+const vector<string> INPUT_SYMBOL_TABLE = {
+    "s",   "S",
+    "t",   "T"
+};
+const vector<string> OUTPUT_SYMBOL_TABLE = {
+    "..",  "##"
+};
+const vector<string> GATE_SYMBOL_TABLE = {
+    "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
+    "^m",  "^M",  ">m",  ">M",  "vm",  "vM",  "<m",  "<M",
+    "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
+    "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
+    "^b",  "^B",  ">b",  ">B",  "vb",  "vB",  "<b",  "<B",
+    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
+    "^p",  "^P",  ">p",  ">P",  "vp",  "vP",  "<p",  "<P",
+    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
+    "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
+};
+
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
     public:
     static bool gridActive;
@@ -56,12 +82,9 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void flip(bool acrossHorizontal = false);
     void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt", bool startEmpty = false);
     void loadFile(const string& filename);
+    void saveFile(const string& filename);
     
     private:
-    static const vector<string> WIRE_SYMBOL_TABLE;
-    static const vector<string> INPUT_SYMBOL_TABLE;
-    static const vector<string> OUTPUT_SYMBOL_TABLE;
-    static const vector<string> GATE_SYMBOL_TABLE;
     static Texture* _tilesetGridPtr;
     static Texture* _tilesetNoGridPtr;
     static Font* _fontPtr;
