@@ -15,6 +15,7 @@ vector<TileLED*> Board::endpointLEDs;
 vector<TileGate*> Board::endpointGates;
 Texture* Board::_tilesetGridPtr = nullptr;
 Texture* Board::_tilesetNoGridPtr = nullptr;
+Font* Board::_fontPtr = nullptr;
 int Board::_textureIDMax;
 Vector2u Board::_tileSize;
 
@@ -44,8 +45,16 @@ const vector<string> Board::GATE_SYMBOL_TABLE = {
     "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
 };
 
+const Font& Board::getFont() {
+    return *_fontPtr;
+}
+
+const Vector2u& Board::getTileSize() {
+    return _tileSize;
+}
+
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    cout << "Stitching textures." << endl;
+    cout << "Stitching textures..." << endl;
     delete _tilesetGridPtr;
     delete _tilesetNoGridPtr;
     _tilesetGridPtr = new Texture;
@@ -73,8 +82,12 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     _tileSize = tileSize;
 }
 
-const Vector2u& Board::getTileSize() {
-    return _tileSize;
+void Board::loadFont(const string& filename) {
+    delete _fontPtr;
+    _fontPtr = new Font();
+    if (!_fontPtr->loadFromFile(filename)) {
+        throw runtime_error("\"" + filename + "\": Unable to load font file.");
+    }
 }
 
 Board::Board() {
@@ -358,7 +371,7 @@ void Board::newBoard(const Vector2u& size, const string& filename, bool startEmp
 }
 
 void Board::loadFile(const string& filename) {
-    cout << "Loading board file \"" << filename << "\"." << endl;
+    cout << "Loading board file \"" << filename << "\"..." << endl;
     ifstream inputFile(filename);
     if (!inputFile.is_open()) {
         throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
@@ -547,4 +560,7 @@ void Board::draw(RenderTarget& target, RenderStates states) const {
         states.texture = _tilesetNoGridPtr;
     }
     target.draw(_vertices, states);
+    for (const pair<Tile*, Text>& tileLabel : tileLabels) {
+        target.draw(tileLabel.second, states);
+    }
 }

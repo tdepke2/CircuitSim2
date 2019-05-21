@@ -31,9 +31,12 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     unordered_set<TileGate*> gateUpdates;
     unordered_map<char, vector<TileSwitch*>> switchKeybinds;
     unordered_map<char, vector<TileButton*>> buttonKeybinds;
+    unordered_map<Tile*, Text> tileLabels;
     
-    static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
+    static const Font& getFont();
     static const Vector2u& getTileSize();
+    static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
+    static void loadFont(const string& filename);
     Board();
     virtual ~Board();
     const Vector2u& getSize() const;
@@ -61,6 +64,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static const vector<string> GATE_SYMBOL_TABLE;
     static Texture* _tilesetGridPtr;
     static Texture* _tilesetNoGridPtr;
+    static Font* _fontPtr;
     static int _textureIDMax;
     static Vector2u _tileSize;
     VertexArray _vertices;

@@ -29,7 +29,7 @@ Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 
 int Simulator::start() {
-    cout << "Initializing setup." << endl;
+    cout << "Initializing setup..." << endl;
     RenderWindow window;
     windowPtr = &window;
     try {
@@ -40,6 +40,7 @@ int Simulator::start() {
         
         viewOption(3);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        Board::loadFont("resources/consolas.ttf");
         Board board, currentTileBoard, copyBufferBoard;
         boardPtr = &board;
         currentTileBoardPtr = &currentTileBoard;

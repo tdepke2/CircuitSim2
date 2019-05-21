@@ -21,7 +21,7 @@ struct TextButton : public Drawable, public Transformable {
     bool visible, selected;
     
     TextButton();
-    TextButton(const Font& font, const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption = 0);
+    TextButton(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption = 0);
     bool update(int mouseX, int mouseY, bool clicked);
     
     private:
@@ -46,7 +46,6 @@ struct DropdownMenu : public Drawable, public Transformable {
 
 class UserInterface : public Drawable, public Transformable {
     public:
-    Font font;
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     

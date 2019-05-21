@@ -15,6 +15,11 @@ TileButton::TileButton(Board* boardPtr, const Vector2u& position, bool noAdjacen
     _charID = charID;
     _state = state;
     boardPtr->buttonKeybinds[charID].push_back(this);
+    boardPtr->tileLabels[this] = Text("", Board::getFont(), 25);
+    if (charID != '\0') {
+        _boardPtr->tileLabels[this].setString(string(1, charID));
+    }
+    boardPtr->tileLabels[this].setPosition(_position.x * Board::getTileSize().x + 9.0f, _position.y * Board::getTileSize().y - 2.0f);
     addUpdate(false, noAdjacentUpdates);
 }
 
@@ -27,6 +32,7 @@ TileButton::~TileButton() {
             break;
         }
     }
+    _boardPtr->tileLabels.erase(this);
 }
 
 State TileButton::getState() const {
@@ -43,6 +49,11 @@ void TileButton::setCharID(char charID) {
     }
     _charID = charID;
     _boardPtr->buttonKeybinds[_charID].push_back(this);
+    if (charID != '\0') {
+        _boardPtr->tileLabels[this].setString(string(1, charID));
+    } else {
+        _boardPtr->tileLabels[this].setString("");
+    }
     addUpdate(true);
 }
 

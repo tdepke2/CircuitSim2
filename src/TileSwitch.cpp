@@ -5,6 +5,11 @@ TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacen
     _charID = charID;
     _state = state;
     boardPtr->switchKeybinds[charID].push_back(this);
+    boardPtr->tileLabels[this] = Text("", Board::getFont(), 25);
+    if (charID != '\0') {
+        _boardPtr->tileLabels[this].setString(string(1, charID));
+    }
+    boardPtr->tileLabels[this].setPosition(_position.x * Board::getTileSize().x + 9.0f, _position.y * Board::getTileSize().y - 2.0f);
     addUpdate(false, noAdjacentUpdates);
 }
 
@@ -17,6 +22,7 @@ TileSwitch::~TileSwitch() {
             break;
         }
     }
+    _boardPtr->tileLabels.erase(this);
 }
 
 State TileSwitch::getState() const {
@@ -32,7 +38,12 @@ void TileSwitch::setCharID(char charID) {
         }
     }
     _charID = charID;
-    _boardPtr->switchKeybinds[_charID].push_back(this);
+    _boardPtr->switchKeybinds[charID].push_back(this);
+    if (charID != '\0') {
+        _boardPtr->tileLabels[this].setString(string(1, charID));
+    } else {
+        _boardPtr->tileLabels[this].setString("");
+    }
     addUpdate(true);
 }
 
