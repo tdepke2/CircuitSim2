@@ -46,6 +46,9 @@ int Simulator::start() {
         boardPtr = &board;
         currentTileBoardPtr = &currentTileBoard;
         copyBufferBoardPtr = &copyBufferBoard;
+        char directoryPath[260];
+        GetCurrentDirectory(sizeof(directoryPath), directoryPath);
+        Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
         board.newBoard();
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
         UserInterface userInterface;
@@ -75,7 +78,7 @@ int Simulator::start() {
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
             float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
             if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
+                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "] [" + to_string(Tile::tileCount) + "]");
                 fpsClock.restart();
                 fpsCounter = 0;
             } else {

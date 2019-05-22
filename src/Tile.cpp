@@ -2,6 +2,7 @@
 #include "Tile.h"
 
 unsigned int Tile::currentUpdateTime = 1;
+int Tile::tileCount = 0;
 
 Tile::Tile() {}
 
@@ -13,10 +14,14 @@ Tile::Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, bo
     if (!suppressUpdate) {
         addUpdate(false, noAdjacentUpdates);
     }
+    
+    ++tileCount;
 }
 
 Tile::~Tile() {
     _boardPtr->cosmeticUpdates.erase(this);
+    
+    --tileCount;
 }
 
 const Vector2u& Tile::getPosition() const {
@@ -35,23 +40,23 @@ State Tile::getState() const {
     return DISCONNECTED;
 }
 
-void Tile::setPosition(const Vector2u& position, bool keepOverwrittenTile) {
+void Tile::setPosition(const Vector2u& position, bool noAdjacentUpdates, bool keepOverwrittenTile) {
     if (!keepOverwrittenTile) {
         if (_boardPtr->getTile(position) != this) {
             delete _boardPtr->getTile(position);
             _boardPtr->setTile(position, this);
             _boardPtr->setTile(_position, new Tile(_boardPtr, _position));
             _position = position;
-            addUpdate();
+            addUpdate(false, noAdjacentUpdates);
         }
     } else {
         _boardPtr->setTile(position, this);
         _position = position;
-        addUpdate();
+        addUpdate(false, noAdjacentUpdates);
     }
 }
 
-void Tile::setDirection(Direction direction) {}
+void Tile::setDirection(Direction direction, bool noAdjacentUpdates) {}
 
 void Tile::setHighlight(bool highlight) {
     if (_highlight != highlight) {
@@ -62,7 +67,7 @@ void Tile::setHighlight(bool highlight) {
 
 void Tile::setState(State state) {}
 
-void Tile::flip(bool acrossHorizontal) {}
+void Tile::flip(bool acrossHorizontal, bool noAdjacentUpdates) {}
 
 State Tile::checkOutput(Direction direction) const {
     return DISCONNECTED;

@@ -20,9 +20,9 @@ class TileGate : public Tile {
     ~TileGate();
     State getState() const;
     State getNextState() const;
-    void setDirection(Direction direction);
+    void setDirection(Direction direction, bool noAdjacentUpdates = false);
     void setState(State state);
-    void flip(bool acrossHorizontal);    // Flips the tile across the vertical/horizontal axis.
+    void flip(bool acrossHorizontal, bool noAdjacentUpdates = false);    // Flips the tile across the vertical/horizontal axis.
     State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     bool updateNextState();    // Checks adjacent tile states (only inputs) and sets the next state of this gate, returns true if state changed. Does not set the actual state of this gate.

@@ -45,6 +45,7 @@ const vector<string> GATE_SYMBOL_TABLE = {
 
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
     public:
+    static string newBoardDefaultPath;
     static bool gridActive;
     static vector<TileLED*> endpointLEDs;
     static vector<TileGate*> endpointGates;
@@ -80,7 +81,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void highlightArea(const IntRect& region, bool highlight);
     void rotate(bool counterClockwise = false);
     void flip(bool acrossHorizontal = false);
-    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = "boards/NewBoard.txt", bool startEmpty = false);
+    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = newBoardDefaultPath, bool startEmpty = false);
     void loadFile(const string& filename);
     void saveFile(const string& filename);
     

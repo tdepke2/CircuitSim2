@@ -24,9 +24,9 @@ State TileGate::getNextState() const {
     return _nextState;
 }
 
-void TileGate::setDirection(Direction direction) {
+void TileGate::setDirection(Direction direction, bool noAdjacentUpdates) {
     _direction = direction;
-    addUpdate();
+    addUpdate(false, noAdjacentUpdates);
 }
 
 void TileGate::setState(State state) {
@@ -34,10 +34,10 @@ void TileGate::setState(State state) {
     addUpdate();
 }
 
-void TileGate::flip(bool acrossHorizontal) {
+void TileGate::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
-        addUpdate();
+        addUpdate(false, noAdjacentUpdates);
     }
 }
 

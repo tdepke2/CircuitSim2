@@ -20,6 +20,7 @@ enum State : int {
 class Tile {    // Generic tile that is stored in a Board.
     public:
     static unsigned int currentUpdateTime;
+    static int tileCount;
     
     Tile();
     Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);    // Construct tile with parent board and position, noAdjacentUpdates stops updates to adjacent tiles, suppressUpdate stops the initial update to this tile.
@@ -28,11 +29,11 @@ class Tile {    // Generic tile that is stored in a Board.
     Direction getDirection() const;
     bool getHighlight() const;
     virtual State getState() const;
-    void setPosition(const Vector2u& position, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
-    virtual void setDirection(Direction direction);
+    void setPosition(const Vector2u& position, bool noAdjacentUpdates = false, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
+    virtual void setDirection(Direction direction, bool noAdjacentUpdates = false);
     void setHighlight(bool highlight);
     virtual void setState(State state);
-    virtual void flip(bool acrossHorizontal);    // Flips the tile across the vertical/horizontal axis.
+    virtual void flip(bool acrossHorizontal, bool noAdjacentUpdates = false);    // Flips the tile across the vertical/horizontal axis.
     virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
     virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
