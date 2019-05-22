@@ -3,6 +3,9 @@ Todo:
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
     - May need to optimize copy/paste functionality so that middle tiles do not update adjacent tiles.
     - Need to optimize selections, they just have too much performance impact.
+    - Gonna want a try-catch in simulator::fileOption to catch file I/O errors.
+    
+    - Sometimes there is a crash when saving new board (happens after loading one?), also exceptions not getting caught in sub try block.
 
 Potential bugs to test:
     - Update time rolls over and not all objects reset.

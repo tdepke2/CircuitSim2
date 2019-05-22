@@ -466,6 +466,13 @@ void Board::saveFile(const string& filename) {
         throw runtime_error("\"" + filename + "\": Unable to open file for writing.");
     }
     
+    size_t dotPosition = filename.rfind('.');
+    if (dotPosition != string::npos) {
+        name = filename.substr(0, dotPosition);
+    } else {
+        name = filename;
+    }
+    
     outputFile << _size.x << endl;
     outputFile << _size.y << endl;
     outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ') << endl;

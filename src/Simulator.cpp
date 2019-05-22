@@ -7,6 +7,7 @@
 #include "TileWire.h"
 #include "UserInterface.h"
 #include <cassert>
+#include <cctype>
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -323,33 +324,57 @@ void Simulator::fileOption(int option) {
         boardPtr->newBoard();
         cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
         viewOption(3);
-    } else if (option == 1) {    // Load board.
+    } else if (option == 1 || option == 3) {    // Load board. Save as board.
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
         char filename[260];
-        
         ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
         fileDialog.lStructSize = sizeof(fileDialog);
         fileDialog.hwndOwner = windowPtr->getSystemHandle();
+        fileDialog.lpstrFilter = "All types (*.*)\0*.*\0Text file (*.txt)\0*.TXT\0";
+        fileDialog.nFilterIndex = 2;
         fileDialog.lpstrFile = filename;
-        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
+        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName/GetSaveFileName does not initialize itself with the filename.
         fileDialog.nMaxFile = sizeof(filename);
-        fileDialog.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
-        fileDialog.nFilterIndex = 1;
         fileDialog.lpstrFileTitle = NULL;
         fileDialog.nMaxFileTitle = 0;
         fileDialog.lpstrInitialDir = "boards";
-        fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        fileDialog.lpstrDefExt = "txt";
         
-        if (GetOpenFileName(&fileDialog) == TRUE) {
-            boardPtr->loadFile(string(fileDialog.lpstrFile));
-            viewOption(3);
-        } else {
-            cout << "No file selected." << endl;
+        try {
+            if (option == 1) {
+                fileDialog.lpstrTitle = "Open Board File";
+                fileDialog.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                
+                if (GetOpenFileName(&fileDialog) == TRUE) {
+                    boardPtr->loadFile(string(filename));
+                    viewOption(3);
+                } else {
+                    cout << "No file selected." << endl;
+                }
+            } else {
+                fileDialog.lpstrTitle = "Save As Board File";
+                fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+                
+                if (GetSaveFileName(&fileDialog) == TRUE) {
+                    string filenameStr(filename);    // Decapitalize the file extension before saving.
+                    size_t dotPosition = filenameStr.rfind('.');
+                    if (dotPosition != string::npos) {
+                        while (dotPosition < filenameStr.length()) {
+                            filenameStr[dotPosition] = tolower(filenameStr[dotPosition]);
+                            ++dotPosition;
+                        }
+                    }
+                    boardPtr->saveFile(filenameStr);
+                } else {
+                    cout << "No file selected." << endl;
+                }
+            }
+        } catch (exception& ex) {
+            cout << "Error occurred during file access! There may be a problem with file permissions and/or file formats." << endl;
+            cout << "Exception details: " << ex.what() << endl;
         }
     } else if (option == 2) {    // Save board.
-        
-    } else if (option == 3) {    // Save as board.
-        
+        boardPtr->saveFile(boardPtr->name + ".txt");
     } else if (option == 4) {    // Rename board.
         
     } else if (option == 5) {    // Resize board.
