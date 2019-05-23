@@ -37,7 +37,7 @@ int Simulator::start() {
         assert(state == State::Uninitialized);
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        window.create(VideoMode(800, 800), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        window.create(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         
         viewOption(3);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
@@ -51,6 +51,7 @@ int Simulator::start() {
         Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
         board.newBoard();
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
+        copyBufferBoard.highlightArea(IntRect(0, 0, copyBufferBoard.getSize().x, copyBufferBoard.getSize().y), true);
         UserInterface userInterface;
         Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
@@ -78,7 +79,7 @@ int Simulator::start() {
             while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
             float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
             if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "] [" + to_string(Tile::tileCount) + "]");
+                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
                 fpsClock.restart();
                 fpsCounter = 0;
             } else {
@@ -324,9 +325,9 @@ int Simulator::randomInteger(int n) {
 
 void Simulator::fileOption(int option) {
     if (option == 0) {    // New board.
+        viewOption(3);
         boardPtr->newBoard();
         cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
-        viewOption(3);
     } else if (option == 1 || option == 3) {    // Load board. Save as board.
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
         char filename[260];
@@ -349,8 +350,8 @@ void Simulator::fileOption(int option) {
                 fileDialog.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                 
                 if (GetOpenFileName(&fileDialog) == TRUE) {
-                    boardPtr->loadFile(string(filename));
                     viewOption(3);
+                    boardPtr->loadFile(string(filename));
                 } else {
                     cout << "No file selected." << endl;
                 }
@@ -495,7 +496,7 @@ void Simulator::toolsOption(int option) {
     } else if (option == 7) {    // Copy selection.
         if (selectionArea != IntRect(0, 0, 0, 0)) {
             copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
-            copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true);
+            copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true, true);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
             toolsOption(8);
         }

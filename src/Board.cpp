@@ -231,7 +231,7 @@ void Board::resize(const Vector2u& size) {
     _tileArray = newTileArray;
 }
 
-void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool keepOverwrittenTiles) {
+void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates, bool keepOverwrittenTiles) {
     assert(region.left >= 0 && region.left + region.width <= static_cast<int>(source.getSize().x) && region.top >= 0 && region.top + region.height <= static_cast<int>(source.getSize().y));
     assert(destination.x >= 0 && destination.x + region.width <= static_cast<int>(_size.x) && destination.y >= 0 && destination.y + region.height <= static_cast<int>(_size.y));
     
@@ -243,7 +243,7 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
             if (!keepOverwrittenTiles) {
                 delete _tileArray[yThis][xThis];
             }
-            _tileArray[yThis][xThis] = source.getTile(Vector2u(xSource, ySource))->clone(this, Vector2u(xThis, yThis), true);
+            _tileArray[yThis][xThis] = source.getTile(Vector2u(xSource, ySource))->clone(this, Vector2u(xThis, yThis), noAdjacentUpdates);
             ++xSource;
             ++xThis;
         }

@@ -2,7 +2,6 @@
 #include "Tile.h"
 
 unsigned int Tile::currentUpdateTime = 1;
-int Tile::tileCount = 0;
 
 Tile::Tile() {}
 
@@ -14,14 +13,10 @@ Tile::Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, bo
     if (!suppressUpdate) {
         addUpdate(false, noAdjacentUpdates);
     }
-    
-    ++tileCount;
 }
 
 Tile::~Tile() {
     _boardPtr->cosmeticUpdates.erase(this);
-    
-    --tileCount;
 }
 
 const Vector2u& Tile::getPosition() const {

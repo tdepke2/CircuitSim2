@@ -20,7 +20,6 @@ enum State : int {
 class Tile {    // Generic tile that is stored in a Board.
     public:
     static unsigned int currentUpdateTime;
-    static int tileCount;
     
     Tile();
     Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);    // Construct tile with parent board and position, noAdjacentUpdates stops updates to adjacent tiles, suppressUpdate stops the initial update to this tile.

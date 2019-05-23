@@ -77,7 +77,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     void replaceTile(Tile* tile);
     void clear();
     void resize(const Vector2u& size);
-    void cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool keepOverwrittenTiles = false);
+    void cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates = false, bool keepOverwrittenTiles = false);
     void highlightArea(const IntRect& region, bool highlight);
     void rotate(bool counterClockwise = false);
     void flip(bool acrossHorizontal = false);
