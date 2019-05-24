@@ -4,12 +4,21 @@ Todo:
     - Need to optimize selections, they just have too much performance impact.
     - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Simulation current speed indicator (top right?).
-    - Boards are centered on loading for the dimensions that fit the screen, otherwise line up with top left.
     - Need text box prompts for rename and switch/button re-label functions.
     - Wire tool.
+    - Improved format for save files, each file includes a notes section that is displayed in the board viewer at the top of a board.
+    - Pressing R when cursor over tile rotates the tile, same for flip.
+    - Additional tool to "toggle" a tile (holding shift will "interact" instead like switch between crossover/junction or set switch/button label).
+    - Refactor simulator to use only pointers to boards/window/other OpenGL types for consistency.
+    - Provide a warning to save changes before exit, loading, or making new board.
+    
+    - Left off working on centering board, doesn't work right now
 
-Potential bugs to test:
+Current and potential bugs:
     - Update time rolls over and not all objects reset.
+    - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.
+        * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
+        * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.
 
 Simulation algorithm version 1:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).

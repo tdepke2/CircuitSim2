@@ -39,7 +39,6 @@ int Simulator::start() {
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         window.create(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         
-        viewOption(3);
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board::loadFont("resources/consolas.ttf");
         Board board, currentTileBoard, copyBufferBoard;
@@ -53,6 +52,7 @@ int Simulator::start() {
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
         copyBufferBoard.highlightArea(IntRect(0, 0, copyBufferBoard.getSize().x, copyBufferBoard.getSize().y), true);
         UserInterface userInterface;
+        viewOption(3);
         Vector2i mouseStart(0, 0);
         Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
         int fpsCounter = 0;
@@ -325,8 +325,11 @@ int Simulator::randomInteger(int n) {
 
 void Simulator::fileOption(int option) {
     if (option == 0) {    // New board.
-        viewOption(3);
+        tileCursor = Vector2i(-1, -1);
+        selectionStart = Vector2i(-1, -1);
+        selectionArea = IntRect(0, 0, 0, 0);
         boardPtr->newBoard();
+        viewOption(3);
         cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
     } else if (option == 1 || option == 3) {    // Load board. Save as board.
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
@@ -350,8 +353,11 @@ void Simulator::fileOption(int option) {
                 fileDialog.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                 
                 if (GetOpenFileName(&fileDialog) == TRUE) {
-                    viewOption(3);
+                    tileCursor = Vector2i(-1, -1);
+                    selectionStart = Vector2i(-1, -1);
+                    selectionArea = IntRect(0, 0, 0, 0);
                     boardPtr->loadFile(string(filename));
+                    viewOption(3);
                 } else {
                     cout << "No file selected." << endl;
                 }
@@ -374,6 +380,7 @@ void Simulator::fileOption(int option) {
                 }
             }
         } catch (exception& ex) {
+            viewOption(3);
             cout << "Error occurred during file access! There may be a problem with file permissions and/or file formats." << endl;
             cout << "Exception details: " << ex.what() << endl;
         }
@@ -413,8 +420,10 @@ void Simulator::viewOption(int option) {
     } else if (option == 3) {    // Default zoom.
         zoomLevel = 1.0f;
         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+        float xCenter = 0.5f * min(static_cast<float>(boardPtr->getSize().x * boardPtr->getTileSize().x), windowPtr->getSize().x - boardPtr->getTileSize().x * 2.0f);
+        float yCenter = 0.5f * min(static_cast<float>(boardPtr->getSize().y * boardPtr->getTileSize().y) - 28.0f, windowPtr->getSize().y - (boardPtr->getTileSize().y + 28.0f) * 2.0f);
+        boardView.setCenter(xCenter, yCenter);
         windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
-        boardView.setCenter(0.5f * Vector2f(windowPtr->getSize()) - Vector2f(32.0f, 60.0f));
     } else {
         assert(false);
     }
