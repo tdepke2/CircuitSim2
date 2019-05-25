@@ -16,10 +16,12 @@
 #include <typeinfo>
 #include <windows.h>
 
-const float Simulator::FPS_CAP = 60.0f;
-Simulator::State Simulator::state = State::Uninitialized;
+const unsigned int Simulator::FRAMERATE_LIMIT = 60;
+atomic<Simulator::State> Simulator::state = State::Uninitialized;
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Paused;
 mt19937 Simulator::mainRNG;
+mutex Simulator::renderMutex, Simulator::renderReadyMutex;
+int Simulator::fpsCounter = 0;
 View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
@@ -40,6 +42,7 @@ int Simulator::start() {
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         windowPtr = new RenderWindow(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
         
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
@@ -56,16 +59,15 @@ int Simulator::start() {
         userInterfacePtr = new UserInterface();
         viewOption(3);
         Vector2i mouseStart(0, 0);
+        Clock perSecondClock;    // Used to count frames per second and updates per second.
+        int upsCounter = 0;
         renderThread = thread(renderLoop);
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
-            boardPtr->updateCosmetics();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
-            copyBufferBoardPtr->updateCosmetics();
-            currentTileBoardPtr->updateCosmetics();
-            
-            
-            
+            renderReadyMutex.lock();
+            renderMutex.lock();
+            renderReadyMutex.unlock();
             Event event;
             while (windowPtr->pollEvent(event)) {    // Process events.
                 if (event.type == Event::MouseMoved) {
@@ -182,9 +184,25 @@ int Simulator::start() {
                 }
                 tileCursor = Vector2i(-1, -1);
             }
+            
+            boardPtr->updateCosmetics();
+            copyBufferBoardPtr->updateCosmetics();
+            currentTileBoardPtr->updateCosmetics();
+            
+            ++upsCounter;
+            if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and UPS.
+                windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", UPS: " + to_string(upsCounter) + "]");
+                perSecondClock.restart();
+                fpsCounter = 0;
+                upsCounter = 0;
+            }
+            renderMutex.unlock();
+            //cout << "main" << endl;
+            this_thread::sleep_for(chrono::milliseconds(1));
         }
     } catch (exception& ex) {
         state = State::Exiting;
+        renderMutex.unlock();
         cout << "\n****************************************************" << endl;
         cout << "* A fatal error has occurred, terminating program. *" << endl;
         cout << "****************************************************" << endl;
@@ -436,10 +454,10 @@ void Simulator::placeTile(int option) {
 
 void Simulator::renderLoop() {
     windowPtr->setActive(true);
-    Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
-    int fpsCounter = 0;
-    
     while (state != State::Exiting) {
+        renderReadyMutex.lock();
+        renderMutex.lock();
+        renderReadyMutex.unlock();
         windowPtr->clear();
         windowPtr->setView(boardView);
         windowPtr->draw(*boardPtr);
@@ -452,17 +470,10 @@ void Simulator::renderLoop() {
         }
         windowPtr->setView(windowView);
         windowPtr->draw(*userInterfacePtr);
-        windowPtr->display();
-        
-        while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down render if the current FPS is greater than the FPS cap.
-        float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
-        if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-            windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
-            fpsClock.restart();
-            fpsCounter = 0;
-        } else {
-            ++fpsCounter;
-        }
+        ++fpsCounter;
+        renderMutex.unlock();
+        //cout << "draw loop" << endl;
+        windowPtr->display();    // Display invokes sf::sleep to pause for next frame and keep framerate constant.
     }
     windowPtr->close();
 }

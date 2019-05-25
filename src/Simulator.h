@@ -5,6 +5,8 @@ class Board;
 class UserInterface;
 
 #include "Tile.h"
+#include <atomic>
+#include <mutex>
 #include <random>
 #include <SFML/Graphics.hpp>
 
@@ -13,7 +15,7 @@ using namespace sf;
 
 class Simulator {
     public:
-    static const float FPS_CAP;
+    static const unsigned int FRAMERATE_LIMIT;
     
     static int start();
     static int randomInteger(int min, int max);
@@ -32,9 +34,11 @@ class Simulator {
         Paused, Slow, Medium, Fast
     };
     
-    static State state;
+    static atomic<State> state;
     static SimSpeed simSpeed;
     static mt19937 mainRNG;
+    static mutex renderMutex, renderReadyMutex;
+    static int fpsCounter;
     static View boardView, windowView;
     static float zoomLevel;
     static RenderWindow* windowPtr;
