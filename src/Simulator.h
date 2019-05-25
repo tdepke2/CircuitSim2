@@ -48,6 +48,7 @@ class Simulator {
     static IntRect selectionArea;
     
     static void renderLoop();
+    static void handleKeyPress(Event::KeyEvent keyEvent);
     static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);
     static char keyEventToChar(Event::KeyEvent keyEvent);
 };

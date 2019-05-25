@@ -34,77 +34,73 @@ IntRect Simulator::selectionArea(0, 0, 0, 0);
 
 int Simulator::start() {
     cout << "Initializing setup..." << endl;
-    RenderWindow window;
-    windowPtr = &window;
     thread renderThread;
     try {
         assert(state == State::Uninitialized);
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        window.create(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
-        window.setActive(false);
+        windowPtr = new RenderWindow(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        windowPtr->setActive(false);
         
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board::loadFont("resources/consolas.ttf");
-        Board board, currentTileBoard, copyBufferBoard;
-        boardPtr = &board;
-        currentTileBoardPtr = &currentTileBoard;
-        copyBufferBoardPtr = &copyBufferBoard;
+        boardPtr = new Board();
+        currentTileBoardPtr = new Board();
+        copyBufferBoardPtr = new Board();
         char directoryPath[260];
         GetCurrentDirectory(sizeof(directoryPath), directoryPath);
         Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
-        board.newBoard();
-        copyBufferBoard.newBoard(Vector2u(1, 1), "");
-        copyBufferBoard.highlightArea(IntRect(0, 0, copyBufferBoard.getSize().x, copyBufferBoard.getSize().y), true);
-        UserInterface userInterface;
-        userInterfacePtr = &userInterface;
+        boardPtr->newBoard();
+        copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
+        copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        userInterfacePtr = new UserInterface();
         viewOption(3);
         Vector2i mouseStart(0, 0);
         renderThread = thread(renderLoop);
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
-            board.updateCosmetics();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
-            copyBufferBoard.updateCosmetics();
-            currentTileBoard.updateCosmetics();
+            boardPtr->updateCosmetics();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
+            copyBufferBoardPtr->updateCosmetics();
+            currentTileBoardPtr->updateCosmetics();
             
             
             
             Event event;
-            while (window.pollEvent(event)) {    // Process events.
+            while (windowPtr->pollEvent(event)) {    // Process events.
                 if (event.type == Event::MouseMoved) {
                     if (Mouse::isButtonPressed(Mouse::Left)) {
                         Vector2f newCenter(boardView.getCenter().x + (mouseStart.x - event.mouseMove.x) * zoomLevel, boardView.getCenter().y + (mouseStart.y - event.mouseMove.y) * zoomLevel);
                         if (newCenter.x < 0.0f) {
                             newCenter.x = 0.0f;
-                        } else if (newCenter.x > static_cast<float>(board.getSize().x * board.getTileSize().x)) {
-                            newCenter.x = static_cast<float>(board.getSize().x * board.getTileSize().x);
+                        } else if (newCenter.x > static_cast<float>(boardPtr->getSize().x * boardPtr->getTileSize().x)) {
+                            newCenter.x = static_cast<float>(boardPtr->getSize().x * boardPtr->getTileSize().x);
                         }
                         if (newCenter.y < 0.0f) {
                             newCenter.y = 0.0f;
-                        } else if (newCenter.y > static_cast<float>(board.getSize().y * board.getTileSize().y)) {
-                            newCenter.y = static_cast<float>(board.getSize().y * board.getTileSize().y);
+                        } else if (newCenter.y > static_cast<float>(boardPtr->getSize().y * boardPtr->getTileSize().y)) {
+                            newCenter.y = static_cast<float>(boardPtr->getSize().y * boardPtr->getTileSize().y);
                         }
                         boardView.setCenter(newCenter);
                     } else {
-                        userInterface.update(event.mouseMove.x, event.mouseMove.y, false);
+                        userInterfacePtr->update(event.mouseMove.x, event.mouseMove.y, false);
                     }
                     mouseStart.x = event.mouseMove.x;
                     mouseStart.y = event.mouseMove.y;
                 } else if (event.type == Event::MouseButtonPressed) {
                     if (event.mouseButton.button == Mouse::Left) {    // Check if view is moved.
-                        userInterface.update(event.mouseButton.x, event.mouseButton.y, true);
-                    } else if (event.mouseButton.button == Mouse::Right && (currentTileBoard.getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
+                        userInterfacePtr->update(event.mouseButton.x, event.mouseButton.y, true);
+                    } else if (event.mouseButton.button == Mouse::Right && (currentTileBoardPtr->getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
                         pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
-                    if (event.mouseButton.button == Mouse::Right && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                    if (event.mouseButton.button == Mouse::Right && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
                         if (selectionStart == Vector2i(-1, -1)) {    // Check if selection was cancelled (right click made without dragging).
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
-                                board.highlightArea(selectionArea, false);
+                                boardPtr->highlightArea(selectionArea, false);
                                 selectionArea = IntRect(0, 0, 0, 0);
                                 if (tileCursor != Vector2i(-1, -1)) {
-                                    board.getTile(tileCursor)->setHighlight(true);
+                                    boardPtr->getTile(tileCursor)->setHighlight(true);
                                 }
                             }
                         } else {    // Else, finish the selection.
@@ -115,176 +111,57 @@ int Simulator::start() {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
                     if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
                         zoomLevel += zoomDelta;
-                        boardView.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
+                        boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     }
                 } else if (event.type == Event::KeyPressed) {
-                    if (Keyboard::isKeyPressed(Keyboard::LControl) || Keyboard::isKeyPressed(Keyboard::RControl)) {
-                        if (event.key.code == Keyboard::N) {
-                            fileOption(0);
-                        } else if (event.key.code == Keyboard::O) {
-                            fileOption(1);
-                        } else if (event.key.code == Keyboard::S) {
-                            fileOption(2);
-                        } else if (event.key.code == Keyboard::A) {
-                            toolsOption(0);
-                        } else if (event.key.code == Keyboard::X) {
-                            toolsOption(6);
-                        } else if (event.key.code == Keyboard::C) {
-                            toolsOption(7);
-                        } else if (event.key.code == Keyboard::V) {
-                            toolsOption(8);
-                        }
-                    } else {
-                        if (event.key.code == Keyboard::Enter) {
-                            viewOption(0);
-                        } else if (event.key.code == Keyboard::Tab) {
-                            if (!event.key.shift) {
-                                runOption(0);
-                            } else {
-                                //runOption(1);
-                            }
-                        } else if (event.key.code == Keyboard::Escape) {
-                            toolsOption(1);
-                        }
-                        if (editMode) {
-                            if (event.key.code == Keyboard::R) {
-                                if (!event.key.shift) {
-                                    toolsOption(2);
-                                } else {
-                                    toolsOption(3);
-                                }
-                            } else if (event.key.code == Keyboard::F) {
-                                if (!event.key.shift) {
-                                    toolsOption(4);
-                                } else {
-                                    toolsOption(5);
-                                }
-                            } else if (event.key.code == Keyboard::Delete) {
-                                toolsOption(9);
-                            } else if (event.key.code == Keyboard::Space) {
-                                placeTile(0);
-                            } else if (event.key.code == Keyboard::T) {
-                                if (!event.key.shift) {
-                                    placeTile(1);
-                                } else {
-                                    placeTile(3);
-                                }
-                            } else if (event.key.code == Keyboard::C) {
-                                if (!event.key.shift) {
-                                    placeTile(2);
-                                } else {
-                                    placeTile(5);
-                                }
-                            } else if (event.key.code == Keyboard::J) {
-                                placeTile(4);
-                            } else if (event.key.code == Keyboard::S) {
-                                if (!event.key.shift) {
-                                    placeTile(6);
-                                } else {
-                                    placeTile(7);
-                                }
-                            } else if (event.key.code == Keyboard::L) {
-                                placeTile(8);
-                            } else if (event.key.code == Keyboard::D) {
-                                placeTile(9);
-                            } else if (event.key.code == Keyboard::B) {
-                                if (!event.key.shift) {
-                                    placeTile(10);
-                                } else {
-                                    placeTile(11);
-                                }
-                            } else if (event.key.code == Keyboard::A) {
-                                if (!event.key.shift) {
-                                    placeTile(12);
-                                } else {
-                                    placeTile(13);
-                                }
-                            } else if (event.key.code == Keyboard::O) {
-                                if (!event.key.shift) {
-                                    placeTile(14);
-                                } else {
-                                    placeTile(15);
-                                }
-                            } else if (event.key.code == Keyboard::X) {
-                                if (!event.key.shift) {
-                                    placeTile(16);
-                                } else {
-                                    placeTile(17);
-                                }
-                            }
-                        } else if (event.key.code >= 0) {
-                            char keyChar = keyEventToChar(event.key);
-                            if (keyChar != '\0' && keyChar != ' ') {
-                                auto mapIter = board.switchKeybinds.find(keyChar);
-                                if (mapIter != board.switchKeybinds.end() && !mapIter->second.empty()) {
-                                    for (TileSwitch* switchPtr : mapIter->second) {
-                                        if (switchPtr->getState() == LOW) {
-                                            switchPtr->setState(HIGH);
-                                        } else {
-                                            switchPtr->setState(LOW);
-                                        }
-                                    }
-                                }
-                                auto mapIter2 = board.buttonKeybinds.find(keyChar);
-                                if (mapIter2 != board.buttonKeybinds.end() && !mapIter2->second.empty()) {
-                                    for (TileButton* buttonPtr : mapIter2->second) {
-                                        if (buttonPtr->getState() == LOW) {
-                                            buttonPtr->setState(HIGH);
-                                        } else {
-                                            buttonPtr->setState(LOW);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    handleKeyPress(event.key);
                 } else if (event.type == Event::Resized) {
-                    boardView.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
-                    windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
+                    boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
+                    windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
                 } else if (event.type == Event::Closed) {
                     state = State::Exiting;
                 }
             }
             
-            Vector2i newTileCursor(window.mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
-            newTileCursor.x /= board.getTileSize().x;
-            newTileCursor.y /= board.getTileSize().y;
-            if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(board.getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(board.getSize().y)) {
+            Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
+            newTileCursor.x /= boardPtr->getTileSize().x;
+            newTileCursor.y /= boardPtr->getTileSize().y;
+            if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(boardPtr->getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(boardPtr->getSize().y)) {
                 if (tileCursor != newTileCursor) {
                     if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
-                        board.getTile(tileCursor)->setHighlight(false);
+                        boardPtr->getTile(tileCursor)->setHighlight(false);
                     }
-                    board.getTile(newTileCursor)->setHighlight(true);
-                    if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoard.getSize() == Vector2u(0, 0) && !copyBufferVisible) {
-                        board.highlightArea(selectionArea, false);
+                    boardPtr->getTile(newTileCursor)->setHighlight(true);
+                    if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                        boardPtr->highlightArea(selectionArea, false);
                         if (tileCursor != Vector2i(-1, -1)) {
                             selectionStart = tileCursor;
                         }
                         selectionArea = IntRect(0, 0, 0, 0);
                     }
                     if (selectionStart != Vector2i(-1, -1)) {
-                        board.highlightArea(selectionArea, false);
+                        boardPtr->highlightArea(selectionArea, false);
                         selectionArea.left = min(selectionStart.x, newTileCursor.x);
                         selectionArea.top = min(selectionStart.y, newTileCursor.y);
                         selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
                         selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
-                        board.highlightArea(selectionArea, true);
+                        boardPtr->highlightArea(selectionArea, true);
                     } else if (Mouse::isButtonPressed(Mouse::Right)) {
                         pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                     tileCursor = newTileCursor;
-                    currentTileBoard.setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
-                    copyBufferBoard.setPosition(currentTileBoard.getPosition());
+                    currentTileBoardPtr->setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
+                    copyBufferBoardPtr->setPosition(currentTileBoardPtr->getPosition());
                 }
             } else if (tileCursor != Vector2i(-1, -1)) {
                 if (!selectionArea.contains(tileCursor)) {
-                    board.getTile(tileCursor)->setHighlight(false);
+                    boardPtr->getTile(tileCursor)->setHighlight(false);
                 }
                 tileCursor = Vector2i(-1, -1);
             }
         }
     } catch (exception& ex) {
-        window.close();
+        state = State::Exiting;
         cout << "\n****************************************************" << endl;
         cout << "* A fatal error has occurred, terminating program. *" << endl;
         cout << "****************************************************" << endl;
@@ -295,7 +172,6 @@ int Simulator::start() {
         return -1;
     }
     
-    window.close();
     renderThread.join();
     return 0;
 }
@@ -540,7 +416,7 @@ void Simulator::renderLoop() {
     Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
     int fpsCounter = 0;
     
-    while (windowPtr->isOpen()) {
+    while (state != State::Exiting) {
         windowPtr->clear();
         windowPtr->setView(boardView);
         windowPtr->draw(*boardPtr);
@@ -563,6 +439,130 @@ void Simulator::renderLoop() {
             fpsCounter = 0;
         } else {
             ++fpsCounter;
+        }
+    }
+    windowPtr->close();
+}
+
+void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
+    if (Keyboard::isKeyPressed(Keyboard::LControl) || Keyboard::isKeyPressed(Keyboard::RControl)) {
+        if (keyEvent.code == Keyboard::N) {
+            fileOption(0);
+        } else if (keyEvent.code == Keyboard::O) {
+            fileOption(1);
+        } else if (keyEvent.code == Keyboard::S) {
+            fileOption(2);
+        } else if (keyEvent.code == Keyboard::A) {
+            toolsOption(0);
+        } else if (keyEvent.code == Keyboard::X) {
+            toolsOption(6);
+        } else if (keyEvent.code == Keyboard::C) {
+            toolsOption(7);
+        } else if (keyEvent.code == Keyboard::V) {
+            toolsOption(8);
+        }
+    } else {
+        if (keyEvent.code == Keyboard::Enter) {
+            viewOption(0);
+        } else if (keyEvent.code == Keyboard::Tab) {
+            if (!keyEvent.shift) {
+                runOption(0);
+            } else {
+                //runOption(1);
+            }
+        } else if (keyEvent.code == Keyboard::Escape) {
+            toolsOption(1);
+        }
+        if (editMode) {
+            if (keyEvent.code == Keyboard::R) {
+                if (!keyEvent.shift) {
+                    toolsOption(2);
+                } else {
+                    toolsOption(3);
+                }
+            } else if (keyEvent.code == Keyboard::F) {
+                if (!keyEvent.shift) {
+                    toolsOption(4);
+                } else {
+                    toolsOption(5);
+                }
+            } else if (keyEvent.code == Keyboard::Delete) {
+                toolsOption(9);
+            } else if (keyEvent.code == Keyboard::Space) {
+                placeTile(0);
+            } else if (keyEvent.code == Keyboard::T) {
+                if (!keyEvent.shift) {
+                    placeTile(1);
+                } else {
+                    placeTile(3);
+                }
+            } else if (keyEvent.code == Keyboard::C) {
+                if (!keyEvent.shift) {
+                    placeTile(2);
+                } else {
+                    placeTile(5);
+                }
+            } else if (keyEvent.code == Keyboard::J) {
+                placeTile(4);
+            } else if (keyEvent.code == Keyboard::S) {
+                if (!keyEvent.shift) {
+                    placeTile(6);
+                } else {
+                    placeTile(7);
+                }
+            } else if (keyEvent.code == Keyboard::L) {
+                placeTile(8);
+            } else if (keyEvent.code == Keyboard::D) {
+                placeTile(9);
+            } else if (keyEvent.code == Keyboard::B) {
+                if (!keyEvent.shift) {
+                    placeTile(10);
+                } else {
+                    placeTile(11);
+                }
+            } else if (keyEvent.code == Keyboard::A) {
+                if (!keyEvent.shift) {
+                    placeTile(12);
+                } else {
+                    placeTile(13);
+                }
+            } else if (keyEvent.code == Keyboard::O) {
+                if (!keyEvent.shift) {
+                    placeTile(14);
+                } else {
+                    placeTile(15);
+                }
+            } else if (keyEvent.code == Keyboard::X) {
+                if (!keyEvent.shift) {
+                    placeTile(16);
+                } else {
+                    placeTile(17);
+                }
+            }
+        } else if (keyEvent.code >= 0) {
+            char keyChar = keyEventToChar(keyEvent);
+            if (keyChar != '\0' && keyChar != ' ') {
+                auto mapIter = boardPtr->switchKeybinds.find(keyChar);
+                if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
+                    for (TileSwitch* switchPtr : mapIter->second) {
+                        if (switchPtr->getState() == LOW) {
+                            switchPtr->setState(HIGH);
+                        } else {
+                            switchPtr->setState(LOW);
+                        }
+                    }
+                }
+                auto mapIter2 = boardPtr->buttonKeybinds.find(keyChar);
+                if (mapIter2 != boardPtr->buttonKeybinds.end() && !mapIter2->second.empty()) {
+                    for (TileButton* buttonPtr : mapIter2->second) {
+                        if (buttonPtr->getState() == LOW) {
+                            buttonPtr->setState(HIGH);
+                        } else {
+                            buttonPtr->setState(LOW);
+                        }
+                    }
+                }
+            }
         }
     }
 }
