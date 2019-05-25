@@ -117,6 +117,9 @@ void Board::updateCosmetics() {
 void Board::updateTiles() {
     assert(endpointLEDs.empty());
     assert(endpointGates.empty());
+    if (wireUpdates.empty() && gateUpdates.empty() && switchUpdates.empty() && buttonUpdates.empty() && LEDUpdates.empty()) {
+        return;
+    }
     /*if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
         cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
     }*/

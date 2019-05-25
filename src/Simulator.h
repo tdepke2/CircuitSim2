@@ -2,6 +2,7 @@
 #define _SIMULATOR_H
 
 class Board;
+class UserInterface;
 
 #include "Tile.h"
 #include <random>
@@ -27,8 +28,12 @@ class Simulator {
     enum class State {
         Uninitialized, Running, Exiting
     };
+    enum class SimSpeed {
+        Paused, Slow, Medium, Fast
+    };
     
     static State state;
+    static SimSpeed simSpeed;
     static mt19937 mainRNG;
     static View boardView, windowView;
     static float zoomLevel;
@@ -36,11 +41,13 @@ class Simulator {
     static Board* boardPtr;
     static Board* currentTileBoardPtr;
     static Board* copyBufferBoardPtr;
+    static UserInterface* userInterfacePtr;
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible;
     static Vector2i tileCursor, selectionStart;
     static IntRect selectionArea;
     
+    static void renderLoop();
     static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);
     static char keyEventToChar(Event::KeyEvent keyEvent);
 };

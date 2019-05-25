@@ -12,11 +12,13 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <typeinfo>
 #include <windows.h>
 
 const float Simulator::FPS_CAP = 60.0f;
 Simulator::State Simulator::state = State::Uninitialized;
+Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Paused;
 mt19937 Simulator::mainRNG;
 View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
@@ -24,6 +26,7 @@ RenderWindow* Simulator::windowPtr = nullptr;
 Board* Simulator::boardPtr = nullptr;
 Board* Simulator::currentTileBoardPtr = nullptr;
 Board* Simulator::copyBufferBoardPtr = nullptr;
+UserInterface* Simulator::userInterfacePtr = nullptr;
 Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::editMode = true, Simulator::copyBufferVisible = false;
 Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
@@ -33,11 +36,13 @@ int Simulator::start() {
     cout << "Initializing setup..." << endl;
     RenderWindow window;
     windowPtr = &window;
+    thread renderThread;
     try {
         assert(state == State::Uninitialized);
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         window.create(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        window.setActive(false);
         
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board::loadFont("resources/consolas.ttf");
@@ -52,39 +57,18 @@ int Simulator::start() {
         copyBufferBoard.newBoard(Vector2u(1, 1), "");
         copyBufferBoard.highlightArea(IntRect(0, 0, copyBufferBoard.getSize().x, copyBufferBoard.getSize().y), true);
         UserInterface userInterface;
+        userInterfacePtr = &userInterface;
         viewOption(3);
         Vector2i mouseStart(0, 0);
-        Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
-        int fpsCounter = 0;
+        renderThread = thread(renderLoop);
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
             board.updateCosmetics();    // ######################################################################################################## May want to move this to end of loop (but make sure updates called before first draw).
             copyBufferBoard.updateCosmetics();
             currentTileBoard.updateCosmetics();
-            window.clear();
-            window.setView(boardView);
-            window.draw(board);
-            if (tileCursor != Vector2i(-1, -1)) {
-                if (copyBufferVisible) {
-                    window.draw(copyBufferBoard);
-                } else {
-                    window.draw(currentTileBoard);
-                }
-            }
-            window.setView(windowView);
-            window.draw(userInterface);
-            window.display();
             
-            while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down simulation if the current FPS is greater than the FPS cap.
-            float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
-            if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
-                window.setTitle("[CircuitSim2] [" + board.name + "] [Size: " + to_string(board.getSize().x) + " x " + to_string(board.getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
-                fpsClock.restart();
-                fpsCounter = 0;
-            } else {
-                ++fpsCounter;
-            }
+            
             
             Event event;
             while (window.pollEvent(event)) {    // Process events.
@@ -258,7 +242,6 @@ int Simulator::start() {
                     boardView.setSize(Vector2f(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel));
                     windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(window.getSize())));
                 } else if (event.type == Event::Closed) {
-                    window.close();
                     state = State::Exiting;
                 }
             }
@@ -308,9 +291,12 @@ int Simulator::start() {
         cout << "Exception details: " << ex.what() << endl;
         cout << "(Press enter)" << endl;
         cin.get();
+        renderThread.join();
         return -1;
     }
     
+    window.close();
+    renderThread.join();
     return 0;
 }
 
@@ -547,6 +533,38 @@ void Simulator::placeTile(int option) {
     }
     currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
     copyBufferVisible = false;
+}
+
+void Simulator::renderLoop() {
+    windowPtr->setActive(true);
+    Clock mainClock, fpsClock;    // The mainClock keeps track of elapsed frame time, fpsClock is used to count frames per second.
+    int fpsCounter = 0;
+    
+    while (windowPtr->isOpen()) {
+        windowPtr->clear();
+        windowPtr->setView(boardView);
+        windowPtr->draw(*boardPtr);
+        if (tileCursor != Vector2i(-1, -1)) {
+            if (copyBufferVisible) {
+                windowPtr->draw(*copyBufferBoardPtr);
+            } else {
+                windowPtr->draw(*currentTileBoardPtr);
+            }
+        }
+        windowPtr->setView(windowView);
+        windowPtr->draw(*userInterfacePtr);
+        windowPtr->display();
+        
+        while (mainClock.getElapsedTime().asSeconds() < 1.0f / FPS_CAP) {}    // Slow down render if the current FPS is greater than the FPS cap.
+        float deltaTime = mainClock.restart().asSeconds();    // Change in time since the last frame.
+        if (fpsClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS.
+            windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + "]");
+            fpsClock.restart();
+            fpsCounter = 0;
+        } else {
+            ++fpsCounter;
+        }
+    }
 }
 
 void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
