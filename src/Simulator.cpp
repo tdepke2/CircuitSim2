@@ -115,6 +115,29 @@ int Simulator::start() {
                     }
                 } else if (event.type == Event::KeyPressed) {
                     handleKeyPress(event.key);
+                } else if (event.type == Event::TextEntered) {
+                    if (!editMode && event.text.unicode >= 33 && event.text.unicode <= 126) {    // Check if key is a printable character (excluding a space).
+                        auto mapIter = boardPtr->switchKeybinds.find(static_cast<char>(event.text.unicode));
+                        if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
+                            for (TileSwitch* switchPtr : mapIter->second) {
+                                if (switchPtr->getState() == LOW) {
+                                    switchPtr->setState(HIGH);
+                                } else {
+                                    switchPtr->setState(LOW);
+                                }
+                            }
+                        }
+                        auto mapIter2 = boardPtr->buttonKeybinds.find(static_cast<char>(event.text.unicode));
+                        if (mapIter2 != boardPtr->buttonKeybinds.end() && !mapIter2->second.empty()) {
+                            for (TileButton* buttonPtr : mapIter2->second) {
+                                if (buttonPtr->getState() == LOW) {
+                                    buttonPtr->setState(HIGH);
+                                } else {
+                                    buttonPtr->setState(LOW);
+                                }
+                            }
+                        }
+                    }
                 } else if (event.type == Event::Resized) {
                     boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
@@ -445,7 +468,7 @@ void Simulator::renderLoop() {
 }
 
 void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
-    if (Keyboard::isKeyPressed(Keyboard::LControl) || Keyboard::isKeyPressed(Keyboard::RControl)) {
+    if (keyEvent.control) {
         if (keyEvent.code == Keyboard::N) {
             fileOption(0);
         } else if (keyEvent.code == Keyboard::O) {
@@ -539,30 +562,6 @@ void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
                     placeTile(17);
                 }
             }
-        } else if (keyEvent.code >= 0) {
-            char keyChar = keyEventToChar(keyEvent);
-            if (keyChar != '\0' && keyChar != ' ') {
-                auto mapIter = boardPtr->switchKeybinds.find(keyChar);
-                if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
-                    for (TileSwitch* switchPtr : mapIter->second) {
-                        if (switchPtr->getState() == LOW) {
-                            switchPtr->setState(HIGH);
-                        } else {
-                            switchPtr->setState(LOW);
-                        }
-                    }
-                }
-                auto mapIter2 = boardPtr->buttonKeybinds.find(keyChar);
-                if (mapIter2 != boardPtr->buttonKeybinds.end() && !mapIter2->second.empty()) {
-                    for (TileButton* buttonPtr : mapIter2->second) {
-                        if (buttonPtr->getState() == LOW) {
-                            buttonPtr->setState(HIGH);
-                        } else {
-                            buttonPtr->setState(LOW);
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -627,120 +626,4 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             }
         }
     }
-}
-
-char Simulator::keyEventToChar(Event::KeyEvent keyEvent) {
-    if (!keyEvent.shift) {
-        if (keyEvent.code < 0) {
-            return '\0';
-        } else if (keyEvent.code < 26) {
-            return 'a' + keyEvent.code;
-        } else if (keyEvent.code < 36) {
-            return '0' - 26 + keyEvent.code;
-        } else if (keyEvent.code < 46) {
-            return '\0';
-        } else if (keyEvent.code == 46) {
-            return '[';
-        } else if (keyEvent.code == 47) {
-            return ']';
-        } else if (keyEvent.code == 48) {
-            return ';';
-        } else if (keyEvent.code == 49) {
-            return ',';
-        } else if (keyEvent.code == 50) {
-            return '.';
-        } else if (keyEvent.code == 51) {
-            return '\'';
-        } else if (keyEvent.code == 52) {
-            return '/';
-        } else if (keyEvent.code == 53) {
-            return '\\';
-        } else if (keyEvent.code == 54) {
-            return '`';
-        } else if (keyEvent.code == 55) {
-            return '=';
-        } else if (keyEvent.code == 56) {
-            return '-';
-        } else if (keyEvent.code == 57) {
-            return ' ';
-        } else if (keyEvent.code < 67) {
-            return '\0';
-        } else if (keyEvent.code == 67) {
-            return '+';
-        } else if (keyEvent.code == 68) {
-            return '-';
-        } else if (keyEvent.code == 69) {
-            return '*';
-        } else if (keyEvent.code == 70) {
-            return '/';
-        } else if (keyEvent.code < 75) {
-            return '\0';
-        } else if (keyEvent.code < 85) {
-            return '0' - 75 + keyEvent.code;
-        }
-    } else {
-        if (keyEvent.code < 0) {
-            return '\0';
-        } else if (keyEvent.code < 26) {
-            return 'A' + keyEvent.code;
-        } else if (keyEvent.code == 26) {
-            return ')';
-        } else if (keyEvent.code == 27) {
-            return '!';
-        } else if (keyEvent.code == 28) {
-            return '@';
-        } else if (keyEvent.code == 29) {
-            return '#';
-        } else if (keyEvent.code == 30) {
-            return '$';
-        } else if (keyEvent.code == 31) {
-            return '%';
-        } else if (keyEvent.code == 32) {
-            return '^';
-        } else if (keyEvent.code == 33) {
-            return '&';
-        } else if (keyEvent.code == 34) {
-            return '*';
-        } else if (keyEvent.code == 35) {
-            return '(';
-        } else if (keyEvent.code < 46) {
-            return '\0';
-        } else if (keyEvent.code == 46) {
-            return '{';
-        } else if (keyEvent.code == 47) {
-            return '}';
-        } else if (keyEvent.code == 48) {
-            return ':';
-        } else if (keyEvent.code == 49) {
-            return '<';
-        } else if (keyEvent.code == 50) {
-            return '>';
-        } else if (keyEvent.code == 51) {
-            return '\"';
-        } else if (keyEvent.code == 52) {
-            return '?';
-        } else if (keyEvent.code == 53) {
-            return '|';
-        } else if (keyEvent.code == 54) {
-            return '~';
-        } else if (keyEvent.code == 55) {
-            return '+';
-        } else if (keyEvent.code == 56) {
-            return '_';
-        } else if (keyEvent.code == 57) {
-            return ' ';
-        } else if (keyEvent.code < 67) {
-            return '\0';
-        } else if (keyEvent.code == 67) {
-            return '+';
-        } else if (keyEvent.code == 68) {
-            return '-';
-        } else if (keyEvent.code == 69) {
-            return '*';
-        } else if (keyEvent.code == 70) {
-            return '/';
-        }
-    }
-    
-    return '\0';
 }

@@ -7,7 +7,6 @@ TODO (latest build):
     - Improved format for save files, each file includes a notes section that is displayed in the board viewer at the top of a board.
     - Pressing R when cursor over tile rotates the tile, same for flip.
     - Additional tool to "toggle" a tile (holding shift will "interact" instead like switch between crossover/junction or set switch/button label).
-    - Refactor simulator to use only pointers to boards/window/other OpenGL types for consistency.
     - Provide a warning to save changes before exit, loading, or making new board.
 
 TODO (future release):
