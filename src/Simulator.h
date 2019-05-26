@@ -31,14 +31,14 @@ class Simulator {
         Uninitialized, Running, Exiting
     };
     enum class SimSpeed {
-        Paused, Slow, Medium, Fast, Fastest
+        Paused, Slow, Medium, Fast, Extreme
     };
     
     static atomic<State> state;
     static SimSpeed simSpeed;
     static mt19937 mainRNG;
     static mutex renderMutex, renderReadyMutex;
-    static int fpsCounter;
+    static int fpsCounter, upsCounter;
     static View boardView, windowView;
     static float zoomLevel;
     static RenderWindow* windowPtr;

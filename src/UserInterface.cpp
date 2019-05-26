@@ -183,6 +183,8 @@ UserInterface::UserInterface() {
     gateMenu.addMenuButton(TextButton("  NOR                 Shift+O", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 15));
     gateMenu.addMenuButton(TextButton("  XOR                       X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 16));
     gateMenu.addMenuButton(TextButton("  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 17));
+    
+    upsDisplay = TextButton(" Current UPS limit: Paused    ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 10, 230), Color::Black, nullptr);
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {
@@ -207,4 +209,5 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(inputMenu, states);
     target.draw(outputMenu, states);
     target.draw(gateMenu, states);
+    target.draw(upsDisplay, states);
 }

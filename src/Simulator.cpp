@@ -21,7 +21,7 @@ atomic<Simulator::State> Simulator::state = State::Uninitialized;
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Paused;
 mt19937 Simulator::mainRNG;
 mutex Simulator::renderMutex, Simulator::renderReadyMutex;
-int Simulator::fpsCounter = 0;
+int Simulator::fpsCounter = 0, Simulator::upsCounter = 0;
 View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
@@ -41,7 +41,7 @@ int Simulator::start() {
         assert(state == State::Uninitialized);
         state = State::Running;
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        windowPtr = new RenderWindow(VideoMode(900, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        windowPtr = new RenderWindow(VideoMode(1300, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
         
@@ -60,7 +60,6 @@ int Simulator::start() {
         viewOption(3);
         Vector2i mouseStart(0, 0);
         Clock perSecondClock, loopClock, updatesClock;    // The perSecondClock counts FPS and UPS, loopClock limits loops per second, updatesClock manages update speed.
-        int upsCounter = 0;
         renderThread = thread(renderLoop);
         
         cout << "Loading completed." << endl;
@@ -185,12 +184,22 @@ int Simulator::start() {
                 tileCursor = Vector2i(-1, -1);
             }
             
-            if (updatesClock.getElapsedTime().asSeconds() >= 0.5f) {
+            bool doUpdate = false;
+            if (simSpeed == SimSpeed::Slow && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
+                doUpdate = true;
+            } else if (simSpeed == SimSpeed::Medium && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
+                doUpdate = true;
+            } else if (simSpeed == SimSpeed::Fast && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
+                doUpdate = true;
+            } else if (simSpeed == SimSpeed::Extreme) {
+                doUpdate = true;
+            }
+            if (doUpdate) {
                 boardPtr->updateTiles();
+                ++upsCounter;
                 updatesClock.restart();
             }
             
-            ++upsCounter;
             if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and UPS.
                 windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", UPS: " + to_string(upsCounter) + "]");
                 perSecondClock.restart();
@@ -199,8 +208,8 @@ int Simulator::start() {
             }
             renderMutex.unlock();
             
-            int64_t sleepTime = static_cast<int64_t>(1.0 / 500.0 * 1.0e6) - loopClock.restart().asMicroseconds();    // Pause a little bit (limit to 500 loops per second) if not running in fastest mode.
-            if (simSpeed != SimSpeed::Fastest && sleepTime > 0) {
+            int64_t sleepTime = static_cast<int64_t>(1.0 / 500.0 * 1.0e6) - loopClock.restart().asMicroseconds();    // Pause a little bit (limit to 500 loops per second) if not running in extreme mode.
+            if (simSpeed != SimSpeed::Extreme && sleepTime > 0) {
                 this_thread::sleep_for(chrono::microseconds(sleepTime));
             }
         }
@@ -338,9 +347,33 @@ void Simulator::viewOption(int option) {
 
 void Simulator::runOption(int option) {
     if (option == 0) {    // Step frame.
+        simSpeed = SimSpeed::Paused;
+        userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Paused    ");
+        userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 10, 230));
         boardPtr->updateTiles();
+        ++upsCounter;
     } else if (option == 1) {    // Change run mode.
-        
+        if (simSpeed == SimSpeed::Paused) {
+            simSpeed = SimSpeed::Slow;
+            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 2         ");
+            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 230, 230));
+        } else if (simSpeed == SimSpeed::Slow) {
+            simSpeed = SimSpeed::Medium;
+            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 30        ");
+            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 230, 10));
+        } else if (simSpeed == SimSpeed::Medium) {
+            simSpeed = SimSpeed::Fast;
+            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 60        ");
+            userInterfacePtr->upsDisplay.button.setFillColor(Color(230, 230, 10));
+        } else if (simSpeed == SimSpeed::Fast) {
+            simSpeed = SimSpeed::Extreme;
+            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Unlimited ");
+            userInterfacePtr->upsDisplay.button.setFillColor(Color(230, 10, 10));
+        } else {
+            simSpeed = SimSpeed::Paused;
+            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Paused    ");
+            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 10, 230));
+        }
     } else {
         assert(false);
     }
@@ -509,7 +542,7 @@ void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
             if (!keyEvent.shift) {
                 runOption(0);
             } else {
-                //runOption(1);
+                runOption(1);
             }
         } else if (keyEvent.code == Keyboard::Escape) {
             toolsOption(1);
