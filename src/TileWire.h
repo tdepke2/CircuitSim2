@@ -34,6 +34,7 @@ class TileWire : public Tile {
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
     void redrawTile() const;
     string toString() const;
+    void fixUpdateTime();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

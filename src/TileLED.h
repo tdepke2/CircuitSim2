@@ -26,6 +26,7 @@ class TileLED : public Tile {
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, just adds this LED to the list of endpoints.
     void redrawTile() const;
     string toString() const;
+    void fixUpdateTime();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

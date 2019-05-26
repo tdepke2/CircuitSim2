@@ -187,6 +187,11 @@ string TileWire::toString() const {
     }
 }
 
+void TileWire::fixUpdateTime() {
+    _updateTimestamp1 = 0;
+    _updateTimestamp2 = 0;
+}
+
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileWire(boardPtr, position, noAdjacentUpdates, _direction, _type, _state1, _state2);
 }

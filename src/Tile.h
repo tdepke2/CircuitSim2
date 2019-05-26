@@ -38,6 +38,7 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
     virtual void redrawTile() const;
     virtual string toString() const;
+    virtual void fixUpdateTime();
     virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:

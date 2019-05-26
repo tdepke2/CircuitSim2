@@ -85,6 +85,8 @@ string Tile::toString() const {
     return "  ";
 }
 
+void Tile::fixUpdateTime() {}
+
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new Tile(boardPtr, position, noAdjacentUpdates);
 }

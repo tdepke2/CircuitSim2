@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <typeinfo>
 
@@ -123,9 +124,6 @@ void Board::updateTiles() {
     /*if (!wireUpdates.empty() || !gateUpdates.empty() || !switchUpdates.empty() || !buttonUpdates.empty() || !LEDUpdates.empty()) {
         cout << "\nUpdates scheduled: w" << wireUpdates.size() << " g" << gateUpdates.size() << " s" << switchUpdates.size() << " b" << buttonUpdates.size() << " L" << LEDUpdates.size() << endl;
     }*/
-    if (Tile::currentUpdateTime % 100 == 99) {
-        cout << "Thats a lot of updates, remember to check for integer rollover with Tile::currentUpdateTime." << endl;
-    }
     
     //cout << "---- GATE STATE CHECKS ----" << endl;
     for (auto setIter = gateUpdates.begin(); setIter != gateUpdates.end();) {    // Check state transitions for all gates (keep update only if gate changed).
@@ -173,9 +171,19 @@ void Board::updateTiles() {
     endpointGates.clear();
     
     TileButton::updateTransitioningButtons();
-    
     //cout << endl;
-    ++Tile::currentUpdateTime;
+    if (Tile::currentUpdateTime == numeric_limits<unsigned int>::max()) {
+        cout << "Update counter has reached max value (" << numeric_limits<unsigned int>::max() << " updates), resetting tiles..." << endl;
+        for (unsigned int y = 0; y < _size.y; ++y) {
+            for (unsigned int x = 0; x < _size.x; ++x) {
+                _tileArray[y][x]->fixUpdateTime();
+            }
+        }
+        Tile::currentUpdateTime = 1;
+        cout << "Tiles reset." << endl;
+    } else {
+        ++Tile::currentUpdateTime;
+    }
 }
 
 void Board::replaceTile(Tile* tile) {

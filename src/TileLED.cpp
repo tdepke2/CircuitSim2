@@ -78,6 +78,10 @@ string TileLED::toString() const {
     return OUTPUT_SYMBOL_TABLE[(_state == HIGH)];
 }
 
+void TileLED::fixUpdateTime() {
+    _updateTimestamp = 0;
+}
+
 Tile* TileLED::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileLED(boardPtr, position, noAdjacentUpdates, _state);
 }
