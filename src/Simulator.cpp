@@ -18,7 +18,7 @@
 
 const unsigned int Simulator::FRAMERATE_LIMIT = 60;
 atomic<Simulator::State> Simulator::state = State::Uninitialized;
-Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Paused;
+Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Medium;
 mt19937 Simulator::mainRNG;
 mutex Simulator::renderMutex, Simulator::renderReadyMutex;
 int Simulator::fpsCounter = 0, Simulator::upsCounter = 0;

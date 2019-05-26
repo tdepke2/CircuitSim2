@@ -31,7 +31,7 @@ const Vector2u& Board::getTileSize() {
 }
 
 void Board::loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize) {
-    cout << "Stitching textures..." << endl;
+    cout << "Building and stitching textures..." << endl;
     delete _tilesetGridPtr;
     delete _tilesetNoGridPtr;
     _tilesetGridPtr = new Texture;
@@ -71,6 +71,10 @@ Board::Board() {
     _vertices.setPrimitiveType(Quads);
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
+    notesBox.setSize(Vector2f(0.0f, 0.0f));
+    notesBox.setFillColor(Color(30, 30, 30));
+    notesText = Text("", getFont(), 25);
+    notesText.setFillColor(Color(150, 150, 150));
 }
 
 Board::~Board() {
@@ -202,6 +206,8 @@ void Board::clear() {
     _vertices.clear();
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
+    notesBox.setSize(Vector2f(0.0f, 0.0f));
+    notesText.setString("");
 }
 
 void Board::resize(const Vector2u& size) {
@@ -372,15 +378,20 @@ void Board::loadFile(const string& filename) {
     }
     clear();
     
-    string line;
+    string line, notesString;
+    float fileVersion;
     int lineNumber = 0, numEntries = 0;
     unsigned int posX = 0, posY = 0;
     try {
         while (getline(inputFile, line)) {
             ++lineNumber;
-            if (line.length() == 0) {
-                continue;
-            } else if (numEntries == 3) {
+            if (line.length() == 0 && numEntries < 8) {
+                if (numEntries == 6) {
+                    notesString += "\n";
+                } else {
+                    continue;
+                }
+            } else if (numEntries == 8) {
                 if (line.length() != _size.x * 2 + 2) {
                     throw runtime_error("Length of this line is incorrect.");
                 }
@@ -422,11 +433,17 @@ void Board::loadFile(const string& filename) {
                 if (posY == _size.y) {
                     ++numEntries;
                 }
-            } else if (numEntries == 0) {
-                _size.x = stoul(line);
+            } else if (numEntries == 0 && line.find("version:") == 0) {
+                fileVersion = stof(line.substr(8));
+                if (fileVersion != 1.0f) {
+                    throw runtime_error("Invalid file version.");
+                }
                 ++numEntries;
-            } else if (numEntries == 1) {
-                _size.y = stoul(line);
+            } else if (numEntries == 1 && line.find("width:") == 0) {
+                _size.x = stoul(line.substr(6));
+                ++numEntries;
+            } else if (numEntries == 2 && line.find("height:") == 0) {
+                _size.y = stoul(line.substr(7));
                 _vertices.resize(_size.x * _size.y * 4);
                 _setVertexCoords();
                 _tileArray = new Tile**[_size.y];
@@ -434,7 +451,30 @@ void Board::loadFile(const string& filename) {
                     _tileArray[y] = new Tile*[_size.x];
                 }
                 ++numEntries;
-            } else if (numEntries == 2 || numEntries == 4) {
+            } else if (numEntries == 3 && line == "data: {") {
+                ++numEntries;
+            } else if (numEntries == 4) {
+                if (line != "}") {
+                    cout << "Warn: \"" << filename + "\" at line " + to_string(lineNumber) + ": Found some unrecognized data." << endl;
+                } else {
+                    ++numEntries;
+                }
+            } else if (numEntries == 5 && line == "notes: {") {
+                ++numEntries;
+            } else if (numEntries == 6) {
+                if (line != "}") {
+                    notesString += line + "\n";
+                } else {
+                    if (notesString.length() != 0) {
+                        notesString.pop_back();
+                        notesText.setString(notesString);
+                        notesBox.setSize(Vector2f(notesText.getLocalBounds().width + 8.0f, notesText.getLocalBounds().height + 8.0f));
+                        notesBox.setPosition(0.0f, -notesBox.getSize().y - 2.0f);
+                        notesText.setPosition(4.0f, -notesBox.getSize().y - 5.0f);
+                    }
+                    ++numEntries;
+                }
+            } else if (numEntries == 7 || numEntries == 9) {
                 if (line.length() != _size.x * 2 + 2) {
                     throw runtime_error("Length of this line is incorrect.");
                 }
@@ -443,7 +483,7 @@ void Board::loadFile(const string& filename) {
                 throw runtime_error("Invalid save file data.");
             }
         }
-        if (numEntries != 5) {
+        if (numEntries != 10) {
             throw runtime_error("Missing data, end of file reached.");
         }
     } catch (exception& ex) {    // File error happened, need to clean up partially loaded board and make a new one.
@@ -465,7 +505,7 @@ void Board::loadFile(const string& filename) {
         
         inputFile.close();
         newBoard();
-        throw runtime_error(filename + " at line " + to_string(lineNumber) + ": " + ex.what());
+        throw runtime_error("\"" + filename + "\" at line " + to_string(lineNumber) + ": " + ex.what());
     }
     inputFile.close();
     cout << "Load completed." << endl;
@@ -485,8 +525,14 @@ void Board::saveFile(const string& filename) {
         name = filename;
     }
     
-    outputFile << _size.x << endl;
-    outputFile << _size.y << endl;
+    outputFile << "version: 1.0" << endl;
+    outputFile << "width: " << _size.x << endl;
+    outputFile << "height: " << _size.y << endl;
+    outputFile << "data: {" << endl;
+    outputFile << "}" << endl;
+    outputFile << "notes: {" << endl;
+    outputFile << notesText.getString().toAnsiString() << endl;
+    outputFile << "}" << endl << endl;
     outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ') << endl;
     for (unsigned int y = 0; y < _size.y; ++y) {
         outputFile << "*";
@@ -580,4 +626,6 @@ void Board::draw(RenderTarget& target, RenderStates states) const {
     for (const pair<Tile*, Text>& tileLabel : tileLabels) {
         target.draw(tileLabel.second, states);
     }
+    target.draw(notesBox, states);
+    target.draw(notesText, states);
 }

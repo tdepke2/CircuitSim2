@@ -1,7 +1,6 @@
 TODO (latest build):
     - Need to optimize selections, they just have too much performance impact.
     - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
-    - Simulation current speed indicator (top right?).
     - Need text box prompts for rename and switch/button re-label functions.
     - Wire tool. Idea for this is to use two additional boards for vertical and horizontal parts, wire drawn between two points (exclusive).
     - Improved format for save files, each file includes a notes section that is displayed in the board viewer at the top of a board.
@@ -14,7 +13,6 @@ TODO (future release):
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
 
 Current and potential bugs:
-    - Update time rolls over and not all objects reset.
     - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.
         * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
         * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.
