@@ -31,7 +31,7 @@ class Simulator {
         Uninitialized, Running, Exiting
     };
     enum class SimSpeed {
-        Paused, Slow, Medium, Fast
+        Paused, Slow, Medium, Fast, Fastest
     };
     
     static atomic<State> state;

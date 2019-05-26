@@ -59,7 +59,7 @@ int Simulator::start() {
         userInterfacePtr = new UserInterface();
         viewOption(3);
         Vector2i mouseStart(0, 0);
-        Clock perSecondClock;    // Used to count frames per second and updates per second.
+        Clock perSecondClock, loopClock, updatesClock;    // The perSecondClock counts FPS and UPS, loopClock limits loops per second, updatesClock manages update speed.
         int upsCounter = 0;
         renderThread = thread(renderLoop);
         
@@ -185,9 +185,10 @@ int Simulator::start() {
                 tileCursor = Vector2i(-1, -1);
             }
             
-            boardPtr->updateCosmetics();
-            copyBufferBoardPtr->updateCosmetics();
-            currentTileBoardPtr->updateCosmetics();
+            if (updatesClock.getElapsedTime().asSeconds() >= 0.5f) {
+                boardPtr->updateTiles();
+                updatesClock.restart();
+            }
             
             ++upsCounter;
             if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and UPS.
@@ -197,8 +198,11 @@ int Simulator::start() {
                 upsCounter = 0;
             }
             renderMutex.unlock();
-            //cout << "main" << endl;
-            this_thread::sleep_for(chrono::milliseconds(1));
+            
+            int64_t sleepTime = static_cast<int64_t>(1.0 / 500.0 * 1.0e6) - loopClock.restart().asMicroseconds();    // Pause a little bit (limit to 500 loops per second) if not running in fastest mode.
+            if (simSpeed != SimSpeed::Fastest && sleepTime > 0) {
+                this_thread::sleep_for(chrono::microseconds(sleepTime));
+            }
         }
     } catch (exception& ex) {
         state = State::Exiting;
@@ -458,6 +462,10 @@ void Simulator::renderLoop() {
         renderReadyMutex.lock();
         renderMutex.lock();
         renderReadyMutex.unlock();
+        boardPtr->updateCosmetics();
+        copyBufferBoardPtr->updateCosmetics();
+        currentTileBoardPtr->updateCosmetics();
+        
         windowPtr->clear();
         windowPtr->setView(boardView);
         windowPtr->draw(*boardPtr);
@@ -472,7 +480,6 @@ void Simulator::renderLoop() {
         windowPtr->draw(*userInterfacePtr);
         ++fpsCounter;
         renderMutex.unlock();
-        //cout << "draw loop" << endl;
         windowPtr->display();    // Display invokes sf::sleep to pause for next frame and keep framerate constant.
     }
     windowPtr->close();
