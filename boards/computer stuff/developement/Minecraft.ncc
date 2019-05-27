@@ -1,0 +1,91 @@
+A = @0    // Minecraft, use WASD to move, IJKL to place/dig blocks, and Q to save and quit. A is player position (with write bit).
+B = @1    // B is num of blocks in inventory.
+C = -128    // C is most significant bit (for pixel drawing). D is general purpose used for drawing, comparison, and storing next position. E is general purpose for user input and reading pixels.
+F = 16    // F is fifth bit, for changing y position. G is for checking x position. H is for checking y position.
+I = 15    // I is first four bits or max x.
+J = 112    // J is next three bits or max y.
+K = 127    // K is max integer.
+DATAIO 0 A output    // Draw player.
+DATAIO E 0 receive input send    // Main loop, get user input. LBL:main
+    JR = 15
+    JUMPIF E != 0
+        @0 = A    // Save and quit.
+        @1 = B
+        DATAIO 0 A output
+        HALT
+    G = A AND I    // Get x and y values from position.
+    H = A AND J
+    D = 7
+    JR = 52
+    JUMPIF E >= D
+        D = 1    // Move player.
+        JR = 27
+        JUMPIF E != D
+            JR = 8    // A pressed, move to (x - 1, y).
+            JUMPIF G == 0    // JUMP:main
+            G = G - 1
+            PC = 44    // JUMP:move
+        D = 2
+        JR = 34
+        JUMPIF E != D
+            JR = 8    // W pressed, move to (x, y - 1).
+            JUMPIF H == 0    // JUMP:main
+            H = H - F
+            PC = 44    // JUMP:move
+        D = 3
+        JR = 41
+        JUMPIF E != D
+            JR = 8    // S pressed, move to (x, y + 1).
+            JUMPIF H == J    // JUMP:main
+            H = H + F
+            PC = 44    // JUMP:move
+        JR = 8    // D pressed, move to (x + 1, y).
+        JUMPIF G == I    // JUMP:main
+        G = G + 1
+        D = G OR H    // Check for block in the way. LBL:move
+        DATAIO E D input output
+        JUMPIF E == 1    // JUMP:main
+        D = D OR C
+        DATAIO 0 A output    // Move player.
+        DATAIO 0 D output
+        A = D + 0
+        PC = 8    // JUMP:main
+    JR = 58    // Place or dig block.
+    JUMPIF E != D
+        JR = 8    // J pressed, interact with (x - 1, y).
+        JUMPIF G == 0    // JUMP:main
+        G = G - 1
+        PC = 75    // JUMP:interact
+    D = 8
+    JR = 65
+    JUMPIF E != D
+        JR = 8    // I pressed, interact with (x, y - 1).
+        JUMPIF H == 0    // JUMP:main
+        H = H - F
+        PC = 75    // JUMP:interact
+    D = 9
+    JR = 72
+    JUMPIF E != D
+        JR = 8    // K pressed, interact with (x, y + 1).
+        JUMPIF H == J    // JUMP:main
+        H = H + F
+        PC = 75    // JUMP:interact
+    JR = 8    // L pressed, interact with (x + 1, y).
+    JUMPIF G == I    // JUMP:main
+    G = G + 1
+    D = G OR H    // Check for block. LBL:interact
+    DATAIO E D input output
+    JR = 85
+    JUMPIF E == 0
+        JR = 8    // Check if inventory full, then dig block.
+        JUMPIF B == K    // JUMP:main
+        D = D OR C
+        DATAIO 0 D output
+        B = B + 1
+        PC = 8    // JUMP:main
+    JR = 8    // Check if inventory empty, then place block.
+    JUMPIF B == 0    // JUMP:main
+    D = D OR C
+    DATAIO 0 D output
+    B = B - 1
+PC = 8    // End of main loop. JUMP:main

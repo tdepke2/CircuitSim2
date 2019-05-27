@@ -1,0 +1,99 @@
+Specifications:
+  8 bit computer.
+  Harvard architecture, reduced instruction set computer (RISC).
+  256 bytes of RAM max.
+  512 bytes of program ROM max (256 instructions).
+  16 registers max.
+
+Hardware:
+  Internal:
+    ALU (add, subtract, shift, AND, OR, NOR, XOR).
+    16 registers.
+    16 bytes RAM.
+    Data I/O interface (for external devices).
+    Control unit (handles ALU, syncing, jumping, and clock).
+    64 bytes ROM (32 instructions).
+  External (finished):
+    Signed integer 7-segment display output.
+    Signed integer binary input.
+    Signed integer numpad input.
+    16 by 8 pixel display output.
+    Dual D-pad game controller input.
+  External (ideas):
+    Pseudo random number generator input.
+    Networking cable input/output.
+
+Registers (16 max):
+  0 - Always zero (read only).
+  1 - Always one (read only).
+  2 - Program counter (PC).
+  3 - Jump register (JR).
+  4 - A.
+  5 - B.
+  6 - C.
+  7 - D.
+  8 - E.
+  9 - F.
+  A - G.
+  B - H.
+  C - I.
+  D - J.
+  E - K.
+  F - L.
+
+Bit layout:
+  Instructions (16b):
+    0000   0000  0000  0000
+    Instr  A     B     Dest
+
+  Data I/O interface (20b):
+    00000000  00000000  0     0     0     0
+    Input     Output    Rec.  Inp.  Send  Out.
+
+Instructions (16 max):
+  0 - Store B_Dest to A (early saving).
+  1 - Load @B_Dest to A (early saving).
+  2 - Save A to @B_Dest.
+  3 - Add (Dest = A + B), can also shift left.
+  4 - Subtract (Dest = A - B).
+  5 - Shift A + B right (Dest = (A + B) >> 1).
+  6 - Data I/O, RegA is mode, RegB is sent to output, input is sent to Dest (early saving).
+    Mode:
+      0001 - Wait for "receive".
+      0010 - Input data.
+      0100 - Pulse "send".
+      1000 - Output data.
+  7 - AND (Dest = A AND B).
+  8 - OR (Dest = A OR B).
+  9 - NOR (Dest = A NOR B).
+  A - XOR (Dest = A XOR B).
+  B - Jump to JR if A == B.
+  C - Jump to JR if A != B.
+  D - Jump to JR if A < B.
+  E - Jump to JR if A >= B.
+  F - Halt.
+
+Control unit details:
+  Run (user input) - Start clock.
+  Pause (user input) - Stop clock.
+  Stop (user input) - Stop clock, clear PC (sc).
+  Clock (only stops at end of cycle, start-clock-pulse is ignored while running) - Address ROM with PC and save instr (sa), run instr on (sr->1) and increment PC (sn),
+    wait for ALU_MAX_TIME, save data (ss) and run instr off (sr->0), wait for PC_MAX_TIME - ALU_MAX_TIME, repeat.
+  Halt - Same as stop.
+  Wait for receive - Force clock to pause mid cycle (right when "wait for receive" arrives), continue clock at receive.
+
+  ALU_MAX_TIME = 12 ticks
+  PC_MAX_TIME = 34 ticks (minimum duration for loading = 6 ticks when stable, 8 ticks when unstable)
+
+  Clock cycle will be 47 ticks (13 for getting instruction + 25 for executing/saving + 9 for finishing up), pulse length is 8 ticks.
+
+Starting screen for game:
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░██░░░░░░░░░░░░░░██░░░░░░░░░░░░
+██████░░░░░░░░░░██████░░░░████░░
+░░██░░░░░░░░░░░░░░██░░░░████████
+░░██░░██████░░██░░██████████████
+████████████████████████████████
+████████████████████████████████
+████████████████████████████████
+Player at (7, 4).

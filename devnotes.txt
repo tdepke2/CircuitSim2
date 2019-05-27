@@ -3,7 +3,6 @@ TODO (latest build):
     - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Need text box prompts for rename and switch/button re-label functions.
     - Wire tool. Idea for this is to use two additional boards for vertical and horizontal parts, wire drawn between two points (exclusive).
-    - Improved format for save files, each file includes a notes section that is displayed in the board viewer at the top of a board.
     - Pressing R when cursor over tile rotates the tile, same for flip.
     - Additional tool to "toggle" a tile (holding shift will "interact" instead like switch between crossover/junction or set switch/button label).
     - Provide a warning to save changes before exit, loading, or making new board.

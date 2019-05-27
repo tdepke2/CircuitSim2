@@ -1,0 +1,10 @@
+A = -1    // Mix RAM writes and reads to test for flaws.
+B = 5
+C = 12
+@0 = A
+@1 = B
+D = @0
+@3 = C
+E = @1
+F = @3
+HALT

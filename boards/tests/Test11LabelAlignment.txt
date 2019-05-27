@@ -1,5 +1,11 @@
-28
-7
+version: 1.0
+width: 28
+height: 7
+data: {
+}
+notes: {
+}
+
 **********************************************************
 *                                                        *
 *  sasbscsdsesfsgshsisjskslsmsnsospsqsrssstsusvswsxsysz  *

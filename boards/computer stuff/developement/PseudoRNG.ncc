@@ -1,0 +1,7 @@
+A = 6    // Generates pseudo-random numbers. A is seed and RNG value.
+B = -9    // B is accumulator.
+DATAIO 0 A output
+B = A +>> B
+B = B NOR 0
+A = A XOR B
+PC = 2

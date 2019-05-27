@@ -1,0 +1,19 @@
+A = 0    // Pick an integer between 0 and 127 inclusive, COM will try to guess it. Enter 0 if too low, 1 if too high, or 2 if correct.
+B = 127    // If you cheat, COM displays -1.
+C = A + B    // A and B are the bounds, C is the guess, D is user input.
+C = C +>> 0
+JR = 16
+JUMPIF B < A
+    DATAIO D C receive input send output
+    JR = 14
+    JUMPIF D == 0
+        JR = 12
+        JUMPIF D == 1
+            HALT     // D is assumed to be 2, computer wins!
+            B = C - 1
+        PC = 2
+        A = C + 1
+PC = 2
+A = -1     // User cheated, display -1.
+DATAIO 0 A output
+HALT

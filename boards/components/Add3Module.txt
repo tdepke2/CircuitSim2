@@ -1,0 +1,29 @@
+version: 1.0
+width: 10
+height: 13
+data: {
+}
+notes: {
+The add-3 module is a component used in
+converting binary to binary coded decimal (BCD)
+with the double dabble algorithm. This algorithm
+works by shifting the bits in a binary number and
+adding 3 if the current 4 bits are greater than
+or equal to 5. See LargeDisplay for an example.
+}
+
+**********************
+*                    *
+*    s3  s2  s1  s0  *
+*    | ,-+-va|=<N|   *
+*  ,-|-<a|-|-|-< |   *
+*  | >->a|-< >-^o<   *
+*  | | '-|-|-|---<   *
+*  >-|---|-|-|---vx  *
+*  | >-va|-|-|---<   *
+*  | vd| '-|-|-vB<   *
+*  '-< | ,-' va" |   *
+*    | '-|---<   |   *
+*    ..  ..  ..  ..  *
+*                    *
+**********************
