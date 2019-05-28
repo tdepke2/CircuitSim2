@@ -70,7 +70,7 @@ int Simulator::start() {
             Event event;
             while (windowPtr->pollEvent(event)) {    // Process events.
                 if (event.type == Event::MouseMoved) {
-                    if (Mouse::isButtonPressed(Mouse::Left)) {
+                    if (!UserInterface::isDialogBoxOpen() && Mouse::isButtonPressed(Mouse::Left)) {
                         Vector2f newCenter(boardView.getCenter().x + (mouseStart.x - event.mouseMove.x) * zoomLevel, boardView.getCenter().y + (mouseStart.y - event.mouseMove.y) * zoomLevel);
                         if (newCenter.x < 0.0f) {
                             newCenter.x = 0.0f;
@@ -91,11 +91,11 @@ int Simulator::start() {
                 } else if (event.type == Event::MouseButtonPressed) {
                     if (event.mouseButton.button == Mouse::Left) {    // Check if view is moved.
                         userInterfacePtr->update(event.mouseButton.x, event.mouseButton.y, true);
-                    } else if (event.mouseButton.button == Mouse::Right && (currentTileBoardPtr->getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
+                    } else if (!UserInterface::isDialogBoxOpen() && event.mouseButton.button == Mouse::Right && (currentTileBoardPtr->getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
                         pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
-                    if (event.mouseButton.button == Mouse::Right && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                    if (!UserInterface::isDialogBoxOpen() && event.mouseButton.button == Mouse::Right && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
                         if (selectionStart == Vector2i(-1, -1)) {    // Check if selection was cancelled (right click made without dragging).
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
                                 boardPtr->highlightArea(selectionArea, false);
@@ -110,94 +110,102 @@ int Simulator::start() {
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
-                    if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
+                    if (!UserInterface::isDialogBoxOpen() && zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
                         zoomLevel += zoomDelta;
                         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     }
                 } else if (event.type == Event::KeyPressed) {
-                    handleKeyPress(event.key);
+                    if (!UserInterface::isDialogBoxOpen()) {
+                        handleKeyPress(event.key);
+                    }
                 } else if (event.type == Event::TextEntered) {
-                    if (!editMode && event.text.unicode >= 33 && event.text.unicode <= 126) {    // Check if key is a printable character (excluding a space).
-                        auto mapIter = boardPtr->switchKeybinds.find(static_cast<char>(event.text.unicode));
-                        if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
-                            for (TileSwitch* switchPtr : mapIter->second) {
-                                if (switchPtr->getState() == LOW) {
-                                    switchPtr->setState(HIGH);
-                                } else {
-                                    switchPtr->setState(LOW);
+                    if (!UserInterface::isDialogBoxOpen()) {
+                        if (!editMode && event.text.unicode >= 33 && event.text.unicode <= 126) {    // Check if key is a printable character (excluding a space).
+                            auto mapIter = boardPtr->switchKeybinds.find(static_cast<char>(event.text.unicode));
+                            if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
+                                for (TileSwitch* switchPtr : mapIter->second) {
+                                    if (switchPtr->getState() == LOW) {
+                                        switchPtr->setState(HIGH);
+                                    } else {
+                                        switchPtr->setState(LOW);
+                                    }
+                                }
+                            }
+                            auto mapIter2 = boardPtr->buttonKeybinds.find(static_cast<char>(event.text.unicode));
+                            if (mapIter2 != boardPtr->buttonKeybinds.end() && !mapIter2->second.empty()) {
+                                for (TileButton* buttonPtr : mapIter2->second) {
+                                    if (buttonPtr->getState() == LOW) {
+                                        buttonPtr->setState(HIGH);
+                                    } else {
+                                        buttonPtr->setState(LOW);
+                                    }
                                 }
                             }
                         }
-                        auto mapIter2 = boardPtr->buttonKeybinds.find(static_cast<char>(event.text.unicode));
-                        if (mapIter2 != boardPtr->buttonKeybinds.end() && !mapIter2->second.empty()) {
-                            for (TileButton* buttonPtr : mapIter2->second) {
-                                if (buttonPtr->getState() == LOW) {
-                                    buttonPtr->setState(HIGH);
-                                } else {
-                                    buttonPtr->setState(LOW);
-                                }
-                            }
-                        }
+                    } else {
+                        userInterfacePtr->update(event.text);
                     }
                 } else if (event.type == Event::Resized) {
                     boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
                 } else if (event.type == Event::Closed) {
-                    state = State::Exiting;
+                    fileOption(6);
                 }
             }
             
-            Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
-            newTileCursor.x /= boardPtr->getTileSize().x;
-            newTileCursor.y /= boardPtr->getTileSize().y;
-            if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(boardPtr->getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(boardPtr->getSize().y)) {
-                if (tileCursor != newTileCursor) {
-                    if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
+            if (!UserInterface::isDialogBoxOpen()) {
+                Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
+                newTileCursor.x /= boardPtr->getTileSize().x;
+                newTileCursor.y /= boardPtr->getTileSize().y;
+                if (newTileCursor.x >= 0 && newTileCursor.x < static_cast<int>(boardPtr->getSize().x) && newTileCursor.y >= 0 && newTileCursor.y < static_cast<int>(boardPtr->getSize().y)) {
+                    if (tileCursor != newTileCursor) {
+                        if (tileCursor != Vector2i(-1, -1) && !selectionArea.contains(tileCursor)) {
+                            boardPtr->getTile(tileCursor)->setHighlight(false);
+                        }
+                        boardPtr->getTile(newTileCursor)->setHighlight(true);
+                        if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                            boardPtr->highlightArea(selectionArea, false);
+                            if (tileCursor != Vector2i(-1, -1)) {
+                                selectionStart = tileCursor;
+                            }
+                            selectionArea = IntRect(0, 0, 0, 0);
+                        }
+                        if (selectionStart != Vector2i(-1, -1)) {
+                            boardPtr->highlightArea(selectionArea, false);
+                            selectionArea.left = min(selectionStart.x, newTileCursor.x);
+                            selectionArea.top = min(selectionStart.y, newTileCursor.y);
+                            selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
+                            selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
+                            boardPtr->highlightArea(selectionArea, true);
+                        } else if (Mouse::isButtonPressed(Mouse::Right)) {
+                            pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
+                        }
+                        tileCursor = newTileCursor;
+                        currentTileBoardPtr->setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
+                        copyBufferBoardPtr->setPosition(currentTileBoardPtr->getPosition());
+                    }
+                } else if (tileCursor != Vector2i(-1, -1)) {
+                    if (!selectionArea.contains(tileCursor)) {
                         boardPtr->getTile(tileCursor)->setHighlight(false);
                     }
-                    boardPtr->getTile(newTileCursor)->setHighlight(true);
-                    if (selectionStart == Vector2i(-1, -1) && Mouse::isButtonPressed(Mouse::Right) && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
-                        boardPtr->highlightArea(selectionArea, false);
-                        if (tileCursor != Vector2i(-1, -1)) {
-                            selectionStart = tileCursor;
-                        }
-                        selectionArea = IntRect(0, 0, 0, 0);
-                    }
-                    if (selectionStart != Vector2i(-1, -1)) {
-                        boardPtr->highlightArea(selectionArea, false);
-                        selectionArea.left = min(selectionStart.x, newTileCursor.x);
-                        selectionArea.top = min(selectionStart.y, newTileCursor.y);
-                        selectionArea.width = max(selectionStart.x, newTileCursor.x) - selectionArea.left + 1;
-                        selectionArea.height = max(selectionStart.y, newTileCursor.y) - selectionArea.top + 1;
-                        boardPtr->highlightArea(selectionArea, true);
-                    } else if (Mouse::isButtonPressed(Mouse::Right)) {
-                        pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
-                    }
-                    tileCursor = newTileCursor;
-                    currentTileBoardPtr->setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
-                    copyBufferBoardPtr->setPosition(currentTileBoardPtr->getPosition());
+                    tileCursor = Vector2i(-1, -1);
                 }
-            } else if (tileCursor != Vector2i(-1, -1)) {
-                if (!selectionArea.contains(tileCursor)) {
-                    boardPtr->getTile(tileCursor)->setHighlight(false);
+                
+                bool doUpdate = false;
+                if (simSpeed == SimSpeed::Slow && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
+                    doUpdate = true;
+                } else if (simSpeed == SimSpeed::Medium && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
+                    doUpdate = true;
+                } else if (simSpeed == SimSpeed::Fast && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
+                    doUpdate = true;
+                } else if (simSpeed == SimSpeed::Extreme) {
+                    doUpdate = true;
                 }
-                tileCursor = Vector2i(-1, -1);
-            }
-            
-            bool doUpdate = false;
-            if (simSpeed == SimSpeed::Slow && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
-                doUpdate = true;
-            } else if (simSpeed == SimSpeed::Medium && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
-                doUpdate = true;
-            } else if (simSpeed == SimSpeed::Fast && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
-                doUpdate = true;
-            } else if (simSpeed == SimSpeed::Extreme) {
-                doUpdate = true;
-            }
-            if (doUpdate) {
-                boardPtr->updateTiles();
-                ++upsCounter;
-                updatesClock.restart();
+                if (doUpdate) {
+                    boardPtr->updateTiles();
+                    ++upsCounter;
+                    updatesClock.restart();
+                }
             }
             
             if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and UPS.

@@ -1,7 +1,11 @@
 #include "Board.h"
 #include "Simulator.h"
 #include "UserInterface.h"
+#include <cmath>
+#include <limits>
 #include <stdexcept>
+
+#include <iostream>
 
 TextButton::TextButton() {}
 
@@ -11,10 +15,10 @@ TextButton::TextButton(const string& buttonText, const Color& textColor, unsigne
     text.setFillColor(textColor);
     text.setCharacterSize(charSize);
     text.setPosition(5.0f, 0.0f);
-    
     button.setSize(Vector2f(text.getLocalBounds().width + 10.0f, charSize * 1.5f));
     button.setFillColor(color1);
     button.setPosition(0.0f, 0.0f);
+    
     setPosition(x, y);
     this->color1 = color1;
     this->color2 = color2;
@@ -64,6 +68,7 @@ DropdownMenu::DropdownMenu(const TextButton& button, const Color& backgroundColo
     background.setSize(Vector2f(0.0f, 4.0f));
     background.setFillColor(backgroundColor);
     background.setPosition(0.0f, button.button.getSize().y);
+    
     setPosition(button.getPosition());
     this->button.setPosition(0.0f, 0.0f);
     maxMenuButtonWidth = 0.0f;
@@ -119,6 +124,100 @@ void DropdownMenu::draw(RenderTarget& target, RenderStates states) const {
             target.draw(b, states);
         }
     }
+}
+
+TextField::TextField() {}
+
+TextField::TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters) {
+    label.setFont(Board::getFont());
+    label.setString(labelText);
+    label.setFillColor(textColor);
+    label.setCharacterSize(charSize);
+    label.setPosition(0.0f, 0.0f);
+    
+    string maxSizeField(maxCharacters, 'a');
+    field.setFont(Board::getFont());
+    field.setString(maxSizeField);
+    field.setFillColor(textColor);
+    field.setCharacterSize(charSize);
+    field.setPosition(label.getLocalBounds().width + 5.0f, 0.0f);
+    
+    background.setSize(Vector2f(field.getLocalBounds().width + 10.0f, charSize * 1.5f));
+    background.setFillColor(fillColor);
+    background.setOutlineColor(outlineColor);
+    background.setOutlineThickness(-2.0f);
+    background.setPosition(label.getLocalBounds().width, 0.0f);
+    
+    caretPosition = min(maxCharacters, static_cast<int>(initialFieldText.length()));
+    caret.setSize(Vector2f(2.0f, charSize * 1.5f - 4.0f));
+    caret.setFillColor(textColor);
+    caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
+    field.setString(initialFieldText);
+    
+    setPosition(x, y);
+    this->maxCharacters = maxCharacters;
+    visible = true;
+    selected = false;
+}
+
+void TextField::update(int mouseX, int mouseY, bool clicked) {
+    if (visible && clicked) {
+        mouseX -= static_cast<int>(getPosition().x);
+        mouseY -= static_cast<int>(getPosition().y);
+        if (background.getGlobalBounds().contains(static_cast<float>(mouseX), static_cast<float>(mouseY))) {
+            unsigned int closestIndex = 0;
+            float closestDistance = numeric_limits<float>::max();
+            for (unsigned int i = 0; i <= field.getString().getSize(); ++i) {
+                float distance = fabs(mouseX - field.findCharacterPos(i).x);
+                if (distance < closestDistance) {
+                    closestIndex = i;
+                    closestDistance = distance;
+                }
+            }
+            caretPosition = closestIndex;
+            caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
+            selected = true;
+        } else if (selected) {
+            selected = false;
+        }
+    }
+}
+
+void TextField::update(Event::TextEvent textEvent) {
+    if (selected) {
+        string s = field.getString();
+        if (textEvent.unicode == 8 && caretPosition > 0) {    // Backspace.
+            s.erase(caretPosition - 1, 1);
+            field.setString(s);
+            --caretPosition;
+            caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
+        } else if (textEvent.unicode == 27) {    // Escape.
+            selected = false;
+        } else if (textEvent.unicode >= 32 && textEvent.unicode <= 126 && static_cast<int>(s.length()) < maxCharacters) {    // Printable character.
+            s.insert(caretPosition, 1, static_cast<char>(textEvent.unicode));
+            field.setString(s);
+            ++caretPosition;
+            caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
+        }
+    }
+}
+
+void TextField::draw(RenderTarget& target, RenderStates states) const {
+    states.transform *= getTransform();
+    if (visible) {
+        target.draw(label, states);
+        target.draw(background, states);
+        target.draw(field, states);
+        if (selected) {
+            target.draw(caret, states);
+        }
+    }
+}
+
+bool UserInterface::dialogBoxOpen = false;
+
+bool UserInterface::isDialogBoxOpen() {
+    return dialogBoxOpen;
 }
 
 UserInterface::UserInterface() {
@@ -185,17 +284,26 @@ UserInterface::UserInterface() {
     gateMenu.addMenuButton(TextButton("  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 17));
     
     upsDisplay = TextButton(" Current UPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
+    
+    testField = TextField("Width: ", "", Color::Black, 15, 30.0f, 30.0f, Color::White, Color(214, 229, 255), 10);
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {
-    fileMenu.update(mouseX, mouseY, clicked);
-    viewMenu.update(mouseX, mouseY, clicked);
-    runMenu.update(mouseX, mouseY, clicked);
-    toolsMenu.update(mouseX, mouseY, clicked);
-    wireMenu.update(mouseX, mouseY, clicked);
-    inputMenu.update(mouseX, mouseY, clicked);
-    outputMenu.update(mouseX, mouseY, clicked);
-    gateMenu.update(mouseX, mouseY, clicked);
+    if (!dialogBoxOpen) {
+        fileMenu.update(mouseX, mouseY, clicked);
+        viewMenu.update(mouseX, mouseY, clicked);
+        runMenu.update(mouseX, mouseY, clicked);
+        toolsMenu.update(mouseX, mouseY, clicked);
+        wireMenu.update(mouseX, mouseY, clicked);
+        inputMenu.update(mouseX, mouseY, clicked);
+        outputMenu.update(mouseX, mouseY, clicked);
+        gateMenu.update(mouseX, mouseY, clicked);
+    }
+    testField.update(mouseX, mouseY, clicked);
+}
+
+void UserInterface::update(Event::TextEvent textEvent) {
+    testField.update(textEvent);
 }
 
 void UserInterface::draw(RenderTarget& target, RenderStates states) const {
@@ -210,4 +318,5 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(outputMenu, states);
     target.draw(gateMenu, states);
     target.draw(upsDisplay, states);
+    target.draw(testField, states);
 }

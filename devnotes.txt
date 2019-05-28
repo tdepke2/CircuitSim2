@@ -1,6 +1,4 @@
 TODO (latest build):
-    - Need to optimize selections, they just have too much performance impact.
-    - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Need text box prompts for rename and switch/button re-label functions.
     - Wire tool. Idea for this is to use two additional boards for vertical and horizontal parts, wire drawn between two points (exclusive).
     - Pressing R when cursor over tile rotates the tile, same for flip.
@@ -10,6 +8,8 @@ TODO (latest build):
 TODO (future release):
     - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
+    - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
+    - Need to optimize selections, they just have too much performance impact.
 
 Current and potential bugs:
     - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.

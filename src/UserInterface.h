@@ -44,16 +44,43 @@ struct DropdownMenu : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
+struct TextField : public Drawable, public Transformable {
+    Text label, field;
+    RectangleShape background, caret;
+    int caretPosition, maxCharacters;
+    bool visible, selected;
+    
+    TextField();
+    TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters);
+    void update(int mouseX, int mouseY, bool clicked);
+    void update(Event::TextEvent textEvent);
+    
+    private:
+    virtual void draw(RenderTarget& target, RenderStates states) const;
+};
+
+/*struct DialogBox : public Drawable, public Transformable {
+    RectangleShape background;
+    Text text;
+    vector<TextButton> optionButtons;
+    vector<TextField> optionFields;
+    bool visible;
+};*/
+
 class UserInterface : public Drawable, public Transformable {
     public:
+    static bool isDialogBoxOpen();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton upsDisplay;
+    TextField testField;
     
     UserInterface();
     void update(int mouseX, int mouseY, bool clicked);
+    void update(Event::TextEvent textEvent);
     
     private:
+    static bool dialogBoxOpen;
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
