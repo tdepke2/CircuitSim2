@@ -59,28 +59,36 @@ struct TextField : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-/*struct DialogBox : public Drawable, public Transformable {
-    RectangleShape background;
+struct DialogPrompt : public Drawable, public Transformable {
     Text text;
+    RectangleShape background;
     vector<TextButton> optionButtons;
     vector<TextField> optionFields;
     bool visible;
-};*/
+    
+    DialogPrompt();
+    DialogPrompt(const string& dialogText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, const Vector2f& size);
+    void update(int mouseX, int mouseY, bool clicked);
+    void update(Event::TextEvent textEvent);
+    
+    private:
+    virtual void draw(RenderTarget& target, RenderStates states) const;
+};
 
 class UserInterface : public Drawable, public Transformable {
     public:
-    static bool isDialogBoxOpen();
+    static bool isDialogPromptOpen();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton upsDisplay;
-    TextField testField;
+    DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt;
     
     UserInterface();
     void update(int mouseX, int mouseY, bool clicked);
     void update(Event::TextEvent textEvent);
     
     private:
-    static bool dialogBoxOpen;
+    static bool dialogPromptOpen;
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 

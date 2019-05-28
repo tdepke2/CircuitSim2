@@ -15,6 +15,7 @@ TextButton::TextButton(const string& buttonText, const Color& textColor, unsigne
     text.setFillColor(textColor);
     text.setCharacterSize(charSize);
     text.setPosition(5.0f, 0.0f);
+    
     button.setSize(Vector2f(text.getLocalBounds().width + 10.0f, charSize * 1.5f));
     button.setFillColor(color1);
     button.setPosition(0.0f, 0.0f);
@@ -54,8 +55,8 @@ bool TextButton::update(int mouseX, int mouseY, bool clicked) {
 }
 
 void TextButton::draw(RenderTarget& target, RenderStates states) const {
-    states.transform *= getTransform();
     if (visible) {
+        states.transform *= getTransform();
         target.draw(button, states);
         target.draw(text, states);
     }
@@ -65,6 +66,7 @@ DropdownMenu::DropdownMenu() {}
 
 DropdownMenu::DropdownMenu(const TextButton& button, const Color& backgroundColor) {
     this->button = button;
+    
     background.setSize(Vector2f(0.0f, 4.0f));
     background.setFillColor(backgroundColor);
     background.setPosition(0.0f, button.button.getSize().y);
@@ -184,7 +186,7 @@ void TextField::update(int mouseX, int mouseY, bool clicked) {
 }
 
 void TextField::update(Event::TextEvent textEvent) {
-    if (selected) {
+    if (visible && selected) {
         string s = field.getString();
         if (textEvent.unicode == 8 && caretPosition > 0) {    // Backspace.
             s.erase(caretPosition - 1, 1);
@@ -203,8 +205,8 @@ void TextField::update(Event::TextEvent textEvent) {
 }
 
 void TextField::draw(RenderTarget& target, RenderStates states) const {
-    states.transform *= getTransform();
     if (visible) {
+        states.transform *= getTransform();
         target.draw(label, states);
         target.draw(background, states);
         target.draw(field, states);
@@ -214,10 +216,64 @@ void TextField::draw(RenderTarget& target, RenderStates states) const {
     }
 }
 
-bool UserInterface::dialogBoxOpen = false;
+DialogPrompt::DialogPrompt() {}
 
-bool UserInterface::isDialogBoxOpen() {
-    return dialogBoxOpen;
+DialogPrompt::DialogPrompt(const string& dialogText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, const Vector2f& size) {
+    text.setFont(Board::getFont());
+    text.setString(dialogText);
+    text.setFillColor(textColor);
+    text.setCharacterSize(charSize);
+    text.setPosition(10.0f, 5.0f);
+    
+    background.setSize(size);
+    background.setFillColor(fillColor);
+    background.setOutlineColor(outlineColor);
+    background.setOutlineThickness(-2.0f);
+    background.setPosition(0.0f, 0.0f);
+    
+    setPosition(x, y);
+    visible = true;
+}
+
+void DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
+    if (visible) {
+        mouseX -= static_cast<int>(getPosition().x);
+        mouseY -= static_cast<int>(getPosition().y);
+        for (TextButton& b : optionButtons) {
+            b.update(mouseX, mouseY, clicked);
+        }
+        for (TextField& f : optionFields) {
+            f.update(mouseX, mouseY, clicked);
+        }
+    }
+}
+
+void DialogPrompt::update(Event::TextEvent textEvent) {
+    if (visible) {
+        for (TextField& f : optionFields) {
+            f.update(textEvent);
+        }
+    }
+}
+
+void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
+    if (visible) {
+        states.transform *= getTransform();
+        target.draw(background, states);
+        target.draw(text, states);
+        for (const TextButton& b : optionButtons) {
+            target.draw(b, states);
+        }
+        for (const TextField& f : optionFields) {
+            target.draw(f, states);
+        }
+    }
+}
+
+bool UserInterface::dialogPromptOpen = false;
+
+bool UserInterface::isDialogPromptOpen() {
+    return dialogPromptOpen;
 }
 
 UserInterface::UserInterface() {
@@ -285,11 +341,21 @@ UserInterface::UserInterface() {
     
     upsDisplay = TextButton(" Current UPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
     
-    testField = TextField("Width: ", "", Color::Black, 15, 30.0f, 30.0f, Color::White, Color(214, 229, 255), 10);
+    //savePrompt = 
+    
+    //renamePrompt = 
+    
+    resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
+    resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr);
+    resizePrompt.optionButtons.emplace_back("Resize", Color::Black, 15, 244.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr);
+    resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20);
+    resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20);
+    
+    //relabelPrompt = 
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {
-    if (!dialogBoxOpen) {
+    if (!dialogPromptOpen) {
         fileMenu.update(mouseX, mouseY, clicked);
         viewMenu.update(mouseX, mouseY, clicked);
         runMenu.update(mouseX, mouseY, clicked);
@@ -299,11 +365,11 @@ void UserInterface::update(int mouseX, int mouseY, bool clicked) {
         outputMenu.update(mouseX, mouseY, clicked);
         gateMenu.update(mouseX, mouseY, clicked);
     }
-    testField.update(mouseX, mouseY, clicked);
+    resizePrompt.update(mouseX, mouseY, clicked);
 }
 
 void UserInterface::update(Event::TextEvent textEvent) {
-    testField.update(textEvent);
+    resizePrompt.update(textEvent);
 }
 
 void UserInterface::draw(RenderTarget& target, RenderStates states) const {
@@ -318,5 +384,5 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(outputMenu, states);
     target.draw(gateMenu, states);
     target.draw(upsDisplay, states);
-    target.draw(testField, states);
+    target.draw(resizePrompt, states);
 }

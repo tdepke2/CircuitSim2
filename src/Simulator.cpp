@@ -70,7 +70,7 @@ int Simulator::start() {
             Event event;
             while (windowPtr->pollEvent(event)) {    // Process events.
                 if (event.type == Event::MouseMoved) {
-                    if (!UserInterface::isDialogBoxOpen() && Mouse::isButtonPressed(Mouse::Left)) {
+                    if (!UserInterface::isDialogPromptOpen() && Mouse::isButtonPressed(Mouse::Left)) {
                         Vector2f newCenter(boardView.getCenter().x + (mouseStart.x - event.mouseMove.x) * zoomLevel, boardView.getCenter().y + (mouseStart.y - event.mouseMove.y) * zoomLevel);
                         if (newCenter.x < 0.0f) {
                             newCenter.x = 0.0f;
@@ -91,11 +91,11 @@ int Simulator::start() {
                 } else if (event.type == Event::MouseButtonPressed) {
                     if (event.mouseButton.button == Mouse::Left) {    // Check if view is moved.
                         userInterfacePtr->update(event.mouseButton.x, event.mouseButton.y, true);
-                    } else if (!UserInterface::isDialogBoxOpen() && event.mouseButton.button == Mouse::Right && (currentTileBoardPtr->getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
+                    } else if (!UserInterface::isDialogPromptOpen() && event.mouseButton.button == Mouse::Right && (currentTileBoardPtr->getSize() != Vector2u(0, 0) || copyBufferVisible)) {    // Check if tile/buffer will be placed.
                         pasteToBoard(tileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
                     }
                 } else if (event.type == Event::MouseButtonReleased) {
-                    if (!UserInterface::isDialogBoxOpen() && event.mouseButton.button == Mouse::Right && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
+                    if (!UserInterface::isDialogPromptOpen() && event.mouseButton.button == Mouse::Right && currentTileBoardPtr->getSize() == Vector2u(0, 0) && !copyBufferVisible) {
                         if (selectionStart == Vector2i(-1, -1)) {    // Check if selection was cancelled (right click made without dragging).
                             if (selectionArea != IntRect(0, 0, 0, 0)) {
                                 boardPtr->highlightArea(selectionArea, false);
@@ -110,16 +110,17 @@ int Simulator::start() {
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
                     float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
-                    if (!UserInterface::isDialogBoxOpen() && zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
+                    if (!UserInterface::isDialogPromptOpen() && zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
                         zoomLevel += zoomDelta;
                         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     }
                 } else if (event.type == Event::KeyPressed) {
-                    if (!UserInterface::isDialogBoxOpen()) {
+                    if (!UserInterface::isDialogPromptOpen()) {
                         handleKeyPress(event.key);
                     }
                 } else if (event.type == Event::TextEntered) {
-                    if (!UserInterface::isDialogBoxOpen()) {
+                    userInterfacePtr->update(event.text);
+                    if (!UserInterface::isDialogPromptOpen()) {
                         if (!editMode && event.text.unicode >= 33 && event.text.unicode <= 126) {    // Check if key is a printable character (excluding a space).
                             auto mapIter = boardPtr->switchKeybinds.find(static_cast<char>(event.text.unicode));
                             if (mapIter != boardPtr->switchKeybinds.end() && !mapIter->second.empty()) {
@@ -142,8 +143,6 @@ int Simulator::start() {
                                 }
                             }
                         }
-                    } else {
-                        userInterfacePtr->update(event.text);
                     }
                 } else if (event.type == Event::Resized) {
                     boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
@@ -153,7 +152,7 @@ int Simulator::start() {
                 }
             }
             
-            if (!UserInterface::isDialogBoxOpen()) {
+            if (!UserInterface::isDialogPromptOpen()) {
                 Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
                 newTileCursor.x /= boardPtr->getTileSize().x;
                 newTileCursor.y /= boardPtr->getTileSize().y;
