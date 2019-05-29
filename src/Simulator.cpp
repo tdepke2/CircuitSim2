@@ -304,8 +304,7 @@ void Simulator::fileOption(int option) {
             }
         } catch (exception& ex) {
             viewOption(3);
-            cout << "Error: Exception occurred during file access! There may be a problem with file permissions and/or file formats." << endl;
-            cout << "Exception details: " << ex.what() << endl;
+            cout << "Error: Exception occurred during file access. " << ex.what() << endl;
         }
     } else if (option == 2) {    // Save board.
         boardPtr->saveFile(boardPtr->name + ".txt");
@@ -317,11 +316,15 @@ void Simulator::fileOption(int option) {
             userInterfacePtr->resizePrompt.show();
         } else {
             try {
-                unsigned int width = stoul(userInterfacePtr->resizePrompt.optionFields[0].field.getString().toAnsiString());
-                unsigned int height = stoul(userInterfacePtr->resizePrompt.optionFields[1].field.getString().toAnsiString());
+                int width = stol(userInterfacePtr->resizePrompt.optionFields[0].field.getString().toAnsiString());
+                int height = stol(userInterfacePtr->resizePrompt.optionFields[1].field.getString().toAnsiString());
+                if (width <= 0 || height <= 0) {
+                    throw runtime_error("Board dimensions cannot be zero or negative.");
+                }
                 boardPtr->resize(Vector2u(width, height));
+                viewOption(3);
             } catch (exception& ex) {
-                cout << "Error: " << ex.what() << endl;
+                cout << "Error: Failed to resize the board. " << ex.what() << endl;
             }
             UserInterface::closeAllDialogPrompts();
         }

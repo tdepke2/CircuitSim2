@@ -211,6 +211,9 @@ void Board::clear() {
 }
 
 void Board::resize(const Vector2u& size) {
+    if (size.x == 0 || size.y == 0) {
+        throw runtime_error("Board dimensions cannot be zero or negative.");
+    }
     _vertices.resize(size.x * size.y * 4);
     Vector2u oldSize = _size;
     _size = size;
@@ -222,6 +225,7 @@ void Board::resize(const Vector2u& size) {
         newTileArray[y] = new Tile*[size.x];
         for (unsigned int x = 0; x < xStop; ++x) {
             newTileArray[y][x] = _tileArray[y][x];
+            newTileArray[y][x]->addUpdate(false, true);
         }
         for (unsigned int x = xStop; x < size.x; ++x) {
             newTileArray[y][x] = new Tile(this, Vector2u(x, y), true);
@@ -246,6 +250,7 @@ void Board::resize(const Vector2u& size) {
     delete[] _tileArray;
     
     _tileArray = newTileArray;
+    cout << "Board size changed to " << _size.x << " x " << _size.y << "." << endl;
 }
 
 void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates, bool keepOverwrittenTiles) {
@@ -341,6 +346,9 @@ void Board::flip(bool acrossHorizontal) {
 }
 
 void Board::newBoard(const Vector2u& size, const string& filename, bool startEmpty) {
+    if (size.x == 0 || size.y == 0) {
+        throw runtime_error("Board dimensions cannot be zero or negative.");
+    }
     size_t dotPosition = filename.rfind('.');
     if (dotPosition != string::npos) {
         name = filename.substr(0, dotPosition);
@@ -440,10 +448,20 @@ void Board::loadFile(const string& filename) {
                 }
                 ++numEntries;
             } else if (numEntries == 1 && line.find("width:") == 0) {
-                _size.x = stoul(line.substr(6));
+                int sizeX = stol(line.substr(6));
+                if (sizeX <= 0) {
+                    throw runtime_error("Board dimensions cannot be zero or negative.");
+                } else {
+                    _size.x = sizeX;
+                }
                 ++numEntries;
             } else if (numEntries == 2 && line.find("height:") == 0) {
-                _size.y = stoul(line.substr(7));
+                int sizeY = stol(line.substr(7));
+                if (sizeY <= 0) {
+                    throw runtime_error("Board dimensions cannot be zero or negative.");
+                } else {
+                    _size.y = sizeY;
+                }
                 _vertices.resize(_size.x * _size.y * 4);
                 _setVertexCoords();
                 _tileArray = new Tile**[_size.y];
@@ -466,7 +484,6 @@ void Board::loadFile(const string& filename) {
                     notesString += line + "\n";
                 } else {
                     if (notesString.length() != 0) {
-                        notesString.pop_back();
                         notesText.setString(notesString);
                         notesBox.setSize(Vector2f(notesText.getLocalBounds().width + 8.0f, notesText.getLocalBounds().height + 8.0f));
                         notesBox.setPosition(0.0f, -notesBox.getSize().y - 2.0f);
@@ -531,7 +548,7 @@ void Board::saveFile(const string& filename) {
     outputFile << "data: {" << endl;
     outputFile << "}" << endl;
     outputFile << "notes: {" << endl;
-    outputFile << notesText.getString().toAnsiString() << endl;
+    outputFile << notesText.getString().toAnsiString();
     outputFile << "}" << endl << endl;
     outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ') << endl;
     for (unsigned int y = 0; y < _size.y; ++y) {
