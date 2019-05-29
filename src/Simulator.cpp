@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cctype>
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -309,7 +310,41 @@ void Simulator::fileOption(int option) {
     } else if (option == 2) {    // Save board.
         boardPtr->saveFile(boardPtr->name + ".txt");
     } else if (option == 4) {    // Rename board.
-        
+        if (!userInterfacePtr->renamePrompt.visible) {
+            userInterfacePtr->renamePrompt.clearFields();
+            userInterfacePtr->renamePrompt.show();
+        } else {
+            try {
+                string newPath, newName = userInterfacePtr->renamePrompt.optionFields[0].field.getString().toAnsiString();
+                if (newName.find('/') != string::npos || newName.find('\\') != string::npos) {
+                    throw runtime_error("Name cannot use slash or backslash, use \"Save As...\" to change board path.");
+                }
+                size_t lastSlashPosition = boardPtr->name.rfind('\\');
+                if (lastSlashPosition != string::npos) {
+                    newPath = boardPtr->name.substr(0, lastSlashPosition + 1) + newName;
+                } else {
+                    throw runtime_error("Cannot parse the board path.");
+                }
+                ifstream inputFile(boardPtr->name + ".txt");
+                if (inputFile.is_open()) {    // If save file exists, try to rename it.
+                    inputFile.close();
+                    if (rename((boardPtr->name + ".txt").c_str(), (newPath + ".txt").c_str()) != 0) {
+                        throw runtime_error("Board with this name already exists.");
+                    }
+                } else {    // Else, make sure no save exists for a board with the new name.
+                    inputFile.open(newPath + ".txt");
+                    if (inputFile.is_open()) {
+                        inputFile.close();
+                        throw runtime_error("Board with this name already exists.");
+                    }
+                }
+                boardPtr->name = newPath;
+                cout << "Board renamed to: \"" << newName << "\"." << endl;
+                UserInterface::closeAllDialogPrompts();
+            } catch (exception& ex) {
+                cout << "Error: Unable to rename the board. " << ex.what() << endl;
+            }
+        }
     } else if (option == 5) {    // Resize board.
         if (!userInterfacePtr->resizePrompt.visible) {
             userInterfacePtr->resizePrompt.clearFields();
@@ -323,10 +358,10 @@ void Simulator::fileOption(int option) {
                 }
                 boardPtr->resize(Vector2u(width, height));
                 viewOption(3);
+                UserInterface::closeAllDialogPrompts();
             } catch (exception& ex) {
                 cout << "Error: Failed to resize the board. " << ex.what() << endl;
             }
-            UserInterface::closeAllDialogPrompts();
         }
     } else if (option == 6) {    // Exit program.
         state = State::Exiting;

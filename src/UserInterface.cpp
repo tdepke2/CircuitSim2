@@ -383,7 +383,10 @@ UserInterface::UserInterface() {
     
     //savePrompt = 
     
-    //renamePrompt = 
+    renamePrompt = DialogPrompt("Enter the new board name.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 103.0f));
+    renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
+    renamePrompt.optionButtons.emplace_back("Rename", Color::Black, 15, 244.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4);
+    renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 90.0f, 33.0f, Color::White, Color(214, 229, 255), 20);
     
     resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
     resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
@@ -404,12 +407,21 @@ void UserInterface::update(int mouseX, int mouseY, bool clicked) {
         inputMenu.update(mouseX, mouseY, clicked);
         outputMenu.update(mouseX, mouseY, clicked);
         gateMenu.update(mouseX, mouseY, clicked);
+    } else {
+        savePrompt.update(mouseX, mouseY, clicked);
+        renamePrompt.update(mouseX, mouseY, clicked);
+        resizePrompt.update(mouseX, mouseY, clicked);
+        relabelPrompt.update(mouseX, mouseY, clicked);
     }
-    resizePrompt.update(mouseX, mouseY, clicked);
 }
 
 void UserInterface::update(Event::TextEvent textEvent) {
-    resizePrompt.update(textEvent);
+    if (_dialogPromptOpen) {
+        savePrompt.update(textEvent);
+        renamePrompt.update(textEvent);
+        resizePrompt.update(textEvent);
+        relabelPrompt.update(textEvent);
+    }
 }
 
 void UserInterface::draw(RenderTarget& target, RenderStates states) const {
@@ -424,5 +436,8 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(outputMenu, states);
     target.draw(gateMenu, states);
     target.draw(upsDisplay, states);
+    target.draw(savePrompt, states);
+    target.draw(renamePrompt, states);
     target.draw(resizePrompt, states);
+    target.draw(relabelPrompt, states);
 }
