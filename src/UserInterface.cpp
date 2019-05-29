@@ -1,6 +1,7 @@
 #include "Board.h"
 #include "Simulator.h"
 #include "UserInterface.h"
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -137,7 +138,7 @@ TextField::TextField(const string& labelText, const string& initialFieldText, co
     label.setCharacterSize(charSize);
     label.setPosition(0.0f, 0.0f);
     
-    string maxSizeField(maxCharacters, 'a');
+    string maxSizeField(maxCharacters, ' ');
     field.setFont(Board::getFont());
     field.setString(maxSizeField);
     field.setFillColor(textColor);
@@ -204,6 +205,12 @@ void TextField::update(Event::TextEvent textEvent) {
     }
 }
 
+void TextField::clear() {
+    field.setString("");
+    caretPosition = 0;
+    caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
+}
+
 void TextField::draw(RenderTarget& target, RenderStates states) const {
     if (visible) {
         states.transform *= getTransform();
@@ -216,7 +223,9 @@ void TextField::draw(RenderTarget& target, RenderStates states) const {
     }
 }
 
-DialogPrompt::DialogPrompt() {}
+DialogPrompt::DialogPrompt() {
+    UserInterface::_dialogPrompts.push_back(this);
+}
 
 DialogPrompt::DialogPrompt(const string& dialogText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, const Vector2f& size) {
     text.setFont(Board::getFont());
@@ -232,7 +241,18 @@ DialogPrompt::DialogPrompt(const string& dialogText, const Color& textColor, uns
     background.setPosition(0.0f, 0.0f);
     
     setPosition(x, y);
-    visible = true;
+    visible = false;
+    UserInterface::_dialogPrompts.push_back(this);
+}
+
+DialogPrompt::~DialogPrompt() {
+    for (auto vectorIter = UserInterface::_dialogPrompts.begin(); vectorIter != UserInterface::_dialogPrompts.end();) {
+        if (*vectorIter == this) {
+            vectorIter = UserInterface::_dialogPrompts.erase(vectorIter);
+        } else {
+            ++vectorIter;
+        }
+    }
 }
 
 void DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
@@ -256,6 +276,18 @@ void DialogPrompt::update(Event::TextEvent textEvent) {
     }
 }
 
+void DialogPrompt::clearFields() {
+    for (TextField& textField : optionFields) {
+        textField.clear();
+    }
+}
+
+void DialogPrompt::show() {
+    assert(!UserInterface::_dialogPromptOpen);
+    visible = true;
+    UserInterface::_dialogPromptOpen = true;
+}
+
 void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
     if (visible) {
         states.transform *= getTransform();
@@ -270,10 +302,18 @@ void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
     }
 }
 
-bool UserInterface::dialogPromptOpen = false;
+bool UserInterface::_dialogPromptOpen = false;
+vector<DialogPrompt*> UserInterface::_dialogPrompts;
 
 bool UserInterface::isDialogPromptOpen() {
-    return dialogPromptOpen;
+    return _dialogPromptOpen;
+}
+
+void UserInterface::closeAllDialogPrompts(int option) {
+    for (DialogPrompt* dialogPrompt : _dialogPrompts) {
+        dialogPrompt->visible = false;
+    }
+    _dialogPromptOpen = false;
 }
 
 UserInterface::UserInterface() {
@@ -346,8 +386,8 @@ UserInterface::UserInterface() {
     //renamePrompt = 
     
     resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
-    resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr);
-    resizePrompt.optionButtons.emplace_back("Resize", Color::Black, 15, 244.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr);
+    resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
+    resizePrompt.optionButtons.emplace_back("Resize", Color::Black, 15, 244.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 5);
     resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20);
     resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20);
     
@@ -355,7 +395,7 @@ UserInterface::UserInterface() {
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {
-    if (!dialogPromptOpen) {
+    if (!_dialogPromptOpen) {
         fileMenu.update(mouseX, mouseY, clicked);
         viewMenu.update(mouseX, mouseY, clicked);
         runMenu.update(mouseX, mouseY, clicked);

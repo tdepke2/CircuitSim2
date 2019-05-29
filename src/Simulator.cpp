@@ -304,7 +304,7 @@ void Simulator::fileOption(int option) {
             }
         } catch (exception& ex) {
             viewOption(3);
-            cout << "Error occurred during file access! There may be a problem with file permissions and/or file formats." << endl;
+            cout << "Error: Exception occurred during file access! There may be a problem with file permissions and/or file formats." << endl;
             cout << "Exception details: " << ex.what() << endl;
         }
     } else if (option == 2) {    // Save board.
@@ -312,7 +312,19 @@ void Simulator::fileOption(int option) {
     } else if (option == 4) {    // Rename board.
         
     } else if (option == 5) {    // Resize board.
-        
+        if (!userInterfacePtr->resizePrompt.visible) {
+            userInterfacePtr->resizePrompt.clearFields();
+            userInterfacePtr->resizePrompt.show();
+        } else {
+            try {
+                unsigned int width = stoul(userInterfacePtr->resizePrompt.optionFields[0].field.getString().toAnsiString());
+                unsigned int height = stoul(userInterfacePtr->resizePrompt.optionFields[1].field.getString().toAnsiString());
+                boardPtr->resize(Vector2u(width, height));
+            } catch (exception& ex) {
+                cout << "Error: " << ex.what() << endl;
+            }
+            UserInterface::closeAllDialogPrompts();
+        }
     } else if (option == 6) {    // Exit program.
         state = State::Exiting;
     } else {
