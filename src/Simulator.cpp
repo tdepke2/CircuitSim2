@@ -462,16 +462,13 @@ void Simulator::toolsOption(int option) {
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileDirection = static_cast<Direction>((currentTileDirection + 1 + 2 * (option == 3)) % 4);
             currentTileBoardPtr->getTile(Vector2u(0, 0))->setDirection(currentTileDirection);
-            currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
             copyBufferBoardPtr->rotate(option == 3);
-            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                     Tile* targetTile = boardPtr->getTile(Vector2u(x, y));
                     targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1 + 2 * (option == 3)) % 4));
-                    targetTile->setHighlight(true);
                 }
             }
         } else if (tileCursor != Vector2i(-1, -1)) {
@@ -480,10 +477,8 @@ void Simulator::toolsOption(int option) {
     } else if (option == 4 || option == 5) {    // Flip across vertical. Flip across horizontal.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileBoardPtr->getTile(Vector2u(0, 0))->flip(option == 5);
-            currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
             copyBufferBoardPtr->flip(option == 5);
-            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (tileCursor != Vector2i(-1, -1)) {
             boardPtr->getTile(tileCursor)->flip(option == 5);
         }
@@ -503,7 +498,6 @@ void Simulator::toolsOption(int option) {
                     } else {
                         targetTile->setState(LOW);
                     }
-                    targetTile->setHighlight(true);
                 }
             }
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
@@ -515,7 +509,6 @@ void Simulator::toolsOption(int option) {
                     } else {
                         targetTile->setState(LOW);
                     }
-                    targetTile->setHighlight(true);
                 }
             }
         } else if (tileCursor != Vector2i(-1, -1)) {
