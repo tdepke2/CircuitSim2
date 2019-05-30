@@ -347,11 +347,13 @@ UserInterface::UserInterface() {
     toolsMenu.addMenuButton(TextButton("  Rotate CCW                  Shift+R", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 3));
     toolsMenu.addMenuButton(TextButton("  Flip Across Vertical              F", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 4));
     toolsMenu.addMenuButton(TextButton("  Flip Across Horizontal      Shift+F", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 5));
-    toolsMenu.addMenuButton(TextButton("  Cut                          Ctrl+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 6));
-    toolsMenu.addMenuButton(TextButton("  Copy                         Ctrl+C", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 7));
-    toolsMenu.addMenuButton(TextButton("  Paste                        Ctrl+V", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 8));
-    toolsMenu.addMenuButton(TextButton("  Delete                          DEL", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 9));
-    toolsMenu.addMenuButton(TextButton("  Wire Tool                         W", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 10));
+    toolsMenu.addMenuButton(TextButton("  Toggle State                      E", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 6));
+    toolsMenu.addMenuButton(TextButton("  Edit/Extra Option           Shift+E", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 7));
+    toolsMenu.addMenuButton(TextButton("  Cut                          Ctrl+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 8));
+    toolsMenu.addMenuButton(TextButton("  Copy                         Ctrl+C", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 9));
+    toolsMenu.addMenuButton(TextButton("  Paste                        Ctrl+V", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 10));
+    toolsMenu.addMenuButton(TextButton("  Delete                          DEL", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 11));
+    toolsMenu.addMenuButton(TextButton("  Wire Tool                         W", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 12));
     
     wireMenu = DropdownMenu(TextButton(" Wire ", Color::Black, 15, toolsMenu.getPosition().x + toolsMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     wireMenu.addMenuButton(TextButton("  Blank (Eraser)      Space", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 0));

@@ -458,67 +458,92 @@ void Simulator::toolsOption(int option) {
         }
     } else if (!editMode) {
         return;
-    } else if (option == 2) {    // Rotate selection CW.
+    } else if (option == 2 || option == 3) {    // Rotate selection CW. Rotate selection CCW.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
-            currentTileDirection = static_cast<Direction>((currentTileDirection + 1) % 4);
+            currentTileDirection = static_cast<Direction>((currentTileDirection + 1 + 2 * (option == 3)) % 4);
             currentTileBoardPtr->getTile(Vector2u(0, 0))->setDirection(currentTileDirection);
             currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
-            copyBufferBoardPtr->rotate(false);
+            copyBufferBoardPtr->rotate(option == 3);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                     Tile* targetTile = boardPtr->getTile(Vector2u(x, y));
-                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1) % 4));
+                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 1 + 2 * (option == 3)) % 4));
                     targetTile->setHighlight(true);
                 }
             }
+        } else if (tileCursor != Vector2i(-1, -1)) {
+            boardPtr->getTile(tileCursor)->setDirection(static_cast<Direction>((boardPtr->getTile(tileCursor)->getDirection() + 1 + 2 * (option == 3)) % 4));
         }
-    } else if (option == 3) {    // Rotate selection CCW.
+    } else if (option == 4 || option == 5) {    // Flip across vertical. Flip across horizontal.
         if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
-            currentTileDirection = static_cast<Direction>((currentTileDirection + 3) % 4);
-            currentTileBoardPtr->getTile(Vector2u(0, 0))->setDirection(currentTileDirection);
+            currentTileBoardPtr->getTile(Vector2u(0, 0))->flip(option == 5);
             currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
         } else if (copyBufferVisible) {
-            copyBufferBoardPtr->rotate(true);
+            copyBufferBoardPtr->flip(option == 5);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
+        } else if (tileCursor != Vector2i(-1, -1)) {
+            boardPtr->getTile(tileCursor)->flip(option == 5);
+        }
+    } else if (option == 6) {    // Toggle state.
+        if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            if (currentTileBoardPtr->getTile(Vector2u(0, 0))->getState() == LOW) {
+                currentTileBoardPtr->getTile(Vector2u(0, 0))->setState(HIGH);
+            } else {
+                currentTileBoardPtr->getTile(Vector2u(0, 0))->setState(LOW);
+            }
+        } else if (copyBufferVisible) {
+            for (unsigned int y = 0; y < copyBufferBoardPtr->getSize().y; ++y) {
+                for (unsigned int x = 0; x < copyBufferBoardPtr->getSize().x; ++x) {
+                    Tile* targetTile = copyBufferBoardPtr->getTile(Vector2u(x, y));
+                    if (targetTile->getState() == LOW) {
+                        targetTile->setState(HIGH);
+                    } else {
+                        targetTile->setState(LOW);
+                    }
+                    targetTile->setHighlight(true);
+                }
+            }
         } else if (selectionArea != IntRect(0, 0, 0, 0)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                     Tile* targetTile = boardPtr->getTile(Vector2u(x, y));
-                    targetTile->setDirection(static_cast<Direction>((targetTile->getDirection() + 3) % 4));
+                    if (targetTile->getState() == LOW) {
+                        targetTile->setState(HIGH);
+                    } else {
+                        targetTile->setState(LOW);
+                    }
                     targetTile->setHighlight(true);
                 }
             }
+        } else if (tileCursor != Vector2i(-1, -1)) {
+            if (boardPtr->getTile(tileCursor)->getState() == LOW) {
+                boardPtr->getTile(tileCursor)->setState(HIGH);
+            } else {
+                boardPtr->getTile(tileCursor)->setState(LOW);
+            }
         }
-    } else if (option == 4) {    // Flip across vertical.
-        if (copyBufferVisible) {
-            copyBufferBoardPtr->flip(false);
-            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
-        }
-    } else if (option == 5) {    // Flip across horizontal.
-        if (copyBufferVisible) {
-            copyBufferBoardPtr->flip(true);
-            copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
-        }
-    } else if (option == 6) {    // Cut selection.
+    } else if (option == 7) {    // Edit/extra option.
         
-    } else if (option == 7) {    // Copy selection.
+    } else if (option == 8) {    // Cut selection.
+        
+    } else if (option == 9) {    // Copy selection.
         if (selectionArea != IntRect(0, 0, 0, 0)) {
             copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
             copyBufferBoardPtr->cloneArea(*boardPtr, selectionArea, Vector2i(0, 0), true, true);
             copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
-            toolsOption(8);
+            toolsOption(10);
         }
-    } else if (option == 8) {    // Paste selection.
+    } else if (option == 10) {    // Paste selection.
         if (copyBufferBoardPtr->getSize() != Vector2u(0, 0)) {
             currentTileBoardPtr->clear();
             copyBufferVisible = true;
         }
-    } else if (option == 9) {    // Delete selection.
+    } else if (option == 11) {    // Delete selection.
         
-    } else if (option == 10) {    // Wire tool.
+    } else if (option == 12) {    // Wire tool.
         
     } else {
         assert(false);
@@ -600,11 +625,11 @@ void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
         } else if (keyEvent.code == Keyboard::A) {
             toolsOption(0);
         } else if (keyEvent.code == Keyboard::X) {
-            toolsOption(6);
-        } else if (keyEvent.code == Keyboard::C) {
-            toolsOption(7);
-        } else if (keyEvent.code == Keyboard::V) {
             toolsOption(8);
+        } else if (keyEvent.code == Keyboard::C) {
+            toolsOption(9);
+        } else if (keyEvent.code == Keyboard::V) {
+            toolsOption(10);
         }
     } else {
         if (keyEvent.code == Keyboard::Enter) {
@@ -631,8 +656,16 @@ void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
                 } else {
                     toolsOption(5);
                 }
+            } else if (keyEvent.code == Keyboard::E) {
+                if (!keyEvent.shift) {
+                    toolsOption(6);
+                } else {
+                    toolsOption(7);
+                }
             } else if (keyEvent.code == Keyboard::Delete) {
-                toolsOption(9);
+                toolsOption(11);
+            } else if (keyEvent.code == Keyboard::W) {
+                toolsOption(12);
             } else if (keyEvent.code == Keyboard::Space) {
                 placeTile(0);
             } else if (keyEvent.code == Keyboard::T) {
