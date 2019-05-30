@@ -87,6 +87,10 @@ string Tile::toString() const {
 
 void Tile::fixUpdateTime() {}
 
+bool Tile::alternativeTile() {
+    return false;
+}
+
 Tile* Tile::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new Tile(boardPtr, position, noAdjacentUpdates);
 }

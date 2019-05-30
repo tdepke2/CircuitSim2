@@ -175,6 +175,18 @@ string TileGate::toString() const {
     return GATE_SYMBOL_TABLE[_type * 8 + _direction * 2 + (_state == HIGH)];
 }
 
+bool TileGate::alternativeTile() {
+    if (_type != DIODE) {
+        if (_type % 2 == 1) {
+            _type = static_cast<Type>(_type + 1);
+        } else {
+            _type = static_cast<Type>(_type - 1);
+        }
+        addUpdate();
+    }
+    return false;
+}
+
 Tile* TileGate::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileGate(boardPtr, position, noAdjacentUpdates, _direction, _type, _state);
 }

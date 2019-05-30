@@ -6,8 +6,6 @@
 #include <limits>
 #include <stdexcept>
 
-#include <iostream>
-
 TextButton::TextButton() {}
 
 TextButton::TextButton(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption) {
@@ -342,13 +340,13 @@ UserInterface::UserInterface() {
     
     toolsMenu = DropdownMenu(TextButton(" Tools ", Color::Black, 15, runMenu.getPosition().x + runMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     toolsMenu.addMenuButton(TextButton("  Select All                   Ctrl+A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));
-    toolsMenu.addMenuButton(TextButton("  Deselect All                    Esc", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 1));
+    toolsMenu.addMenuButton(TextButton("  Deselect All                    ESC", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 1));
     toolsMenu.addMenuButton(TextButton("  Rotate CW                         R", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 2));
     toolsMenu.addMenuButton(TextButton("  Rotate CCW                  Shift+R", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 3));
     toolsMenu.addMenuButton(TextButton("  Flip Across Vertical              F", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 4));
     toolsMenu.addMenuButton(TextButton("  Flip Across Horizontal      Shift+F", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 5));
     toolsMenu.addMenuButton(TextButton("  Toggle State                      E", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 6));
-    toolsMenu.addMenuButton(TextButton("  Edit/Extra Option           Shift+E", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 7));
+    toolsMenu.addMenuButton(TextButton("  Edit/Alternative Tile       Shift+E", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 7));
     toolsMenu.addMenuButton(TextButton("  Cut                          Ctrl+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 8));
     toolsMenu.addMenuButton(TextButton("  Copy                         Ctrl+C", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 9));
     toolsMenu.addMenuButton(TextButton("  Paste                        Ctrl+V", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 10));
@@ -388,7 +386,7 @@ UserInterface::UserInterface() {
     renamePrompt = DialogPrompt("Enter the new board name.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 103.0f));
     renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     renamePrompt.optionButtons.emplace_back("Rename", Color::Black, 15, 244.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4);
-    renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 90.0f, 33.0f, Color::White, Color(214, 229, 255), 20);
+    renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 20.0f, 33.0f, Color::White, Color(214, 229, 255), 40);
     
     resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
     resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
@@ -396,7 +394,10 @@ UserInterface::UserInterface() {
     resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20);
     resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20);
     
-    //relabelPrompt = 
+    relabelPrompt = DialogPrompt("Enter the new label for this switch/button. This\nwill bind the tile to the corresponding keyboard\nkey, a space functions as a null keybind.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 140.0f));
+    relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
+    relabelPrompt.optionButtons.emplace_back("Relabel", Color::Black, 15, 244.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::relabelTarget);
+    relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
 }
 
 void UserInterface::update(int mouseX, int mouseY, bool clicked) {

@@ -1,8 +1,6 @@
 #ifndef _USERINTERFACE_H
 #define _USERINTERFACE_H
 
-class Simulator;
-
 #include <functional>
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -96,6 +94,7 @@ class UserInterface : public Drawable, public Transformable {
     private:
     static bool _dialogPromptOpen;
     static vector<DialogPrompt*> _dialogPrompts;
+    Tile* _relabelTargetTile;
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 

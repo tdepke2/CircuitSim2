@@ -23,6 +23,7 @@ class TileButton : public Tile {
     void updateOutput();    // Updates this button and starts wire traversal on connected tiles (does not change state).
     void redrawTile() const;
     string toString() const;
+    bool alternativeTile();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

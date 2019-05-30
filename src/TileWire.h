@@ -35,6 +35,7 @@ class TileWire : public Tile {
     void redrawTile() const;
     string toString() const;
     void fixUpdateTime();
+    bool alternativeTile();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

@@ -100,6 +100,10 @@ string TileButton::toString() const {
     return s;
 }
 
+bool TileButton::alternativeTile() {
+    return true;
+}
+
 Tile* TileButton::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileButton(boardPtr, position, noAdjacentUpdates, _charID, _state);
 }

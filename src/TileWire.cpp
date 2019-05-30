@@ -192,6 +192,19 @@ void TileWire::fixUpdateTime() {
     _updateTimestamp2 = 0;
 }
 
+bool TileWire::alternativeTile() {
+    if (_type == JUNCTION) {
+        _type = CROSSOVER;
+        _state2 = _state1;
+        addUpdate();
+    } else if (_type == CROSSOVER) {
+        _type = JUNCTION;
+        _state2 = LOW;
+        addUpdate();
+    }
+    return false;
+}
+
 Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileWire(boardPtr, position, noAdjacentUpdates, _direction, _type, _state1, _state2);
 }

@@ -22,6 +22,7 @@ class TileSwitch : public Tile {
     void updateOutput();    // Updates this switch and starts wire traversal on connected tiles.
     void redrawTile() const;
     string toString() const;
+    bool alternativeTile();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

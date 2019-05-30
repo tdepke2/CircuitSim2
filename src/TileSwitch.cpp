@@ -87,6 +87,10 @@ string TileSwitch::toString() const {
     return s;
 }
 
+bool TileSwitch::alternativeTile() {
+    return true;
+}
+
 Tile* TileSwitch::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates) {
     return new TileSwitch(boardPtr, position, noAdjacentUpdates, _charID, _state);
 }

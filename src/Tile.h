@@ -39,6 +39,7 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual void redrawTile() const;
     virtual string toString() const;
     virtual void fixUpdateTime();
+    virtual bool alternativeTile();
     virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:

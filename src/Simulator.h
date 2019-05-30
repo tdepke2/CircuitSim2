@@ -25,6 +25,7 @@ class Simulator {
     static void runOption(int option);
     static void toolsOption(int option);
     static void placeTile(int option);
+    static void relabelTarget(int option = 0);
     
     private:
     enum class State {
@@ -50,12 +51,12 @@ class Simulator {
     static bool editMode, copyBufferVisible;
     static Vector2i tileCursor, selectionStart;
     static IntRect selectionArea;
+    static Tile* relabelTargetTile;
     
     static void terminationHandler(int sigNum);
     static void renderLoop();
     static void handleKeyPress(Event::KeyEvent keyEvent);
     static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);
-    static char keyEventToChar(Event::KeyEvent keyEvent);
 };
 
 #endif

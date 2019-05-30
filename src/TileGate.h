@@ -30,6 +30,7 @@ class TileGate : public Tile {
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, just adds this gate to the list of endpoints if the gate does not point back to the source in the direction.
     void redrawTile() const;
     string toString() const;
+    bool alternativeTile();
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:

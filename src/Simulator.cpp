@@ -35,6 +35,7 @@ Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::editMode = true, Simulator::copyBufferVisible = false;
 Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
 IntRect Simulator::selectionArea(0, 0, 0, 0);
+Tile* Simulator::relabelTargetTile = nullptr;
 
 int Simulator::start() {
     cout << "Initializing setup..." << endl;
@@ -518,8 +519,20 @@ void Simulator::toolsOption(int option) {
                 boardPtr->getTile(tileCursor)->setState(LOW);
             }
         }
-    } else if (option == 7) {    // Edit/extra option.
-        
+    } else if (option == 7) {    // Edit/alternative tile.
+        if (currentTileBoardPtr->getSize() != Vector2u(0, 0)) {
+            if (currentTileBoardPtr->getTile(Vector2u(0, 0))->alternativeTile()) {
+                relabelTargetTile = currentTileBoardPtr->getTile(Vector2u(0, 0));
+                userInterfacePtr->relabelPrompt.clearFields();
+                userInterfacePtr->relabelPrompt.show();
+            }
+        } else if (tileCursor != Vector2i(-1, -1)) {
+            if (boardPtr->getTile(tileCursor)->alternativeTile()) {
+                relabelTargetTile = boardPtr->getTile(tileCursor);
+                userInterfacePtr->relabelPrompt.clearFields();
+                userInterfacePtr->relabelPrompt.show();
+            }
+        }
     } else if (option == 8) {    // Cut selection.
         
     } else if (option == 9) {    // Copy selection.
@@ -567,6 +580,18 @@ void Simulator::placeTile(int option) {
     }
     currentTileBoardPtr->getTile(Vector2u(0, 0))->setHighlight(true);
     copyBufferVisible = false;
+}
+
+void Simulator::relabelTarget(int option) {
+    assert(relabelTargetTile != nullptr);
+    if (typeid(*relabelTargetTile) == typeid(TileSwitch)) {
+        static_cast<TileSwitch*>(relabelTargetTile)->setCharID(userInterfacePtr->relabelPrompt.optionFields[0].field.getString()[0]);
+    } else if (typeid(*relabelTargetTile) == typeid(TileButton)) {
+        static_cast<TileButton*>(relabelTargetTile)->setCharID(userInterfacePtr->relabelPrompt.optionFields[0].field.getString()[0]);
+    } else {
+        assert(false);
+    }
+    UserInterface::closeAllDialogPrompts();
 }
 
 void Simulator::terminationHandler(int sigNum) {
