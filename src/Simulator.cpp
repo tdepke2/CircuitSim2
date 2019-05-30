@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cctype>
 #include <chrono>
+#include <csignal>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -39,12 +40,16 @@ int Simulator::start() {
     cout << "Initializing setup..." << endl;
     thread renderThread;
     try {
+        renderMutex.lock();
         assert(state == State::Uninitialized);
         state = State::Running;
+        SetConsoleCtrlHandler(NULL, TRUE);    // Disable control signals (like Ctrl + C) in log window in case the user tries to close application this way.
+        signal(SIGBREAK, terminationHandler);    // If log window closed, need to clean up in the few milliseconds available before program goes down.
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         windowPtr = new RenderWindow(VideoMode(1300, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
+        renderThread = thread(renderLoop);
         
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board::loadFont("resources/consolas.ttf");
@@ -61,11 +66,11 @@ int Simulator::start() {
         viewOption(3);
         Vector2i mouseStart(0, 0);
         Clock perSecondClock, loopClock, updatesClock;    // The perSecondClock counts FPS and UPS, loopClock limits loops per second, updatesClock manages update speed.
-        renderThread = thread(renderLoop);
+        renderMutex.unlock();
         
         cout << "Loading completed." << endl;
         while (state != State::Exiting) {
-            renderReadyMutex.lock();
+            renderReadyMutex.lock();    // Two mutex system helps prevent starvation of render thread and main thread (a binary semaphore could work even better though).
             renderMutex.lock();
             renderReadyMutex.unlock();
             Event event;
@@ -229,8 +234,8 @@ int Simulator::start() {
         cout << "****************************************************" << endl;
         cout << "Exception details: " << ex.what() << endl;
         cout << "(Press enter)" << endl;
-        cin.get();
         renderThread.join();
+        cin.get();
         return -1;
     }
     
@@ -546,8 +551,17 @@ void Simulator::placeTile(int option) {
     copyBufferVisible = false;
 }
 
+void Simulator::terminationHandler(int sigNum) {
+    state = State::Exiting;
+    cout << "Immediate termination requested." << endl;
+    this_thread::sleep_for(chrono::milliseconds(1000));
+}
+
 void Simulator::renderLoop() {
     windowPtr->setActive(true);
+    renderMutex.lock();    // First time lock to wait for setup.
+    renderMutex.unlock();
+    
     while (state != State::Exiting) {
         renderReadyMutex.lock();
         renderMutex.lock();
