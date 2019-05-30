@@ -71,10 +71,11 @@ Board::Board() {
     _vertices.setPrimitiveType(Quads);
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
-    notesBox.setSize(Vector2f(0.0f, 0.0f));
-    notesBox.setFillColor(Color(30, 30, 30));
-    notesText = Text("", getFont(), 25);
-    notesText.setFillColor(Color(150, 150, 150));
+    _notesBox.setSize(Vector2f(0.0f, 0.0f));
+    _notesBox.setFillColor(Color(30, 30, 30));
+    _notesText = Text("", getFont(), 25);
+    _notesText.setFillColor(Color(150, 150, 150));
+    changesMade = false;
 }
 
 Board::~Board() {
@@ -95,10 +96,12 @@ Tile* Board::getTile(const Vector2u& position) const {
 
 void Board::setTile(const Vector2i& position, Tile* tile) {
     _tileArray[position.y][position.x] = tile;
+    changesMade = true;
 }
 
 void Board::setTile(const Vector2u& position, Tile* tile) {
     _tileArray[position.y][position.x] = tile;
+    changesMade = true;
 }
 
 void Board::redrawTileVertices(int textureID, const Vector2u& position, Direction direction, bool highlight) {
@@ -193,6 +196,7 @@ void Board::updateTiles() {
 void Board::replaceTile(Tile* tile) {
     delete _tileArray[tile->getPosition().y][tile->getPosition().x];
     _tileArray[tile->getPosition().y][tile->getPosition().x] = tile;
+    changesMade = true;
 }
 
 void Board::clear() {
@@ -206,8 +210,9 @@ void Board::clear() {
     _vertices.clear();
     _size = Vector2u(0, 0);
     _tileArray = nullptr;
-    notesBox.setSize(Vector2f(0.0f, 0.0f));
-    notesText.setString("");
+    _notesBox.setSize(Vector2f(0.0f, 0.0f));
+    _notesText.setString("");
+    changesMade = false;
 }
 
 void Board::resize(const Vector2u& size) {
@@ -250,6 +255,7 @@ void Board::resize(const Vector2u& size) {
     delete[] _tileArray;
     
     _tileArray = newTileArray;
+    changesMade = true;
     cout << "Board size changed to " << _size.x << " x " << _size.y << "." << endl;
 }
 
@@ -272,6 +278,7 @@ void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i
         ++ySource;
         ++yThis;
     }
+    changesMade = true;
 }
 
 void Board::highlightArea(const IntRect& region, bool highlight) {
@@ -307,6 +314,7 @@ void Board::rotate(bool counterClockwise) {
         delete[] oldTileArray[y];
     }
     delete[] oldTileArray;
+    changesMade = true;
 }
 
 void Board::flip(bool acrossHorizontal) {
@@ -343,6 +351,7 @@ void Board::flip(bool acrossHorizontal) {
             }
         }
     }
+    changesMade = true;
 }
 
 void Board::newBoard(const Vector2u& size, const string& filename, bool startEmpty) {
@@ -369,6 +378,7 @@ void Board::newBoard(const Vector2u& size, const string& filename, bool startEmp
             }
         }
     }
+    changesMade = false;
 }
 
 void Board::loadFile(const string& filename) {
@@ -484,10 +494,10 @@ void Board::loadFile(const string& filename) {
                     notesString += line + "\n";
                 } else {
                     if (notesString.length() != 0) {
-                        notesText.setString(notesString);
-                        notesBox.setSize(Vector2f(notesText.getLocalBounds().width + 8.0f, notesText.getLocalBounds().height + 8.0f));
-                        notesBox.setPosition(0.0f, -notesBox.getSize().y - 2.0f);
-                        notesText.setPosition(4.0f, -notesBox.getSize().y - 5.0f);
+                        _notesText.setString(notesString);
+                        _notesBox.setSize(Vector2f(_notesText.getLocalBounds().width + 8.0f, _notesText.getLocalBounds().height + 8.0f));
+                        _notesBox.setPosition(0.0f, -_notesBox.getSize().y - 2.0f);
+                        _notesText.setPosition(4.0f, -_notesBox.getSize().y - 5.0f);
                     }
                     ++numEntries;
                 }
@@ -525,6 +535,7 @@ void Board::loadFile(const string& filename) {
         throw runtime_error("\"" + filename + "\" at line " + to_string(lineNumber) + ": " + ex.what());
     }
     inputFile.close();
+    changesMade = false;
     cout << "Load completed." << endl;
 }
 
@@ -548,7 +559,7 @@ void Board::saveFile(const string& filename) {
     outputFile << "data: {" << endl;
     outputFile << "}" << endl;
     outputFile << "notes: {" << endl;
-    outputFile << notesText.getString().toAnsiString();
+    outputFile << _notesText.getString().toAnsiString();
     outputFile << "}" << endl << endl;
     outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ') << endl;
     for (unsigned int y = 0; y < _size.y; ++y) {
@@ -561,6 +572,7 @@ void Board::saveFile(const string& filename) {
     outputFile << setfill ('*') << setw (_size.x * 2 + 2) << "*" << setfill (' ');
     
     outputFile.close();
+    changesMade = false;
     cout << "Save completed." << endl;
 }
 
@@ -643,6 +655,6 @@ void Board::draw(RenderTarget& target, RenderStates states) const {
     for (const pair<Tile*, Text>& tileLabel : tileLabels) {
         target.draw(tileLabel.second, states);
     }
-    target.draw(notesBox, states);
-    target.draw(notesText, states);
+    target.draw(_notesBox, states);
+    target.draw(_notesText, states);
 }

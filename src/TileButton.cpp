@@ -49,11 +49,13 @@ void TileButton::setCharID(char charID) {
     _boardPtr->buttonKeybinds[_charID].push_back(this);
     _boardPtr->tileLabels[this].setString(string(1, charID));
     addUpdate(true);
+    _boardPtr->changesMade = true;
 }
 
 void TileButton::setState(State state) {
     _state = state;
     addUpdate();
+    _boardPtr->changesMade = true;
 }
 
 State TileButton::checkOutput(Direction direction) const {

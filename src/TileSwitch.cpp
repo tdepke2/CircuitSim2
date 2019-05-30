@@ -39,11 +39,13 @@ void TileSwitch::setCharID(char charID) {
     _boardPtr->switchKeybinds[charID].push_back(this);
     _boardPtr->tileLabels[this].setString(string(1, charID));
     addUpdate(true);
+    _boardPtr->changesMade = true;
 }
 
 void TileSwitch::setState(State state) {
     _state = state;
     addUpdate();
+    _boardPtr->changesMade = true;
 }
 
 State TileSwitch::checkOutput(Direction direction) const {

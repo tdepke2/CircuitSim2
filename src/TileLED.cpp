@@ -25,6 +25,7 @@ State TileLED::getState() const {
 void TileLED::setState(State state) {
     _state = state;
     addUpdate();
+    _boardPtr->changesMade = true;
 }
 
 void TileLED::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {

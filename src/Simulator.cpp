@@ -255,13 +255,26 @@ int Simulator::randomInteger(int n) {
 
 void Simulator::fileOption(int option) {
     if (option == 0) {    // New board.
-        tileCursor = Vector2i(-1, -1);
-        selectionStart = Vector2i(-1, -1);
-        selectionArea = IntRect(0, 0, 0, 0);
-        boardPtr->newBoard();
-        viewOption(3);
-        cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
+        if (!userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
+            userInterfacePtr->savePrompt.optionButtons[1].actionOption = 0;
+            userInterfacePtr->savePrompt.show();
+        } else {
+            tileCursor = Vector2i(-1, -1);
+            selectionStart = Vector2i(-1, -1);
+            selectionArea = IntRect(0, 0, 0, 0);
+            boardPtr->newBoard();
+            viewOption(3);
+            cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
+            UserInterface::closeAllDialogPrompts();
+        }
     } else if (option == 1 || option == 3) {    // Load board. Save as board.
+        if (option == 1 && !userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
+            userInterfacePtr->savePrompt.optionButtons[1].actionOption = 1;
+            userInterfacePtr->savePrompt.show();
+            return;
+        }
+        UserInterface::closeAllDialogPrompts();
+        
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
         char filename[260];
         ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
@@ -315,6 +328,7 @@ void Simulator::fileOption(int option) {
         }
     } else if (option == 2) {    // Save board.
         boardPtr->saveFile(boardPtr->name + ".txt");
+        UserInterface::closeAllDialogPrompts();
     } else if (option == 4) {    // Rename board.
         if (!userInterfacePtr->renamePrompt.visible) {
             userInterfacePtr->renamePrompt.clearFields();
@@ -370,7 +384,13 @@ void Simulator::fileOption(int option) {
             }
         }
     } else if (option == 6) {    // Exit program.
-        state = State::Exiting;
+        if (!userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
+            userInterfacePtr->savePrompt.optionButtons[1].actionOption = 6;
+            userInterfacePtr->savePrompt.show();
+        } else {
+            UserInterface::closeAllDialogPrompts();
+            state = State::Exiting;
+        }
     } else {
         assert(false);
     }

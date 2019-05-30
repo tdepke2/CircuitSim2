@@ -381,7 +381,10 @@ UserInterface::UserInterface() {
     
     upsDisplay = TextButton(" Current UPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
     
-    //savePrompt = 
+    savePrompt = DialogPrompt("Are you sure? Changes have not been saved.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 75.0f));
+    savePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 45.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
+    savePrompt.optionButtons.emplace_back("Discard Changes", Color::Black, 15, 150.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption);
+    savePrompt.optionButtons.emplace_back("Save", Color::Black, 15, 325.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 2);
     
     renamePrompt = DialogPrompt("Enter the new board name.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 103.0f));
     renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);

@@ -27,17 +27,20 @@ State TileGate::getNextState() const {
 void TileGate::setDirection(Direction direction, bool noAdjacentUpdates) {
     _direction = direction;
     addUpdate(false, noAdjacentUpdates);
+    _boardPtr->changesMade = true;
 }
 
 void TileGate::setState(State state) {
     _state = state;
     addUpdate();
+    _boardPtr->changesMade = true;
 }
 
 void TileGate::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
         addUpdate(false, noAdjacentUpdates);
+        _boardPtr->changesMade = true;
     }
 }
 
@@ -183,6 +186,7 @@ bool TileGate::alternativeTile() {
             _type = static_cast<Type>(_type - 1);
         }
         addUpdate();
+        _boardPtr->changesMade = true;
     }
     return false;
 }

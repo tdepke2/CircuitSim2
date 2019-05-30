@@ -50,6 +50,7 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     static vector<TileLED*> endpointLEDs;
     static vector<TileGate*> endpointGates;
     string name;
+    bool changesMade;
     unordered_set<Tile*> cosmeticUpdates;
     unordered_set<TileWire*> wireUpdates;
     unordered_set<TileSwitch*> switchUpdates;
@@ -94,8 +95,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     VertexArray _vertices;
     Vector2u _size;
     Tile*** _tileArray;
-    RectangleShape notesBox;
-    Text notesText;
+    RectangleShape _notesBox;
+    Text _notesText;
     
     static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
     static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);

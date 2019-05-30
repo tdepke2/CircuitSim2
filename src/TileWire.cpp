@@ -45,11 +45,13 @@ void TileWire::setDirection(Direction direction, bool noAdjacentUpdates) {
                 _direction = direction;
             }
             addUpdate(false, noAdjacentUpdates);
+            _boardPtr->changesMade = true;
         } else if (direction % 2 == 1) {    // If direction odd, assume 1 or 3 rotations were made to the crossover wire.
             State tempState = _state1;
             _state1 = _state2;
             _state2 = tempState;
             addUpdate(false, noAdjacentUpdates);
+            _boardPtr->changesMade = true;
         }
     }
 }
@@ -60,6 +62,7 @@ void TileWire::setState(State state) {
         _state2 = state;
     }
     addUpdate();
+    _boardPtr->changesMade = true;
 }
 
 void TileWire::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
@@ -72,9 +75,11 @@ void TileWire::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
             _direction = static_cast<Direction>(_direction - 1);
         }
         addUpdate(false, noAdjacentUpdates);
+        _boardPtr->changesMade = true;
     } else if (_type == TEE && ((!acrossHorizontal && _direction % 2 == 0) || (acrossHorizontal && _direction % 2 == 1))) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
         addUpdate(false, noAdjacentUpdates);
+        _boardPtr->changesMade = true;
     }
 }
 
@@ -197,10 +202,12 @@ bool TileWire::alternativeTile() {
         _type = CROSSOVER;
         _state2 = _state1;
         addUpdate();
+        _boardPtr->changesMade = true;
     } else if (_type == CROSSOVER) {
         _type = JUNCTION;
         _state2 = LOW;
         addUpdate();
+        _boardPtr->changesMade = true;
     }
     return false;
 }
