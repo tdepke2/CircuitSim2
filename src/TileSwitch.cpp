@@ -45,7 +45,6 @@ void TileSwitch::setCharID(char charID) {
 void TileSwitch::setState(State state) {
     _state = state;
     addUpdate();
-    _boardPtr->changesMade = true;
 }
 
 State TileSwitch::checkOutput(Direction direction) const {

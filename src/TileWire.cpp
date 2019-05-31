@@ -62,7 +62,6 @@ void TileWire::setState(State state) {
         _state2 = state;
     }
     addUpdate();
-    _boardPtr->changesMade = true;
 }
 
 void TileWire::flip(bool acrossHorizontal, bool noAdjacentUpdates) {

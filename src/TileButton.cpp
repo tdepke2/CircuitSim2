@@ -55,7 +55,6 @@ void TileButton::setCharID(char charID) {
 void TileButton::setState(State state) {
     _state = state;
     addUpdate();
-    _boardPtr->changesMade = true;
 }
 
 State TileButton::checkOutput(Direction direction) const {

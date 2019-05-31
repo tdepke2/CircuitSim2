@@ -33,7 +33,6 @@ void TileGate::setDirection(Direction direction, bool noAdjacentUpdates) {
 void TileGate::setState(State state) {
     _state = state;
     addUpdate();
-    _boardPtr->changesMade = true;
 }
 
 void TileGate::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
