@@ -46,10 +46,12 @@ class Simulator {
     static Board* boardPtr;
     static Board* currentTileBoardPtr;
     static Board* copyBufferBoardPtr;
+    static Board* wireVerticalBoardPtr;
+    static Board* wireHorizontalBoardPtr;
     static UserInterface* userInterfacePtr;
     static Direction currentTileDirection;
-    static bool editMode, copyBufferVisible;
-    static Vector2i tileCursor, selectionStart;
+    static bool editMode, copyBufferVisible, wireToolVerticalFirst;
+    static Vector2i tileCursor, selectionStart, wireToolStart;
     static IntRect selectionArea;
     static Tile* relabelTargetTile;
     

@@ -30,10 +30,12 @@ RenderWindow* Simulator::windowPtr = nullptr;
 Board* Simulator::boardPtr = nullptr;
 Board* Simulator::currentTileBoardPtr = nullptr;
 Board* Simulator::copyBufferBoardPtr = nullptr;
+Board* Simulator::wireVerticalBoardPtr = nullptr;
+Board* Simulator::wireHorizontalBoardPtr = nullptr;
 UserInterface* Simulator::userInterfacePtr = nullptr;
 Direction Simulator::currentTileDirection = NORTH;
-bool Simulator::editMode = true, Simulator::copyBufferVisible = false;
-Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1);
+bool Simulator::editMode = true, Simulator::copyBufferVisible = false, Simulator::wireToolVerticalFirst = true;
+Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1), Simulator::wireToolStart(-1, -1);
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 Tile* Simulator::relabelTargetTile = nullptr;
 
@@ -57,6 +59,8 @@ int Simulator::start() {
         boardPtr = new Board();
         currentTileBoardPtr = new Board();
         copyBufferBoardPtr = new Board();
+        wireVerticalBoardPtr = new Board();
+        wireHorizontalBoardPtr = new Board();
         char directoryPath[260];
         GetCurrentDirectory(sizeof(directoryPath), directoryPath);
         Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
@@ -185,6 +189,28 @@ int Simulator::start() {
                             boardPtr->highlightArea(selectionArea, true);
                         } else if (Mouse::isButtonPressed(Mouse::Right)) {
                             pasteToBoard(newTileCursor, Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift));
+                        }
+                        if (wireToolStart != Vector2i(-1, -1)) {
+                            if (wireToolStart == tileCursor) {
+                                wireToolVerticalFirst = abs(newTileCursor.x - tileCursor.x) <= abs(newTileCursor.y - tileCursor.y);
+                            } else if (wireToolVerticalFirst) {
+                                if (abs(newTileCursor.y - wireToolStart.y) > 1) {
+                                    wireVerticalBoardPtr->newBoard(Vector2u(1, abs(newTileCursor.y - wireToolStart.y)));
+                                    wireVerticalBoardPtr->setPosition(static_cast<float>(wireToolStart.x * Board::getTileSize().x), static_cast<float>(min(wireToolStart.y, newTileCursor.y) * Board::getTileSize().y));
+                                    wireVerticalBoardPtr->highlightArea(IntRect(0, 0, wireVerticalBoardPtr->getSize().x, wireVerticalBoardPtr->getSize().y), true);
+                                } else {
+                                    wireVerticalBoardPtr->clear();
+                                }
+                                if (abs(newTileCursor.x - wireToolStart.x) > 1) {
+                                    wireHorizontalBoardPtr->newBoard(Vector2u(abs(newTileCursor.x - wireToolStart.x), 1));
+                                    wireHorizontalBoardPtr->setPosition(static_cast<float>(min(wireToolStart.x, newTileCursor.x) * Board::getTileSize().x), static_cast<float>(newTileCursor.y * Board::getTileSize().y));
+                                    wireHorizontalBoardPtr->highlightArea(IntRect(0, 0, wireHorizontalBoardPtr->getSize().x, wireHorizontalBoardPtr->getSize().y), true);
+                                } else {
+                                    wireHorizontalBoardPtr->clear();
+                                }
+                            } else {
+                                
+                            }
                         }
                         tileCursor = newTileCursor;
                         currentTileBoardPtr->setPosition(static_cast<float>(tileCursor.x * Board::getTileSize().x), static_cast<float>(tileCursor.y * Board::getTileSize().y));
@@ -570,7 +596,15 @@ void Simulator::toolsOption(int option) {
     } else if (option == 11) {    // Delete selection.
         
     } else if (option == 12) {    // Wire tool.
-        
+        if (wireToolStart == Vector2i(-1, -1)) {
+            if (tileCursor != Vector2i(-1, -1)) {
+                wireToolStart = tileCursor;
+            }
+        } else {
+            wireToolStart = Vector2i(-1, -1);
+            wireVerticalBoardPtr->clear();
+            wireHorizontalBoardPtr->clear();
+        }
     } else {
         assert(false);
     }
@@ -632,6 +666,8 @@ void Simulator::renderLoop() {
         boardPtr->updateCosmetics();
         copyBufferBoardPtr->updateCosmetics();
         currentTileBoardPtr->updateCosmetics();
+        wireVerticalBoardPtr->updateCosmetics();
+        wireHorizontalBoardPtr->updateCosmetics();
         
         windowPtr->clear();
         windowPtr->setView(boardView);
@@ -643,6 +679,8 @@ void Simulator::renderLoop() {
                 windowPtr->draw(*currentTileBoardPtr);
             }
         }
+        windowPtr->draw(*wireVerticalBoardPtr);
+        windowPtr->draw(*wireHorizontalBoardPtr);
         windowPtr->setView(windowView);
         windowPtr->draw(*userInterfacePtr);
         ++fpsCounter;
