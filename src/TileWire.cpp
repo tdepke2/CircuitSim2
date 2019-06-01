@@ -32,6 +32,10 @@ TileWire::~TileWire() {
     _boardPtr->wireUpdates.erase(this);
 }
 
+TileWire::Type TileWire::getType() const {
+    return _type;
+}
+
 State TileWire::getState() const {
     return _state1;
 }

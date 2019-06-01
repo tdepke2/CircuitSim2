@@ -24,6 +24,7 @@ class TileWire : public Tile {
     
     TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);    // Construct a wire tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileWire();
+    Type getType() const;
     State getState() const;
     void setDirection(Direction direction, bool noAdjacentUpdates = false);
     void setState(State state);

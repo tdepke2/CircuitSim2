@@ -18,6 +18,7 @@ class TileGate : public Tile {
     
     TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = DIODE, State state = LOW);    // Construct a gate tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileGate();
+    Type getType() const;
     State getState() const;
     State getNextState() const;
     void setDirection(Direction direction, bool noAdjacentUpdates = false);

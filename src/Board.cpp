@@ -10,7 +10,6 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-#include <typeinfo>
 
 string Board::newBoardDefaultPath = "boards/NewBoard.txt";
 bool Board::gridActive = true;

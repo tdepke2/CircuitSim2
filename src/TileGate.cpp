@@ -16,6 +16,10 @@ TileGate::~TileGate() {
     _boardPtr->gateUpdates.erase(this);
 }
 
+TileGate::Type TileGate::getType() const {
+    return _type;
+}
+
 State TileGate::getState() const {
     return _state;
 }
