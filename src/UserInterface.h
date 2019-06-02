@@ -84,7 +84,7 @@ class UserInterface : public Drawable, public Transformable {    // The window U
     static void closeAllDialogPrompts(int option = 0);
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
-    TextButton upsDisplay;
+    TextButton tpsDisplay;
     DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt;
     
     UserInterface();

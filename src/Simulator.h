@@ -39,7 +39,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static SimSpeed simSpeed;
     static mt19937 mainRNG;
     static mutex renderMutex, renderReadyMutex;
-    static int fpsCounter, upsCounter;
+    static int fpsCounter, tpsCounter;
     static View boardView, windowView;
     static float zoomLevel;
     static RenderWindow* windowPtr;

@@ -24,7 +24,7 @@ atomic<Simulator::State> Simulator::state = State::Uninitialized;
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Medium;
 mt19937 Simulator::mainRNG;
 mutex Simulator::renderMutex, Simulator::renderReadyMutex;
-int Simulator::fpsCounter = 0, Simulator::upsCounter = 0;
+int Simulator::fpsCounter = 0, Simulator::tpsCounter = 0;
 View Simulator::boardView, Simulator::windowView;
 float Simulator::zoomLevel;
 RenderWindow* Simulator::windowPtr = nullptr;
@@ -78,7 +78,7 @@ int Simulator::start() {
         wireToolLabelPtr->setOutlineThickness(1.0f);
         viewOption(3);
         Vector2i mouseStart(0, 0);
-        Clock perSecondClock, loopClock, updatesClock;    // The perSecondClock counts FPS and UPS, loopClock limits loops per second, updatesClock manages update speed.
+        Clock perSecondClock, loopClock, tickClock;    // The perSecondClock counts FPS and TPS, loopClock limits loops per second, tickClock manages tick speed.
         renderMutex.unlock();
         
         cout << "Loading completed." << endl;
@@ -222,27 +222,27 @@ int Simulator::start() {
                 }
                 
                 bool doUpdate = false;
-                if (simSpeed == SimSpeed::Slow && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
+                if (simSpeed == SimSpeed::Slow && tickClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
                     doUpdate = true;
-                } else if (simSpeed == SimSpeed::Medium && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
+                } else if (simSpeed == SimSpeed::Medium && tickClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
                     doUpdate = true;
-                } else if (simSpeed == SimSpeed::Fast && updatesClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
+                } else if (simSpeed == SimSpeed::Fast && tickClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
                     doUpdate = true;
                 } else if (simSpeed == SimSpeed::Extreme) {
                     doUpdate = true;
                 }
                 if (doUpdate) {
                     boardPtr->updateTiles();
-                    ++upsCounter;
-                    updatesClock.restart();
+                    ++tpsCounter;
+                    tickClock.restart();
                 }
             }
             
-            if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and UPS.
-                windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", UPS: " + to_string(upsCounter) + "]");
+            if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and TPS.
+                windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", TPS: " + to_string(tpsCounter) + "]");
                 perSecondClock.restart();
                 fpsCounter = 0;
-                upsCounter = 0;
+                tpsCounter = 0;
             }
             renderMutex.unlock();
             
@@ -463,33 +463,33 @@ void Simulator::viewOption(int option) {
 }
 
 void Simulator::runOption(int option) {
-    if (option == 0) {    // Step frame.
+    if (option == 0) {    // Step one tick.
         simSpeed = SimSpeed::Paused;
-        userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Paused    ");
-        userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 10, 230));
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
         boardPtr->updateTiles();
-        ++upsCounter;
-    } else if (option == 1) {    // Change run mode.
+        ++tpsCounter;
+    } else if (option == 1) {    // Change max TPS.
         if (simSpeed == SimSpeed::Paused) {
             simSpeed = SimSpeed::Slow;
-            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 2         ");
-            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 230, 230));
+            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 2         ");
+            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 230));
         } else if (simSpeed == SimSpeed::Slow) {
             simSpeed = SimSpeed::Medium;
-            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 30        ");
-            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 230, 10));
+            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 30        ");
+            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 10));
         } else if (simSpeed == SimSpeed::Medium) {
             simSpeed = SimSpeed::Fast;
-            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: 60        ");
-            userInterfacePtr->upsDisplay.button.setFillColor(Color(230, 230, 10));
+            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 60        ");
+            userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 230, 10));
         } else if (simSpeed == SimSpeed::Fast) {
             simSpeed = SimSpeed::Extreme;
-            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Unlimited ");
-            userInterfacePtr->upsDisplay.button.setFillColor(Color(230, 10, 10));
+            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Unlimited ");
+            userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 10, 10));
         } else {
             simSpeed = SimSpeed::Paused;
-            userInterfacePtr->upsDisplay.text.setString(" Current UPS limit: Paused    ");
-            userInterfacePtr->upsDisplay.button.setFillColor(Color(10, 10, 230));
+            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
+            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
         }
     } else {
         assert(false);

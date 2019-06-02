@@ -335,8 +335,8 @@ UserInterface::UserInterface() {
     viewMenu.addMenuButton(TextButton("  Default Zoom", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 3));
     
     runMenu = DropdownMenu(TextButton(" Run ", Color::Black, 15, viewMenu.getPosition().x + viewMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
-    runMenu.addMenuButton(TextButton("  Step Frame                 Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
-    runMenu.addMenuButton(TextButton("  Change Run Mode      Shift+Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 1));
+    runMenu.addMenuButton(TextButton("  Step One Tick             Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 0));
+    runMenu.addMenuButton(TextButton("  Change Max TPS      Shift+Tab", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::runOption, 1));
     
     toolsMenu = DropdownMenu(TextButton(" Tools ", Color::Black, 15, runMenu.getPosition().x + runMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     toolsMenu.addMenuButton(TextButton("  Select All                   Ctrl+A", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 0));
@@ -379,7 +379,7 @@ UserInterface::UserInterface() {
     gateMenu.addMenuButton(TextButton("  XOR                       X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 16));
     gateMenu.addMenuButton(TextButton("  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 17));
     
-    upsDisplay = TextButton(" Current UPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
+    tpsDisplay = TextButton(" Current TPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
     
     savePrompt = DialogPrompt("Are you sure? Changes have not been saved.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 75.0f));
     savePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 45.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
@@ -441,7 +441,7 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(inputMenu, states);
     target.draw(outputMenu, states);
     target.draw(gateMenu, states);
-    target.draw(upsDisplay, states);
+    target.draw(tpsDisplay, states);
     target.draw(savePrompt, states);
     target.draw(renamePrompt, states);
     target.draw(resizePrompt, states);
