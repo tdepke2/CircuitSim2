@@ -63,8 +63,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     
     static const Font& getFont();
     static const Vector2u& getTileSize();
-    static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);
-    static void loadFont(const string& filename);
+    static void loadTextures(const string& filenameGrid, const string& filenameNoGrid, const Vector2u& tileSize);    // Loads the texture files, then clamps and stitches them to fix mipmap blending.
+    static void loadFont(const string& filename);    // Loads the font file.
     Board();
     virtual ~Board();
     const Vector2u& getSize() const;
@@ -72,19 +72,19 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     Tile* getTile(const Vector2u& position) const;
     void setTile(const Vector2i& position, Tile* tile);
     void setTile(const Vector2u& position, Tile* tile);
-    void redrawTileVertices(int textureID, const Vector2u& position, Direction direction, bool highlight);
-    void updateCosmetics();
-    void updateTiles();
-    void replaceTile(Tile* tile);
-    void clear();
-    void resize(const Vector2u& size);
-    void cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates = false, bool keepOverwrittenTiles = false);
-    void highlightArea(const IntRect& region, bool highlight);
-    void rotate(bool counterClockwise = false);
-    void flip(bool acrossHorizontal = false);
-    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = newBoardDefaultPath, bool startEmpty = false);
-    void loadFile(const string& filename);
-    void saveFile(const string& filename);
+    void redrawTileVertices(int textureID, const Vector2u& position, Direction direction, bool highlight);    // Redraws the vertices of a single tile to the VertexArray.
+    void updateCosmetics();    // Runs all cosmetic updates that are scheduled.
+    void updateTiles();    // Updates all tiles and advances the simulation to the next tick if any updates are available.
+    void replaceTile(Tile* tile);    // Replaces a tile on the board with a different one, deletes the replaced tile.
+    void clear();    // Sets the board size to zero and deletes all tiles.
+    void resize(const Vector2u& size);    // Changes the board size (must not be zero), objects are preserved in their original locations where applicable.
+    void cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates = false, bool keepOverwrittenTiles = false);    // Clones an area from another board into this one.
+    void highlightArea(const IntRect& region, bool highlight);    // Sets the highlight on an area of the board.
+    void rotate(bool counterClockwise = false);    // Rotates the board and all objects in CW/CCW direction.
+    void flip(bool acrossHorizontal = false);    // Flips the board across the vertical/horizontal axis.
+    void newBoard(const Vector2u& size = Vector2u(20, 20), const string& filename = newBoardDefaultPath, bool startEmpty = false);    // Resets the board to a new one, all tiles are deleted.
+    void loadFile(const string& filename);    // Loads data for a board from a file.
+    void saveFile(const string& filename);    // Saves current board data to a file.
     
     private:
     static Texture* _tilesetGridPtr;
@@ -98,11 +98,11 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     RectangleShape _notesBox;
     Text _notesText;
     
-    static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);
-    static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);
-    void _setVertexCoords();
-    int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;
-    virtual void draw (RenderTarget& target, RenderStates states) const;
+    static void _clampToSize(Image& image, const Vector2u& topLeft, const Vector2u& bottomRight);    // Clamps an image to a specified border, does not resize the image object.
+    static void _buildTexture(const Image& source, Texture* target, const Vector2u& tileSize);    // Builds a large texture with clamped tiles from a condensed texture image.
+    void _setVertexCoords();    // Recalculates the coordinates of all vertices.
+    int _findSymbol(char c1, char c2, const vector<string>& symbolTable) const;    // Finds the index of the given pattern in a symbol table. If no pattern found, -1 is returned.
+    virtual void draw (RenderTarget& target, RenderStates states) const;    // A function of Drawable objects to draw the object to a window.
 };
 
 #endif

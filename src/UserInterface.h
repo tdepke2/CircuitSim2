@@ -10,7 +10,7 @@
 using namespace std;
 using namespace sf;
 
-struct TextButton : public Drawable, public Transformable {
+struct TextButton : public Drawable, public Transformable {    // Represents a clickable button with text on it. The button can call an action when pressed.
     Text text;
     RectangleShape button;
     Color color1, color2;
@@ -26,7 +26,7 @@ struct TextButton : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct DropdownMenu : public Drawable, public Transformable {
+struct DropdownMenu : public Drawable, public Transformable {    // A dropdown menu for buttons.
     TextButton button;
     RectangleShape background;
     vector<TextButton> menuButtons;
@@ -42,7 +42,7 @@ struct DropdownMenu : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct TextField : public Drawable, public Transformable {
+struct TextField : public Drawable, public Transformable {    // A text field for string input. Text can be entered when selected and the position of the caret can be moved by clicking.
     Text label, field;
     RectangleShape background, caret;
     int caretPosition, maxCharacters;
@@ -58,7 +58,7 @@ struct TextField : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct DialogPrompt : public Drawable, public Transformable {
+struct DialogPrompt : public Drawable, public Transformable {    // A dialog box with buttons and text fields.
     Text text;
     RectangleShape background;
     vector<TextButton> optionButtons;
@@ -77,7 +77,7 @@ struct DialogPrompt : public Drawable, public Transformable {
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-class UserInterface : public Drawable, public Transformable {
+class UserInterface : public Drawable, public Transformable {    // The window UI. Includes the top bar menus and all prompts.
     friend struct DialogPrompt;
     public:
     static bool isDialogPromptOpen();

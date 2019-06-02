@@ -34,16 +34,17 @@ Board* Simulator::copyBufferBoardPtr = nullptr;
 Board* Simulator::wireVerticalBoardPtr = nullptr;
 Board* Simulator::wireHorizontalBoardPtr = nullptr;
 UserInterface* Simulator::userInterfacePtr = nullptr;
+Text* Simulator::wireToolLabelPtr = nullptr;
 Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::editMode = true, Simulator::copyBufferVisible = false, Simulator::wireToolVerticalFirst = true;
 Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1), Simulator::wireToolStart(-1, -1);
 Vector2u Simulator::wireVerticalPosition(0, 0), Simulator::wireHorizontalPosition(0, 0);
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 Tile* Simulator::relabelTargetTile = nullptr;
-Text* Simulator::wireToolLabelPtr = nullptr;
 
 int Simulator::start() {
     cout << "Initializing setup..." << endl;
+    int exitCode = 0;
     thread renderThread;
     try {
         renderMutex.lock();
@@ -258,13 +259,20 @@ int Simulator::start() {
         cout << "****************************************************" << endl;
         cout << "Exception details: " << ex.what() << endl;
         cout << "(Press enter)" << endl;
-        renderThread.join();
         cin.get();
-        return -1;
+        exitCode = -1;
     }
     
-    renderThread.join();
-    return 0;
+    renderThread.join();    // Clean up dynamically allocated memory and exit.
+    delete windowPtr;
+    delete boardPtr;
+    delete currentTileBoardPtr;
+    delete copyBufferBoardPtr;
+    delete wireVerticalBoardPtr;
+    delete wireHorizontalBoardPtr;
+    delete userInterfacePtr;
+    delete wireToolLabelPtr;
+    return exitCode;
 }
 
 int Simulator::randomInteger(int min, int max) {
