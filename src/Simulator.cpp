@@ -407,6 +407,7 @@ void Simulator::fileOption(int option) {
                 if (width <= 0 || height <= 0) {
                     throw runtime_error("Board dimensions cannot be zero or negative.");
                 }
+                toolsOption(1);
                 boardPtr->resize(Vector2u(width, height));
                 viewOption(3);
                 UserInterface::closeAllDialogPrompts();
@@ -503,13 +504,11 @@ void Simulator::toolsOption(int option) {
     } else if (option == 1) {    // Deselect all.
         currentTileBoardPtr->clear();
         copyBufferVisible = false;
-        if (selectionArea != IntRect(0, 0, 0, 0)) {
-            boardPtr->highlightArea(selectionArea, false);
-            selectionStart = Vector2i(-1, -1);
-            selectionArea = IntRect(0, 0, 0, 0);
-            if (tileCursor != Vector2i(-1, -1)) {
-                boardPtr->getTile(tileCursor)->setHighlight(true);
-            }
+        boardPtr->highlightArea(selectionArea, false);
+        selectionStart = Vector2i(-1, -1);
+        selectionArea = IntRect(0, 0, 0, 0);
+        if (tileCursor != Vector2i(-1, -1)) {
+            boardPtr->getTile(tileCursor)->setHighlight(true);
         }
         wireToolStart = Vector2i(-1, -1);
         wireVerticalBoardPtr->clear();
@@ -594,7 +593,8 @@ void Simulator::toolsOption(int option) {
             }
         }
     } else if (option == 8) {    // Cut selection.
-        
+        toolsOption(9);
+        toolsOption(11);
     } else if (option == 9) {    // Copy selection.
         if (selectionArea != IntRect(0, 0, 0, 0)) {
             copyBufferBoardPtr->newBoard(Vector2u(selectionArea.width, selectionArea.height), "", true);
@@ -609,7 +609,19 @@ void Simulator::toolsOption(int option) {
         wireVerticalBoardPtr->clear();
         wireHorizontalBoardPtr->clear();
     } else if (option == 11) {    // Delete selection.
-        
+        for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+            for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
+                if (typeid(*(boardPtr->getTile(Vector2u(x, y)))) != typeid(Tile)) {
+                    boardPtr->replaceTile(new Tile(boardPtr, Vector2u(x, y)));
+                }
+            }
+        }
+        boardPtr->highlightArea(selectionArea, false);
+        selectionStart = Vector2i(-1, -1);
+        selectionArea = IntRect(0, 0, 0, 0);
+        if (tileCursor != Vector2i(-1, -1)) {
+            boardPtr->getTile(tileCursor)->setHighlight(true);
+        }
     } else if (option == 12) {    // Wire tool.
         if (wireToolStart == Vector2i(-1, -1)) {
             if (tileCursor != Vector2i(-1, -1)) {
@@ -855,13 +867,11 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             }
             boardPtr->cloneArea(*copyBufferBoardPtr, pasteArea, tileCursor);
         }
-        if (selectionArea != IntRect(0, 0, 0, 0)) {
-            boardPtr->highlightArea(selectionArea, false);
-            selectionStart = Vector2i(-1, -1);
-            selectionArea = IntRect(0, 0, 0, 0);
-            if (tileCursor != Vector2i(-1, -1)) {
-                boardPtr->getTile(tileCursor)->setHighlight(true);
-            }
+        boardPtr->highlightArea(selectionArea, false);
+        selectionStart = Vector2i(-1, -1);
+        selectionArea = IntRect(0, 0, 0, 0);
+        if (tileCursor != Vector2i(-1, -1)) {
+            boardPtr->getTile(tileCursor)->setHighlight(true);
         }
     } else {
         if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
