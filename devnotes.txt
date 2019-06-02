@@ -1,5 +1,5 @@
-TODO (latest build):
-    - Wire tool. Idea for this is to use two additional boards for vertical and horizontal parts, wire drawn between two points (exclusive).
+TODO (build 1.0):
+    - All done!
 
 TODO (future release):
     - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
