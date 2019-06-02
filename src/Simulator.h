@@ -52,13 +52,16 @@ class Simulator {
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible, wireToolVerticalFirst;
     static Vector2i tileCursor, selectionStart, wireToolStart;
+    static Vector2u wireVerticalPosition, wireHorizontalPosition;
     static IntRect selectionArea;
     static Tile* relabelTargetTile;
+    static Text* wireToolLabelPtr;
     
     static void terminationHandler(int sigNum);
     static void renderLoop();
     static void handleKeyPress(Event::KeyEvent keyEvent);
     static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);
+    static void updateWireTool(const Vector2i& tileCursor, const Vector2i& newTileCursor);
 };
 
 #endif
