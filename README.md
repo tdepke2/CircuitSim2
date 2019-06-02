@@ -1,8 +1,24 @@
-CircuitSim2
+# CircuitSim2 #
 
-Circuit Simulator project I built a while ago, now with much better functionality and GUI.
+![image1](/image1.png)
+
+## About This Project ##
+
+CircuitSim2 is a developement and testing platform for digital logic circuits. Circuits are designed by placing tiles onto a grid, each element (such as a wire, switch, LED, or logic gate) takes up one of the grid squares. Tiles that are adjacent to one another and connect together will transfer a logic signal (either LOW or HIGH). By combining lots of these gates and wires into a module to abstract the design, some complex circuitry can be created such as state machines, computational hardware, and even computers.
+
+## Platform and Usage ##
+
+Currently, CircuitSim2 is only available for Windows but a Linux/MacOS build may be available in the future.
+
+The latest build [can be found here](https://github.com/tdepke2/CircuitSim2/releases) and includes all required dependencies in the application so no installation is required. Just unzip the file and it should be good to go.
+
+### Getting Started ###
+
+To learn the basics of building circuits with this application, some tutorials are provided in the boards/tutorials directory (use File->Open... to view these). to be continued...
 
 Dev notes:
+
+![image2](/image2.png)
 
 __Controls list__
 * Left click to drag view.
