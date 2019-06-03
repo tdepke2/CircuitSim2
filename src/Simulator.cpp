@@ -671,6 +671,10 @@ void Simulator::placeTile(int option) {
 
 void Simulator::relabelTarget(int option) {
     assert(relabelTargetTile != nullptr);
+    if (userInterfacePtr->relabelPrompt.optionFields[0].field.getString().getSize() == 0) {
+        cout << "Error: No label entered." << endl;
+        return;
+    }
     if (typeid(*relabelTargetTile) == typeid(TileSwitch)) {
         static_cast<TileSwitch*>(relabelTargetTile)->setCharID(userInterfacePtr->relabelPrompt.optionFields[0].field.getString()[0]);
     } else if (typeid(*relabelTargetTile) == typeid(TileButton)) {

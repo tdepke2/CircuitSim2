@@ -10,6 +10,7 @@ TODO (future release):
     - Optimize paste/delete so that middle updates are not sent to adjacent tiles.
     - Leaving an entry blank when resizing should accept that dimension as not changing size.
     - The Save As option should copy the current board name into the text entry.
+    - Text fields should be auto selected, especially for setting label. This could be a property of DialogBox::show to select first field in vector.
 
 Current and potential bugs:
     - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.

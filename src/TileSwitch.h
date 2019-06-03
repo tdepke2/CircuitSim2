@@ -15,6 +15,7 @@ class TileSwitch : public Tile {
     TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, char charID = ' ', State state = LOW);    // Construct a switch tile, noAdjacentUpdates stops updates to adjacent tiles.
     ~TileSwitch();
     State getState() const;
+    void setPosition(const Vector2u& position, bool noAdjacentUpdates = false, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
     void setCharID(char charID);
     void setState(State state);
     State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.

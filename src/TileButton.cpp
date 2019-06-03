@@ -37,6 +37,11 @@ State TileButton::getState() const {
     return _state;
 }
 
+void TileButton::setPosition(const Vector2u& position, bool noAdjacentUpdates, bool keepOverwrittenTile) {
+    Tile::setPosition(position, noAdjacentUpdates, keepOverwrittenTile);
+    _boardPtr->tileLabels[this].setPosition(_position.x * Board::getTileSize().x + 9.0f, _position.y * Board::getTileSize().y - 2.0f);
+}
+
 void TileButton::setCharID(char charID) {
     auto mapIter = _boardPtr->buttonKeybinds.find(_charID);
     for (auto vectorIter = mapIter->second.begin(); vectorIter != mapIter->second.end(); ++vectorIter) {

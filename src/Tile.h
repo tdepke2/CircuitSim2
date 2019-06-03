@@ -28,7 +28,7 @@ class Tile {    // Generic tile that is stored in a Board.
     Direction getDirection() const;
     bool getHighlight() const;
     virtual State getState() const;
-    void setPosition(const Vector2u& position, bool noAdjacentUpdates = false, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
+    virtual void setPosition(const Vector2u& position, bool noAdjacentUpdates = false, bool keepOverwrittenTile = false);    // Moves the tile to a new location, if keepOverwrittenTile is true then the tile that occupies the specified position will not be deleted.
     virtual void setDirection(Direction direction, bool noAdjacentUpdates = false);
     void setHighlight(bool highlight);
     virtual void setState(State state);
