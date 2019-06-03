@@ -1,7 +1,9 @@
 Debug/
 Release/
+resource.h
 *.vcxproj
 *.filters
 *.rc
+*.aps
 *.user
 *.o
