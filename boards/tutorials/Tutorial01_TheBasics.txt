@@ -1,0 +1,44 @@
+version: 1.0
+width: 65
+height: 20
+data: {
+}
+notes: {
+To start off, we'll cover some of the basic tools and wire mechanics. For viewing a circuit board, you can left click and drag to pan the view and
+scroll up or down to zoom (a mouse is definitely recommended for this if you use a touchpad instead). Right clicking and dragging with an empty
+cursor will start making a selection on the board. Selections can be used to fill an area with one type of tile, rotate all tiles in the area, copy
+the tiles in the area to paste them elsewhere, etc. To deselect the area, you can press ESC on keyboard or use Tools->Deselect All. To place a tile
+onto the board, pick one from the top menus (the Wire, Input, Output, and Gate menus have the full list to pick from) and then right click to place
+it down or drag to make a line of them (note that if you are in view mode this will not work, switch between view and edit mode by pressing Enter).
+
+Now lets talk about how the wires work. When a wire is placed down it will start in the "off" or "low" state indicated with white color until powered
+by adjacent tiles. A line of connected wires can be used to transfer a signal between two tiles, such as a switch that powers an LED. In the current
+build of CircuitSim2, wires as well as the rest of the tiles can only be off or on. There are no analog states for wires, but tri-state and state
+conflicts are planned for the near future. Tip: the wire tool is a very handy tool to use when building with wire, press w to use it.
+
+The examples below demonstrate some ways to use wires in circuits. To toggle the switches and buttons on the board, either highlight the tile with an
+empty cursor and press e or switch to view mode (Enter) and press the corresponding symbol on the keyboard.
+}
+
+************************************************************************************************************************************
+*                                                                                                                                  *
+*                                                                                        ,-----------------------s3                *
+*                                                                                        | ;=====================S2                *
+*                                                                                        | [ ,-------------------s1                *
+*              sa                  ,-sc,                 sd                              | [ | ;=================S0                *
+*              |                   |   |                 |       ##                      | [ | [                                   *
+*              |                   |   |                 |       [               t7------|-[-|-[-----------..                      *
+*        ;=====| ----..            |   |             ,---|-------[-,             t6------|-[-|-[-------------..                    *
+*        Sb    |                   ..  --            |   | ..    [ |             t5------|-[-|-[---------------..                  *
+*        "=====|=====##            |   |             |   | |     [ |             t4------|-[-|-[-----------------..                *
+*              |                   |   |             |   '-|---v-[-'                     | [ | [                                   *
+*              |                   ..  ..            |     |   | [                       | [ | [                                   *
+*              ..                                    |     |   | ^N                      | [ | [                                   *
+*                                                    |     '---+-'                       | [ | [                                   *
+*                                                    ..        ..                        | [ | [                                   *
+*                                                                                        | [ | ##                                  *
+*                                                                                        | [ ..                                    *
+*                                                                                        | ##                                      *
+*                                                                                        ..                                        *
+*                                                                                                                                  *
+************************************************************************************************************************************

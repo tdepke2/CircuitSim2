@@ -1,0 +1,56 @@
+version: 1.0
+width: 65
+height: 35
+data: {
+}
+notes: {
+This tutorial will discuss a bit of how binary works and its applications for those that are new to the subject. So what is binary? It's just another
+way of representing numbers and other info in a format that is easier for circuits to use than decimal is. Binary uses base two as opposed to base
+ten in decimal, this allows a number to be represented with a bunch of consecutive "bits" that are either off or on. Since a wire can transfer an
+off/on signal, we can use a few wires in parallel (called a "bus") to transfer binary data in a circuit. Another reason to use binary in hardware is
+that it's easy to design circuits that carry out mathematical operations that work on binary numbers. One of the drawbacks of using binary however,
+is that it can be hard to read a number that is encoded in this format. To solve this we need a way to convert between binary and decimal.
+
+Some examples are provided below, from left to right these are: decimal to binary converter, binary to decimal converter, ripple-carry adder (RCA).
+For the decimal to binary converter, make sure only one of the switches is on at a time otherwise the output will be incorrect. The ripple-carry
+adder is a circuit capable of adding two binary numbers together to get a binary result. This can be hooked up to the converters to make a very
+simple calculator. For more information about binary and adders, check out "binary number", "two's complement", and "ripple-carry adder" online.
+}
+
+************************************************************************************************************************************
+*                                                                                                                                  *
+*                                                            ;=========;                                                           *
+*                                                            [       ##^=##                                                        *
+*                                                            [     ##      ##                                                      *
+*                                                            [ ;===<.      >===;                                                   *
+*                                                            [ [   ##      ##  [                                                   *
+*                                                            [ [     ..v-..    [                                                   *
+*                                                            [ [   ##  |   ##  [                                                   *
+*                                                            [ [ ;=<.  |   >=; [                                                   *
+*                                                            [ [ [ ##  |   ##[ [                                                   *
+*    s9  s8  s7  s6  s5  s4  s3  s2  s1  s0                  [ [ [   ##| ##  [ [               sD    sC    sB    sA                *
+*    |   |   |   |   |   |   |   |   |   |                   [ [ [   "=|=<.  [ [               |     |     |     |                 *
+*    >-vm>-vm|   |   |   |   |   |   |   |                   [ [ "=; ;=|=[=>B<.[               |   sd|   sc|   sb|   sa            *
+*    |-^-|-^-|---|---|---|---|---|---|---|---..    --,       "=[=; "=<.| [ | ^d[               |   | |   | |   | |   |             *
+*    |   |   >-vm>-vm>-vm>-vm|   |   |   |           |         [ "=v=^A|=[=|=|=[=;             >-vx< >-vx< >-vx< >-vx<             *
+*    |---|---|-^-|-^-|-^-|-^-|---|---|---|---..    --|-,       [ ,-[---|-[-|-^-^B[             va|-' va|-' va|-' va|-'             *
+*    |   |   >-vm>-vm|   |   >-vm>-vm|   |           | |       [ | >=<d|-[-<   [ [             < >-vx< >-vx< >-vx< >-vx--          *
+*    |---|---|-^-|-^-|---|---|-^-|-^-|---|---..    --|-|-,     [ | "=<D|=^=|===<.[         ..--^-<a|-^-<a|-^-<a|-^-<a|-            *
+*    >-vm|   >-vm|   >-vm|   >-vm|   >-vm|           | | |     >=|=====|=>D|=v=^A[                 |     |     |     |             *
+*    |-^-|---|-^-|---|-^-|---|-^-|---|-^-|---..    --|-|-|-,   [ |   ,-+->d|=" [ [                 ..    ..    ..    ..            *
+*                                                    | | | |   [ '-, vd| ,-^->d<.[                                                 *
+*                                                    | | | |   "=<X|=^=|=|=<Dv=[="                                                 *
+*                                                    | | | |   ,-|-|---^x| ;=[=<.                                                  *
+*                                                    | | | |   | >-|-<a|-< ^D[ ^d                                                  *
+*                                                    | | | |   | vd| >=|=|=" [ |                                                   *
+*                                                    | | | | ,-+-' >-[-^a|-v-[-<                                                   *
+*                                                    | | | | ^d'-<d+-^N'-< '-^N|                                                   *
+*                                                    '-|-|-|-<     |     |     |                                                   *
+*                                                      '-|-|-|-----<     |     |                                                   *
+*                                                        '-|-|-----|-----<     |                                                   *
+*                                                          '-|-----|-----|-----<                                                   *
+*                                                            |     |     |     |                                                   *
+*                                                            sd    sc    sb    sa                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+************************************************************************************************************************************

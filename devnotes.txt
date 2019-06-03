@@ -4,10 +4,12 @@ TODO (build 1.0):
 TODO (future release):
     - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
-    - Errors should be shown in a visual queue on bottom left of screen, they fade out after some time.
+    - Errors/info should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Need to optimize selections, they just have too much performance impact.
     - The texture for the connectors on gates is not currently used.
     - Optimize paste/delete so that middle updates are not sent to adjacent tiles.
+    - Leaving an entry blank when resizing should accept that dimension as not changing size.
+    - The Save As option should copy the current board name into the text entry.
 
 Current and potential bugs:
     - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.
