@@ -687,7 +687,7 @@ void Simulator::relabelTarget(int option) {
 
 void Simulator::terminationHandler(int sigNum) {
     state = State::Exiting;
-    cout << "Immediate termination requested." << endl;
+    cout << "Closing program." << endl;
     this_thread::sleep_for(chrono::milliseconds(1000));
 }
 

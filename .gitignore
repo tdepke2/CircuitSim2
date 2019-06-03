@@ -2,5 +2,6 @@ Debug/
 Release/
 *.vcxproj
 *.filters
+*.rc
 *.user
 *.o
