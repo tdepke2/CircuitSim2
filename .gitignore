@@ -1,6 +1,7 @@
 Debug/
 Release/
 resource.h
+CircuitSim2.exe
 *.vcxproj
 *.filters
 *.rc
