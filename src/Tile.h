@@ -14,7 +14,7 @@ enum Direction : int {
 };
 
 enum State : int {
-    DISCONNECTED = 0, LOW, HIGH, HIGH_Z, INVALID
+    DISCONNECTED = 0, LOW, HIGH, MIDDLE
 };
 
 class Tile {    // Generic tile that is stored in a Board.

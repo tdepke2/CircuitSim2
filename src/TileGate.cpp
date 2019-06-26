@@ -170,15 +170,15 @@ void TileGate::redrawTile() const {
     int textureID;
     bool connectRight = false, connectLeft = false;
     if (_type < 3) {
-        textureID = 19 + _type * 6 + connectLeft * 4 + connectRight * 2 + (_state == HIGH);
+        textureID = 28 + _type * 9 + _state - 1 + connectRight * 3 + connectLeft * 6;
     } else {
-        textureID = 13 + _type * 8 + connectLeft * 4 + connectRight * 2 + (_state == HIGH);
+        textureID = 19 + _type * 12 + _state - 1 + connectRight * 3 + connectLeft * 6;
     }
     _boardPtr->redrawTileVertices(textureID, _position, _direction, _highlight);
 }
 
 string TileGate::toString() const {
-    return GATE_SYMBOL_TABLE[_type * 8 + _direction * 2 + (_state == HIGH)];
+    return GATE_SYMBOL_TABLE[_type * 12 + _direction * 3 + _state - 1];
 }
 
 bool TileGate::alternativeTile() {

@@ -13,16 +13,18 @@ vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
 
 TileWire::TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates, Direction direction, Type type, State state1, State state2) : Tile(boardPtr, position, true, true) {
-    if (type != JUNCTION && type != CROSSOVER) {
-        if (type == STRAIGHT) {
-            _direction = static_cast<Direction>(direction % 2);
-        } else {
-            _direction = direction;
-        }
+    if (type == STRAIGHT) {
+        _direction = static_cast<Direction>(direction % 2);
+    } else if (type != JUNCTION && type != CROSSOVER) {
+        _direction = direction;
     }
     _type = type;
     _state1 = state1;
-    _state2 = state2;
+    if (type == CROSSOVER) {
+        _state2 = state2;
+    } else {
+        _state2 = LOW;
+    }
     _updateTimestamp1 = 0;
     _updateTimestamp2 = 0;
     addUpdate(false, noAdjacentUpdates);
@@ -180,18 +182,18 @@ void TileWire::followWire(Direction direction, State state) {
 }
 
 void TileWire::redrawTile() const {
-    _boardPtr->redrawTileVertices(1 + _type * 2 + (_state2 == HIGH) * 2 + (_state1 == HIGH), _position, _direction, _highlight);
+    _boardPtr->redrawTileVertices(1 + _type * 3 + _state1 - 1 + (_state2 - 1) * 3, _position, _direction, _highlight);
 }
 
 string TileWire::toString() const {
     if (_type == STRAIGHT) {
-        return WIRE_SYMBOL_TABLE[(_direction % 2) * 2 + (_state1 == HIGH)];
+        return WIRE_SYMBOL_TABLE[_direction * 3 + _state1 - 1];
     } else if (_type < JUNCTION) {
-        return WIRE_SYMBOL_TABLE[-4 + _type * 8 + _direction * 2 + (_state1 == HIGH)];
+        return WIRE_SYMBOL_TABLE[-6 + _type * 12 + _direction * 3 + _state1 - 1];
     } else if (_type == JUNCTION) {
-        return WIRE_SYMBOL_TABLE[20 + (_state1 == HIGH)];
+        return WIRE_SYMBOL_TABLE[30 + _state1 - 1];
     } else {
-        return WIRE_SYMBOL_TABLE[22 + (_state2 == HIGH) * 2 + (_state1 == HIGH)];
+        return WIRE_SYMBOL_TABLE[33 + _state1 - 1 + (_state2 - 1) * 3];
     }
 }
 

@@ -97,11 +97,11 @@ void TileButton::updateOutput() {
 }
 
 void TileButton::redrawTile() const {
-    _boardPtr->redrawTileVertices(15 + (_state == HIGH), _position, _direction, _highlight);
+    _boardPtr->redrawTileVertices(24 + _state - 1, _position, _direction, _highlight);
 }
 
 string TileButton::toString() const {
-    string s(INPUT_SYMBOL_TABLE[2 + (_state == HIGH)]);
+    string s(INPUT_SYMBOL_TABLE[2 + _state - 1]);
     s.push_back(_charID);
     return s;
 }

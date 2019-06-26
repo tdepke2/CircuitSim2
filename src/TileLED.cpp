@@ -71,11 +71,11 @@ void TileLED::followWire(Direction direction, State state) {
 }
 
 void TileLED::redrawTile() const {
-    _boardPtr->redrawTileVertices(17 + (_state == HIGH), _position, _direction, _highlight);
+    _boardPtr->redrawTileVertices(26 + _state - 1, _position, _direction, _highlight);
 }
 
 string TileLED::toString() const {
-    return OUTPUT_SYMBOL_TABLE[(_state == HIGH)];
+    return OUTPUT_SYMBOL_TABLE[_state - 1];
 }
 
 void TileLED::fixUpdateTime() {

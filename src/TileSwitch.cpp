@@ -84,11 +84,11 @@ void TileSwitch::updateOutput() {
 }
 
 void TileSwitch::redrawTile() const {
-    _boardPtr->redrawTileVertices(13 + (_state == HIGH), _position, _direction, _highlight);
+    _boardPtr->redrawTileVertices(22 + _state - 1, _position, _direction, _highlight);
 }
 
 string TileSwitch::toString() const {
-    string s(INPUT_SYMBOL_TABLE[(_state == HIGH)]);
+    string s(INPUT_SYMBOL_TABLE[_state - 1]);
     s.push_back(_charID);
     return s;
 }

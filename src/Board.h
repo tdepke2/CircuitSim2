@@ -18,11 +18,11 @@ using namespace std;
 using namespace sf;
 
 const vector<string> WIRE_SYMBOL_TABLE = {
-    "| ",  "[ ",  "--",  "==",
-    "\'-", "\"=", ",-",  ";=",  ", ",  "; ",  "\' ", "\" ",
-    ">-",  ">=",  "v-",  "v=",  "< ",  "<.",  "^-",  "^=",
-    "+-",  "#=",
-    "|-",  "[-",  "|=",  "[="
+    "| ",  "[ ",  "{ ",  "--",  "==",  "~~",
+    "\'-", "\"=", "`~",  ",-",  ";=",  ".~",  ", ",  "; ",  ". ",  "\' ", "\" ", "` ",
+    ">-",  ">=",  ">~",  "v-",  "v=",  "v~",  "< ",  "<.",  "<:",  "^-",  "^=",  "^~",
+    "+-",  "#=",  "+~",
+    "|-",  "[-",  "{-",  "|=",  "[=",  "{=",  "|~",  "[~",  "{~"
 };
 const vector<string> INPUT_SYMBOL_TABLE = {
     "s",   "S",
@@ -32,15 +32,15 @@ const vector<string> OUTPUT_SYMBOL_TABLE = {
     "..",  "##"
 };
 const vector<string> GATE_SYMBOL_TABLE = {
-    "^d",  "^D",  ">d",  ">D",  "vd",  "vD",  "<d",  "<D",
-    "^m",  "^M",  ">m",  ">M",  "vm",  "vM",  "<m",  "<M",
-    "^n",  "^N",  ">n",  ">N",  "vn",  "vN",  "<n",  "<N",
-    "^a",  "^A",  ">a",  ">A",  "va",  "vA",  "<a",  "<A",
-    "^b",  "^B",  ">b",  ">B",  "vb",  "vB",  "<b",  "<B",
-    "^o",  "^O",  ">o",  ">O",  "vo",  "vO",  "<o",  "<O",
-    "^p",  "^P",  ">p",  ">P",  "vp",  "vP",  "<p",  "<P",
-    "^x",  "^X",  ">x",  ">X",  "vx",  "vX",  "<x",  "<X",
-    "^y",  "^Y",  ">y",  ">Y",  "vy",  "vY",  "<y",  "<Y"
+    "^d",  "^D",  "`d",  ">d",  ">D",  "}d",  "vd",  "vD",  ",d",  "<d",  "<D",  "{d",
+    "^m",  "^M",  "`m",  ">m",  ">M",  "}m",  "vm",  "vM",  ",m",  "<m",  "<M",  "{m",
+    "^n",  "^N",  "`n",  ">n",  ">N",  "}n",  "vn",  "vN",  ",n",  "<n",  "<N",  "{n",
+    "^a",  "^A",  "`a",  ">a",  ">A",  "}a",  "va",  "vA",  ",a",  "<a",  "<A",  "{a",
+    "^b",  "^B",  "`b",  ">b",  ">B",  "}b",  "vb",  "vB",  ",b",  "<b",  "<B",  "{b",
+    "^o",  "^O",  "`o",  ">o",  ">O",  "}o",  "vo",  "vO",  ",o",  "<o",  "<O",  "{o",
+    "^p",  "^P",  "`p",  ">p",  ">P",  "}p",  "vp",  "vP",  ",p",  "<p",  "<P",  "{p",
+    "^x",  "^X",  "`x",  ">x",  ">X",  "}x",  "vx",  "vX",  ",x",  "<x",  "<X",  "{x",
+    "^y",  "^Y",  "`y",  ">y",  ">Y",  "}y",  "vy",  "vY",  ",y",  "<y",  "<Y",  "{y"
 };
 
 class Board : public Drawable, public Transformable {    // Class for a circuit board with logic components that can be drawn to the window.
