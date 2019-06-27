@@ -40,6 +40,10 @@ class TileWire : public Tile {
     Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     private:
+    enum FollowWireStage : int {
+        INITIAL_STAGE = 0, INPUT_FOUND, INVALID_STAGE
+    };
+    
     const bool CONNECTION_INFO[4][5][4][4] = {    // Checks for wire path given direction of object, type, direction of entry, and direction of exit.
         {{{1, 0, 1, 0}, {0, 0, 0, 0}, {1, 0, 1, 0}, {0, 0, 0, 0}},    // STRAIGHT   "│ "
          {{0, 0, 0, 0}, {0, 0, 0, 0}, {1, 1, 0, 0}, {1, 1, 0, 0}},    // CORNER     "└─"
@@ -69,11 +73,10 @@ class TileWire : public Tile {
     Type _type;
     State _state1, _state2;
     unsigned int _updateTimestamp1, _updateTimestamp2;
-    bool _invalidStateFound;
     
-    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);    // Adds a tile to current wire traversal in followWire.
+    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr, FollowWireStage& stage);    // Adds a tile to current wire traversal in followWire.
     void _fixTraversedWires(State state);    // Sets the states of previously traversed wires to the new state.
-    void _checkForInvalidState(Tile* target, State targetState, State* statePtr);    // Checks for conflicting state errors during _addNextTile.
+    void _checkForInvalidState(Tile* target, State targetState, State* statePtr, FollowWireStage& stage);    // Checks for conflicting state errors during _addNextTile.
 };
 
 #endif

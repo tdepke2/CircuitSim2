@@ -101,7 +101,6 @@ void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr)
         }
     } else if (*statePtr == LOW) {
         if (nextTile->checkOutput(direction) == HIGH) {
-            //cout << "  Conflict detected, fixing LEDs." << endl;
             *statePtr = HIGH;
             for (TileLED* LED : traversedLEDs) {
                 LED->_state = *statePtr;

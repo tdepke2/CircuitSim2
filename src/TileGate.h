@@ -37,6 +37,12 @@ class TileGate : public Tile {
     private:
     Type _type;
     State _state, _nextState;
+    
+    State _complementState(State state) const;
+    State _findNextStateBuffer(State adjacentStates[4], int numInputs, int numHigh, int numMiddle) const;
+    State _findNextStateAND(State adjacentStates[4], int numInputs, int numHigh, int numMiddle) const;
+    State _findNextStateOR(State adjacentStates[4], int numInputs, int numHigh, int numMiddle) const;
+    State _findNextStateXOR(State adjacentStates[4], int numInputs, int numHigh, int numMiddle) const;
 };
 
 #endif

@@ -3,6 +3,8 @@ TODO (build 1.0):
 
 TODO (future release):
     - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
+    - _position should be private in Tile, not protected.
+    - Display current "epoch" of simulation on UI.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
     - Errors/info should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Need to optimize selections, they just have too much performance impact.
