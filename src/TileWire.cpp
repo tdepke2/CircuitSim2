@@ -283,14 +283,15 @@ void TileWire::_fixTraversedWires(State state) const {
 }
 
 void TileWire::_checkForInvalidState(Tile* target, State targetState, State& state, FollowWireStage& stage) const {
-    if (targetState == MIDDLE) {
-        return;
-    }
-    if (stage == INITIAL_STAGE || state == MIDDLE) {
-        stage = INPUT_FOUND;
-        state = targetState;
-        _fixTraversedWires(state);
-    } else if (state != targetState) {
+    if (stage == INITIAL_STAGE) {
+        if (targetState != MIDDLE) {
+            stage = INPUT_FOUND;
+        }
+        if (state != targetState) {
+            state = targetState;
+            _fixTraversedWires(state);
+        }
+    } else if (targetState != MIDDLE && state != targetState) {
         cout << "Uh oh thats an error! At (" << target->getPosition().x << ", " << target->getPosition().y << ")" << endl;
         if (stage != INVALID_STAGE) {
             stage = INVALID_STAGE;
