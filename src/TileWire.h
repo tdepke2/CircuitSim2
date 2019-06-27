@@ -19,7 +19,7 @@ class TileWire : public Tile {
         STRAIGHT = 0, CORNER, TEE, JUNCTION, CROSSOVER
     };
     
-    static vector<pair<TileWire*, Direction>> traversedWires;    // Vector of currently travelled wires in one instance of followWire, used to fix wire states in the case of a state conflict.
+    static vector<pair<TileWire*, Direction>> traversedWires;    // Vector of currently traveled wires in one instance of followWire, used to fix wire states in the case of a state conflict.
     static stack<pair<TileWire*, Direction>> wireNodes;    // Stack of wire nodes used in DFS algorithm.
     
     TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, Direction direction = NORTH, Type type = STRAIGHT, State state1 = LOW, State state2 = LOW);    // Construct a wire tile, noAdjacentUpdates stops updates to adjacent tiles.
@@ -29,7 +29,7 @@ class TileWire : public Tile {
     void setDirection(Direction direction, bool noAdjacentUpdates = false);
     void setState(State state);
     void flip(bool acrossHorizontal, bool noAdjacentUpdates = false);    // Flips the tile across the vertical/horizontal axis.
-    State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
+    State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when traveling the given direction towards the tile.
     void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     void updateWire(State state);    // Attempts to update this wire and all connected wires with a given predicted state, travels all paths through the wire.
     void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
@@ -74,38 +74,9 @@ class TileWire : public Tile {
     State _state1, _state2;
     unsigned int _updateTimestamp1, _updateTimestamp2;
     
-    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr, FollowWireStage& stage);    // Adds a tile to current wire traversal in followWire.
-    void _fixTraversedWires(State state);    // Sets the states of previously traversed wires to the new state.
-    void _checkForInvalidState(Tile* target, State targetState, State* statePtr, FollowWireStage& stage);    // Checks for conflicting state errors during _addNextTile.
+    void _addNextTile(Tile* nextTile, Direction direction, State& state, FollowWireStage& stage) const;    // Adds a tile to current wire traversal in followWire.
+    void _fixTraversedWires(State state) const;    // Sets the states of previously traversed wires to the new state.
+    void _checkForInvalidState(Tile* target, State targetState, State& state, FollowWireStage& stage) const;    // Checks for conflicting state errors during _addNextTile.
 };
 
 #endif
-
-/* List of type IDs
- 0  "| "  "│ "
- 1  "--"  "──"
- 2  "'-"  "└─"
- 3  ",-"  "┌─"
- 4  ", "  "┐ "
- 5  "' "  "┘ "
- 6  ">-"  "├─"
- 7  "v-"  "┬─"
- 8  "< "  "┤ "
- 9  "^-"  "┴─"
-10  "+-"  "┼─"
-11  "|-"  "│─"
-
- 0  "s"
- 1  "t"
-
- 0  ".."  "░░"
-
- 0  "d"
- 1  "n"
- 2  "a"
- 3  "o"
- 4  "x"
- 5  "b"
- 6  "p"
- 7  "y"
-*/

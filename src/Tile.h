@@ -33,7 +33,7 @@ class Tile {    // Generic tile that is stored in a Board.
     void setHighlight(bool highlight);
     virtual void setState(State state);
     virtual void flip(bool acrossHorizontal, bool noAdjacentUpdates = false);    // Flips the tile across the vertical/horizontal axis.
-    virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when travelling the given direction towards the tile.
+    virtual State checkOutput(Direction direction) const;    // Check for output from this tile on the side that is closest when traveling the given direction towards the tile.
     virtual void addUpdate(bool isCosmetic = false, bool noAdjacentUpdates = false);    // Add an update to this tile into the corresponding hash set, isCosmetic disables the state update part, noAdjacentUpdates stops updates to adjacent tiles.
     virtual void followWire(Direction direction, State state);    // Used in wire path following algorithm, traverses a wire using DFS and marks locations of endpoints to be updated later.
     virtual void redrawTile() const;

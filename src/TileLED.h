@@ -14,7 +14,7 @@ using namespace sf;
 
 class TileLED : public Tile {
     public:
-    static vector<TileLED*> traversedLEDs;    // Vector of currently travelled LEDs in one instance of updateLED, used to fix LED states in the case of a state conflict.
+    static vector<TileLED*> traversedLEDs;    // Vector of currently traveled LEDs in one instance of updateLED, used to fix LED states in the case of a state conflict.
     static stack<TileLED*> LEDNodes;    // Stack of LED nodes used in DFS algorithm.
     
     TileLED(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, State state = LOW);    // Construct an LED tile, noAdjacentUpdates stops updates to adjacent tiles.
@@ -33,7 +33,7 @@ class TileLED : public Tile {
     State _state;
     unsigned int _updateTimestamp;
     
-    void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);    // Adds a tile to current LED traversal in updateLED.
+    void _addNextTile(Tile* nextTile, Direction direction, State& state) const;    // Adds a tile to current LED traversal in updateLED.
 };
 
 #endif

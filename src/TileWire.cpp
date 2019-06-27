@@ -138,7 +138,7 @@ void TileWire::followWire(Direction direction, State state) {
     //cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
     FollowWireStage stage = INITIAL_STAGE;
-    _addNextTile(this, direction, &state, stage);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
+    _addNextTile(this, direction, state, stage);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
     if (wireNodes.empty()) {
         return;
     }
@@ -146,16 +146,16 @@ void TileWire::followWire(Direction direction, State state) {
     
     const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];    // Check for connection with all adjacent tiles (in the case that this is some arbitrary wire chosen and did not come from a source gate).
     if (exitDirections[0] && _position.y > 0) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y - 1)), NORTH, &state, stage);
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y - 1)), NORTH, state, stage);
     }
     if (exitDirections[1] && _position.x < _boardPtr->getSize().x - 1) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x + 1, _position.y)), EAST, &state, stage);
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x + 1, _position.y)), EAST, state, stage);
     }
     if (exitDirections[2] && _position.y < _boardPtr->getSize().y - 1) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y + 1)), SOUTH, &state, stage);
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y + 1)), SOUTH, state, stage);
     }
     if (exitDirections[3] && _position.x > 0) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x - 1, _position.y)), WEST, &state, stage);
+        _addNextTile(_boardPtr->getTile(Vector2u(_position.x - 1, _position.y)), WEST, state, stage);
     }
     
     while (!wireNodes.empty()) {    // Perform depth-first traversal on remaining connected wires.
@@ -166,16 +166,16 @@ void TileWire::followWire(Direction direction, State state) {
         
         const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];    // Check for connection with adjacent tiles that do not point back to source wire.
         if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH, &state, stage);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH, state, stage);
         }
         if (exitDirections[1] && currentDirection != WEST && currentWire->_position.x < _boardPtr->getSize().x - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST, &state, stage);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST, state, stage);
         }
         if (exitDirections[2] && currentDirection != NORTH && currentWire->_position.y < _boardPtr->getSize().y - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH, &state, stage);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH, state, stage);
         }
         if (exitDirections[3] && currentDirection != EAST && currentWire->_position.x > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST, &state, stage);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST, state, stage);
         }
     }
     traversedWires.clear();
@@ -221,19 +221,19 @@ Tile* TileWire::clone(Board* boardPtr, const Vector2u& position, bool noAdjacent
     return new TileWire(boardPtr, position, noAdjacentUpdates, _direction, _type, _state1, _state2);
 }
 
-void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr, FollowWireStage& stage) {
+void TileWire::_addNextTile(Tile* nextTile, Direction direction, State& state, FollowWireStage& stage) const {
     if (typeid(*nextTile) == typeid(TileWire)) {    // Check if nextTile is a wire (most common case).
         TileWire* nextWire = static_cast<TileWire*>(nextTile);
         if (CONNECTION_INFO[nextWire->_direction][nextWire->_type][direction][(direction + 2) % 4]) {    // Check if we have a connection back to the source.
             bool wireUpdated = false;
             if (nextWire->_type == CROSSOVER && direction % 2 == 1) {    // Update state of the wire and timestamp if this wire has not been traversed yet.
                 if (nextWire->_updateTimestamp2 != Tile::currentUpdateTime) {
-                    nextWire->_state2 = *statePtr;
+                    nextWire->_state2 = state;
                     nextWire->_updateTimestamp2 = Tile::currentUpdateTime;
                     wireUpdated = true;
                 }
             } else if (nextWire->_updateTimestamp1 != Tile::currentUpdateTime) {
-                nextWire->_state1 = *statePtr;
+                nextWire->_state1 = state;
                 nextWire->_updateTimestamp1 = Tile::currentUpdateTime;
                 wireUpdated = true;
             }
@@ -252,10 +252,10 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
         State gateNextState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;    // If the gate outputs into previous wire, there may be a state conflict.
         if (gateNextState != DISCONNECTED) {
             if (Board::enableExtraLogicStates) {
-                _checkForInvalidState(nextTile, gateNextState, statePtr, stage);
-            } else if (gateNextState == HIGH && *statePtr == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
-                *statePtr = HIGH;
-                _fixTraversedWires(*statePtr);
+                _checkForInvalidState(nextTile, gateNextState, state, stage);
+            } else if (gateNextState == HIGH && state == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
+                state = HIGH;
+                _fixTraversedWires(state);
             }
         } else {    // This gate is an endpoint, no need to check for conflict.
             Board::endpointGates.push_back(nextGate);
@@ -264,15 +264,15 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
         Board::endpointLEDs.push_back(static_cast<TileLED*>(nextTile));
     } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {    // Else check if switch/button.
         if (Board::enableExtraLogicStates) {
-            _checkForInvalidState(nextTile, nextTile->getState(), statePtr, stage);
-        } else if (nextTile->getState() == HIGH && *statePtr == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
-            *statePtr = HIGH;
-            _fixTraversedWires(*statePtr);
+            _checkForInvalidState(nextTile, nextTile->getState(), state, stage);
+        } else if (nextTile->getState() == HIGH && state == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
+            state = HIGH;
+            _fixTraversedWires(state);
         }
     }
 }
 
-void TileWire::_fixTraversedWires(State state) {
+void TileWire::_fixTraversedWires(State state) const {
     for (pair<TileWire*, Direction>& wire : traversedWires) {
         if (wire.first->_type == CROSSOVER && wire.second % 2 == 1) {
             wire.first->_state2 = state;
@@ -282,21 +282,21 @@ void TileWire::_fixTraversedWires(State state) {
     }
 }
 
-void TileWire::_checkForInvalidState(Tile* target, State targetState, State* statePtr, FollowWireStage& stage) {
+void TileWire::_checkForInvalidState(Tile* target, State targetState, State& state, FollowWireStage& stage) const {
     if (targetState == MIDDLE) {
         return;
     }
-    if (stage == INITIAL_STAGE || *statePtr == MIDDLE) {
+    if (stage == INITIAL_STAGE || state == MIDDLE) {
         stage = INPUT_FOUND;
-        *statePtr = targetState;
-        _fixTraversedWires(*statePtr);
-    } else if (*statePtr != targetState) {
+        state = targetState;
+        _fixTraversedWires(state);
+    } else if (state != targetState) {
         cout << "Uh oh thats an error! At (" << target->getPosition().x << ", " << target->getPosition().y << ")" << endl;
         if (stage != INVALID_STAGE) {
             stage = INVALID_STAGE;
             ++Board::numStateErrors;
-            *statePtr = MIDDLE;
-            _fixTraversedWires(*statePtr);
+            state = MIDDLE;
+            _fixTraversedWires(state);
         }
     }
 }

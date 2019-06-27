@@ -43,7 +43,7 @@ void TileLED::updateLED(State state) {
     
     //cout << "Update LED started at (" << _position.x << ", " << _position.y << ")." << endl;
     
-    _addNextTile(this, NORTH, &state);
+    _addNextTile(this, NORTH, state);
     while (!LEDNodes.empty()) {    // Start a depth-first traversal on the connected LEDs.
         TileLED* currentLED = LEDNodes.top();
         LEDNodes.pop();
@@ -51,16 +51,16 @@ void TileLED::updateLED(State state) {
         //cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
         
         if (currentLED->_position.y > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y - 1)), NORTH, &state);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y - 1)), NORTH, state);
         }
         if (currentLED->_position.x < _boardPtr->getSize().x - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x + 1, currentLED->_position.y)), EAST, &state);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x + 1, currentLED->_position.y)), EAST, state);
         }
         if (currentLED->_position.y < _boardPtr->getSize().y - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y + 1)), SOUTH, &state);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y + 1)), SOUTH, state);
         }
         if (currentLED->_position.x > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x - 1, currentLED->_position.y)), WEST, &state);
+            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x - 1, currentLED->_position.y)), WEST, state);
         }
     }
     traversedLEDs.clear();
@@ -86,11 +86,11 @@ Tile* TileLED::clone(Board* boardPtr, const Vector2u& position, bool noAdjacentU
     return new TileLED(boardPtr, position, noAdjacentUpdates, _state);
 }
 
-void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr) {
+void TileLED::_addNextTile(Tile* nextTile, Direction direction, State& state) const {
     if (typeid(*nextTile) == typeid(TileLED)) {    // Check if nextTile is an LED (most common case).
         TileLED* nextLED = static_cast<TileLED*>(nextTile);
         if (nextLED->_updateTimestamp != Tile::currentUpdateTime) {
-            nextLED->_state = *statePtr;
+            nextLED->_state = state;
             nextLED->_updateTimestamp = Tile::currentUpdateTime;
             nextLED->addUpdate(true);
             traversedLEDs.push_back(nextLED);
@@ -99,11 +99,11 @@ void TileLED::_addNextTile(Tile* nextTile, Direction direction, State* statePtr)
                 _boardPtr->LEDUpdates.erase(nextLED);
             }
         }
-    } else if (*statePtr == LOW) {
+    } else if (state == LOW) {
         if (nextTile->checkOutput(direction) == HIGH) {
-            *statePtr = HIGH;
+            state = HIGH;
             for (TileLED* LED : traversedLEDs) {
-                LED->_state = *statePtr;
+                LED->_state = state;
             }
         }
     }
