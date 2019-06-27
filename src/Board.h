@@ -47,6 +47,8 @@ class Board : public Drawable, public Transformable {    // Class for a circuit 
     public:
     static string newBoardDefaultPath;
     static bool gridActive;
+    static bool enableExtraLogicStates;
+    static int numStateErrors;
     static vector<TileLED*> endpointLEDs;
     static vector<TileGate*> endpointGates;
     string name;

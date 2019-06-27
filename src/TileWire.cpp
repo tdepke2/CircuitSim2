@@ -5,9 +5,8 @@
 #include "TileSwitch.h"
 #include "TileWire.h"
 #include <cassert>
+#include <iostream>
 #include <typeinfo>
-
-//#include <iostream>
 
 vector<pair<TileWire*, Direction>> TileWire::traversedWires;
 stack<pair<TileWire*, Direction>> TileWire::wireNodes;
@@ -138,6 +137,7 @@ void TileWire::followWire(Direction direction, State state) {
     
     //cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
     
+    _invalidStateFound = false;
     _addNextTile(this, direction, &state);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
     if (wireNodes.empty()) {
         return;
@@ -251,8 +251,11 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
         TileGate* nextGate = static_cast<TileGate*>(nextTile);
         State gateNextState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;    // If the gate outputs into previous wire, there may be a state conflict.
         if (gateNextState != DISCONNECTED) {
-            if (gateNextState == HIGH && *statePtr == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
-                //cout << "  Found a state conflict." << endl;
+            if (Board::enableExtraLogicStates) {
+                if (gateNextState != MIDDLE) {    // If gate is not in tri-state then check for state conflict or invalid state.
+                    _checkForInvalidState(nextTile, gateNextState, statePtr);
+                }
+            } else if (gateNextState == HIGH && *statePtr == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
                 *statePtr = HIGH;
                 _fixTraversedWires(*statePtr);
             }
@@ -262,7 +265,9 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State* statePtr
     } else if (typeid(*nextTile) == typeid(TileLED)) {    // Else check if it is an LED.
         Board::endpointLEDs.push_back(static_cast<TileLED*>(nextTile));
     } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {    // Else check if switch/button.
-        if (nextTile->getState() == HIGH && *statePtr == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
+        if (Board::enableExtraLogicStates) {
+            _checkForInvalidState(nextTile, nextTile->getState(), statePtr);
+        } else if (nextTile->getState() == HIGH && *statePtr == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
             *statePtr = HIGH;
             _fixTraversedWires(*statePtr);
         }
@@ -275,6 +280,21 @@ void TileWire::_fixTraversedWires(State state) {
             wire.first->_state2 = state;
         } else {
             wire.first->_state1 = state;
+        }
+    }
+}
+
+void TileWire::_checkForInvalidState(Tile* target, State targetState, State* statePtr) {
+    if (!_invalidStateFound && *statePtr == MIDDLE) {
+        *statePtr = targetState;
+        _fixTraversedWires(*statePtr);
+    } else if (*statePtr != targetState) {
+        cout << "Uh oh thats an error! At (" << target->getPosition().x << ", " << target->getPosition().y << ")" << endl;
+        if (!_invalidStateFound) {
+            _invalidStateFound = true;
+            ++Board::numStateErrors;
+            *statePtr = MIDDLE;
+            _fixTraversedWires(*statePtr);
         }
     }
 }

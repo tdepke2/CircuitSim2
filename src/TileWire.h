@@ -69,9 +69,11 @@ class TileWire : public Tile {
     Type _type;
     State _state1, _state2;
     unsigned int _updateTimestamp1, _updateTimestamp2;
+    bool _invalidStateFound;
     
     void _addNextTile(Tile* nextTile, Direction direction, State* statePtr);    // Adds a tile to current wire traversal in followWire.
     void _fixTraversedWires(State state);    // Sets the states of previously traversed wires to the new state.
+    void _checkForInvalidState(Tile* target, State targetState, State* statePtr);    // Checks for conflicting state errors during _addNextTile.
 };
 
 #endif

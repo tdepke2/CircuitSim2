@@ -13,6 +13,8 @@
 
 string Board::newBoardDefaultPath = "boards/NewBoard.txt";
 bool Board::gridActive = true;
+bool Board::enableExtraLogicStates = true;
+int Board::numStateErrors = 0;
 vector<TileLED*> Board::endpointLEDs;
 vector<TileGate*> Board::endpointGates;
 Texture* Board::_tilesetGridPtr = nullptr;
