@@ -1,8 +1,4 @@
-TODO (build 1.0):
-    - All done!
-
-TODO (future release):
-    - Gonna need additional tri-state (dashed color) and conflict (red color) wire states. These will save as unpowered wires.
+TODO:
     - _position should be private in Tile, not protected.
     - Display current "epoch" of simulation on UI.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
@@ -19,7 +15,7 @@ Current and potential bugs:
         * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
         * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.
 
-Simulation algorithm version 1:
+Simulation algorithm explaination:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
     - When the state of an object changes, it is given a cosmetic and state update in the appropriate sets and updates adjacent tiles.
         * During board loading, do not update adjacent tiles.
@@ -28,21 +24,22 @@ Simulation algorithm version 1:
         * If a gate is found, updates to it are added/removed.
         * If a different state is found then new state is used from now on (when applicable) and errors are fixed.
     - In the background, we are constantly running cosmetic updates to keep the editor running.
+    - There are two simulation modes, the basic mode features only off/on (LOW/HIGH) states and the other includes an additional "middle" state (tri-state) and "invalid" state.
     - When a transition to the next frame happens:
         1. Start by iterating through all of the gateUpdates.
-            A. Check the new state of the gate (only off or on) based on current states of surrounding elements and save it, remove the update if state did not change.
+            A. Check the new state of the gate (off, on, or tri-state if extra states enabled) based on current states of surrounding elements and save it, remove the update if state did not change.
             B. The new state is saved as a transitioning state and does not affect current gate state (for now).
         2. Iterate switchUpdates, buttonUpdates, and gateUpdates, traverse outputs along wires using depth-first search.
             A. First, the update to this object is removed (in the case of an active button, the update gets added back later).
             B. For DFS to work, every wire is given a timestamp of when it was last updated and this is used to check if the wire has been traversed.
                 1. Note that an integer overflow is possible here at approximately four billion updates, if it happens then need to reset timestamps of ALL wires back to zero (big overhead but basically never happens).
             C. Positions of wires are kept track of as wire is traversed in case an error is made and we need to fix the previous wires.
-            D. If a switch/button/gate is found and it outputs, then the state is checked for an error (note that if it is a gate, we cannot remove updates to it because then the gate state will not change).
-                1. For a gate that inputs or an LED, it is saved for later instead.
+            D. If a switch/button/gate is found and it outputs to the wire, then the state is checked for an error (note that if it is a gate, we cannot remove updates to it because then the gate state will not change).
+                1. If the wire connects to the gate input or to an LED, it is saved for later instead.
+                2. When only using basic states, an error just means that the previous wires have to be iterated and fixed to match the new state (the new state will always be on in this case).
+                3. When using extra states, the state fix is needed if the wire state is in tri-state and the output pulls the wire to a different state or the wire was in a predicted state (usually off) and output does not match up.
+                4. Again for extra states, if the wire is not in tri-state and the output conflicts with the state then this is invalid. In this case the wire will be set to tri-state and will not be allowed to transition based on remaining outputs in the path, this also throws a blocking error at the end of the tick.
         3. If wire updates remain that were not removed during traversal, need to update these (same steps as above). Similar thing for remaining LED updates.
-        4. Update all of the endpoints (LEDs and gates). LEDs are updated by DFS traversal on connected LEDs that assumes LOW state and gates just receive a state update.
-        5. Last step is to update all of the buttons that are transitioning to LOW and increment the current update time.
+        4. Update all of the endpoints (LEDs and gates). LEDs are updated by DFS traversal on connected LEDs that assumes off state and gates just receive a state update.
+        5. Last step is to update all of the buttons that are turning off and increment the current update time.
     - The first frame simulated after loading a board or making edits will have some performance impact but additional frame simulations should not.
-
-Simulation algorithm version 2 (features tri-state and invalid state wires):
-    
