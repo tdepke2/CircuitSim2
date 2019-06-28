@@ -9,6 +9,9 @@ TileGate::TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpd
     _type = type;
     _state = state;
     _nextState = state;
+    _connectorChange = false;
+    _leftConnector = false;
+    _rightConnector = false;
     addUpdate(false, noAdjacentUpdates);
 }
 
@@ -62,11 +65,12 @@ void TileGate::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
         if (!noAdjacentUpdates) {
             _updateAdjacentTiles();
         }
+        _connectorChange = true;
     }
 }
 
 bool TileGate::updateNextState() {
-    State adjacentStates [4];
+    State adjacentStates[4];
     adjacentStates[0] = _position.y > 0 ? _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(NORTH) : DISCONNECTED;
     adjacentStates[1] = _position.x < _boardPtr->getSize().x - 1 ? _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(EAST) : DISCONNECTED;
     adjacentStates[2] = _position.y < _boardPtr->getSize().y - 1 ? _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->checkOutput(SOUTH) : DISCONNECTED;
@@ -85,6 +89,16 @@ bool TileGate::updateNextState() {
     }
     if (!Board::enableExtraLogicStates) {
         numMiddle = 0;
+    }
+    if (_connectorChange) {
+        _rightConnector = (adjacentStates[(_direction + 1) % 4] != DISCONNECTED);
+        _leftConnector = (adjacentStates[(_direction + 3) % 4] != DISCONNECTED);
+        if (_type < AND && _rightConnector && _leftConnector) {
+            _rightConnector = false;
+            _leftConnector = false;
+        }
+        _connectorChange = false;
+        addUpdate(true);
     }
     
     if (_type == DIODE) {
@@ -153,11 +167,10 @@ void TileGate::followWire(Direction direction, State state) {
 
 void TileGate::redrawTile() const {
     int textureID;
-    bool connectRight = false, connectLeft = false;
-    if (_type < 3) {
-        textureID = 28 + _type * 9 + _state - 1 + connectRight * 3 + connectLeft * 6;
+    if (_type < AND) {
+        textureID = 28 + _type * 9 + _state - 1 + _rightConnector * 3 + _leftConnector * 6;
     } else {
-        textureID = 19 + _type * 12 + _state - 1 + connectRight * 3 + connectLeft * 6;
+        textureID = 19 + _type * 12 + _state - 1 + _rightConnector * 3 + _leftConnector * 6;
     }
     _boardPtr->redrawTileVertices(textureID, _position, _direction, _highlight);
 }

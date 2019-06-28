@@ -37,6 +37,7 @@ class TileGate : public Tile {
     private:
     Type _type;
     State _state, _nextState;
+    bool _connectorChange, _rightConnector, _leftConnector;
     
     State _complementState(State state) const;    // Converts LOW state to HIGH and HIGH to LOW.
     State _findNextStateBuffer(State adjacentStates[4], int numInputs, int numHigh, int numMiddle) const;    // Determines the next gate state (buffer logic).
