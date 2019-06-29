@@ -10,9 +10,11 @@ TODO:
     - Text fields should be auto selected, especially for setting label. This could be a property of DialogBox::show to select first field in vector.
 
 Current and potential bugs:
-    - Problem where file dialog conflicts with internal window state, seems to only be fixable with multithreading.
+    - Problem where file dialog conflicts with internal window state, seems to only be fixable by multithreading the FileDialog instance.
         * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
         * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.
+        * This also seems to cause slight differences in board loading (different update hashes were observed for the exact same board).
+    - Closing the log window kills the main thread within a few milliseconds, only solution for this is to spawn log window in a separate thread.
 
 Simulation algorithm explaination:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).

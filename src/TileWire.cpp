@@ -178,6 +178,17 @@ void TileWire::followWire(Direction direction, State state) {
             _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST, state, stage);
         }
     }
+    
+    if (stage == INVALID_STAGE) {    // Check if wire is in an invalid state and change it if so.
+        if (Board::numStateErrors < 10) {
+            cout << "Detected state conflict in wire at position (" << _position.x << ", " << _position.y << ")." << endl;
+        }
+        ++Board::numStateErrors;
+        _fixTraversedWires(MIDDLE);
+        for (pair<TileWire*, Direction>& wire : traversedWires) {
+            wire.first->setHighlight(true);
+        }
+    }
     traversedWires.clear();
 }
 
@@ -252,7 +263,7 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State& state, F
         State gateNextState = (nextGate->getDirection() + 2) % 4 == direction ? nextGate->getNextState() : DISCONNECTED;    // If the gate outputs into previous wire, there may be a state conflict.
         if (gateNextState != DISCONNECTED) {
             if (Board::enableExtraLogicStates) {
-                _checkForInvalidState(nextTile, gateNextState, state, stage);
+                _checkForInvalidState(gateNextState, state, stage);
             } else if (gateNextState == HIGH && state == LOW) {    // If currently LOW and gate outputs HIGH in the next state, conflict found.
                 state = HIGH;
                 _fixTraversedWires(state);
@@ -264,7 +275,7 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State& state, F
         Board::endpointLEDs.push_back(static_cast<TileLED*>(nextTile));
     } else if (typeid(*nextTile) == typeid(TileSwitch) || typeid(*nextTile) == typeid(TileButton)) {    // Else check if switch/button.
         if (Board::enableExtraLogicStates) {
-            _checkForInvalidState(nextTile, nextTile->getState(), state, stage);
+            _checkForInvalidState(nextTile->getState(), state, stage);
         } else if (nextTile->getState() == HIGH && state == LOW) {    // If currently LOW and switch/button outputs HIGH, conflict found.
             state = HIGH;
             _fixTraversedWires(state);
@@ -282,7 +293,7 @@ void TileWire::_fixTraversedWires(State state) const {
     }
 }
 
-void TileWire::_checkForInvalidState(Tile* target, State targetState, State& state, FollowWireStage& stage) const {
+void TileWire::_checkForInvalidState(State targetState, State& state, FollowWireStage& stage) const {
     if (stage == INITIAL_STAGE) {
         if (targetState != MIDDLE) {
             stage = INPUT_FOUND;
@@ -292,12 +303,6 @@ void TileWire::_checkForInvalidState(Tile* target, State targetState, State& sta
             _fixTraversedWires(state);
         }
     } else if (targetState != MIDDLE && state != targetState) {
-        cout << "Uh oh thats an error! At (" << target->getPosition().x << ", " << target->getPosition().y << ")" << endl;
-        if (stage != INVALID_STAGE) {
-            stage = INVALID_STAGE;
-            ++Board::numStateErrors;
-            state = MIDDLE;
-            _fixTraversedWires(state);
-        }
+        stage = INVALID_STAGE;
     }
 }

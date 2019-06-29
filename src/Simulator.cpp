@@ -221,20 +221,17 @@ int Simulator::start() {
                     tileCursor = Vector2i(-1, -1);
                 }
                 
-                bool doUpdate = false;
                 if (simSpeed == SimSpeed::Slow && tickClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
-                    doUpdate = true;
-                } else if (simSpeed == SimSpeed::Medium && tickClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
-                    doUpdate = true;
-                } else if (simSpeed == SimSpeed::Fast && tickClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
-                    doUpdate = true;
-                } else if (simSpeed == SimSpeed::Extreme) {
-                    doUpdate = true;
-                }
-                if (doUpdate) {
-                    boardPtr->updateTiles();
-                    ++tpsCounter;
+                    nextTick();
                     tickClock.restart();
+                } else if (simSpeed == SimSpeed::Medium && tickClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
+                    nextTick();
+                    tickClock.restart();
+                } else if (simSpeed == SimSpeed::Fast && tickClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
+                    nextTick();
+                    tickClock.restart();
+                } else if (simSpeed == SimSpeed::Extreme) {
+                    nextTick();
                 }
             }
             
@@ -465,11 +462,10 @@ void Simulator::viewOption(int option) {
 
 void Simulator::runOption(int option) {
     if (option == 0) {    // Step one tick.
+        nextTick();
         simSpeed = SimSpeed::Paused;
         userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
         userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
-        boardPtr->updateTiles();
-        ++tpsCounter;
     } else if (option == 1) {    // Change max TPS.
         if (simSpeed == SimSpeed::Paused) {
             simSpeed = SimSpeed::Slow;
@@ -728,6 +724,21 @@ void Simulator::renderLoop() {
         windowPtr->display();    // Display invokes sf::sleep to pause for next frame and keep framerate constant.
     }
     windowPtr->close();
+}
+
+void Simulator::nextTick() {
+    boardPtr->updateTiles();
+    ++tpsCounter;
+    if (Board::numStateErrors > 0) {
+        if (Board::numStateErrors > 10) {
+            cout << "(and " << Board::numStateErrors - 10 << " more...)" << endl;
+        }
+        cout << "Detected " << Board::numStateErrors << " total conflict(s). Sources of error have been highlighted." << endl;
+        Board::numStateErrors = 0;
+        simSpeed = SimSpeed::Paused;
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
+    }
 }
 
 void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {

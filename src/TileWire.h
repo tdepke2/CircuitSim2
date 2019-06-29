@@ -76,7 +76,7 @@ class TileWire : public Tile {
     
     void _addNextTile(Tile* nextTile, Direction direction, State& state, FollowWireStage& stage) const;    // Adds a tile to current wire traversal in followWire.
     void _fixTraversedWires(State state) const;    // Sets the states of previously traversed wires to the new state.
-    void _checkForInvalidState(Tile* target, State targetState, State& state, FollowWireStage& stage) const;    // Checks for conflicting state errors during _addNextTile.
+    void _checkForInvalidState(State targetState, State& state, FollowWireStage& stage) const;    // Checks for conflicting state errors during _addNextTile.
 };
 
 #endif

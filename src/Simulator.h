@@ -59,6 +59,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     
     static void terminationHandler(int sigNum);    // Sets simulation to exit when a termination signal is received from main thread.
     static void renderLoop();    // The render thread.
+    static void nextTick();    // Runs the main board simulation for one tick.
     static void handleKeyPress(Event::KeyEvent keyEvent);    // Controls keybinds and their actions.
     static void pasteToBoard(const Vector2i& tileCursor, bool forcePaste);    // Pastes the current tile or copy buffer at the selected position.
     static void updateWireTool(const Vector2i& tileCursor, const Vector2i& newTileCursor);    // Updates the wire tool by recalculating wire positions.
