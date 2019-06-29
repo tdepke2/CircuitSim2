@@ -7,20 +7,20 @@ TileSwitch::TileSwitch(Board* boardPtr, const Vector2u& position, bool noAdjacen
     boardPtr->switchKeybinds[charID].push_back(this);
     boardPtr->tileLabels[this] = Text("", Board::getFont(), 25);
     boardPtr->tileLabels[this].setString(string(1, charID));
-    boardPtr->tileLabels[this].setPosition(_position.x * Board::getTileSize().x + 9.0f, _position.y * Board::getTileSize().y - 2.0f);
+    boardPtr->tileLabels[this].setPosition(getPosition().x * Board::getTileSize().x + 9.0f, getPosition().y * Board::getTileSize().y - 2.0f);
     addUpdate(false, noAdjacentUpdates);
 }
 
 TileSwitch::~TileSwitch() {
-    _boardPtr->switchUpdates.erase(this);
-    auto mapIter = _boardPtr->switchKeybinds.find(_charID);
+    getBoardPtr()->switchUpdates.erase(this);
+    auto mapIter = getBoardPtr()->switchKeybinds.find(_charID);
     for (auto vectorIter = mapIter->second.begin(); vectorIter != mapIter->second.end(); ++vectorIter) {
         if (*vectorIter == this) {
             mapIter->second.erase(vectorIter);
             break;
         }
     }
-    _boardPtr->tileLabels.erase(this);
+    getBoardPtr()->tileLabels.erase(this);
 }
 
 State TileSwitch::getState() const {
@@ -29,11 +29,11 @@ State TileSwitch::getState() const {
 
 void TileSwitch::setPosition(const Vector2u& position, bool noAdjacentUpdates, bool keepOverwrittenTile) {
     Tile::setPosition(position, noAdjacentUpdates, keepOverwrittenTile);
-    _boardPtr->tileLabels[this].setPosition(_position.x * Board::getTileSize().x + 9.0f, _position.y * Board::getTileSize().y - 2.0f);
+    getBoardPtr()->tileLabels[this].setPosition(getPosition().x * Board::getTileSize().x + 9.0f, getPosition().y * Board::getTileSize().y - 2.0f);
 }
 
 void TileSwitch::setCharID(char charID) {
-    auto mapIter = _boardPtr->switchKeybinds.find(_charID);
+    auto mapIter = getBoardPtr()->switchKeybinds.find(_charID);
     for (auto vectorIter = mapIter->second.begin(); vectorIter != mapIter->second.end(); ++vectorIter) {
         if (*vectorIter == this) {
             mapIter->second.erase(vectorIter);
@@ -41,10 +41,10 @@ void TileSwitch::setCharID(char charID) {
         }
     }
     _charID = charID;
-    _boardPtr->switchKeybinds[charID].push_back(this);
-    _boardPtr->tileLabels[this].setString(string(1, charID));
+    getBoardPtr()->switchKeybinds[charID].push_back(this);
+    getBoardPtr()->tileLabels[this].setString(string(1, charID));
     addUpdate(true);
-    _boardPtr->changesMade = true;
+    getBoardPtr()->changesMade = true;
 }
 
 void TileSwitch::setState(State state) {
@@ -57,9 +57,9 @@ State TileSwitch::checkOutput(Direction direction) const {
 }
 
 void TileSwitch::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
-    _boardPtr->cosmeticUpdates.insert(this);
+    getBoardPtr()->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
-        _boardPtr->switchUpdates.insert(this);
+        getBoardPtr()->switchUpdates.insert(this);
         if (!noAdjacentUpdates) {
             _updateAdjacentTiles();
         }
@@ -67,24 +67,24 @@ void TileSwitch::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
 }
 
 void TileSwitch::updateOutput() {
-    _boardPtr->switchUpdates.erase(this);
+    getBoardPtr()->switchUpdates.erase(this);
     
-    if (_position.y > 0) {    // Follow wire on all adjacent sides.
-        _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->followWire(NORTH, _state);
+    if (getPosition().y > 0) {    // Follow wire on all adjacent sides.
+        getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y - 1))->followWire(NORTH, _state);
     }
-    if (_position.x < _boardPtr->getSize().x - 1) {
-        _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->followWire(EAST, _state);
+    if (getPosition().x < getBoardPtr()->getSize().x - 1) {
+        getBoardPtr()->getTile(Vector2u(getPosition().x + 1, getPosition().y))->followWire(EAST, _state);
     }
-    if (_position.y < _boardPtr->getSize().y - 1) {
-        _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->followWire(SOUTH, _state);
+    if (getPosition().y < getBoardPtr()->getSize().y - 1) {
+        getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y + 1))->followWire(SOUTH, _state);
     }
-    if (_position.x > 0) {
-        _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->followWire(WEST, _state);
+    if (getPosition().x > 0) {
+        getBoardPtr()->getTile(Vector2u(getPosition().x - 1, getPosition().y))->followWire(WEST, _state);
     }
 }
 
 void TileSwitch::redrawTile() const {
-    _boardPtr->redrawTileVertices(22 + _state - 1, _position, _direction, _highlight);
+    getBoardPtr()->redrawTileVertices(22 + _state - 1, getPosition(), _direction, getHighlight());
 }
 
 string TileSwitch::toString() const {

@@ -15,7 +15,7 @@ TileLED::TileLED(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdat
 }
 
 TileLED::~TileLED() {
-    _boardPtr->LEDUpdates.erase(this);
+    getBoardPtr()->LEDUpdates.erase(this);
 }
 
 State TileLED::getState() const {
@@ -28,9 +28,9 @@ void TileLED::setState(State state) {
 }
 
 void TileLED::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
-    _boardPtr->cosmeticUpdates.insert(this);
+    getBoardPtr()->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
-        _boardPtr->LEDUpdates.insert(this);
+        getBoardPtr()->LEDUpdates.insert(this);
         if (!noAdjacentUpdates) {
             _updateAdjacentTiles();
         }
@@ -41,26 +41,26 @@ void TileLED::updateLED(State state) {
     assert(traversedLEDs.empty());
     assert(LEDNodes.empty());
     
-    //cout << "Update LED started at (" << _position.x << ", " << _position.y << ")." << endl;
+    //cout << "Update LED started at (" << getPosition().x << ", " << getPosition().y << ")." << endl;
     
     _addNextTile(this, NORTH, state);
     while (!LEDNodes.empty()) {    // Start a depth-first traversal on the connected LEDs.
         TileLED* currentLED = LEDNodes.top();
         LEDNodes.pop();
         
-        //cout << "  currently at (" << currentLED->_position.x << ", " << currentLED->_position.y << ")" << endl;
+        //cout << "  currently at (" << currentLED->getPosition().x << ", " << currentLED->getPosition().y << ")" << endl;
         
-        if (currentLED->_position.y > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y - 1)), NORTH, state);
+        if (currentLED->getPosition().y > 0) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentLED->getPosition().x, currentLED->getPosition().y - 1)), NORTH, state);
         }
-        if (currentLED->_position.x < _boardPtr->getSize().x - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x + 1, currentLED->_position.y)), EAST, state);
+        if (currentLED->getPosition().x < getBoardPtr()->getSize().x - 1) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentLED->getPosition().x + 1, currentLED->getPosition().y)), EAST, state);
         }
-        if (currentLED->_position.y < _boardPtr->getSize().y - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x, currentLED->_position.y + 1)), SOUTH, state);
+        if (currentLED->getPosition().y < getBoardPtr()->getSize().y - 1) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentLED->getPosition().x, currentLED->getPosition().y + 1)), SOUTH, state);
         }
-        if (currentLED->_position.x > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentLED->_position.x - 1, currentLED->_position.y)), WEST, state);
+        if (currentLED->getPosition().x > 0) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentLED->getPosition().x - 1, currentLED->getPosition().y)), WEST, state);
         }
     }
     traversedLEDs.clear();
@@ -71,7 +71,7 @@ void TileLED::followWire(Direction direction, State state) {
 }
 
 void TileLED::redrawTile() const {
-    _boardPtr->redrawTileVertices(26 + _state - 1, _position, _direction, _highlight);
+    getBoardPtr()->redrawTileVertices(26 + _state - 1, getPosition(), _direction, getHighlight());
 }
 
 string TileLED::toString() const {
@@ -95,8 +95,8 @@ void TileLED::_addNextTile(Tile* nextTile, Direction direction, State& state) co
             nextLED->addUpdate(true);
             traversedLEDs.push_back(nextLED);
             LEDNodes.push(nextLED);
-            if (!_boardPtr->LEDUpdates.empty()) {
-                _boardPtr->LEDUpdates.erase(nextLED);
+            if (!getBoardPtr()->LEDUpdates.empty()) {
+                getBoardPtr()->LEDUpdates.erase(nextLED);
             }
         }
     } else if (state == LOW) {

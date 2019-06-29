@@ -24,6 +24,7 @@ class Tile {    // Generic tile that is stored in a Board.
     Tile();
     Tile(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false, bool suppressUpdate = false);    // Construct tile with parent board and position, noAdjacentUpdates stops updates to adjacent tiles, suppressUpdate stops the initial update to this tile.
     virtual ~Tile();
+    Board* const getBoardPtr() const;
     const Vector2u& getPosition() const;
     Direction getDirection() const;
     bool getHighlight() const;
@@ -43,12 +44,14 @@ class Tile {    // Generic tile that is stored in a Board.
     virtual Tile* clone(Board* boardPtr, const Vector2u& position, bool noAdjacentUpdates = false);    // Make a copy of this tile, the new tile needs its own board and position.
     
     protected:
-    Board* _boardPtr;
-    Vector2u _position;
     Direction _direction;
-    bool _highlight;
     
     void _updateAdjacentTiles();    // Send a single state update to each of the tiles adjacent to this one, this does not cascade to other tiles.
+    
+    private:
+    Board* _boardPtr;
+    Vector2u _position;
+    bool _highlight;
 };
 
 #endif

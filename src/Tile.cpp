@@ -19,6 +19,10 @@ Tile::~Tile() {
     _boardPtr->cosmeticUpdates.erase(this);
 }
 
+Board* const Tile::getBoardPtr() const {
+    return _boardPtr;
+}
+
 const Vector2u& Tile::getPosition() const {
     return _position;
 }

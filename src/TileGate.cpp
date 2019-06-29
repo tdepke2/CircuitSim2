@@ -16,7 +16,7 @@ TileGate::TileGate(Board* boardPtr, const Vector2u& position, bool noAdjacentUpd
 }
 
 TileGate::~TileGate() {
-    _boardPtr->gateUpdates.erase(this);
+    getBoardPtr()->gateUpdates.erase(this);
 }
 
 TileGate::Type TileGate::getType() const {
@@ -34,7 +34,7 @@ State TileGate::getNextState() const {
 void TileGate::setDirection(Direction direction, bool noAdjacentUpdates) {
     _direction = direction;
     addUpdate(false, noAdjacentUpdates);
-    _boardPtr->changesMade = true;
+    getBoardPtr()->changesMade = true;
 }
 
 void TileGate::setState(State state) {
@@ -46,7 +46,7 @@ void TileGate::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
     if ((!acrossHorizontal && _direction % 2 == 1) || (acrossHorizontal && _direction % 2 == 0)) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
         addUpdate(false, noAdjacentUpdates);
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     }
 }
 
@@ -59,9 +59,9 @@ State TileGate::checkOutput(Direction direction) const {
 }
 
 void TileGate::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
-    _boardPtr->cosmeticUpdates.insert(this);
+    getBoardPtr()->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
-        _boardPtr->gateUpdates.insert(this);
+        getBoardPtr()->gateUpdates.insert(this);
         if (!noAdjacentUpdates) {
             _updateAdjacentTiles();
         }
@@ -71,10 +71,10 @@ void TileGate::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
 
 bool TileGate::updateNextState() {
     State adjacentStates[4];
-    adjacentStates[0] = _position.y > 0 ? _boardPtr->getTile(Vector2u(_position.x, _position.y - 1))->checkOutput(NORTH) : DISCONNECTED;
-    adjacentStates[1] = _position.x < _boardPtr->getSize().x - 1 ? _boardPtr->getTile(Vector2u(_position.x + 1, _position.y))->checkOutput(EAST) : DISCONNECTED;
-    adjacentStates[2] = _position.y < _boardPtr->getSize().y - 1 ? _boardPtr->getTile(Vector2u(_position.x, _position.y + 1))->checkOutput(SOUTH) : DISCONNECTED;
-    adjacentStates[3] = _position.x > 0 ? _boardPtr->getTile(Vector2u(_position.x - 1, _position.y))->checkOutput(WEST) : DISCONNECTED;
+    adjacentStates[0] = getPosition().y > 0 ? getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y - 1))->checkOutput(NORTH) : DISCONNECTED;
+    adjacentStates[1] = getPosition().x < getBoardPtr()->getSize().x - 1 ? getBoardPtr()->getTile(Vector2u(getPosition().x + 1, getPosition().y))->checkOutput(EAST) : DISCONNECTED;
+    adjacentStates[2] = getPosition().y < getBoardPtr()->getSize().y - 1 ? getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y + 1))->checkOutput(SOUTH) : DISCONNECTED;
+    adjacentStates[3] = getPosition().x > 0 ? getBoardPtr()->getTile(Vector2u(getPosition().x - 1, getPosition().y))->checkOutput(WEST) : DISCONNECTED;
     
     int numInputs = 0, numHigh = 0, numMiddle = 0;
     for (int i = 0; i < 4; ++i) {
@@ -131,7 +131,7 @@ bool TileGate::updateNextState() {
         _nextState = _complementState(_findNextStateXOR(adjacentStates, numInputs, numHigh, numMiddle));
     }
     
-    //cout << "Gate at (" << _position.x << ", " << _position.y << ") checked for state change:" << endl;
+    //cout << "Gate at (" << getPosition().x << ", " << getPosition().y << ") checked for state change:" << endl;
     //cout << "  aS = [" << adjacentStates[0] << ", " << adjacentStates[1] << ", " << adjacentStates[2] << ", " << adjacentStates[3] << "]" << endl;
     //cout << "  state = " << _state << ", next = " << _nextState << endl;
     
@@ -139,23 +139,23 @@ bool TileGate::updateNextState() {
 }
 
 void TileGate::updateOutput() {
-    //cout << "Gate at (" << _position.x << ", " << _position.y << ") updated:" << endl;
-    _boardPtr->gateUpdates.erase(this);    // Remove this gate update and transition to next state.
+    //cout << "Gate at (" << getPosition().x << ", " << getPosition().y << ") updated:" << endl;
+    getBoardPtr()->gateUpdates.erase(this);    // Remove this gate update and transition to next state.
     _state = _nextState;
     addUpdate(true);
     
     Vector2u targetPosition;    // Start followWire at the output (the object at output could be anything, not just a wire).
     if (_direction == NORTH) {
-        targetPosition = Vector2u(_position.x, _position.y - 1);
+        targetPosition = Vector2u(getPosition().x, getPosition().y - 1);
     } else if (_direction == EAST) {
-        targetPosition = Vector2u(_position.x + 1, _position.y);
+        targetPosition = Vector2u(getPosition().x + 1, getPosition().y);
     } else if (_direction == SOUTH) {
-        targetPosition = Vector2u(_position.x, _position.y + 1);
+        targetPosition = Vector2u(getPosition().x, getPosition().y + 1);
     } else {
-        targetPosition = Vector2u(_position.x - 1, _position.y);
+        targetPosition = Vector2u(getPosition().x - 1, getPosition().y);
     }
-    if (targetPosition.x < _boardPtr->getSize().x && targetPosition.y < _boardPtr->getSize().y) {
-        _boardPtr->getTile(targetPosition)->followWire(_direction, _state);
+    if (targetPosition.x < getBoardPtr()->getSize().x && targetPosition.y < getBoardPtr()->getSize().y) {
+        getBoardPtr()->getTile(targetPosition)->followWire(_direction, _state);
     }
 }
 
@@ -172,7 +172,7 @@ void TileGate::redrawTile() const {
     } else {
         textureID = 19 + _type * 12 + _state - 1 + _rightConnector * 3 + _leftConnector * 6;
     }
-    _boardPtr->redrawTileVertices(textureID, _position, _direction, _highlight);
+    getBoardPtr()->redrawTileVertices(textureID, getPosition(), _direction, getHighlight());
 }
 
 string TileGate::toString() const {
@@ -187,7 +187,7 @@ bool TileGate::alternativeTile() {
             _type = static_cast<Type>(_type - 1);
         }
         addUpdate();
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     }
     return false;
 }

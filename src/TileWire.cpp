@@ -30,7 +30,7 @@ TileWire::TileWire(Board* boardPtr, const Vector2u& position, bool noAdjacentUpd
 }
 
 TileWire::~TileWire() {
-    _boardPtr->wireUpdates.erase(this);
+    getBoardPtr()->wireUpdates.erase(this);
 }
 
 TileWire::Type TileWire::getType() const {
@@ -50,13 +50,13 @@ void TileWire::setDirection(Direction direction, bool noAdjacentUpdates) {
                 _direction = direction;
             }
             addUpdate(false, noAdjacentUpdates);
-            _boardPtr->changesMade = true;
+            getBoardPtr()->changesMade = true;
         } else if (direction % 2 == 1) {    // If direction odd, assume 1 or 3 rotations were made to the crossover wire.
             State tempState = _state1;
             _state1 = _state2;
             _state2 = tempState;
             addUpdate(false, noAdjacentUpdates);
-            _boardPtr->changesMade = true;
+            getBoardPtr()->changesMade = true;
         }
     }
 }
@@ -79,11 +79,11 @@ void TileWire::flip(bool acrossHorizontal, bool noAdjacentUpdates) {
             _direction = static_cast<Direction>(_direction - 1);
         }
         addUpdate(false, noAdjacentUpdates);
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     } else if (_type == TEE && ((!acrossHorizontal && _direction % 2 == 0) || (acrossHorizontal && _direction % 2 == 1))) {
         _direction = static_cast<Direction>((_direction + 2) % 4);
         addUpdate(false, noAdjacentUpdates);
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     }
 }
 
@@ -101,9 +101,9 @@ State TileWire::checkOutput(Direction direction) const {
 }
 
 void TileWire::addUpdate(bool isCosmetic, bool noAdjacentUpdates) {
-    _boardPtr->cosmeticUpdates.insert(this);
+    getBoardPtr()->cosmeticUpdates.insert(this);
     if (!isCosmetic) {
-        _boardPtr->wireUpdates.insert(this);
+        getBoardPtr()->wireUpdates.insert(this);
         if (!noAdjacentUpdates) {
             _updateAdjacentTiles();
         }
@@ -135,7 +135,7 @@ void TileWire::followWire(Direction direction, State state) {
     assert(traversedWires.empty());
     assert(wireNodes.empty());
     
-    //cout << "Follow wire started at (" << _position.x << ", " << _position.y << ")." << endl;
+    //cout << "Follow wire started at (" << getPosition().x << ", " << getPosition().y << ")." << endl;
     
     FollowWireStage stage = INITIAL_STAGE;
     _addNextTile(this, direction, state, stage);    // Add the first wire to the traversal. If it did not connect or was already checked then we return, otherwise continue traversal.
@@ -145,43 +145,43 @@ void TileWire::followWire(Direction direction, State state) {
     wireNodes.pop();
     
     const bool* exitDirections = CONNECTION_INFO[_direction][_type][direction];    // Check for connection with all adjacent tiles (in the case that this is some arbitrary wire chosen and did not come from a source gate).
-    if (exitDirections[0] && _position.y > 0) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y - 1)), NORTH, state, stage);
+    if (exitDirections[0] && getPosition().y > 0) {
+        _addNextTile(getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y - 1)), NORTH, state, stage);
     }
-    if (exitDirections[1] && _position.x < _boardPtr->getSize().x - 1) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x + 1, _position.y)), EAST, state, stage);
+    if (exitDirections[1] && getPosition().x < getBoardPtr()->getSize().x - 1) {
+        _addNextTile(getBoardPtr()->getTile(Vector2u(getPosition().x + 1, getPosition().y)), EAST, state, stage);
     }
-    if (exitDirections[2] && _position.y < _boardPtr->getSize().y - 1) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x, _position.y + 1)), SOUTH, state, stage);
+    if (exitDirections[2] && getPosition().y < getBoardPtr()->getSize().y - 1) {
+        _addNextTile(getBoardPtr()->getTile(Vector2u(getPosition().x, getPosition().y + 1)), SOUTH, state, stage);
     }
-    if (exitDirections[3] && _position.x > 0) {
-        _addNextTile(_boardPtr->getTile(Vector2u(_position.x - 1, _position.y)), WEST, state, stage);
+    if (exitDirections[3] && getPosition().x > 0) {
+        _addNextTile(getBoardPtr()->getTile(Vector2u(getPosition().x - 1, getPosition().y)), WEST, state, stage);
     }
     
     while (!wireNodes.empty()) {    // Perform depth-first traversal on remaining connected wires.
         TileWire* currentWire = wireNodes.top().first;
         Direction currentDirection = wireNodes.top().second;
         wireNodes.pop();
-        //cout << "  currently at (" << currentWire->_position.x << ", " << currentWire->_position.y << ") going direction " << currentDirection << endl;
+        //cout << "  currently at (" << currentWire->getPosition().x << ", " << currentWire->getPosition().y << ") going direction " << currentDirection << endl;
         
         const bool* exitDirections = CONNECTION_INFO[currentWire->_direction][currentWire->_type][currentDirection];    // Check for connection with adjacent tiles that do not point back to source wire.
-        if (exitDirections[0] && currentDirection != SOUTH && currentWire->_position.y > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y - 1)), NORTH, state, stage);
+        if (exitDirections[0] && currentDirection != SOUTH && currentWire->getPosition().y > 0) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentWire->getPosition().x, currentWire->getPosition().y - 1)), NORTH, state, stage);
         }
-        if (exitDirections[1] && currentDirection != WEST && currentWire->_position.x < _boardPtr->getSize().x - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x + 1, currentWire->_position.y)), EAST, state, stage);
+        if (exitDirections[1] && currentDirection != WEST && currentWire->getPosition().x < getBoardPtr()->getSize().x - 1) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentWire->getPosition().x + 1, currentWire->getPosition().y)), EAST, state, stage);
         }
-        if (exitDirections[2] && currentDirection != NORTH && currentWire->_position.y < _boardPtr->getSize().y - 1) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x, currentWire->_position.y + 1)), SOUTH, state, stage);
+        if (exitDirections[2] && currentDirection != NORTH && currentWire->getPosition().y < getBoardPtr()->getSize().y - 1) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentWire->getPosition().x, currentWire->getPosition().y + 1)), SOUTH, state, stage);
         }
-        if (exitDirections[3] && currentDirection != EAST && currentWire->_position.x > 0) {
-            _addNextTile(_boardPtr->getTile(Vector2u(currentWire->_position.x - 1, currentWire->_position.y)), WEST, state, stage);
+        if (exitDirections[3] && currentDirection != EAST && currentWire->getPosition().x > 0) {
+            _addNextTile(getBoardPtr()->getTile(Vector2u(currentWire->getPosition().x - 1, currentWire->getPosition().y)), WEST, state, stage);
         }
     }
     
     if (stage == INVALID_STAGE) {    // Check if wire is in an invalid state and change it if so.
         if (Board::numStateErrors < 10) {
-            cout << "Detected state conflict in wire at position (" << _position.x << ", " << _position.y << ")." << endl;
+            cout << "Detected state conflict in wire at position (" << getPosition().x << ", " << getPosition().y << ")." << endl;
         }
         ++Board::numStateErrors;
         _fixTraversedWires(MIDDLE);
@@ -193,7 +193,7 @@ void TileWire::followWire(Direction direction, State state) {
 }
 
 void TileWire::redrawTile() const {
-    _boardPtr->redrawTileVertices(1 + _type * 3 + _state1 - 1 + (_state2 - 1) * 3, _position, _direction, _highlight);
+    getBoardPtr()->redrawTileVertices(1 + _type * 3 + _state1 - 1 + (_state2 - 1) * 3, getPosition(), _direction, getHighlight());
 }
 
 string TileWire::toString() const {
@@ -218,12 +218,12 @@ bool TileWire::alternativeTile() {
         _type = CROSSOVER;
         _state2 = _state1;
         addUpdate();
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     } else if (_type == CROSSOVER) {
         _type = JUNCTION;
         _state2 = LOW;
         addUpdate();
-        _boardPtr->changesMade = true;
+        getBoardPtr()->changesMade = true;
     }
     return false;
 }
@@ -253,8 +253,8 @@ void TileWire::_addNextTile(Tile* nextTile, Direction direction, State& state, F
                 nextWire->addUpdate(true);
                 traversedWires.push_back(pair<TileWire*, Direction>(nextWire, direction));
                 wireNodes.push(pair<TileWire*, Direction>(nextWire, direction));
-                if (!_boardPtr->wireUpdates.empty() && (nextWire->_type != CROSSOVER || nextWire->_updateTimestamp1 == nextWire->_updateTimestamp2)) {    // Attempt to remove update if scheduled and wire has been fully updated.
-                    _boardPtr->wireUpdates.erase(nextWire);
+                if (!getBoardPtr()->wireUpdates.empty() && (nextWire->_type != CROSSOVER || nextWire->_updateTimestamp1 == nextWire->_updateTimestamp2)) {    // Attempt to remove update if scheduled and wire has been fully updated.
+                    getBoardPtr()->wireUpdates.erase(nextWire);
                 }
             }
         }
