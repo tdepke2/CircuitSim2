@@ -10,13 +10,27 @@
 using namespace std;
 using namespace sf;
 
-struct TextButton : public Drawable, public Transformable {    // Represents a clickable button with text on it. The button can call an action when pressed.
+class UIComponent : public Drawable, public Transformable {
+    public:
+    bool visible;
+    
+    UIComponent();
+    virtual ~UIComponent();
+    virtual bool update(int mouseX, int mouseY, bool clicked);
+    virtual bool update(Event::TextEvent textEvent);
+    
+    private:
+    virtual void draw(RenderTarget& target, RenderStates states) const = 0;
+};
+
+class TextButton : public UIComponent {    // Represents a clickable button with text on it. The button can call an action when pressed.
+    public:
     Text text;
     RectangleShape button;
     Color color1, color2;
     function<void(int)> action;
     int actionOption;
-    bool visible, selected;
+    bool selected;
     
     TextButton();
     TextButton(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption = 0);
@@ -26,50 +40,51 @@ struct TextButton : public Drawable, public Transformable {    // Represents a c
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct DropdownMenu : public Drawable, public Transformable {    // A dropdown menu for buttons.
+class DropdownMenu : public UIComponent {    // A dropdown menu for buttons.
+    public:
     TextButton button;
     RectangleShape background;
     vector<TextButton> menuButtons;
     float maxMenuButtonWidth;
-    bool visible;
     
     DropdownMenu();
     DropdownMenu(const TextButton& button, const Color& backgroundColor);
     void addMenuButton(const TextButton& menuButton);
-    void update(int mouseX, int mouseY, bool clicked);
+    bool update(int mouseX, int mouseY, bool clicked);
     
     private:
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct TextField : public Drawable, public Transformable {    // A text field for string input. Text can be entered when selected and the position of the caret can be moved by clicking.
+class TextField : public UIComponent {    // A text field for string input. Text can be entered when selected and the position of the caret can be moved by clicking.
+    public:
     Text label, field;
     RectangleShape background, caret;
     int caretPosition, maxCharacters;
-    bool visible, selected;
+    bool selected;
     
     TextField();
     TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters);
-    void update(int mouseX, int mouseY, bool clicked);
-    void update(Event::TextEvent textEvent);
+    bool update(int mouseX, int mouseY, bool clicked);
+    bool update(Event::TextEvent textEvent);
     void clear();
     
     private:
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-struct DialogPrompt : public Drawable, public Transformable {    // A dialog box with buttons and text fields.
+class DialogPrompt : public UIComponent {    // A dialog box with buttons and text fields.
+    public:
     Text text;
     RectangleShape background;
     vector<TextButton> optionButtons;
     vector<TextField> optionFields;
-    bool visible;
     
     DialogPrompt();
     DialogPrompt(const string& dialogText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, const Vector2f& size);
     ~DialogPrompt();
-    void update(int mouseX, int mouseY, bool clicked);
-    void update(Event::TextEvent textEvent);
+    bool update(int mouseX, int mouseY, bool clicked);
+    bool update(Event::TextEvent textEvent);
     void clearFields();
     void show();
     
@@ -77,8 +92,9 @@ struct DialogPrompt : public Drawable, public Transformable {    // A dialog box
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
-class UserInterface : public Drawable, public Transformable {    // The window UI. Includes the top bar menus and all prompts.
-    friend struct DialogPrompt;
+class UserInterface : public UIComponent {    // The window UI. Includes the top bar menus and all prompts.
+    friend class DialogPrompt;
+    
     public:
     static bool isDialogPromptOpen();
     static void closeAllDialogPrompts(int option = 0);
@@ -88,8 +104,8 @@ class UserInterface : public Drawable, public Transformable {    // The window U
     DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt;
     
     UserInterface();
-    void update(int mouseX, int mouseY, bool clicked);
-    void update(Event::TextEvent textEvent);
+    bool update(int mouseX, int mouseY, bool clicked);
+    bool update(Event::TextEvent textEvent);
     
     private:
     static bool _dialogPromptOpen;

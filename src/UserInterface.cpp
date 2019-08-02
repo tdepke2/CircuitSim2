@@ -6,6 +6,20 @@
 #include <limits>
 #include <stdexcept>
 
+UIComponent::UIComponent() {
+    visible = true;
+}
+
+UIComponent::~UIComponent() {}
+
+bool UIComponent::update(int mouseX, int mouseY, bool clicked) {
+    return false;
+}
+
+bool UIComponent::update(Event::TextEvent textEvent) {
+    return false;
+}
+
 TextButton::TextButton() {}
 
 TextButton::TextButton(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& color1, const Color& color2, function<void(int)> action, int actionOption) {
@@ -24,7 +38,6 @@ TextButton::TextButton(const string& buttonText, const Color& textColor, unsigne
     this->color2 = color2;
     this->action = action;
     this->actionOption = actionOption;
-    visible = true;
     selected = false;
 }
 
@@ -92,7 +105,7 @@ void DropdownMenu::addMenuButton(const TextButton& menuButton) {
     background.setSize(newBackgroundSize);
 }
 
-void DropdownMenu::update(int mouseX, int mouseY, bool clicked) {
+bool DropdownMenu::update(int mouseX, int mouseY, bool clicked) {
     mouseX -= static_cast<int>(getPosition().x);
     mouseY -= static_cast<int>(getPosition().y);
     if (visible) {
@@ -114,6 +127,7 @@ void DropdownMenu::update(int mouseX, int mouseY, bool clicked) {
     } else if (clicked) {
         visible = false;
     }
+    return false;
 }
 
 void DropdownMenu::draw(RenderTarget& target, RenderStates states) const {
@@ -157,11 +171,10 @@ TextField::TextField(const string& labelText, const string& initialFieldText, co
     
     setPosition(x, y);
     this->maxCharacters = maxCharacters;
-    visible = true;
     selected = false;
 }
 
-void TextField::update(int mouseX, int mouseY, bool clicked) {
+bool TextField::update(int mouseX, int mouseY, bool clicked) {
     if (visible && clicked) {
         mouseX -= static_cast<int>(getPosition().x);
         mouseY -= static_cast<int>(getPosition().y);
@@ -182,9 +195,10 @@ void TextField::update(int mouseX, int mouseY, bool clicked) {
             selected = false;
         }
     }
+    return false;
 }
 
-void TextField::update(Event::TextEvent textEvent) {
+bool TextField::update(Event::TextEvent textEvent) {
     if (visible && selected) {
         string s = field.getString();
         if (textEvent.unicode == 8 && caretPosition > 0) {    // Backspace.
@@ -201,6 +215,7 @@ void TextField::update(Event::TextEvent textEvent) {
             caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
         }
     }
+    return false;
 }
 
 void TextField::clear() {
@@ -253,7 +268,7 @@ DialogPrompt::~DialogPrompt() {
     }
 }
 
-void DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
+bool DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
     if (visible) {
         mouseX -= static_cast<int>(getPosition().x);
         mouseY -= static_cast<int>(getPosition().y);
@@ -264,14 +279,16 @@ void DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
             f.update(mouseX, mouseY, clicked);
         }
     }
+    return false;
 }
 
-void DialogPrompt::update(Event::TextEvent textEvent) {
+bool DialogPrompt::update(Event::TextEvent textEvent) {
     if (visible) {
         for (TextField& f : optionFields) {
             f.update(textEvent);
         }
     }
+    return false;
 }
 
 void DialogPrompt::clearFields() {
@@ -283,6 +300,9 @@ void DialogPrompt::clearFields() {
 void DialogPrompt::show() {
     assert(!UserInterface::_dialogPromptOpen);
     visible = true;
+    if (!optionFields.empty()) {
+        optionFields[0].selected = true;
+    }
     UserInterface::_dialogPromptOpen = true;
 }
 
@@ -403,7 +423,7 @@ UserInterface::UserInterface() {
     relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
 }
 
-void UserInterface::update(int mouseX, int mouseY, bool clicked) {
+bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
     if (!_dialogPromptOpen) {
         fileMenu.update(mouseX, mouseY, clicked);
         viewMenu.update(mouseX, mouseY, clicked);
@@ -419,15 +439,17 @@ void UserInterface::update(int mouseX, int mouseY, bool clicked) {
         resizePrompt.update(mouseX, mouseY, clicked);
         relabelPrompt.update(mouseX, mouseY, clicked);
     }
+    return false;
 }
 
-void UserInterface::update(Event::TextEvent textEvent) {
+bool UserInterface::update(Event::TextEvent textEvent) {
     if (_dialogPromptOpen) {
         savePrompt.update(textEvent);
         renamePrompt.update(textEvent);
         resizePrompt.update(textEvent);
         relabelPrompt.update(textEvent);
     }
+    return false;
 }
 
 void UserInterface::draw(RenderTarget& target, RenderStates states) const {

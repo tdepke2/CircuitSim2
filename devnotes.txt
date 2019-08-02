@@ -1,5 +1,4 @@
 TODO:
-    - _position should be private in Tile, not protected.
     - Display current "epoch" of simulation on UI.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
     - Errors/info should be shown in a visual queue on bottom left of screen, they fade out after some time.
@@ -7,16 +6,17 @@ TODO:
     - Optimize paste/delete so that middle updates are not sent to adjacent tiles.
     - Leaving an entry blank when resizing should accept that dimension as not changing size.
     - The Save As option should copy the current board name into the text entry.
-    - Text fields should be auto selected, especially for setting label. This could be a property of DialogBox::show to select first field in vector.
+    - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.
 
 Current and potential bugs:
+    - Crash when including any of \/:*?"<>| in a save filename.
     - Problem where file dialog conflicts with internal window state, seems to only be fixable by multithreading the FileDialog instance.
         * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
         * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.
         * This also seems to cause slight differences in board loading (different update hashes were observed for the exact same board).
     - Closing the log window kills the main thread within a few milliseconds, only solution for this is to spawn log window in a separate thread.
 
-Simulation algorithm explaination:
+Simulation algorithm explanation:
     - There is a set for each type of update that occurs (cosmetic, wire, switch, button, LED, and gate, implemented as hash sets).
     - When the state of an object changes, it is given a cosmetic and state update in the appropriate sets and updates adjacent tiles.
         * During board loading, do not update adjacent tiles.

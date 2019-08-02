@@ -72,7 +72,7 @@ int Simulator::start() {
         copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
         copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         userInterfacePtr = new UserInterface();
-        wireToolLabelPtr = new Text("test", Board::getFont(), 30);
+        wireToolLabelPtr = new Text("", Board::getFont(), 30);
         wireToolLabelPtr->setFillColor(Color::White);
         wireToolLabelPtr->setOutlineColor(Color::Black);
         wireToolLabelPtr->setOutlineThickness(1.0f);
