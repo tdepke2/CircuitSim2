@@ -99,7 +99,6 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     static TextField* fieldToSelectPtr;
     static bool isDialogPromptOpen();
     static void closeAllDialogPrompts(int option = 0);
-    static void confirmDialogPrompt();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton tpsDisplay;

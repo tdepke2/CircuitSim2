@@ -286,11 +286,19 @@ bool DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
 
 bool DialogPrompt::update(Event::TextEvent textEvent) {
     if (visible) {
-        if (textEvent.unicode == 9) {
-            
-        } else if (textEvent.unicode == 13) {
-            
-        } else {
+        if (textEvent.unicode == 9) {    // If key tab pressed, attempt to switch to next text field.
+            for (unsigned int i = 0; i < optionFields.size(); ++i) {
+                if (optionFields[i].selected == true) {
+                    optionFields[i].selected = false;
+                    optionFields[(i + 1) % optionFields.size()].selected = true;
+                    break;
+                }
+            }
+        } else if (textEvent.unicode == 13) {    // If key enter pressed, activate the first button (assumed as confirmation action).
+            if (optionButtons[0].action != nullptr) {
+                optionButtons[0].action(optionButtons[0].actionOption);
+            }
+        } else {    // Else, send the text event to the fields.
             for (TextField& f : optionFields) {
                 f.update(textEvent);
             }
@@ -309,6 +317,9 @@ void DialogPrompt::show() {
     assert(!UserInterface::_dialogPromptOpen);
     visible = true;
     if (!optionFields.empty()) {
+        for (TextField& f : optionFields) {
+            f.selected = false;
+        }
         UserInterface::fieldToSelectPtr = &optionFields[0];
     }
     UserInterface::_dialogPromptOpen = true;
@@ -341,12 +352,6 @@ void UserInterface::closeAllDialogPrompts(int option) {
         dialogPrompt->visible = false;
     }
     _dialogPromptOpen = false;
-}
-
-void UserInterface::confirmDialogPrompt() {
-    for (DialogPrompt* dialogPrompt : _dialogPrompts) {
-        
-    }
 }
 
 UserInterface::UserInterface() {
@@ -417,24 +422,24 @@ UserInterface::UserInterface() {
     tpsDisplay = TextButton(" Current TPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
     
     savePrompt = DialogPrompt("Are you sure? Changes have not been saved.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 75.0f));
-    savePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 45.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
-    savePrompt.optionButtons.emplace_back("Discard Changes", Color::Black, 15, 150.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption);
     savePrompt.optionButtons.emplace_back("Save", Color::Black, 15, 325.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 2);
+    savePrompt.optionButtons.emplace_back("Discard Changes", Color::Black, 15, 150.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption);
+    savePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 45.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     
     renamePrompt = DialogPrompt("Enter the new board name.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 103.0f));
-    renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     renamePrompt.optionButtons.emplace_back("Rename", Color::Black, 15, 244.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4);
+    renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 20.0f, 33.0f, Color::White, Color(214, 229, 255), 40);
     
     resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
-    resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     resizePrompt.optionButtons.emplace_back("Resize", Color::Black, 15, 244.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 5);
+    resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20);
     resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20);
     
     relabelPrompt = DialogPrompt("Enter the new label for this switch/button. This\nwill bind the tile to the corresponding keyboard\nkey, a space functions as a null keybind.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 140.0f));
-    relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     relabelPrompt.optionButtons.emplace_back("Relabel", Color::Black, 15, 244.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::relabelTarget);
+    relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
 }
 

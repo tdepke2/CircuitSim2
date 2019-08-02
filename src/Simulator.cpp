@@ -291,9 +291,11 @@ void Simulator::fileOption(int option) {
             userInterfacePtr->savePrompt.optionButtons[1].actionOption = 0;
             userInterfacePtr->savePrompt.show();
         } else {
-            tileCursor = Vector2i(-1, -1);
-            selectionStart = Vector2i(-1, -1);
-            selectionArea = IntRect(0, 0, 0, 0);
+            toolsOption(1);
+            if (tileCursor != Vector2i(-1, -1)) {
+                boardPtr->getTile(tileCursor)->setHighlight(false);
+                tileCursor = Vector2i(-1, -1);
+            }
             boardPtr->newBoard();
             viewOption(3);
             cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
@@ -328,9 +330,11 @@ void Simulator::fileOption(int option) {
                 fileDialog.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                 
                 if (GetOpenFileName(&fileDialog) == TRUE) {
-                    tileCursor = Vector2i(-1, -1);
-                    selectionStart = Vector2i(-1, -1);
-                    selectionArea = IntRect(0, 0, 0, 0);
+                    toolsOption(1);
+                    if (tileCursor != Vector2i(-1, -1)) {
+                        boardPtr->getTile(tileCursor)->setHighlight(false);
+                        tileCursor = Vector2i(-1, -1);
+                    }
                     boardPtr->loadFile(string(filename));
                     viewOption(3);
                 } else {
@@ -409,6 +413,10 @@ void Simulator::fileOption(int option) {
                     throw runtime_error("Board dimensions cannot be zero or negative.");
                 }
                 toolsOption(1);
+                if (tileCursor != Vector2i(-1, -1)) {
+                    boardPtr->getTile(tileCursor)->setHighlight(false);
+                    tileCursor = Vector2i(-1, -1);
+                }
                 boardPtr->resize(Vector2u(width, height));
                 viewOption(3);
                 UserInterface::closeAllDialogPrompts();
