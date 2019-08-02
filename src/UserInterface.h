@@ -96,8 +96,10 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     friend class DialogPrompt;
     
     public:
+    static TextField* fieldToSelectPtr;
     static bool isDialogPromptOpen();
     static void closeAllDialogPrompts(int option = 0);
+    static void confirmDialogPrompt();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton tpsDisplay;
@@ -111,6 +113,7 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     static bool _dialogPromptOpen;
     static vector<DialogPrompt*> _dialogPrompts;
     Tile* _relabelTargetTile;
+    
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 

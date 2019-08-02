@@ -181,6 +181,10 @@ int Simulator::start() {
                     fileOption(6);
                 }
             }
+            if (UserInterface::fieldToSelectPtr != nullptr) {    // If dialog box with text field is opening up, the field gets selected after events have been processed.
+                UserInterface::fieldToSelectPtr->selected = true;
+                UserInterface::fieldToSelectPtr = nullptr;
+            }
             
             if (!UserInterface::isDialogPromptOpen()) {
                 Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.

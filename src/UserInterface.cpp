@@ -6,6 +6,8 @@
 #include <limits>
 #include <stdexcept>
 
+#include <iostream>
+
 UIComponent::UIComponent() {
     visible = true;
 }
@@ -284,8 +286,14 @@ bool DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
 
 bool DialogPrompt::update(Event::TextEvent textEvent) {
     if (visible) {
-        for (TextField& f : optionFields) {
-            f.update(textEvent);
+        if (textEvent.unicode == 9) {
+            
+        } else if (textEvent.unicode == 13) {
+            
+        } else {
+            for (TextField& f : optionFields) {
+                f.update(textEvent);
+            }
         }
     }
     return false;
@@ -301,7 +309,7 @@ void DialogPrompt::show() {
     assert(!UserInterface::_dialogPromptOpen);
     visible = true;
     if (!optionFields.empty()) {
-        optionFields[0].selected = true;
+        UserInterface::fieldToSelectPtr = &optionFields[0];
     }
     UserInterface::_dialogPromptOpen = true;
 }
@@ -320,6 +328,7 @@ void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
     }
 }
 
+TextField* UserInterface::fieldToSelectPtr = nullptr;
 bool UserInterface::_dialogPromptOpen = false;
 vector<DialogPrompt*> UserInterface::_dialogPrompts;
 
@@ -332,6 +341,12 @@ void UserInterface::closeAllDialogPrompts(int option) {
         dialogPrompt->visible = false;
     }
     _dialogPromptOpen = false;
+}
+
+void UserInterface::confirmDialogPrompt() {
+    for (DialogPrompt* dialogPrompt : _dialogPrompts) {
+        
+    }
 }
 
 UserInterface::UserInterface() {

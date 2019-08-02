@@ -7,6 +7,7 @@ TODO:
     - Leaving an entry blank when resizing should accept that dimension as not changing size.
     - The Save As option should copy the current board name into the text entry.
     - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.
+    - Add a custom application icon.
 
 Current and potential bugs:
     - Crash when including any of \/:*?"<>| in a save filename.
