@@ -5,12 +5,11 @@ TODO:
     - Need to optimize selections, they just have too much performance impact.
     - Optimize paste/delete so that middle updates are not sent to adjacent tiles.
     - Leaving an entry blank when resizing should accept that dimension as not changing size.
-    - The Save As option should copy the current board name into the text entry.
     - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.
     - Add a custom application icon.
+    - Shift zooming, the best thing ever.
 
 Current and potential bugs:
-    - Crash when including any of \/:*?"<>| in a save filename.
     - Problem where file dialog conflicts with internal window state, seems to only be fixable by multithreading the FileDialog instance.
         * To reproduce, start program, have mouse on window near middle, open file, double click test01 file such that mouse still near middle of window, and voila the alignment is fucked (doesn't work every time).
         * After selecting file and mouse not on window, no problems at all. Already tried deleting window events so this isn't the problem.

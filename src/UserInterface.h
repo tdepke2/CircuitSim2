@@ -65,9 +65,9 @@ class TextField : public UIComponent {    // A text field for string input. Text
     
     TextField();
     TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters);
+    void setString(const string& s);
     bool update(int mouseX, int mouseY, bool clicked);
     bool update(Event::TextEvent textEvent);
-    void clear();
     
     private:
     virtual void draw(RenderTarget& target, RenderStates states) const;

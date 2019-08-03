@@ -314,10 +314,10 @@ void Simulator::fileOption(int option) {
         ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
         fileDialog.lStructSize = sizeof(fileDialog);
         fileDialog.hwndOwner = windowPtr->getSystemHandle();
-        fileDialog.lpstrFilter = "All types (*.*)\0*.*\0Text file (*.txt)\0*.TXT\0";
+        fileDialog.lpstrFilter = "All types (*.*)\0*.*\0Text file (*.txt)\0*.txt\0";
         fileDialog.nFilterIndex = 2;
         fileDialog.lpstrFile = filename;
-        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName/GetSaveFileName does not initialize itself with the filename.
+        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
         fileDialog.nMaxFile = sizeof(filename);
         fileDialog.lpstrFileTitle = NULL;
         fileDialog.nMaxFileTitle = 0;
@@ -341,6 +341,7 @@ void Simulator::fileOption(int option) {
                     cout << "No file selected." << endl;
                 }
             } else {
+                strcpy_s(filename, 260, boardPtr->name.substr(boardPtr->name.rfind('\\') + 1).c_str());
                 fileDialog.lpstrTitle = "Save As Board File";
                 fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
                 
@@ -363,11 +364,15 @@ void Simulator::fileOption(int option) {
             cout << "Error: Exception occurred during file access. " << ex.what() << endl;
         }
     } else if (option == 2) {    // Save board.
-        boardPtr->saveFile(boardPtr->name + ".txt");
+        try {
+            boardPtr->saveFile(boardPtr->name + ".txt");
+        } catch (exception& ex) {
+            cout << "Error: Failed to save board. " << ex.what() << endl;
+        }
         UserInterface::closeAllDialogPrompts();
     } else if (option == 4) {    // Rename board.
         if (!userInterfacePtr->renamePrompt.visible) {
-            userInterfacePtr->renamePrompt.clearFields();
+            userInterfacePtr->renamePrompt.optionFields[0].setString(boardPtr->name.substr(boardPtr->name.rfind('\\') + 1));
             userInterfacePtr->renamePrompt.show();
         } else {
             try {

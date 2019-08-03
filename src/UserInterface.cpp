@@ -169,11 +169,17 @@ TextField::TextField(const string& labelText, const string& initialFieldText, co
     caret.setSize(Vector2f(2.0f, charSize * 1.5f - 4.0f));
     caret.setFillColor(textColor);
     caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
-    field.setString(initialFieldText);
+    field.setString(initialFieldText.substr(0, maxCharacters));
     
     setPosition(x, y);
     this->maxCharacters = maxCharacters;
     selected = false;
+}
+
+void TextField::setString(const string& s) {
+    field.setString(s.substr(0, maxCharacters));
+    caretPosition = min(maxCharacters, static_cast<int>(s.length()));
+    caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
 }
 
 bool TextField::update(int mouseX, int mouseY, bool clicked) {
@@ -218,12 +224,6 @@ bool TextField::update(Event::TextEvent textEvent) {
         }
     }
     return false;
-}
-
-void TextField::clear() {
-    field.setString("");
-    caretPosition = 0;
-    caret.setPosition(field.findCharacterPos(caretPosition).x, 2.0f);
 }
 
 void TextField::draw(RenderTarget& target, RenderStates states) const {
@@ -309,7 +309,7 @@ bool DialogPrompt::update(Event::TextEvent textEvent) {
 
 void DialogPrompt::clearFields() {
     for (TextField& textField : optionFields) {
-        textField.clear();
+        textField.setString("");
     }
 }
 
