@@ -139,7 +139,7 @@ int Simulator::start() {
                         }
                     }
                 } else if (event.type == Event::MouseWheelScrolled) {
-                    float zoomDelta = event.mouseWheelScroll.delta * zoomLevel * -0.04f;
+                    float zoomDelta = event.mouseWheelScroll.delta * (1 + (Keyboard::isKeyPressed(Keyboard::LShift) || Keyboard::isKeyPressed(Keyboard::RShift)) * 5) * zoomLevel * -0.04f;
                     if (!UserInterface::isDialogPromptOpen() && zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
                         zoomLevel += zoomDelta;
                         boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
@@ -408,7 +408,8 @@ void Simulator::fileOption(int option) {
         }
     } else if (option == 5) {    // Resize board.
         if (!userInterfacePtr->resizePrompt.visible) {
-            userInterfacePtr->resizePrompt.clearFields();
+            userInterfacePtr->resizePrompt.optionFields[0].setString(to_string(boardPtr->getSize().x));
+            userInterfacePtr->resizePrompt.optionFields[1].setString(to_string(boardPtr->getSize().y));
             userInterfacePtr->resizePrompt.show();
         } else {
             try {
