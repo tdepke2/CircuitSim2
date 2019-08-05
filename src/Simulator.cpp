@@ -20,6 +20,7 @@
 #include <windows.h>
 
 const unsigned int Simulator::FRAMERATE_LIMIT = 60;
+const Vector2u Simulator::INITIAL_WINDOW_SIZE(1300, 900);
 atomic<Simulator::State> Simulator::state = State::Uninitialized;
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Medium;
 mt19937 Simulator::mainRNG;
@@ -42,6 +43,10 @@ Vector2u Simulator::wireVerticalPosition(0, 0), Simulator::wireHorizontalPositio
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 Tile* Simulator::relabelTargetTile = nullptr;
 
+const Vector2u& Simulator::getWindowSize() {
+    return windowPtr->getSize();
+}
+
 int Simulator::start() {
     cout << "Initializing setup..." << endl;
     int exitCode = 0;
@@ -53,7 +58,7 @@ int Simulator::start() {
         SetConsoleCtrlHandler(NULL, TRUE);    // Disable control signals (like Ctrl + C) in log window in case the user tries to close application this way.
         signal(SIGBREAK, terminationHandler);    // If log window closed, need to clean up in the few milliseconds available before program goes down.
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
-        windowPtr = new RenderWindow(VideoMode(1300, 900), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
+        windowPtr = new RenderWindow(VideoMode(INITIAL_WINDOW_SIZE.x, INITIAL_WINDOW_SIZE.y), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
         renderThread = thread(renderLoop);
@@ -177,6 +182,7 @@ int Simulator::start() {
                 } else if (event.type == Event::Resized) {
                     boardView.setSize(Vector2f(windowPtr->getSize().x * zoomLevel, windowPtr->getSize().y * zoomLevel));
                     windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
+                    userInterfacePtr->update(event.size);
                 } else if (event.type == Event::Closed) {
                     fileOption(6);
                 }
@@ -185,6 +191,7 @@ int Simulator::start() {
                 UserInterface::fieldToSelectPtr->selected = true;
                 UserInterface::fieldToSelectPtr = nullptr;
             }
+            UserInterface::updateMessages();
             
             if (!UserInterface::isDialogPromptOpen()) {
                 Vector2i newTileCursor(windowPtr->mapPixelToCoords(mouseStart, boardView));    // Check if cursor moved.
@@ -240,7 +247,8 @@ int Simulator::start() {
             }
             
             if (perSecondClock.getElapsedTime().asSeconds() >= 1.0f) {    // Calculate FPS and TPS.
-                windowPtr->setTitle("[CircuitSim2] [" + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", TPS: " + to_string(tpsCounter) + "]");
+                string changesMadeIndicator = boardPtr->changesMade ? "*" : "";
+                windowPtr->setTitle("[CircuitSim2] [" + changesMadeIndicator + boardPtr->name + "] [Size: " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + "] [FPS: " + to_string(fpsCounter) + ", TPS: " + to_string(tpsCounter) + "]");
                 perSecondClock.restart();
                 fpsCounter = 0;
                 tpsCounter = 0;
@@ -258,7 +266,7 @@ int Simulator::start() {
         cout << "\n****************************************************" << endl;
         cout << "* A fatal error has occurred, terminating program. *" << endl;
         cout << "****************************************************" << endl;
-        cout << "Exception details: " << ex.what() << endl;
+        UserInterface::pushMessage("Fatal error: " + string(ex.what()), true);
         cout << "(Press enter)" << endl;
         cin.get();
         exitCode = -1;
@@ -298,7 +306,7 @@ void Simulator::fileOption(int option) {
             }
             boardPtr->newBoard();
             viewOption(3);
-            cout << "Created new board with size " << boardPtr->getSize().x << " x " << boardPtr->getSize().y << "." << endl;
+            UserInterface::pushMessage("Created new board with size " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + ".");
             UserInterface::closeAllDialogPrompts();
         }
     } else if (option == 1 || option == 3) {    // Load board. Save as board.
@@ -361,13 +369,13 @@ void Simulator::fileOption(int option) {
             }
         } catch (exception& ex) {
             viewOption(3);
-            cout << "Error: Exception occurred during file access. " << ex.what() << endl;
+            UserInterface::pushMessage("Error: Exception in file access. " + string(ex.what()), true);
         }
     } else if (option == 2) {    // Save board.
         try {
             boardPtr->saveFile(boardPtr->name + ".txt");
         } catch (exception& ex) {
-            cout << "Error: Failed to save board. " << ex.what() << endl;
+            UserInterface::pushMessage("Error: Failed to save board. " + string(ex.what()), true);
         }
         UserInterface::closeAllDialogPrompts();
     } else if (option == 4) {    // Rename board.
@@ -400,10 +408,10 @@ void Simulator::fileOption(int option) {
                     }
                 }
                 boardPtr->name = newPath;
-                cout << "Board renamed to: \"" << newName << "\"." << endl;
+                UserInterface::pushMessage("Board renamed to: \"" + newName + "\".");
                 UserInterface::closeAllDialogPrompts();
             } catch (exception& ex) {
-                cout << "Error: Unable to rename the board. " << ex.what() << endl;
+                UserInterface::pushMessage("Error: Unable to rename the board. " + string(ex.what()), true);
             }
         }
     } else if (option == 5) {    // Resize board.
@@ -427,7 +435,7 @@ void Simulator::fileOption(int option) {
                 viewOption(3);
                 UserInterface::closeAllDialogPrompts();
             } catch (exception& ex) {
-                cout << "Error: Failed to resize the board. " << ex.what() << endl;
+                UserInterface::pushMessage("Error: Failed to resize the board. " + string(ex.what()), true);
             }
         }
     } else if (option == 6) {    // Exit program.
@@ -686,7 +694,7 @@ void Simulator::placeTile(int option) {
 void Simulator::relabelTarget(int option) {
     assert(relabelTargetTile != nullptr);
     if (userInterfacePtr->relabelPrompt.optionFields[0].field.getString().getSize() == 0) {
-        cout << "Error: No label entered." << endl;
+        UserInterface::pushMessage("Error: No label entered.", true);
         return;
     }
     if (typeid(*relabelTargetTile) == typeid(TileSwitch)) {
@@ -751,7 +759,7 @@ void Simulator::nextTick() {
         if (Board::numStateErrors > 10) {
             cout << "(and " << Board::numStateErrors - 10 << " more...)" << endl;
         }
-        cout << "Detected " << Board::numStateErrors << " total conflict(s). Sources of error have been highlighted." << endl;
+        UserInterface::pushMessage("Detected " + to_string(Board::numStateErrors) + " total conflict(s). Simulation has been paused.", true);
         Board::numStateErrors = 0;
         simSpeed = SimSpeed::Paused;
         userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");

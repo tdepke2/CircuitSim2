@@ -4,6 +4,7 @@
 #include "TileLED.h"
 #include "TileSwitch.h"
 #include "TileWire.h"
+#include "UserInterface.h"
 #include <cassert>
 #include <fstream>
 #include <iomanip>
@@ -44,7 +45,7 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     _buildTexture(tilesetImage, _tilesetGridPtr, tileSize);
     _tilesetGridPtr->setSmooth(true);
     if (!_tilesetGridPtr->generateMipmap()) {
-        cout << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture." << endl;
+        UserInterface::pushMessage("Warn: \"" + filenameGrid + "\": Unable to generate mipmap for texture.", true);
     }
     
     if (!tilesetImage.loadFromFile(filenameNoGrid)) {
@@ -53,7 +54,7 @@ void Board::loadTextures(const string& filenameGrid, const string& filenameNoGri
     _buildTexture(tilesetImage, _tilesetNoGridPtr, tileSize);
     _tilesetNoGridPtr->setSmooth(true);
     if (!_tilesetNoGridPtr->generateMipmap()) {
-        cout << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture." << endl;
+        UserInterface::pushMessage("Warn: \"" + filenameNoGrid + "\": Unable to generate mipmap for texture.", true);
     }
     
     _textureIDMax = tilesetImage.getSize().x / tileSize.x * tilesetImage.getSize().y / tileSize.y;
@@ -181,7 +182,7 @@ void Board::updateTiles() {
     TileButton::updateTransitioningButtons();
     //cout << endl;
     if (Tile::currentUpdateTime == numeric_limits<unsigned int>::max()) {
-        cout << "Update counter has reached max value (" << numeric_limits<unsigned int>::max() << " updates), resetting tiles..." << endl;
+        UserInterface::pushMessage("Update counter has reached max value (" + to_string(numeric_limits<unsigned int>::max()) + " updates), resetting tiles...");
         for (unsigned int y = 0; y < _size.y; ++y) {
             for (unsigned int x = 0; x < _size.x; ++x) {
                 _tileArray[y][x]->fixUpdateTime();
@@ -257,7 +258,7 @@ void Board::resize(const Vector2u& size) {
     
     _tileArray = newTileArray;
     changesMade = true;
-    cout << "Board size changed to " << _size.x << " x " << _size.y << "." << endl;
+    UserInterface::pushMessage("Board size changed to " + to_string(_size.x) + " x " + to_string(_size.y) + ".");
 }
 
 void Board::cloneArea(const Board& source, const IntRect& region, const Vector2i& destination, bool noAdjacentUpdates, bool keepOverwrittenTiles) {
@@ -383,7 +384,7 @@ void Board::newBoard(const Vector2u& size, const string& filename, bool startEmp
 }
 
 void Board::loadFile(const string& filename) {
-    cout << "Loading board file \"" << filename << "\"..." << endl;
+    UserInterface::pushMessage("Loading board file \"" + filename + "\"...");
     ifstream inputFile(filename);
     if (!inputFile.is_open()) {
         throw runtime_error("\"" + filename + "\": Unable to open file for reading.");
@@ -484,7 +485,7 @@ void Board::loadFile(const string& filename) {
                 ++numEntries;
             } else if (numEntries == 4) {
                 if (line != "}") {
-                    cout << "Warn: \"" << filename + "\" at line " + to_string(lineNumber) + ": Found some unrecognized data." << endl;
+                    UserInterface::pushMessage("Warn: \"" + filename + "\" at line " + to_string(lineNumber) + ": Found some unrecognized data.", true);
                 } else {
                     ++numEntries;
                 }
@@ -541,7 +542,7 @@ void Board::loadFile(const string& filename) {
 }
 
 void Board::saveFile(const string& filename) {
-    cout << "Saving board file \"" << filename << "\"..." << endl;
+    UserInterface::pushMessage("Saving board file \"" + filename + "\"...");
     ofstream outputFile(filename);
     if (!outputFile.is_open()) {
         throw runtime_error("\"" + filename + "\": Unable to open file for writing.");

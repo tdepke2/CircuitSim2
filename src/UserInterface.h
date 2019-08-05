@@ -2,6 +2,7 @@
 #define _USERINTERFACE_H
 
 #include <functional>
+#include <list>
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
@@ -99,6 +100,8 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     static TextField* fieldToSelectPtr;
     static bool isDialogPromptOpen();
     static void closeAllDialogPrompts(int option = 0);
+    static void pushMessage(const string& s, bool isError = false);
+    static void updateMessages();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton tpsDisplay;
@@ -107,10 +110,13 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     UserInterface();
     bool update(int mouseX, int mouseY, bool clicked);
     bool update(Event::TextEvent textEvent);
+    void update(Event::SizeEvent sizeEvent);
     
     private:
     static bool _dialogPromptOpen;
     static vector<DialogPrompt*> _dialogPrompts;
+    static list<TextButton> _messageList;
+    static Clock _messageClock;
     Tile* _relabelTargetTile;
     
     virtual void draw(RenderTarget& target, RenderStates states) const;

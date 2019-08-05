@@ -1,7 +1,6 @@
 TODO:
     - Display current "epoch" of simulation on UI.
     - During simulation, if conflicting states occur then pause and show an error (a setting will be available to turn this off).
-    - Errors/info should be shown in a visual queue on bottom left of screen, they fade out after some time.
     - Need to optimize selections, they just have too much performance impact.
     - Optimize paste/delete so that middle updates are not sent to adjacent tiles.
     - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.

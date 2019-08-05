@@ -3,10 +3,9 @@
 #include "UserInterface.h"
 #include <cassert>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <stdexcept>
-
-#include <iostream>
 
 UIComponent::UIComponent() {
     visible = true;
@@ -342,6 +341,8 @@ void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
 TextField* UserInterface::fieldToSelectPtr = nullptr;
 bool UserInterface::_dialogPromptOpen = false;
 vector<DialogPrompt*> UserInterface::_dialogPrompts;
+list<TextButton> UserInterface::_messageList;
+Clock UserInterface::_messageClock;
 
 bool UserInterface::isDialogPromptOpen() {
     return _dialogPromptOpen;
@@ -354,8 +355,45 @@ void UserInterface::closeAllDialogPrompts(int option) {
     _dialogPromptOpen = false;
 }
 
+void UserInterface::pushMessage(const string& s, bool isError) {
+    cout << s << endl;
+    if (_messageList.size() >= 4) {
+        _messageList.pop_back();
+        for (auto listIter = _messageList.begin(); listIter != _messageList.end(); ++listIter) {
+            listIter->move(0.0f, 30.0f);
+        }
+        _messageClock.restart();
+    } else if (_messageList.empty()) {
+        _messageClock.restart();
+    }
+    
+    Color messageColor;
+    if (!isError) {
+        messageColor = Color(31, 61, 255, 200);
+    } else {
+        messageColor = Color(255, 31, 31, 200);
+    }
+    _messageList.push_front(TextButton(s, Color(0, 0, 0, 200), 16, 10.0f, Simulator::getWindowSize().y - 35.0f - _messageList.size() * 30.0f, messageColor, Color::Black, nullptr));
+}
+
+void UserInterface::updateMessages() {
+    int32_t currentMilliseconds = _messageClock.getElapsedTime().asMilliseconds();
+    if (!_messageList.empty() && currentMilliseconds >= 4000) {
+        if (currentMilliseconds >= 6000) {
+            _messageList.pop_back();
+            for (auto listIter = _messageList.begin(); listIter != _messageList.end(); ++listIter) {
+                listIter->move(0.0f, 30.0f);
+            }
+            _messageClock.restart();
+        } else {
+            _messageList.back().text.setFillColor(Color(0, 0, 0, static_cast<uint8_t>((6000 - currentMilliseconds) * 0.1f)));
+            _messageList.back().button.setFillColor(_messageList.back().color1 - Color(0, 0, 0, static_cast<uint8_t>((currentMilliseconds - 4000) * 0.1f)));
+        }
+    }
+}
+
 UserInterface::UserInterface() {
-    topBar.setSize(Vector2f(4000.0f, 28.0f));
+    topBar.setSize(Vector2f(static_cast<float>(Simulator::getWindowSize().x), 28.0f));
     topBar.setFillColor(Color::White);
     topBar.setPosition(0.0f, 0.0f);
     
@@ -472,8 +510,20 @@ bool UserInterface::update(Event::TextEvent textEvent) {
     return false;
 }
 
+void UserInterface::update(Event::SizeEvent sizeEvent) {
+    topBar.setSize(Vector2f(static_cast<float>(sizeEvent.width), 28.0f));
+    int i = _messageList.size() - 1;
+    for (auto listIter = _messageList.begin(); listIter != _messageList.end(); ++listIter) {
+        listIter->setPosition(10.0f, sizeEvent.height - 35.0f - i * 30.0f);
+        --i;
+    }
+}
+
 void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     states.transform *= getTransform();
+    for (auto listIter = _messageList.cbegin(); listIter != _messageList.cend(); ++listIter) {
+        target.draw(*listIter, states);
+    }
     target.draw(topBar, states);
     target.draw(fileMenu, states);
     target.draw(viewMenu, states);
