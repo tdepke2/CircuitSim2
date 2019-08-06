@@ -237,6 +237,48 @@ void TextField::draw(RenderTarget& target, RenderStates states) const {
     }
 }
 
+CheckBox::CheckBox() {}
+
+CheckBox::CheckBox(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& buttonColor, const Color& checkColor, bool startChecked) {
+    const float BUTTON_HEIGHT = charSize * 1.5f;
+    text.setFont(Board::getFont());
+    text.setString(buttonText);
+    text.setFillColor(textColor);
+    text.setCharacterSize(charSize);
+    text.setPosition(BUTTON_HEIGHT + 5.0f, 0.0f);
+    
+    button.setSize(Vector2f(BUTTON_HEIGHT + text.getLocalBounds().width + 10.0f, BUTTON_HEIGHT));
+    button.setFillColor(buttonColor);
+    button.setPosition(0.0f, 0.0f);
+    
+    check.setSize(Vector2f(BUTTON_HEIGHT * 0.8f, BUTTON_HEIGHT * 0.8f));
+    if (!startChecked) {
+        check.setFillColor(buttonColor);
+    } else {
+        check.setFillColor(checkColor);
+    }
+    check.setOutlineColor(Color::Black);
+    check.setOutlineThickness(-2.0f);
+    check.setPosition(BUTTON_HEIGHT * 0.2f, BUTTON_HEIGHT * 0.1f);
+    
+    setPosition(x, y);
+    this->checkColor = checkColor;
+    checked = startChecked;
+}
+
+bool CheckBox::update(int mouseX, int mouseY, bool clicked) {
+    return false;
+}
+
+void CheckBox::draw(RenderTarget& target, RenderStates states) const {
+    if (visible) {
+        states.transform *= getTransform();
+        target.draw(button, states);
+        target.draw(text, states);
+        target.draw(check, states);
+    }
+}
+
 DialogPrompt::DialogPrompt() {
     UserInterface::_dialogPrompts.push_back(this);
 }
@@ -278,6 +320,9 @@ bool DialogPrompt::update(int mouseX, int mouseY, bool clicked) {
         }
         for (TextField& f : optionFields) {
             f.update(mouseX, mouseY, clicked);
+        }
+        for (CheckBox& c : optionChecks) {
+            c.update(mouseX, mouseY, clicked);
         }
     }
     return false;
@@ -334,6 +379,9 @@ void DialogPrompt::draw(RenderTarget& target, RenderStates states) const {
         }
         for (const TextField& f : optionFields) {
             target.draw(f, states);
+        }
+        for (const CheckBox& c : optionChecks) {
+            target.draw(c, states);
         }
     }
 }
@@ -404,7 +452,8 @@ UserInterface::UserInterface() {
     fileMenu.addMenuButton(TextButton("  Save As...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 3));
     fileMenu.addMenuButton(TextButton("  Rename...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4));
     fileMenu.addMenuButton(TextButton("  Resize...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 5));
-    fileMenu.addMenuButton(TextButton("  Exit", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6));
+    fileMenu.addMenuButton(TextButton("  Configuration...", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6));
+    fileMenu.addMenuButton(TextButton("  Exit", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 7));
     
     viewMenu = DropdownMenu(TextButton(" View ", Color::Black, 15, fileMenu.getPosition().x + fileMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     viewMenu.addMenuButton(TextButton("  Toggle View/Edit Mode      Enter", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::viewOption, 0));
@@ -479,6 +528,10 @@ UserInterface::UserInterface() {
     relabelPrompt.optionButtons.emplace_back("Relabel", Color::Black, 15, 244.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::relabelTarget);
     relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
+    
+    configPrompt = DialogPrompt("Configuration menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 140.0f));
+    configPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
+    configPrompt.optionChecks.emplace_back("Test thing", Color::Black, 15, 244.0f, 110.0f, Color(240, 240, 240), Color::Red);
 }
 
 bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
@@ -496,6 +549,7 @@ bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
         renamePrompt.update(mouseX, mouseY, clicked);
         resizePrompt.update(mouseX, mouseY, clicked);
         relabelPrompt.update(mouseX, mouseY, clicked);
+        configPrompt.update(mouseX, mouseY, clicked);
     }
     return false;
 }
@@ -506,6 +560,7 @@ bool UserInterface::update(Event::TextEvent textEvent) {
         renamePrompt.update(textEvent);
         resizePrompt.update(textEvent);
         relabelPrompt.update(textEvent);
+        configPrompt.update(textEvent);
     }
     return false;
 }
@@ -538,4 +593,5 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(renamePrompt, states);
     target.draw(resizePrompt, states);
     target.draw(relabelPrompt, states);
+    target.draw(configPrompt, states);
 }

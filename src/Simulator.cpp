@@ -184,7 +184,7 @@ int Simulator::start() {
                     windowView.reset(FloatRect(Vector2f(0.0f, 0.0f), Vector2f(windowPtr->getSize())));
                     userInterfacePtr->update(event.size);
                 } else if (event.type == Event::Closed) {
-                    fileOption(6);
+                    fileOption(7);
                 }
             }
             if (UserInterface::fieldToSelectPtr != nullptr) {    // If dialog box with text field is opening up, the field gets selected after events have been processed.
@@ -438,7 +438,14 @@ void Simulator::fileOption(int option) {
                 UserInterface::pushMessage("Error: Failed to resize the board. " + string(ex.what()), true);
             }
         }
-    } else if (option == 6) {    // Exit program.
+    } else if (option == 6) {    // Configuration.
+        if (!userInterfacePtr->configPrompt.visible) {
+            userInterfacePtr->configPrompt.show();
+        } else {
+            UserInterface::closeAllDialogPrompts();
+            cout << "we gotta update the thingy." << endl;
+        }
+    } else if (option == 7) {    // Exit program.
         if (!userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
             userInterfacePtr->savePrompt.optionButtons[1].actionOption = 6;
             userInterfacePtr->savePrompt.show();

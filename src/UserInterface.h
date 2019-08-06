@@ -74,12 +74,28 @@ class TextField : public UIComponent {    // A text field for string input. Text
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 
+class CheckBox : public UIComponent {    // A check box that can be clicked to toggle a setting.
+    public:
+    Text text;
+    RectangleShape button, check;
+    Color checkColor;
+    bool checked;
+    
+    CheckBox();
+    CheckBox(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& buttonColor, const Color& checkColor, bool startChecked = false);
+    bool update(int mouseX, int mouseY, bool clicked);
+    
+    private:
+    virtual void draw(RenderTarget& target, RenderStates states) const;
+};
+
 class DialogPrompt : public UIComponent {    // A dialog box with buttons and text fields.
     public:
     Text text;
     RectangleShape background;
     vector<TextButton> optionButtons;
     vector<TextField> optionFields;
+    vector<CheckBox> optionChecks;
     
     DialogPrompt();
     DialogPrompt(const string& dialogText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, const Vector2f& size);
@@ -105,7 +121,7 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton tpsDisplay;
-    DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt;
+    DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt, configPrompt;
     
     UserInterface();
     bool update(int mouseX, int mouseY, bool clicked);
