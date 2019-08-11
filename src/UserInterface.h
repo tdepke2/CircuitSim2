@@ -79,13 +79,16 @@ class CheckBox : public UIComponent {    // A check box that can be clicked to t
     Text text;
     RectangleShape button, check;
     Color checkColor;
-    bool checked;
     
     CheckBox();
     CheckBox(const string& buttonText, const Color& textColor, unsigned int charSize, float x, float y, const Color& buttonColor, const Color& checkColor, bool startChecked = false);
+    bool isChecked() const;
+    void setChecked(bool checked);
     bool update(int mouseX, int mouseY, bool clicked);
     
     private:
+    bool _checked;
+    
     virtual void draw(RenderTarget& target, RenderStates states) const;
 };
 

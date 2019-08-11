@@ -47,6 +47,10 @@ const Vector2u& Simulator::getWindowSize() {
     return windowPtr->getSize();
 }
 
+const UserInterface* Simulator::getUserInterface() {
+    return userInterfacePtr;
+}
+
 int Simulator::start() {
     cout << "Initializing setup..." << endl;
     int exitCode = 0;
@@ -447,7 +451,7 @@ void Simulator::fileOption(int option) {
         }
     } else if (option == 7) {    // Exit program.
         if (!userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
-            userInterfacePtr->savePrompt.optionButtons[1].actionOption = 6;
+            userInterfacePtr->savePrompt.optionButtons[1].actionOption = 7;
             userInterfacePtr->savePrompt.show();
         } else {
             UserInterface::closeAllDialogPrompts();

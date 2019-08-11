@@ -19,6 +19,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static const Vector2u INITIAL_WINDOW_SIZE;
     
     static const Vector2u& getWindowSize();
+    static const UserInterface* getUserInterface();
     static int start();    // Main thread, handles window event processing and simulation updates.
     static int randomInteger(int min, int max);    // Generates a random integer between min and max inclusive.
     static int randomInteger(int n);    // Generates a random integer between 0 and n - 1.

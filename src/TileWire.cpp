@@ -1,9 +1,11 @@
 #include "Board.h"
+#include "Simulator.h"
 #include "TileButton.h"
 #include "TileGate.h"
 #include "TileLED.h"
 #include "TileSwitch.h"
 #include "TileWire.h"
+#include "UserInterface.h"
 #include <cassert>
 #include <iostream>
 #include <typeinfo>
@@ -180,13 +182,15 @@ void TileWire::followWire(Direction direction, State state) {
     }
     
     if (stage == INVALID_STAGE) {    // Check if wire is in an invalid state and change it if so.
-        if (Board::numStateErrors < 10) {
-            cout << "Detected state conflict in wire at position (" << getPosition().x << ", " << getPosition().y << ")." << endl;
-        }
-        ++Board::numStateErrors;
         _fixTraversedWires(MIDDLE);
-        for (pair<TileWire*, Direction>& wire : traversedWires) {
-            wire.first->setHighlight(true);
+        if (Simulator::getUserInterface()->configPrompt.optionChecks[1].isChecked()) {
+            if (Board::numStateErrors < 10) {
+                cout << "Detected state conflict in wire at position (" << getPosition().x << ", " << getPosition().y << ")." << endl;
+            }
+            ++Board::numStateErrors;
+            for (pair<TileWire*, Direction>& wire : traversedWires) {
+                wire.first->setHighlight(true);
+            }
         }
     }
     traversedWires.clear();
