@@ -31,6 +31,13 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static void relabelTarget(int option = 0);    // Sets the label on the switch/button pointed to by relabelTargetTile, used by the GUI to set a label.
     
     private:
+    struct Configuration {
+        int slowTPSLimit = 2;
+        int mediumTPSLimit = 30;
+        int fastTPSLimit = 60;
+        bool triStateLogicDefault = true;
+        bool pauseOnConflict = true;
+    };
     enum class State {
         Uninitialized, Running, Exiting
     };
@@ -38,6 +45,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
         Paused, Slow, Medium, Fast, Extreme
     };
     
+    static Configuration config;
     static atomic<State> state;
     static SimSpeed simSpeed;
     static mt19937 mainRNG;
@@ -60,6 +68,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static IntRect selectionArea;
     static Tile* relabelTargetTile;
     
+    static void openConfig(const string& filename, bool saveData);
     static void terminationHandler(int sigNum);    // Sets simulation to exit when a termination signal is received from main thread.
     static void renderLoop();    // The render thread.
     static void nextTick();    // Runs the main board simulation for one tick.

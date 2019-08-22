@@ -550,13 +550,14 @@ UserInterface::UserInterface() {
     relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
     
-    configPrompt = DialogPrompt("Configuration menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 230.0f));
-    configPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 181.0f, 200.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
+    configPrompt = DialogPrompt("Configuration menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 260.0f));
+    configPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 181.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
     configPrompt.optionFields.emplace_back("Slow TPS limit:   ", "", Color::Black, 15, 90.0f, 40.0f, Color::White, Color(214, 229, 255), 9);
     configPrompt.optionFields.emplace_back("Medium TPS limit: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 9);
     configPrompt.optionFields.emplace_back("Fast TPS limit:   ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 9);
-    configPrompt.optionChecks.emplace_back("Tri-state logic rules (this board)", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(80, 80, 80), true);
-    configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(80, 80, 80), true);
+    configPrompt.optionChecks.emplace_back("Tri-state logic rules (new boards)", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(80, 80, 80));
+    configPrompt.optionChecks.emplace_back("Tri-state logic rules (this board)", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(80, 80, 80));
+    configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(80, 80, 80));
 }
 
 bool UserInterface::update(int mouseX, int mouseY, bool clicked) {

@@ -21,6 +21,7 @@
 
 const unsigned int Simulator::FRAMERATE_LIMIT = 60;
 const Vector2u Simulator::INITIAL_WINDOW_SIZE(1300, 900);
+Simulator::Configuration Simulator::config;
 atomic<Simulator::State> Simulator::state = State::Uninitialized;
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Medium;
 mt19937 Simulator::mainRNG;
@@ -81,6 +82,7 @@ int Simulator::start() {
         copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
         copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         userInterfacePtr = new UserInterface();
+        openConfig("resources/config.ini", false);
         wireToolLabelPtr = new Text("", Board::getFont(), 30);
         wireToolLabelPtr->setFillColor(Color::White);
         wireToolLabelPtr->setOutlineColor(Color::Black);
@@ -90,7 +92,7 @@ int Simulator::start() {
         Clock perSecondClock, loopClock, tickClock;    // The perSecondClock counts FPS and TPS, loopClock limits loops per second, tickClock manages tick speed.
         renderMutex.unlock();
         
-        cout << "Loading completed." << endl;
+        cout << "Setup complete." << endl;
         while (state != State::Exiting) {
             renderReadyMutex.lock();    // Two mutex system helps prevent starvation of render thread and main thread (a binary semaphore could work even better though).
             renderMutex.lock();
@@ -716,6 +718,79 @@ void Simulator::relabelTarget(int option) {
         assert(false);
     }
     UserInterface::closeAllDialogPrompts();
+}
+
+void Simulator::openConfig(const string& filename, bool saveData) {
+    if (!saveData) {
+        cout << "Loading configuration..." << endl;
+    }
+    ifstream inputFile(filename);
+    if (!inputFile.is_open()) {
+        throw runtime_error("\"" + filename + "\": Unable to open config file.");
+    }
+    
+    string line, fileData;
+    int lineNumber = 0, numEntries = 0;
+    try {
+        while (getline(inputFile, line)) {
+            ++lineNumber;
+            if (line.length() != 0 && line.find(';') == string::npos) {
+                string option = "", value = "";
+                unsigned int i = 0;
+                while (i < line.length() && line[i] == ' ') {
+                    ++i;
+                }
+                while (i < line.length() && line[i] != ' ' && line[i] != '=') {
+                    option.push_back(line[i]);
+                    ++i;
+                }
+                while (i < line.length() && line[i] == ' ') {
+                    ++i;
+                }
+                ++i;
+                while (i < line.length()) {
+                    value.push_back(line[i]);
+                    ++i;
+                }
+                
+                if (numEntries == 0 && line == "[settings]") {
+                    ++numEntries;
+                } else if (numEntries == 1) {
+                    if (option == "slow_tps_limit") {
+                        config.slowTPSLimit = stoi(value);
+                    } else if (option == "medium_tps_limit") {
+                        config.mediumTPSLimit = stoi(value);
+                    } else if (option == "fast_tps_limit") {
+                        config.fastTPSLimit = stoi(value);
+                    } else if (option == "tri-state_logic_default") {
+                        config.triStateLogicDefault = static_cast<bool>(stoi(value));
+                    } else if (option == "pause_on_conflict") {
+                        config.pauseOnConflict = static_cast<bool>(stoi(value));
+                    } else {
+                        throw runtime_error("Invalid config file data.");
+                    }
+                } else {
+                    throw runtime_error("Invalid config file data.");
+                }
+            }
+            fileData += line + "\n";
+        }
+        if (numEntries != 1) {
+            throw runtime_error("Missing data, end of file reached.");
+        }
+    } catch (exception& ex) {
+        inputFile.close();
+        throw runtime_error("\"" + filename + "\" at line " + to_string(lineNumber) + ": " + ex.what());
+    }
+    inputFile.close();
+    
+    if (!saveData) {
+        userInterfacePtr->configPrompt.optionFields[0].setString(to_string(config.slowTPSLimit));
+        userInterfacePtr->configPrompt.optionFields[1].setString(to_string(config.mediumTPSLimit));
+        userInterfacePtr->configPrompt.optionFields[2].setString(to_string(config.fastTPSLimit));
+        userInterfacePtr->configPrompt.optionChecks[0].setChecked(config.triStateLogicDefault);
+        userInterfacePtr->configPrompt.optionChecks[2].setChecked(config.pauseOnConflict);
+    }
 }
 
 void Simulator::terminationHandler(int sigNum) {
