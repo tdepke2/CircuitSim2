@@ -456,8 +456,29 @@ void Simulator::fileOption(int option) {
         if (!userInterfacePtr->configPrompt.visible) {
             userInterfacePtr->configPrompt.show();
         } else {
-            UserInterface::closeAllDialogPrompts();
-            cout << "we gotta update the thingy." << endl;
+            try {
+                float f = stof(userInterfacePtr->configPrompt.optionFields[0].field.getString().toAnsiString());
+                if (f <= 0.0f) {
+                    throw runtime_error("Value for slow TPS limit must be greater than zero.");
+                }
+                config.slowTPSLimit = f;
+                f = stof(userInterfacePtr->configPrompt.optionFields[1].field.getString().toAnsiString());
+                if (f <= 0.0f) {
+                    throw runtime_error("Value for medium TPS limit must be greater than zero.");
+                }
+                config.mediumTPSLimit = f;
+                f = stof(userInterfacePtr->configPrompt.optionFields[2].field.getString().toAnsiString());
+                if (f <= 0.0f) {
+                    throw runtime_error("Value for fast TPS limit must be greater than zero.");
+                }
+                config.fastTPSLimit = f;
+                config.triStateLogicDefault = userInterfacePtr->configPrompt.optionChecks[0].isChecked();
+                config.pauseOnConflict = userInterfacePtr->configPrompt.optionChecks[2].isChecked();
+                UserInterface::closeAllDialogPrompts();
+                cout << "save the config and update gui thingy (same with loading config cuz I forgot that)." << endl;
+            } catch (exception& ex) {
+                UserInterface::pushMessage("Error: " + string(ex.what()), true);
+            }
         }
     } else if (option == 7) {    // Exit program.
         if (!userInterfacePtr->savePrompt.visible && boardPtr->changesMade) {
