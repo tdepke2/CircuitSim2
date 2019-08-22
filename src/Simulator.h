@@ -9,6 +9,7 @@ class UserInterface;
 #include <mutex>
 #include <random>
 #include <SFML/Graphics.hpp>
+#include <string>
 
 using namespace std;
 using namespace sf;
@@ -23,6 +24,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static int start();    // Main thread, handles window event processing and simulation updates.
     static int randomInteger(int min, int max);    // Generates a random integer between min and max inclusive.
     static int randomInteger(int n);    // Generates a random integer between 0 and n - 1.
+    static string decimalToString(float f);    // Formats a float to a string with minimal trailing zeros.
     static void fileOption(int option);    // Calls an option in the file menu.
     static void viewOption(int option);    // Calls an option in the view menu.
     static void runOption(int option);    // Calls an option in the run menu.
@@ -32,9 +34,9 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     
     private:
     struct Configuration {
-        int slowTPSLimit = 2;
-        int mediumTPSLimit = 30;
-        int fastTPSLimit = 60;
+        float slowTPSLimit = 2.0f;
+        float mediumTPSLimit = 30.0f;
+        float fastTPSLimit = 60.0f;
         bool triStateLogicDefault = true;
         bool pauseOnConflict = true;
     };
@@ -68,7 +70,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static IntRect selectionArea;
     static Tile* relabelTargetTile;
     
-    static void openConfig(const string& filename, bool saveData);
+    static void openConfig(const string& filename, bool saveData);    // Opens a configuration file for loading/saving data.
     static void terminationHandler(int sigNum);    // Sets simulation to exit when a termination signal is received from main thread.
     static void renderLoop();    // The render thread.
     static void nextTick();    // Runs the main board simulation for one tick.

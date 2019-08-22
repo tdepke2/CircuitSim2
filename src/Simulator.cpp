@@ -14,7 +14,6 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-#include <string>
 #include <thread>
 #include <typeinfo>
 #include <windows.h>
@@ -238,13 +237,13 @@ int Simulator::start() {
                     tileCursor = Vector2i(-1, -1);
                 }
                 
-                if (simSpeed == SimSpeed::Slow && tickClock.getElapsedTime().asSeconds() >= 1.0f / 2.0f) {
+                if (simSpeed == SimSpeed::Slow && tickClock.getElapsedTime().asSeconds() >= 1.0f / config.slowTPSLimit) {
                     nextTick();
                     tickClock.restart();
-                } else if (simSpeed == SimSpeed::Medium && tickClock.getElapsedTime().asSeconds() >= 1.0f / 30.0f) {
+                } else if (simSpeed == SimSpeed::Medium && tickClock.getElapsedTime().asSeconds() >= 1.0f / config.mediumTPSLimit) {
                     nextTick();
                     tickClock.restart();
-                } else if (simSpeed == SimSpeed::Fast && tickClock.getElapsedTime().asSeconds() >= 1.0f / 60.0f) {
+                } else if (simSpeed == SimSpeed::Fast && tickClock.getElapsedTime().asSeconds() >= 1.0f / config.fastTPSLimit) {
                     nextTick();
                     tickClock.restart();
                 } else if (simSpeed == SimSpeed::Extreme) {
@@ -297,6 +296,15 @@ int Simulator::randomInteger(int min, int max) {
 
 int Simulator::randomInteger(int n) {
     return randomInteger(0, n - 1);
+}
+
+string Simulator::decimalToString(float f) {
+    string s = to_string(f);
+    unsigned int minLength = s.rfind('.') + 2;
+    while (s.length() > minLength && s.back() == '0') {
+        s.pop_back();
+    }
+    return s;
 }
 
 void Simulator::fileOption(int option) {
@@ -757,11 +765,23 @@ void Simulator::openConfig(const string& filename, bool saveData) {
                     ++numEntries;
                 } else if (numEntries == 1) {
                     if (option == "slow_tps_limit") {
-                        config.slowTPSLimit = stoi(value);
+                        float valueAsFloat = stof(value);
+                        if (valueAsFloat <= 0.0f) {
+                            throw runtime_error("Value for \"slow_tps_limit\" must be greater than zero.");
+                        }
+                        config.slowTPSLimit = valueAsFloat;
                     } else if (option == "medium_tps_limit") {
-                        config.mediumTPSLimit = stoi(value);
+                        float valueAsFloat = stof(value);
+                        if (valueAsFloat <= 0.0f) {
+                            throw runtime_error("Value for \"medium_tps_limit\" must be greater than zero.");
+                        }
+                        config.mediumTPSLimit = valueAsFloat;
                     } else if (option == "fast_tps_limit") {
-                        config.fastTPSLimit = stoi(value);
+                        float valueAsFloat = stof(value);
+                        if (valueAsFloat <= 0.0f) {
+                            throw runtime_error("Value for \"fast_tps_limit\" must be greater than zero.");
+                        }
+                        config.fastTPSLimit = valueAsFloat;
                     } else if (option == "tri-state_logic_default") {
                         config.triStateLogicDefault = static_cast<bool>(stoi(value));
                     } else if (option == "pause_on_conflict") {
@@ -785,9 +805,9 @@ void Simulator::openConfig(const string& filename, bool saveData) {
     inputFile.close();
     
     if (!saveData) {
-        userInterfacePtr->configPrompt.optionFields[0].setString(to_string(config.slowTPSLimit));
-        userInterfacePtr->configPrompt.optionFields[1].setString(to_string(config.mediumTPSLimit));
-        userInterfacePtr->configPrompt.optionFields[2].setString(to_string(config.fastTPSLimit));
+        userInterfacePtr->configPrompt.optionFields[0].setString(decimalToString(config.slowTPSLimit));
+        userInterfacePtr->configPrompt.optionFields[1].setString(decimalToString(config.mediumTPSLimit));
+        userInterfacePtr->configPrompt.optionFields[2].setString(decimalToString(config.fastTPSLimit));
         userInterfacePtr->configPrompt.optionChecks[0].setChecked(config.triStateLogicDefault);
         userInterfacePtr->configPrompt.optionChecks[2].setChecked(config.pauseOnConflict);
     }
