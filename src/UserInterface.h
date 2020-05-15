@@ -11,7 +11,7 @@
 using namespace std;
 using namespace sf;
 
-class UIComponent : public Drawable, public Transformable {
+class UIComponent : public Drawable, public Transformable {    // Abstract base class for all drawable elements of the user interface.
     public:
     bool visible;
     

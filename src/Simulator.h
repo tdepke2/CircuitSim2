@@ -51,18 +51,18 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static atomic<State> state;
     static SimSpeed simSpeed;
     static mt19937 mainRNG;
-    static mutex renderMutex, renderReadyMutex;
+    static mutex renderMutex, renderReadyMutex;    // Ensures render call and simulation tick are mutually exclusive.
     static int fpsCounter, tpsCounter;
-    static View boardView, windowView;
+    static View boardView, windowView;    // The boardView keeps the current view transform of the board, windowView is the default transform of the application.
     static float zoomLevel;
-    static RenderWindow* windowPtr;
-    static Board* boardPtr;
-    static Board* currentTileBoardPtr;
-    static Board* copyBufferBoardPtr;
-    static Board* wireVerticalBoardPtr;
+    static RenderWindow* windowPtr;    // Main render window provided by SFML.
+    static Board* boardPtr;    // The primary circuit board.
+    static Board* currentTileBoardPtr;    // Stores currently selected tile to place on the board.
+    static Board* copyBufferBoardPtr;    // Stores last copied region.
+    static Board* wireVerticalBoardPtr;    // Both wireVerticalBoardPtr and wireHorizontalBoardPtr are used to display the wire tool.
     static Board* wireHorizontalBoardPtr;
-    static UserInterface* userInterfacePtr;
-    static Text* wireToolLabelPtr;
+    static UserInterface* userInterfacePtr;    // Displays the dropdown menu, dialog prompts, and event messages.
+    static Text* wireToolLabelPtr;    // Displays the distance measurement for the wire tool.
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible, wireToolVerticalFirst;
     static Vector2i tileCursor, selectionStart, wireToolStart;

@@ -2,6 +2,10 @@ TODO:
     - Display current "epoch" of simulation on UI.
     - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.
     - Add a custom application icon.
+    
+    - Config not really working right now.
+    - Smart pointers, specifically in Simulator class.
+    - Missing config file should not be a fatal error.
 
 Current and potential bugs:
     - Problem where file dialog conflicts with internal window state, seems to only be fixable by multithreading the FileDialog instance.

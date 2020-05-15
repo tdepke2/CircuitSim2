@@ -755,16 +755,16 @@ void Simulator::openConfig(const string& filename, bool saveData) {
     }
     ifstream inputFile(filename);
     if (!inputFile.is_open()) {
-        throw runtime_error("\"" + filename + "\": Unable to open config file.");
+        throw runtime_error("\"" + filename + "\": Unable to open configuration file.");
     }
     
-    string line, fileData;
+    string line, fileData;    // Parse the configuration file, expects the file format to conform to the INI style. The fileData string stores the entire file.
     int lineNumber = 0, numEntries = 0;
     try {
         while (getline(inputFile, line)) {
             ++lineNumber;
             if (line.length() != 0 && line.find(';') == string::npos) {
-                string option = "", value = "";
+                string option = "", value = "";    // Parse "option = value" from the current line.
                 unsigned int i = 0;
                 while (i < line.length() && line[i] == ' ') {
                     ++i;
@@ -785,7 +785,7 @@ void Simulator::openConfig(const string& filename, bool saveData) {
                 if (numEntries == 0 && line == "[settings]") {
                     ++numEntries;
                 } else if (numEntries == 1) {
-                    if (option == "slow_tps_limit") {
+                    if (option == "slow_tps_limit") {    // Set configuration values from the file.
                         float valueAsFloat = stof(value);
                         if (valueAsFloat <= 0.0f) {
                             throw runtime_error("Value for \"slow_tps_limit\" must be greater than zero.");
@@ -825,7 +825,7 @@ void Simulator::openConfig(const string& filename, bool saveData) {
     }
     inputFile.close();
     
-    if (!saveData) {
+    if (!saveData) {    // Update user interface to match new configuration.
         userInterfacePtr->configPrompt.optionFields[0].setString(decimalToString(config.slowTPSLimit));
         userInterfacePtr->configPrompt.optionFields[1].setString(decimalToString(config.mediumTPSLimit));
         userInterfacePtr->configPrompt.optionFields[2].setString(decimalToString(config.fastTPSLimit));
@@ -855,7 +855,7 @@ void Simulator::renderLoop() {
         wireVerticalBoardPtr->updateCosmetics();
         wireHorizontalBoardPtr->updateCosmetics();
         
-        windowPtr->clear();
+        windowPtr->clear();    // Clear and redraw all of the visible elements.
         windowPtr->setView(boardView);
         windowPtr->draw(*boardPtr);
         if (tileCursor != Vector2i(-1, -1)) {
@@ -882,7 +882,7 @@ void Simulator::renderLoop() {
 void Simulator::nextTick() {
     boardPtr->updateTiles();
     ++tpsCounter;
-    if (Board::numStateErrors > 0) {
+    if (Board::numStateErrors > 0) {    // Check for state errors in the last tick.
         if (Board::numStateErrors > 10) {
             cout << "(and " << Board::numStateErrors - 10 << " more...)" << endl;
         }
@@ -895,7 +895,7 @@ void Simulator::nextTick() {
 }
 
 void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
-    if (keyEvent.control) {
+    if (keyEvent.control) {    // Most key bindings are listed in the user interface dropdown menus.
         if (keyEvent.code == Keyboard::N) {
             fileOption(0);
         } else if (keyEvent.code == Keyboard::O) {
@@ -1005,12 +1005,12 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
     if (tileCursor == Vector2i(-1, -1)) {
         return;
     }
-    if (!selectionArea.contains(tileCursor)) {
+    if (!selectionArea.contains(tileCursor)) {    // If not pasting into a selection, just copy the tiles to be pasted onto the board at the position.
         if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
             boardPtr->replaceTile(currentTileBoardPtr->getTile(Vector2u(0, 0))->clone(boardPtr, Vector2u(tileCursor)));
         } else if (copyBufferVisible) {
             IntRect pasteArea(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y);
-            if (tileCursor.x + pasteArea.width > static_cast<int>(boardPtr->getSize().x)) {
+            if (tileCursor.x + pasteArea.width > static_cast<int>(boardPtr->getSize().x)) {    // Check if paste area extends off the board. If it does, crop paste area if forcePaste is enabled.
                 if (forcePaste) {
                     pasteArea.width = boardPtr->getSize().x - tileCursor.x;
                 } else {
@@ -1024,7 +1024,7 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
                     return;
                 }
             }
-            if (!forcePaste) {
+            if (!forcePaste) {    // If not forcePaste and the paste area is not blank, fail the paste.
                 for (int y = tileCursor.y + pasteArea.height - 1; y >= tileCursor.y; --y) {
                     for (int x = tileCursor.x + pasteArea.width - 1; x >= tileCursor.x; --x) {
                         if (typeid(*boardPtr->getTile(Vector2u(x, y))) != typeid(Tile)) {
@@ -1035,13 +1035,13 @@ void Simulator::pasteToBoard(const Vector2i& tileCursor, bool forcePaste) {
             }
             boardPtr->cloneArea(*copyBufferBoardPtr, pasteArea, tileCursor);
         }
-        boardPtr->highlightArea(selectionArea, false);
+        boardPtr->highlightArea(selectionArea, false);    // Remove highlight for any active selection.
         selectionStart = Vector2i(-1, -1);
         selectionArea = IntRect(0, 0, 0, 0);
         if (tileCursor != Vector2i(-1, -1)) {
             boardPtr->getTile(tileCursor)->setHighlight(true);
         }
-    } else {
+    } else {    // Pasting into selection, need to tile the paste to fill the selection area.
         if (currentTileBoardPtr->getSize() == Vector2u(1, 1)) {
             for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
                 for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
