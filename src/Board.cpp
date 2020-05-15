@@ -397,6 +397,7 @@ void Board::loadFile(const string& filename) {
         name = filename;
     }
     clear();
+    enableExtraLogicStates = false;    // By default, extra logic states are off for backwards compatibility.
     
     string line, notesString;
     float fileVersion;
@@ -484,7 +485,9 @@ void Board::loadFile(const string& filename) {
             } else if (numEntries == 3 && line == "data: {") {
                 ++numEntries;
             } else if (numEntries == 4) {
-                if (line != "}") {
+                if (line.find("extraLogicStates:") == 0) {
+                    enableExtraLogicStates = stoi(line.substr(17));
+                } else if (line != "}") {
                     UserInterface::pushMessage("Warn: \"" + filename + "\" at line " + to_string(lineNumber) + ": Found some unrecognized data.", true);
                 } else {
                     ++numEntries;
@@ -559,6 +562,7 @@ void Board::saveFile(const string& filename) {
     outputFile << "width: " << _size.x << endl;
     outputFile << "height: " << _size.y << endl;
     outputFile << "data: {" << endl;
+    outputFile << "extraLogicStates: " << enableExtraLogicStates << endl;
     outputFile << "}" << endl;
     outputFile << "notes: {" << endl;
     outputFile << _notesText.getString().toAnsiString();

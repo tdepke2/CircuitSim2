@@ -68,20 +68,23 @@ int Simulator::start() {
         windowPtr->setActive(false);
         renderThread = thread(renderLoop);
         
+        GetCurrentDirectory(sizeof(directoryPath), directoryPath);    // Load file resources and create boards.
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Board::loadFont("resources/consolas.ttf");
+        Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
         boardPtr = new Board();
         currentTileBoardPtr = new Board();
         copyBufferBoardPtr = new Board();
         wireVerticalBoardPtr = new Board();
         wireHorizontalBoardPtr = new Board();
-        GetCurrentDirectory(sizeof(directoryPath), directoryPath);
-        Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
+        userInterfacePtr = new UserInterface();
+        
+        openConfig(string(directoryPath) + "\\resources\\config.ini", false);    // Load the configuration file.
         boardPtr->newBoard();
+        Board::enableExtraLogicStates = config.triStateLogicDefault;
+        userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
         copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
         copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
-        userInterfacePtr = new UserInterface();
-        openConfig(string(directoryPath) + "\\resources\\config.ini", false);
         wireToolLabelPtr = new Text("", Board::getFont(), 30);
         wireToolLabelPtr->setFillColor(Color::White);
         wireToolLabelPtr->setOutlineColor(Color::Black);
@@ -319,6 +322,8 @@ void Simulator::fileOption(int option) {
                 tileCursor = Vector2i(-1, -1);
             }
             boardPtr->newBoard();
+            Board::enableExtraLogicStates = config.triStateLogicDefault;
+            userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
             viewOption(3);
             UserInterface::pushMessage("Created new board with size " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + ".");
             UserInterface::closeAllDialogPrompts();
@@ -358,6 +363,7 @@ void Simulator::fileOption(int option) {
                         tileCursor = Vector2i(-1, -1);
                     }
                     boardPtr->loadFile(string(filename));
+                    userInterfacePtr->configPrompt.optionChecks[1].setChecked(Board::enableExtraLogicStates);
                     viewOption(3);
                 } else {
                     cout << "No file selected." << endl;
@@ -473,6 +479,10 @@ void Simulator::fileOption(int option) {
                 }
                 config.fastTPSLimit = f;
                 config.triStateLogicDefault = userInterfacePtr->configPrompt.optionChecks[0].isChecked();
+                if (Board::enableExtraLogicStates != userInterfacePtr->configPrompt.optionChecks[1].isChecked()) {
+                    boardPtr->changesMade = true;
+                    Board::enableExtraLogicStates = userInterfacePtr->configPrompt.optionChecks[1].isChecked();
+                }
                 config.pauseOnConflict = userInterfacePtr->configPrompt.optionChecks[2].isChecked();
                 openConfig(string(directoryPath) + "\\resources\\config.ini", true);
                 UserInterface::closeAllDialogPrompts();
