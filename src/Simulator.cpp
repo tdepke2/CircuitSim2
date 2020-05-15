@@ -36,6 +36,7 @@ Board* Simulator::wireVerticalBoardPtr = nullptr;
 Board* Simulator::wireHorizontalBoardPtr = nullptr;
 UserInterface* Simulator::userInterfacePtr = nullptr;
 Text* Simulator::wireToolLabelPtr = nullptr;
+char Simulator::directoryPath[260];
 Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::editMode = true, Simulator::copyBufferVisible = false, Simulator::wireToolVerticalFirst = true;
 Vector2i Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1), Simulator::wireToolStart(-1, -1);
@@ -74,14 +75,13 @@ int Simulator::start() {
         copyBufferBoardPtr = new Board();
         wireVerticalBoardPtr = new Board();
         wireHorizontalBoardPtr = new Board();
-        char directoryPath[260];
         GetCurrentDirectory(sizeof(directoryPath), directoryPath);
         Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
         boardPtr->newBoard();
         copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
         copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         userInterfacePtr = new UserInterface();
-        openConfig("resources/config.ini", false);
+        openConfig(string(directoryPath) + "\\resources\\config.ini", false);
         wireToolLabelPtr = new Text("", Board::getFont(), 30);
         wireToolLabelPtr->setFillColor(Color::White);
         wireToolLabelPtr->setOutlineColor(Color::Black);
@@ -474,8 +474,8 @@ void Simulator::fileOption(int option) {
                 config.fastTPSLimit = f;
                 config.triStateLogicDefault = userInterfacePtr->configPrompt.optionChecks[0].isChecked();
                 config.pauseOnConflict = userInterfacePtr->configPrompt.optionChecks[2].isChecked();
+                openConfig(string(directoryPath) + "\\resources\\config.ini", true);
                 UserInterface::closeAllDialogPrompts();
-                cout << "save the config and update gui thingy (same with loading config cuz I forgot that)." << endl;
             } catch (exception& ex) {
                 UserInterface::pushMessage("Error: " + string(ex.what()), true);
             }
@@ -531,30 +531,18 @@ void Simulator::viewOption(int option) {
 void Simulator::runOption(int option) {
     if (option == 0) {    // Step one tick.
         nextTick();
-        simSpeed = SimSpeed::Paused;
-        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
-        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
+        updateSimSpeed(SimSpeed::Paused);
     } else if (option == 1) {    // Change max TPS.
         if (simSpeed == SimSpeed::Paused) {
-            simSpeed = SimSpeed::Slow;
-            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 2         ");
-            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 230));
+            updateSimSpeed(SimSpeed::Slow);
         } else if (simSpeed == SimSpeed::Slow) {
-            simSpeed = SimSpeed::Medium;
-            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 30        ");
-            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 10));
+            updateSimSpeed(SimSpeed::Medium);
         } else if (simSpeed == SimSpeed::Medium) {
-            simSpeed = SimSpeed::Fast;
-            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: 60        ");
-            userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 230, 10));
+            updateSimSpeed(SimSpeed::Fast);
         } else if (simSpeed == SimSpeed::Fast) {
-            simSpeed = SimSpeed::Extreme;
-            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Unlimited ");
-            userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 10, 10));
+            updateSimSpeed(SimSpeed::Extreme);
         } else {
-            simSpeed = SimSpeed::Paused;
-            userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
-            userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
+            updateSimSpeed(SimSpeed::Paused);
         }
     } else {
         assert(false);
@@ -785,33 +773,50 @@ void Simulator::openConfig(const string& filename, bool saveData) {
                 if (numEntries == 0 && line == "[settings]") {
                     ++numEntries;
                 } else if (numEntries == 1) {
-                    if (option == "slow_tps_limit") {    // Set configuration values from the file.
-                        float valueAsFloat = stof(value);
-                        if (valueAsFloat <= 0.0f) {
-                            throw runtime_error("Value for \"slow_tps_limit\" must be greater than zero.");
+                    if (!saveData) {
+                        if (option == "slow_tps_limit") {    // Set configuration values from the file.
+                            float valueAsFloat = stof(value);
+                            if (valueAsFloat <= 0.0f) {
+                                throw runtime_error("Value for \"slow_tps_limit\" must be greater than zero.");
+                            }
+                            config.slowTPSLimit = valueAsFloat;
+                        } else if (option == "medium_tps_limit") {
+                            float valueAsFloat = stof(value);
+                            if (valueAsFloat <= 0.0f) {
+                                throw runtime_error("Value for \"medium_tps_limit\" must be greater than zero.");
+                            }
+                            config.mediumTPSLimit = valueAsFloat;
+                        } else if (option == "fast_tps_limit") {
+                            float valueAsFloat = stof(value);
+                            if (valueAsFloat <= 0.0f) {
+                                throw runtime_error("Value for \"fast_tps_limit\" must be greater than zero.");
+                            }
+                            config.fastTPSLimit = valueAsFloat;
+                        } else if (option == "tri-state_logic_default") {
+                            config.triStateLogicDefault = static_cast<bool>(stoi(value));
+                        } else if (option == "pause_on_conflict") {
+                            config.pauseOnConflict = static_cast<bool>(stoi(value));
+                        } else {
+                            throw runtime_error("Invalid configuration file data.");
                         }
-                        config.slowTPSLimit = valueAsFloat;
-                    } else if (option == "medium_tps_limit") {
-                        float valueAsFloat = stof(value);
-                        if (valueAsFloat <= 0.0f) {
-                            throw runtime_error("Value for \"medium_tps_limit\" must be greater than zero.");
-                        }
-                        config.mediumTPSLimit = valueAsFloat;
-                    } else if (option == "fast_tps_limit") {
-                        float valueAsFloat = stof(value);
-                        if (valueAsFloat <= 0.0f) {
-                            throw runtime_error("Value for \"fast_tps_limit\" must be greater than zero.");
-                        }
-                        config.fastTPSLimit = valueAsFloat;
-                    } else if (option == "tri-state_logic_default") {
-                        config.triStateLogicDefault = static_cast<bool>(stoi(value));
-                    } else if (option == "pause_on_conflict") {
-                        config.pauseOnConflict = static_cast<bool>(stoi(value));
                     } else {
-                        throw runtime_error("Invalid config file data.");
+                        line = option + " = ";
+                        if (option == "slow_tps_limit") {    // Modify line to match current configuration values.
+                            line += decimalToString(config.slowTPSLimit);
+                        } else if (option == "medium_tps_limit") {
+                            line += decimalToString(config.mediumTPSLimit);
+                        } else if (option == "fast_tps_limit") {
+                            line += decimalToString(config.fastTPSLimit);
+                        } else if (option == "tri-state_logic_default") {
+                            line += to_string(config.triStateLogicDefault);
+                        } else if (option == "pause_on_conflict") {
+                            line += to_string(config.pauseOnConflict);
+                        } else {
+                            throw runtime_error("Invalid configuration file data.");
+                        }
                     }
                 } else {
-                    throw runtime_error("Invalid config file data.");
+                    throw runtime_error("Invalid configuration file data.");
                 }
             }
             fileData += line + "\n";
@@ -831,6 +836,34 @@ void Simulator::openConfig(const string& filename, bool saveData) {
         userInterfacePtr->configPrompt.optionFields[2].setString(decimalToString(config.fastTPSLimit));
         userInterfacePtr->configPrompt.optionChecks[0].setChecked(config.triStateLogicDefault);
         userInterfacePtr->configPrompt.optionChecks[2].setChecked(config.pauseOnConflict);
+    } else {    // Save the configuration file.
+        ofstream outputFile(filename);
+        if (!outputFile.is_open()) {
+            throw runtime_error("\"" + filename + "\": Unable to open configuration file.");
+        }
+        outputFile << fileData;
+        outputFile.close();
+    }
+    updateSimSpeed(simSpeed);    // Update the simSpeed indicator.
+}
+
+void Simulator::updateSimSpeed(SimSpeed newSpeed) {
+    simSpeed = newSpeed;
+    if (newSpeed == SimSpeed::Paused) {
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
+    } else if (newSpeed == SimSpeed::Slow) {
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: " + decimalToString(config.slowTPSLimit));
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 230));
+    } else if (newSpeed == SimSpeed::Medium) {
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: " + decimalToString(config.mediumTPSLimit));
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 230, 10));
+    } else if (newSpeed == SimSpeed::Fast) {
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: " + decimalToString(config.fastTPSLimit));
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 230, 10));
+    } else {
+        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Unlimited ");
+        userInterfacePtr->tpsDisplay.button.setFillColor(Color(230, 10, 10));
     }
 }
 
@@ -888,9 +921,7 @@ void Simulator::nextTick() {
         }
         UserInterface::pushMessage("Detected " + to_string(Board::numStateErrors) + " total conflict(s). Simulation has been paused.", true);
         Board::numStateErrors = 0;
-        simSpeed = SimSpeed::Paused;
-        userInterfacePtr->tpsDisplay.text.setString(" Current TPS limit: Paused    ");
-        userInterfacePtr->tpsDisplay.button.setFillColor(Color(10, 10, 230));
+        updateSimSpeed(SimSpeed::Paused);
     }
 }
 

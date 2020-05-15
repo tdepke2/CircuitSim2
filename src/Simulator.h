@@ -63,6 +63,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static Board* wireHorizontalBoardPtr;
     static UserInterface* userInterfacePtr;    // Displays the dropdown menu, dialog prompts, and event messages.
     static Text* wireToolLabelPtr;    // Displays the distance measurement for the wire tool.
+    static char directoryPath[260];    // Base path to the application directory.
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible, wireToolVerticalFirst;
     static Vector2i tileCursor, selectionStart, wireToolStart;
@@ -71,6 +72,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static Tile* relabelTargetTile;
     
     static void openConfig(const string& filename, bool saveData);    // Opens a configuration file for loading/saving data.
+    static void updateSimSpeed(SimSpeed newSpeed);    // Changes the simulation speed and updates this in the user interface.
     static void terminationHandler(int sigNum);    // Sets simulation to exit when a termination signal is received from main thread.
     static void renderLoop();    // The render thread.
     static void nextTick();    // Runs the main board simulation for one tick.

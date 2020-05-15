@@ -527,7 +527,7 @@ UserInterface::UserInterface() {
     gateMenu.addMenuButton(TextButton("  XOR                       X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 16));
     gateMenu.addMenuButton(TextButton("  XNOR                Shift+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 17));
     
-    tpsDisplay = TextButton(" Current TPS limit: 30        ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
+    tpsDisplay = TextButton(" Current TPS limit: ...       ", Color::Black, 15, gateMenu.getPosition().x + gateMenu.button.button.getSize().x + 30.0f, 5.0f, Color(10, 230, 10), Color::Black, nullptr);
     
     savePrompt = DialogPrompt("Are you sure? Changes have not been saved.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 75.0f));
     savePrompt.optionButtons.emplace_back("Save", Color::Black, 15, 325.0f, 45.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 2);
