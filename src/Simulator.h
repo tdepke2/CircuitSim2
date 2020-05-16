@@ -66,11 +66,12 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static char directoryPath[260];    // Base path to the application directory.
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible, wireToolVerticalFirst;
-    static Vector2i tileCursor, selectionStart, wireToolStart;
+    static Vector2i mouseStart, tileCursor, selectionStart, wireToolStart;
     static Vector2u wireVerticalPosition, wireHorizontalPosition;
     static IntRect selectionArea;
     static Tile* relabelTargetTile;
     
+    static void processEvents();    // Poll all events from the window and update simulation.
     static void openConfig(const string& filename, bool saveData);    // Opens a configuration file for loading/saving data.
     static void updateSimSpeed(SimSpeed newSpeed);    // Changes the simulation speed and updates this in the user interface.
     static void terminationHandler(int sigNum);    // Sets simulation to exit when a termination signal is received from main thread.
