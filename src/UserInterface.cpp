@@ -500,6 +500,7 @@ UserInterface::UserInterface() {
     toolsMenu.addMenuButton(TextButton("  Paste                        Ctrl+V", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 10));
     toolsMenu.addMenuButton(TextButton("  Delete                          DEL", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 11));
     toolsMenu.addMenuButton(TextButton("  Wire Tool                         W", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 12));
+    toolsMenu.addMenuButton(TextButton("  Selection Query                   Q", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13));
     
     wireMenu = DropdownMenu(TextButton(" Wire ", Color::Black, 15, toolsMenu.getPosition().x + toolsMenu.button.button.getSize().x, 5.0f, Color::White, Color(214, 229, 255), nullptr), Color(240, 240, 240));
     wireMenu.addMenuButton(TextButton("  Blank (Eraser)      Space", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::placeTile, 0));
@@ -558,6 +559,11 @@ UserInterface::UserInterface() {
     configPrompt.optionChecks.emplace_back("Tri-state logic rules (new boards)", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(80, 80, 80));
     configPrompt.optionChecks.emplace_back("Tri-state logic rules (this board)", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(80, 80, 80));
     configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(80, 80, 80));
+    
+    queryPrompt = DialogPrompt("Test menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 260.0f));
+    queryPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 181.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13);
+    queryPrompt.optionFields.emplace_back("Slow TPS limit:   ", "", Color::Black, 15, 90.0f, 40.0f, Color::White, Color(214, 229, 255), 9);
+    queryPrompt.optionChecks.emplace_back("Tri-state logic rules (new boards)", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(80, 80, 80));
 }
 
 bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
@@ -576,6 +582,7 @@ bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
         resizePrompt.update(mouseX, mouseY, clicked);
         relabelPrompt.update(mouseX, mouseY, clicked);
         configPrompt.update(mouseX, mouseY, clicked);
+        queryPrompt.update(mouseX, mouseY, clicked);
     }
     return false;
 }
@@ -587,6 +594,7 @@ bool UserInterface::update(Event::TextEvent textEvent) {
         resizePrompt.update(textEvent);
         relabelPrompt.update(textEvent);
         configPrompt.update(textEvent);
+        queryPrompt.update(textEvent);
     }
     return false;
 }
@@ -620,4 +628,5 @@ void UserInterface::draw(RenderTarget& target, RenderStates states) const {
     target.draw(resizePrompt, states);
     target.draw(relabelPrompt, states);
     target.draw(configPrompt, states);
+    target.draw(queryPrompt, states);
 }

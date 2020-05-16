@@ -124,7 +124,7 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
     TextButton tpsDisplay;
-    DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt, configPrompt;
+    DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt, configPrompt, queryPrompt;
     
     UserInterface();
     bool update(int mouseX, int mouseY, bool clicked);

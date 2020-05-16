@@ -601,6 +601,12 @@ void Simulator::toolsOption(int option) {
             wireVerticalBoardPtr->clear();
             wireHorizontalBoardPtr->clear();
         }
+    } else if (option == 13) {    // Selection query tool.
+        if (!userInterfacePtr->queryPrompt.visible) {
+            userInterfacePtr->queryPrompt.show();
+        } else {
+            UserInterface::closeAllDialogPrompts();
+        }
     } else {
         assert(false);
     }
@@ -990,6 +996,8 @@ void Simulator::handleKeyPress(Event::KeyEvent keyEvent) {
                 toolsOption(11);
             } else if (keyEvent.code == Keyboard::W) {
                 toolsOption(12);
+            } else if (keyEvent.code == Keyboard::Q) {
+                toolsOption(13);
             } else if (keyEvent.code == Keyboard::Space) {
                 placeTile(0);
             } else if (keyEvent.code == Keyboard::T) {
