@@ -612,8 +612,8 @@ void Simulator::toolsOption(int option) {
             if (selectionArea.width != 1 && selectionArea.height != 1) {
                 userInterfacePtr->queryPrompt.optionFields[0].setString("Size must be 1-wide only.");
             } else {
-                int numBits = 0;
-                bool binaryValue[32];
+                vector<bool> binaryValue;
+                binaryValue.reserve(32);
                 bool foundError = false;
                 
                 if (selectionArea.width == 1) {    // Selection is along y-axis. Scan selection to get bits.
@@ -621,47 +621,78 @@ void Simulator::toolsOption(int option) {
                         const Tile* t = boardPtr->getTile(Vector2u(selectionArea.left, y));
                         if (typeid(*t) != typeid(Tile)) {
                             if (t->getState() == LOW) {
-                                binaryValue[numBits] = false;
+                                binaryValue.push_back(false);
                             } else if (t->getState() == HIGH) {
-                                binaryValue[numBits] = true;
+                                binaryValue.push_back(true);
                             } else {
+                                binaryValue.push_back(false);
                                 foundError = true;
                             }
-                            ++numBits;
                         }
                     }
-                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.height) + " tiles (" + to_string(numBits) + " bits)");
+                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.height) + " tiles (" + to_string(binaryValue.size()) + " bits)");
                 } else {    // Selection is along x-axis.
                     for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
                         const Tile* t = boardPtr->getTile(Vector2u(x, selectionArea.top));
                         if (typeid(*t) != typeid(Tile)) {
                             if (t->getState() == LOW) {
-                                binaryValue[numBits] = false;
+                                binaryValue.push_back(false);
                             } else if (t->getState() == HIGH) {
-                                binaryValue[numBits] = true;
+                                binaryValue.push_back(true);
                             } else {
+                                binaryValue.push_back(false);
                                 foundError = true;
                             }
-                            ++numBits;
                         }
                     }
-                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width) + " tiles (" + to_string(numBits) + " bits)");
+                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width) + " tiles (" + to_string(binaryValue.size()) + " bits)");
                 }
                 
-                if (foundError) {    // Report that value could not be determined (usually because of a tri-state element).
+                if (foundError || binaryValue.size() > 32) {    // Report that value could not be determined (usually because of a tri-state element).
                     userInterfacePtr->queryPrompt.optionFields[1].setString("???");
                     userInterfacePtr->queryPrompt.optionFields[2].setString("???");
                     userInterfacePtr->queryPrompt.optionFields[3].setString("???");
                     userInterfacePtr->queryPrompt.optionFields[4].setString("???");
-                } else if (numBits > 0) {    // Convert binary value to other possible formats.
-                    string strBinary = "0b";
-                    for (int i = numBits - 1; i >= 0; --i) {
-                        strBinary.push_back(binaryValue[i] ? '1' : '0');
+                } else if (binaryValue.size() > 0) {    // Convert binary value to other possible formats.
+                    if (!userInterfacePtr->queryPrompt.optionChecks[0].isChecked()) {    // If using different direction convention, swap the bits around.
+                        for (int i = 0; i < static_cast<int>(binaryValue.size() / 2); ++i) {
+                            swap(binaryValue[i], binaryValue[binaryValue.size() - 1 - i]);
+                        }
+                    }
+                    
+                    string strBinary = "0b", strHexadecimal = "0x";
+                    int hexDigit = 0;
+                    uint32_t unsignedValue = 0;
+                    int32_t signedValue = 0;
+                    for (int i = static_cast<int>(binaryValue.size() - 1); i >= 0; --i) {
+                        hexDigit <<= 1;
+                        unsignedValue <<= 1;
+                        if (binaryValue[i]) {
+                            strBinary.push_back('1');
+                            hexDigit += 1;
+                            unsignedValue += 1;
+                        } else {
+                            strBinary.push_back('0');
+                        }
+                        
+                        if (i % 4 == 0) {
+                            if (hexDigit < 10) {
+                                strHexadecimal.push_back('0' + hexDigit);
+                            } else {
+                                strHexadecimal.push_back('A' + hexDigit - 10);
+                            }
+                            hexDigit = 0;
+                        }
+                    }
+                    if (binaryValue[binaryValue.size() - 1]) {
+                        signedValue = unsignedValue - (static_cast<int64_t>(1) << binaryValue.size());
+                    } else {
+                        signedValue = unsignedValue;
                     }
                     userInterfacePtr->queryPrompt.optionFields[1].setString(strBinary);
-                    userInterfacePtr->queryPrompt.optionFields[2].setString("");
-                    userInterfacePtr->queryPrompt.optionFields[3].setString("");
-                    userInterfacePtr->queryPrompt.optionFields[4].setString("");
+                    userInterfacePtr->queryPrompt.optionFields[2].setString(strHexadecimal);
+                    userInterfacePtr->queryPrompt.optionFields[3].setString(to_string(unsignedValue));
+                    userInterfacePtr->queryPrompt.optionFields[4].setString(to_string(signedValue));
                 }
             }
             userInterfacePtr->queryPrompt.show();

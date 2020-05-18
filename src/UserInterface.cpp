@@ -173,7 +173,7 @@ TextField::TextField(const string& labelText, const string& initialFieldText, co
     setPosition(x, y);
     this->maxCharacters = maxCharacters;
     selected = false;
-    isEditable = true;
+    this->isEditable = isEditable;
 }
 
 void TextField::setString(const string& s) {
@@ -539,24 +539,24 @@ UserInterface::UserInterface() {
     renamePrompt = DialogPrompt("Enter the new board name.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 103.0f));
     renamePrompt.optionButtons.emplace_back("Rename", Color::Black, 15, 244.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 4);
     renamePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 73.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
-    renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 20.0f, 33.0f, Color::White, Color(214, 229, 255), 40, true);
+    renamePrompt.optionFields.emplace_back("Name: ", "", Color::Black, 15, 20.0f, 33.0f, Color::White, Color(214, 229, 255), 40);
     
     resizePrompt = DialogPrompt("Enter the new board size. Note: if the new size\ntruncates the board, any objects that do not fit\non the new board will be deleted!", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 170.0f));
     resizePrompt.optionButtons.emplace_back("Resize", Color::Black, 15, 244.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 5);
     resizePrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 140.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
-    resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20, true);
-    resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20, true);
+    resizePrompt.optionFields.emplace_back("Width:  ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 20);
+    resizePrompt.optionFields.emplace_back("Height: ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 20);
     
     relabelPrompt = DialogPrompt("Enter the new label for this switch/button. This\nwill bind the tile to the corresponding keyboard\nkey, a space functions as a null keybind.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 140.0f));
     relabelPrompt.optionButtons.emplace_back("Relabel", Color::Black, 15, 244.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::relabelTarget);
     relabelPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 118.0f, 110.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
-    relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1, true);
+    relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
     
     configPrompt = DialogPrompt("Configuration menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 260.0f));
     configPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 181.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
-    configPrompt.optionFields.emplace_back("Slow TPS limit:   ", "", Color::Black, 15, 90.0f, 40.0f, Color::White, Color(214, 229, 255), 9, true);
-    configPrompt.optionFields.emplace_back("Medium TPS limit: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 9, true);
-    configPrompt.optionFields.emplace_back("Fast TPS limit:   ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 9, true);
+    configPrompt.optionFields.emplace_back("Slow TPS limit:   ", "", Color::Black, 15, 90.0f, 40.0f, Color::White, Color(214, 229, 255), 9);
+    configPrompt.optionFields.emplace_back("Medium TPS limit: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 9);
+    configPrompt.optionFields.emplace_back("Fast TPS limit:   ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 9);
     configPrompt.optionChecks.emplace_back("Tri-state logic rules (new boards)", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(80, 80, 80));
     configPrompt.optionChecks.emplace_back("Tri-state logic rules (this board)", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(80, 80, 80));
     configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(80, 80, 80));
@@ -568,7 +568,7 @@ UserInterface::UserInterface() {
     queryPrompt.optionFields.emplace_back("Hexadecimal:    ", "", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Unsigned:       ", "", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("2's complement: ", "", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(214, 229, 255), 34, false);
-    queryPrompt.optionChecks.emplace_back("LSB is at right/bottom", Color::Black, 15, 90.0f, 220.0f, Color::White, Color(80, 80, 80));
+    queryPrompt.optionChecks.emplace_back("LSB is at right/bottom", Color::Black, 15, 90.0f, 220.0f, Color::White, Color(80, 80, 80), true);
 }
 
 bool UserInterface::update(int mouseX, int mouseY, bool clicked) {
