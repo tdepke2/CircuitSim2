@@ -603,6 +603,67 @@ void Simulator::toolsOption(int option) {
         }
     } else if (option == 13) {    // Selection query tool.
         if (!userInterfacePtr->queryPrompt.visible) {
+            userInterfacePtr->queryPrompt.optionFields[0].setString("");    // Clear previous fields.
+            userInterfacePtr->queryPrompt.optionFields[1].setString("");
+            userInterfacePtr->queryPrompt.optionFields[2].setString("");
+            userInterfacePtr->queryPrompt.optionFields[3].setString("");
+            userInterfacePtr->queryPrompt.optionFields[4].setString("");
+            
+            if (selectionArea.width != 1 && selectionArea.height != 1) {
+                userInterfacePtr->queryPrompt.optionFields[0].setString("Size must be 1-wide only.");
+            } else {
+                int numBits = 0;
+                bool binaryValue[32];
+                bool foundError = false;
+                
+                if (selectionArea.width == 1) {    // Selection is along y-axis. Scan selection to get bits.
+                    for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
+                        const Tile* t = boardPtr->getTile(Vector2u(selectionArea.left, y));
+                        if (typeid(*t) != typeid(Tile)) {
+                            if (t->getState() == LOW) {
+                                binaryValue[numBits] = false;
+                            } else if (t->getState() == HIGH) {
+                                binaryValue[numBits] = true;
+                            } else {
+                                foundError = true;
+                            }
+                            ++numBits;
+                        }
+                    }
+                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.height) + " tiles (" + to_string(numBits) + " bits)");
+                } else {    // Selection is along x-axis.
+                    for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
+                        const Tile* t = boardPtr->getTile(Vector2u(x, selectionArea.top));
+                        if (typeid(*t) != typeid(Tile)) {
+                            if (t->getState() == LOW) {
+                                binaryValue[numBits] = false;
+                            } else if (t->getState() == HIGH) {
+                                binaryValue[numBits] = true;
+                            } else {
+                                foundError = true;
+                            }
+                            ++numBits;
+                        }
+                    }
+                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width) + " tiles (" + to_string(numBits) + " bits)");
+                }
+                
+                if (foundError) {    // Report that value could not be determined (usually because of a tri-state element).
+                    userInterfacePtr->queryPrompt.optionFields[1].setString("???");
+                    userInterfacePtr->queryPrompt.optionFields[2].setString("???");
+                    userInterfacePtr->queryPrompt.optionFields[3].setString("???");
+                    userInterfacePtr->queryPrompt.optionFields[4].setString("???");
+                } else if (numBits > 0) {    // Convert binary value to other possible formats.
+                    string strBinary = "0b";
+                    for (int i = numBits - 1; i >= 0; --i) {
+                        strBinary.push_back(binaryValue[i] ? '1' : '0');
+                    }
+                    userInterfacePtr->queryPrompt.optionFields[1].setString(strBinary);
+                    userInterfacePtr->queryPrompt.optionFields[2].setString("");
+                    userInterfacePtr->queryPrompt.optionFields[3].setString("");
+                    userInterfacePtr->queryPrompt.optionFields[4].setString("");
+                }
+            }
             userInterfacePtr->queryPrompt.show();
         } else {
             UserInterface::closeAllDialogPrompts();

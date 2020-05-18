@@ -62,10 +62,10 @@ class TextField : public UIComponent {    // A text field for string input. Text
     Text label, field;
     RectangleShape background, caret;
     int caretPosition, maxCharacters;
-    bool selected;
+    bool selected, isEditable;
     
     TextField();
-    TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters);
+    TextField(const string& labelText, const string& initialFieldText, const Color& textColor, unsigned int charSize, float x, float y, const Color& fillColor, const Color& outlineColor, int maxCharacters, bool isEditable);
     void setString(const string& s);
     bool update(int mouseX, int mouseY, bool clicked);
     bool update(Event::TextEvent textEvent);
