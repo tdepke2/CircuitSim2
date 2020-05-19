@@ -561,14 +561,15 @@ UserInterface::UserInterface() {
     configPrompt.optionChecks.emplace_back("Tri-state logic rules (this board)", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(80, 80, 80));
     configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(80, 80, 80));
     
-    queryPrompt = DialogPrompt("Selection query.\nMake a 1-wide selection over some tiles to read the binary data.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(600.0f, 290.0f));
-    queryPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 280.0f, 260.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13);
+    queryPrompt = DialogPrompt("Selection query.\nMake a 1-wide selection over some tiles to read the binary data.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(600.0f, 320.0f));
+    queryPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 280.0f, 290.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13);
     queryPrompt.optionFields.emplace_back("Selection size: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Binary:         ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Hexadecimal:    ", "", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Unsigned:       ", "", Color::Black, 15, 90.0f, 160.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("2's complement: ", "", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionChecks.emplace_back("LSB is at right/bottom", Color::Black, 15, 90.0f, 220.0f, Color::White, Color(80, 80, 80), true);
+    queryPrompt.optionChecks.emplace_back("Only count LEDs", Color::Black, 15, 90.0f, 250.0f, Color::White, Color(80, 80, 80));
 }
 
 bool UserInterface::update(int mouseX, int mouseY, bool clicked) {

@@ -616,37 +616,49 @@ void Simulator::toolsOption(int option) {
                 binaryValue.reserve(32);
                 bool foundError = false;
                 
-                if (selectionArea.width == 1) {    // Selection is along y-axis. Scan selection to get bits.
-                    for (int y = selectionArea.top + selectionArea.height - 1; y >= selectionArea.top; --y) {
-                        const Tile* t = boardPtr->getTile(Vector2u(selectionArea.left, y));
-                        if (typeid(*t) != typeid(Tile)) {
-                            if (t->getState() == LOW) {
-                                binaryValue.push_back(false);
-                            } else if (t->getState() == HIGH) {
-                                binaryValue.push_back(true);
-                            } else {
-                                binaryValue.push_back(false);
-                                foundError = true;
-                            }
-                        }
-                    }
-                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.height) + " tiles (" + to_string(binaryValue.size()) + " bits)");
+                int index, indexLast;
+                Direction dirPerpendicular;
+                if (selectionArea.width == 1) {    // Selection is along y-axis.
+                    index = selectionArea.top + selectionArea.height - 1;
+                    indexLast = selectionArea.top;
+                    dirPerpendicular = EAST;
                 } else {    // Selection is along x-axis.
-                    for (int x = selectionArea.left + selectionArea.width - 1; x >= selectionArea.left; --x) {
-                        const Tile* t = boardPtr->getTile(Vector2u(x, selectionArea.top));
-                        if (typeid(*t) != typeid(Tile)) {
-                            if (t->getState() == LOW) {
-                                binaryValue.push_back(false);
-                            } else if (t->getState() == HIGH) {
-                                binaryValue.push_back(true);
+                    index = selectionArea.left + selectionArea.width - 1;
+                    indexLast = selectionArea.left;
+                    dirPerpendicular = NORTH;
+                }
+                while (index >= indexLast) {    // Scan selection to get bits.
+                    const Tile* t;
+                    if (selectionArea.width == 1) {
+                        t = boardPtr->getTile(Vector2u(selectionArea.left, index));
+                    } else {
+                        t = boardPtr->getTile(Vector2u(index, selectionArea.top));
+                    }
+                    if (typeid(*t) != typeid(Tile)) {
+                        ::State tileState = DISCONNECTED;
+                        if (!userInterfacePtr->queryPrompt.optionChecks[1].isChecked()) {
+                            if (typeid(*t) == typeid(TileWire)) {
+                                if (t->checkOutput(dirPerpendicular) == t->checkOutput(static_cast<Direction>(dirPerpendicular + 2))) {
+                                    tileState = t->checkOutput(dirPerpendicular);
+                                }
                             } else {
-                                binaryValue.push_back(false);
-                                foundError = true;
+                                tileState = t->getState();
                             }
+                        } else if (typeid(*t) == typeid(TileLED)) {
+                            tileState = t->getState();
+                        }
+                        if (tileState == LOW) {
+                            binaryValue.push_back(false);
+                        } else if (tileState == HIGH) {
+                            binaryValue.push_back(true);
+                        } else if (tileState != DISCONNECTED) {
+                            binaryValue.push_back(false);
+                            foundError = true;
                         }
                     }
-                    userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width) + " tiles (" + to_string(binaryValue.size()) + " bits)");
+                    --index;
                 }
+                userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width == 1 ? selectionArea.height : selectionArea.width) + " tiles (" + to_string(binaryValue.size()) + " bits)");
                 
                 if (foundError || binaryValue.size() > 32) {    // Report that value could not be determined (usually because of a tri-state element).
                     userInterfacePtr->queryPrompt.optionFields[1].setString("???");
