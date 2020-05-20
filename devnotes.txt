@@ -1,8 +1,5 @@
 TODO:
-    - Display current "epoch" of simulation on UI.
-    - New tool that can determine value on a bus. Highlight an area then specify direction, signed/unsigned, float/fixed point and get a value back. Opens a menu when tool is active that shows the value and options.
     - Add a custom application icon.
-    
     - Smart pointers, specifically in Simulator class.
 
 Current and potential bugs:

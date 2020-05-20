@@ -80,6 +80,7 @@ int Simulator::start() {
         userInterfacePtr = new UserInterface();
         
         openConfig(string(directoryPath) + "\\resources\\config.ini", false);    // Load the configuration file.
+        Tile::currentUpdateTime = 1;
         boardPtr->newBoard();
         Board::enableExtraLogicStates = config.triStateLogicDefault;
         userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
@@ -103,6 +104,7 @@ int Simulator::start() {
                 UserInterface::fieldToSelectPtr->selected = true;
                 UserInterface::fieldToSelectPtr = nullptr;
             }
+            userInterfacePtr->tickCounter.text.setString(" Update counter: " + to_string(Tile::currentUpdateTime - 1));
             UserInterface::updateMessages();
             
             if (!UserInterface::isDialogPromptOpen()) {
@@ -225,6 +227,7 @@ void Simulator::fileOption(int option) {
                 boardPtr->getTile(tileCursor)->setHighlight(false);
                 tileCursor = Vector2i(-1, -1);
             }
+            Tile::currentUpdateTime = 1;
             boardPtr->newBoard();
             Board::enableExtraLogicStates = config.triStateLogicDefault;
             userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
@@ -266,6 +269,7 @@ void Simulator::fileOption(int option) {
                         boardPtr->getTile(tileCursor)->setHighlight(false);
                         tileCursor = Vector2i(-1, -1);
                     }
+                    Tile::currentUpdateTime = 1;
                     boardPtr->loadFile(string(filename));
                     userInterfacePtr->configPrompt.optionChecks[1].setChecked(Board::enableExtraLogicStates);
                     viewOption(3);

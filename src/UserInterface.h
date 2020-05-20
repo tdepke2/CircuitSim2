@@ -123,7 +123,7 @@ class UserInterface : public UIComponent {    // The window UI. Includes the top
     static void updateMessages();
     RectangleShape topBar;
     DropdownMenu fileMenu, viewMenu, runMenu, toolsMenu, wireMenu, inputMenu, outputMenu, gateMenu;
-    TextButton tpsDisplay;
+    TextButton tpsDisplay, tickCounter;
     DialogPrompt savePrompt, renamePrompt, resizePrompt, relabelPrompt, configPrompt, queryPrompt;
     
     UserInterface();
