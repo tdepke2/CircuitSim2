@@ -8,14 +8,15 @@ In this tutorial we'll review what logic gates are and how to use them. In a nut
 number of off/on signals will produce a deterministic output off/on signal. The three main types are Buffer, AND, OR, and XOR and each has a
 complemented version where the output is inverted. The output of each of the gates is determined from a set of rules: 1) Buffer output matches input.
 2) AND output is only on if all inputs are on. 3) OR output is only on if any input is on. 4) XOR output is only on if the number of inputs that are
-on is odd. These simple rules make logic gates very easy to build using transistors in real hardware.
+on is odd. These simple rules make logic gates very easy to build using transistors in real hardware. On a side note, it's important to respect how
+many inputs a gate accepts for it to function correctly. For diodes, buffers, and inverters, only one input is accepted, the rest of the gates must
+have two or three inputs.
 
 For this application, the state of each logic gate can only transition during a "tick". A tick is a small unit of time where every tile is allowed to
 update, like a wire turning off or a button sending a pulse. Ticks are counted in ticks per second or TPS as shown at the top of the screen. The tick
 rate essentially controls the flow of time in the simulation, this also synchronizes behavior of gates over time so that circuits perform the same
 every time they are tested. Keep in mind that if the tick rate is zero nothing will happen in the simulation if, for example, a switch/button is
-pressed or an input is removed from a gate. On a final note, it's important to respect how many inputs a gate accepts for it to function correctly.
-For diodes, buffers, and inverters, only one input is accepted, the rest of the gates must have two or three inputs.
+pressed or an input is removed from a gate. The options in the Run menu as well as File->Configuration allow the tick rate to be changed.
 
 The following examples illustrate gate behavior and some basic circuits that use them.
 }

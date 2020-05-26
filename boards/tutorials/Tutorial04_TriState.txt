@@ -1,0 +1,58 @@
+version: 1.0
+width: 65
+height: 30
+data: {
+extraLogicStates: 1
+}
+notes: {
+As of version 1.1, there are two new logic states that circuits can use. Buffers and inverters now have the ability to output a tri-state signal,
+this happens when the tile is connected to two (and only two) inputs where one input is opposite the output (the input signal) and the other is on
+the side (the control signal). In this configuration, the buffer/inverter will output a tri-state signal when the control is off and will output the
+usual off/on depending on the given input signal when the control is on. A wire that is in tri-state is basically disconnected (it is between the off
+and on states) and can be pulled to the off/on state from other connections. Tri-state can still be passed into logic gates and other tiles, but it
+behaves as a non-deterministic signal and therefore is not recommended to use with gates other than buffers and inverters.
+
+The reason tri-state is necessary is because of the other logic state that has been added: conflict state. This state occurs when a wire receives off
+and on states during a tick, this causes them to sort of cancel each other out (with the old logic rules, the on state would just take priority).
+Conflict state behaves just like tri-state does, but will also pause the simulation and highlight the offending wire(s) when it occurs (the "pause on
+state conflict" can be disabled in the configuration). Both of these new states were added to better simulate how real hardware works (tri-state is
+often referred to as a "floating" connection, and conflicting states lead to a short circuit). This also breaks a lot of circuits built prior to
+version 1.1, so to get the old behavior back an option is available in the configuration.
+
+The examples below demonstrate these new changes. The second one to the left is a 4-bit multiplexer, it selects one of N inputs to send to the output
+(in this case, N is just two). Tip: another handy tool that was added is the selection query tool (select a 1-wide area and press q). This tool can
+read the binary data on a bus and output it in hexadecimal, unsigned, and 2's complement formats.
+}
+
+************************************************************************************************************************************
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*        si-->m--..                                                                                                                *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*            si                                                                                                                    *
+*            |               ,---ss-->m,           ##  ##  ..  ..                                                                  *
+*            >m--..          vN        |           "=; [ ,-'   |                                                                   *
+*                            [         >-v-v-,       [ [ | ,---'                                       ..      ..                  *
+*                            [   s7----}m|=|=|=======<.[ | |                                           {       {                   *
+*            sc              [   S6======}m|=|=======[=<.| |                                           >~. .~~~<:                  *
+*            |               [   S5========}m|-------[-[-< |                                           `p{~` .~`p                  *
+*        si--}m~~..          [   s4----------}m------[-[-|-<             sE------v-------..            | `~~~` {                   *
+*                            [                       [ [ | |                     |                     |       `m--st              *
+*                            "=========v=v=v=;       [ [ | |                     |                   ,-^o    ,-^o                  *
+*            sc                  S3====>M[=[=[=======" [ | |                   --^a                  '-ta    '-tb                  *
+*            |                   S2======>M[=[=========" | |                     |                                                 *
+*        si--}n~~..              s1-------->m[-----------' |                                                                       *
+*                                s0---------->m------------'                                                                       *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+*                                                                                                                                  *
+************************************************************************************************************************************
