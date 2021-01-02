@@ -70,6 +70,11 @@ int Simulator::start() {
         
         GetCurrentDirectory(sizeof(directoryPath), directoryPath);    // Load file resources and create boards.
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
+        Image appIcon;
+        if (!appIcon.loadFromFile("resources/icon.png")) {
+            throw runtime_error("\"resources/icon.png\": Unable to load texture file.");
+        }
+        windowPtr->setIcon(appIcon.getSize().x, appIcon.getSize().y, appIcon.getPixelsPtr());
         Board::loadFont("resources/consolas.ttf");
         Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
         boardPtr = new Board();

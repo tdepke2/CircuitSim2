@@ -1,11 +1,9 @@
 Debug/
 Release/
 boards/wip/
-resource.h
 CircuitSim2.exe
 *.vcxproj
 *.filters
-*.rc
 *.aps
 *.user
 *.o
