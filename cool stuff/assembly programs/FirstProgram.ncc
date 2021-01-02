@@ -1,0 +1,4 @@
+A = 7    // Tests basic functionality.
+B = 5
+C = A + B
+HALT

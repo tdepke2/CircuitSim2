@@ -1,0 +1,4 @@
+A = 0     // Outputs a number received from input to test the numpad hardware.
+DATAIO A 0 receive input send      // DATAIO A A receive input send output <- Doesn't work too well.
+DATAIO 0 A output
+PC = 1

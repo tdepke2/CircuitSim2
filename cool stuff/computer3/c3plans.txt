@@ -1,0 +1,21 @@
+Specifications:
+    16-bit, Harvard architecture, RISC machine.
+    65536 bytes of RAM max.
+    65536 instructions max (each instruction is 32-bit, 262144 bytes of ROM max).
+    32 registers.
+    Programmed with MIPS assembly language.
+
+Registers (same as MIPS format):
+    Name        Number  Description             Preserved Across Call?
+    $zero       0       Constant zero           NA
+    $at         1       Assembler temporary     No
+    $v0-$v1     2-3     Function results        No
+    $a0-$a3     4-7     Arguments               No
+    $t0-$t7     8-15    Temporaries             No
+    $s0-$s7     16-23   Saved temporaries       Yes
+    $t8-$t9     24-25   Temporaries             No
+    $k0-$k1     26-27   Reserved for Kernel     No
+    $gp         28      Global pointer          Yes
+    $sp         29      Stack pointer           Yes
+    $fp         30      Frame pointer           Yes
+    $ra         31      Return address          Yes
