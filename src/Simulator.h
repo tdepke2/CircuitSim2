@@ -16,9 +16,18 @@ using namespace sf;
 
 class Simulator {    // Singleton class that controls the simulation logic. Includes the main thread and render thread.
     public:
+    struct Configuration {
+        float slowTPSLimit = 2.0f;
+        float mediumTPSLimit = 30.0f;
+        float fastTPSLimit = 60.0f;
+        bool triStateLogicDefault = true;
+        bool pauseOnConflict = true;
+    };
+    
     static const unsigned int FRAMERATE_LIMIT;
     static const Vector2u INITIAL_WINDOW_SIZE;
     
+    static const Configuration& getConfig();
     static const Vector2u& getWindowSize();
     static const UserInterface* getUserInterface();
     static int start();    // Main thread, handles window event processing and simulation updates.
@@ -33,13 +42,6 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static void relabelTarget(int option = 0);    // Sets the label on the switch/button pointed to by relabelTargetTile, used by the GUI to set a label.
     
     private:
-    struct Configuration {
-        float slowTPSLimit = 2.0f;
-        float mediumTPSLimit = 30.0f;
-        float fastTPSLimit = 60.0f;
-        bool triStateLogicDefault = true;
-        bool pauseOnConflict = true;
-    };
     enum class State {
         Uninitialized, Running, Exiting
     };

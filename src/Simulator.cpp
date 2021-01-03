@@ -44,6 +44,10 @@ Vector2u Simulator::wireVerticalPosition(0, 0), Simulator::wireHorizontalPositio
 IntRect Simulator::selectionArea(0, 0, 0, 0);
 Tile* Simulator::relabelTargetTile = nullptr;
 
+const Simulator::Configuration& Simulator::getConfig() {
+    return config;
+}
+
 const Vector2u& Simulator::getWindowSize() {
     return windowPtr->getSize();
 }
@@ -88,7 +92,6 @@ int Simulator::start() {
         Tile::currentUpdateTime = 1;
         boardPtr->newBoard();
         Board::enableExtraLogicStates = config.triStateLogicDefault;
-        userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
         copyBufferBoardPtr->newBoard(Vector2u(1, 1), "");
         copyBufferBoardPtr->highlightArea(IntRect(0, 0, copyBufferBoardPtr->getSize().x, copyBufferBoardPtr->getSize().y), true);
         wireToolLabelPtr = new Text("", Board::getFont(), 30);
@@ -235,7 +238,6 @@ void Simulator::fileOption(int option) {
             Tile::currentUpdateTime = 1;
             boardPtr->newBoard();
             Board::enableExtraLogicStates = config.triStateLogicDefault;
-            userInterfacePtr->configPrompt.optionChecks[1].setChecked(config.triStateLogicDefault);
             viewOption(3);
             UserInterface::pushMessage("Created new board with size " + to_string(boardPtr->getSize().x) + " x " + to_string(boardPtr->getSize().y) + ".");
             UserInterface::closeAllDialogPrompts();
@@ -276,7 +278,6 @@ void Simulator::fileOption(int option) {
                     }
                     Tile::currentUpdateTime = 1;
                     boardPtr->loadFile(string(filename));
-                    userInterfacePtr->configPrompt.optionChecks[1].setChecked(Board::enableExtraLogicStates);
                     viewOption(3);
                 } else {
                     cout << "No file selected." << endl;
@@ -373,6 +374,12 @@ void Simulator::fileOption(int option) {
         }
     } else if (option == 6) {    // Configuration.
         if (!userInterfacePtr->configPrompt.visible) {
+            userInterfacePtr->configPrompt.optionFields[0].setString(decimalToString(config.slowTPSLimit));    // Update user interface to match configuration.
+            userInterfacePtr->configPrompt.optionFields[1].setString(decimalToString(config.mediumTPSLimit));
+            userInterfacePtr->configPrompt.optionFields[2].setString(decimalToString(config.fastTPSLimit));
+            userInterfacePtr->configPrompt.optionChecks[0].setChecked(config.triStateLogicDefault);
+            userInterfacePtr->configPrompt.optionChecks[1].setChecked(Board::enableExtraLogicStates);
+            userInterfacePtr->configPrompt.optionChecks[2].setChecked(config.pauseOnConflict);
             userInterfacePtr->configPrompt.show();
         } else {
             try {
@@ -611,115 +618,111 @@ void Simulator::toolsOption(int option) {
             wireHorizontalBoardPtr->clear();
         }
     } else if (option == 13) {    // Selection query tool.
-        if (!userInterfacePtr->queryPrompt.visible) {
-            userInterfacePtr->queryPrompt.optionFields[0].setString("");    // Clear previous fields.
-            userInterfacePtr->queryPrompt.optionFields[1].setString("");
-            userInterfacePtr->queryPrompt.optionFields[2].setString("");
-            userInterfacePtr->queryPrompt.optionFields[3].setString("");
-            userInterfacePtr->queryPrompt.optionFields[4].setString("");
+        userInterfacePtr->queryPrompt.optionFields[0].setString("");    // Clear previous fields.
+        userInterfacePtr->queryPrompt.optionFields[1].setString("");
+        userInterfacePtr->queryPrompt.optionFields[2].setString("");
+        userInterfacePtr->queryPrompt.optionFields[3].setString("");
+        userInterfacePtr->queryPrompt.optionFields[4].setString("");
+        
+        if (selectionArea.width != 1 && selectionArea.height != 1) {
+            userInterfacePtr->queryPrompt.optionFields[0].setString("Size must be 1-wide only.");
+        } else {
+            vector<bool> binaryValue;
+            binaryValue.reserve(32);
+            bool foundError = false;
             
-            if (selectionArea.width != 1 && selectionArea.height != 1) {
-                userInterfacePtr->queryPrompt.optionFields[0].setString("Size must be 1-wide only.");
-            } else {
-                vector<bool> binaryValue;
-                binaryValue.reserve(32);
-                bool foundError = false;
-                
-                int index, indexLast;
-                Direction dirPerpendicular;
-                if (selectionArea.width == 1) {    // Selection is along y-axis.
-                    index = selectionArea.top + selectionArea.height - 1;
-                    indexLast = selectionArea.top;
-                    dirPerpendicular = EAST;
-                } else {    // Selection is along x-axis.
-                    index = selectionArea.left + selectionArea.width - 1;
-                    indexLast = selectionArea.left;
-                    dirPerpendicular = NORTH;
+            int index, indexLast;
+            Direction dirPerpendicular;
+            if (selectionArea.width == 1) {    // Selection is along y-axis.
+                index = selectionArea.top + selectionArea.height - 1;
+                indexLast = selectionArea.top;
+                dirPerpendicular = EAST;
+            } else {    // Selection is along x-axis.
+                index = selectionArea.left + selectionArea.width - 1;
+                indexLast = selectionArea.left;
+                dirPerpendicular = NORTH;
+            }
+            while (index >= indexLast) {    // Scan selection to get bits.
+                const Tile* t;
+                if (selectionArea.width == 1) {
+                    t = boardPtr->getTile(Vector2u(selectionArea.left, index));
+                } else {
+                    t = boardPtr->getTile(Vector2u(index, selectionArea.top));
                 }
-                while (index >= indexLast) {    // Scan selection to get bits.
-                    const Tile* t;
-                    if (selectionArea.width == 1) {
-                        t = boardPtr->getTile(Vector2u(selectionArea.left, index));
-                    } else {
-                        t = boardPtr->getTile(Vector2u(index, selectionArea.top));
-                    }
-                    if (typeid(*t) != typeid(Tile)) {
-                        ::State tileState = DISCONNECTED;
-                        if (!userInterfacePtr->queryPrompt.optionChecks[1].isChecked()) {
-                            if (typeid(*t) == typeid(TileWire)) {
-                                if (t->checkOutput(dirPerpendicular) == t->checkOutput(static_cast<Direction>(dirPerpendicular + 2))) {
-                                    tileState = t->checkOutput(dirPerpendicular);
-                                }
-                            } else {
-                                tileState = t->getState();
+                if (typeid(*t) != typeid(Tile)) {
+                    ::State tileState = DISCONNECTED;
+                    if (!userInterfacePtr->queryPrompt.optionChecks[1].isChecked()) {
+                        if (typeid(*t) == typeid(TileWire)) {
+                            if (t->checkOutput(dirPerpendicular) == t->checkOutput(static_cast<Direction>(dirPerpendicular + 2))) {
+                                tileState = t->checkOutput(dirPerpendicular);
                             }
-                        } else if (typeid(*t) == typeid(TileLED)) {
+                        } else {
                             tileState = t->getState();
                         }
-                        if (tileState == LOW) {
-                            binaryValue.push_back(false);
-                        } else if (tileState == HIGH) {
-                            binaryValue.push_back(true);
-                        } else if (tileState != DISCONNECTED) {
-                            binaryValue.push_back(false);
-                            foundError = true;
-                        }
+                    } else if (typeid(*t) == typeid(TileLED)) {
+                        tileState = t->getState();
                     }
-                    --index;
+                    if (tileState == LOW) {
+                        binaryValue.push_back(false);
+                    } else if (tileState == HIGH) {
+                        binaryValue.push_back(true);
+                    } else if (tileState != DISCONNECTED) {
+                        binaryValue.push_back(false);
+                        foundError = true;
+                    }
                 }
-                userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width == 1 ? selectionArea.height : selectionArea.width) + " tiles (" + to_string(binaryValue.size()) + " bits)");
+                --index;
+            }
+            userInterfacePtr->queryPrompt.optionFields[0].setString(to_string(selectionArea.width == 1 ? selectionArea.height : selectionArea.width) + " tiles (" + to_string(binaryValue.size()) + " bits)");
+            
+            if (foundError || binaryValue.size() > 32) {    // Report that value could not be determined (usually because of a tri-state element).
+                userInterfacePtr->queryPrompt.optionFields[1].setString("???");
+                userInterfacePtr->queryPrompt.optionFields[2].setString("???");
+                userInterfacePtr->queryPrompt.optionFields[3].setString("???");
+                userInterfacePtr->queryPrompt.optionFields[4].setString("???");
+            } else if (binaryValue.size() > 0) {    // Convert binary value to other possible formats.
+                if (!userInterfacePtr->queryPrompt.optionChecks[0].isChecked()) {    // If using different direction convention, swap the bits around.
+                    for (int i = 0; i < static_cast<int>(binaryValue.size() / 2); ++i) {
+                        swap(binaryValue[i], binaryValue[binaryValue.size() - 1 - i]);
+                    }
+                }
                 
-                if (foundError || binaryValue.size() > 32) {    // Report that value could not be determined (usually because of a tri-state element).
-                    userInterfacePtr->queryPrompt.optionFields[1].setString("???");
-                    userInterfacePtr->queryPrompt.optionFields[2].setString("???");
-                    userInterfacePtr->queryPrompt.optionFields[3].setString("???");
-                    userInterfacePtr->queryPrompt.optionFields[4].setString("???");
-                } else if (binaryValue.size() > 0) {    // Convert binary value to other possible formats.
-                    if (!userInterfacePtr->queryPrompt.optionChecks[0].isChecked()) {    // If using different direction convention, swap the bits around.
-                        for (int i = 0; i < static_cast<int>(binaryValue.size() / 2); ++i) {
-                            swap(binaryValue[i], binaryValue[binaryValue.size() - 1 - i]);
-                        }
+                string strBinary = "0b", strHexadecimal = "0x";
+                int hexDigit = 0;
+                uint32_t unsignedValue = 0;
+                int32_t signedValue = 0;
+                for (int i = static_cast<int>(binaryValue.size() - 1); i >= 0; --i) {
+                    hexDigit <<= 1;
+                    unsignedValue <<= 1;
+                    if (binaryValue[i]) {
+                        strBinary.push_back('1');
+                        hexDigit += 1;
+                        unsignedValue += 1;
+                    } else {
+                        strBinary.push_back('0');
                     }
                     
-                    string strBinary = "0b", strHexadecimal = "0x";
-                    int hexDigit = 0;
-                    uint32_t unsignedValue = 0;
-                    int32_t signedValue = 0;
-                    for (int i = static_cast<int>(binaryValue.size() - 1); i >= 0; --i) {
-                        hexDigit <<= 1;
-                        unsignedValue <<= 1;
-                        if (binaryValue[i]) {
-                            strBinary.push_back('1');
-                            hexDigit += 1;
-                            unsignedValue += 1;
+                    if (i % 4 == 0) {
+                        if (hexDigit < 10) {
+                            strHexadecimal.push_back('0' + hexDigit);
                         } else {
-                            strBinary.push_back('0');
+                            strHexadecimal.push_back('A' + hexDigit - 10);
                         }
-                        
-                        if (i % 4 == 0) {
-                            if (hexDigit < 10) {
-                                strHexadecimal.push_back('0' + hexDigit);
-                            } else {
-                                strHexadecimal.push_back('A' + hexDigit - 10);
-                            }
-                            hexDigit = 0;
-                        }
+                        hexDigit = 0;
                     }
-                    if (binaryValue[binaryValue.size() - 1]) {
-                        signedValue = unsignedValue - (static_cast<int64_t>(1) << binaryValue.size());
-                    } else {
-                        signedValue = unsignedValue;
-                    }
-                    userInterfacePtr->queryPrompt.optionFields[1].setString(strBinary);
-                    userInterfacePtr->queryPrompt.optionFields[2].setString(strHexadecimal);
-                    userInterfacePtr->queryPrompt.optionFields[3].setString(to_string(unsignedValue));
-                    userInterfacePtr->queryPrompt.optionFields[4].setString(to_string(signedValue));
                 }
+                if (binaryValue[binaryValue.size() - 1]) {
+                    signedValue = unsignedValue - (static_cast<int64_t>(1) << binaryValue.size());
+                } else {
+                    signedValue = unsignedValue;
+                }
+                userInterfacePtr->queryPrompt.optionFields[1].setString(strBinary);
+                userInterfacePtr->queryPrompt.optionFields[2].setString(strHexadecimal);
+                userInterfacePtr->queryPrompt.optionFields[3].setString(to_string(unsignedValue));
+                userInterfacePtr->queryPrompt.optionFields[4].setString(to_string(signedValue));
             }
-            userInterfacePtr->queryPrompt.show();
-        } else {
-            UserInterface::closeAllDialogPrompts();
         }
+        userInterfacePtr->queryPrompt.show();
     } else {
         assert(false);
     }
@@ -962,13 +965,7 @@ void Simulator::openConfig(const string& filename, bool saveData) {
     }
     inputFile.close();
     
-    if (!saveData) {    // Update user interface to match new configuration.
-        userInterfacePtr->configPrompt.optionFields[0].setString(decimalToString(config.slowTPSLimit));
-        userInterfacePtr->configPrompt.optionFields[1].setString(decimalToString(config.mediumTPSLimit));
-        userInterfacePtr->configPrompt.optionFields[2].setString(decimalToString(config.fastTPSLimit));
-        userInterfacePtr->configPrompt.optionChecks[0].setChecked(config.triStateLogicDefault);
-        userInterfacePtr->configPrompt.optionChecks[2].setChecked(config.pauseOnConflict);
-    } else {    // Save the configuration file.
+    if (saveData) {    // Save the configuration file.
         ofstream outputFile(filename);
         if (!outputFile.is_open()) {
             throw runtime_error("\"" + filename + "\": Unable to open configuration file.");

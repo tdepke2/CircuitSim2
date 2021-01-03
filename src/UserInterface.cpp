@@ -380,7 +380,8 @@ void DialogPrompt::clearFields() {
 }
 
 void DialogPrompt::show() {
-    assert(!UserInterface::_dialogPromptOpen);
+    //assert(!UserInterface::_dialogPromptOpen);    // There is a case where a prompt is open and user closes application window.
+    UserInterface::closeAllDialogPrompts();
     visible = true;
     if (!optionFields.empty()) {
         for (TextField& f : optionFields) {
@@ -563,7 +564,7 @@ UserInterface::UserInterface() {
     configPrompt.optionChecks.emplace_back("Pause on state conflict", Color::Black, 15, 90.0f, 190.0f, Color::White, Color(80, 80, 80));
     
     queryPrompt = DialogPrompt("Selection query.\nMake a 1-wide selection over some tiles to read the binary data.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(600.0f, 320.0f));
-    queryPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 280.0f, 290.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13);
+    queryPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 280.0f, 290.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     queryPrompt.optionFields.emplace_back("Selection size: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Binary:         ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 34, false);
     queryPrompt.optionFields.emplace_back("Hexadecimal:    ", "", Color::Black, 15, 90.0f, 130.0f, Color::White, Color(214, 229, 255), 34, false);

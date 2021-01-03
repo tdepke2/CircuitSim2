@@ -183,7 +183,7 @@ void TileWire::followWire(Direction direction, State state) {
     
     if (stage == INVALID_STAGE) {    // Check if wire is in an invalid state and change it if so.
         _fixTraversedWires(MIDDLE);
-        if (Simulator::getUserInterface()->configPrompt.optionChecks[2].isChecked()) {
+        if (Simulator::getConfig().pauseOnConflict) {
             if (Board::numStateErrors < 10) {
                 cout << "Detected state conflict in wire at position (" << getPosition().x << ", " << getPosition().y << ")." << endl;
             }
