@@ -364,6 +364,8 @@ bool DialogPrompt::update(Event::TextEvent textEvent) {
             if (optionButtons[0].action != nullptr) {
                 optionButtons[0].action(optionButtons[0].actionOption);
             }
+        } else if (textEvent.unicode == 27) {    // Escape pressed, close dialog.
+            UserInterface::closeAllDialogPrompts();
         } else {    // Else, send the text event to the fields.
             for (TextField& f : optionFields) {
                 f.update(textEvent);
@@ -555,7 +557,8 @@ UserInterface::UserInterface() {
     relabelPrompt.optionFields.emplace_back("Label (one character): ", "", Color::Black, 15, 112.0f, 70.0f, Color::White, Color(214, 229, 255), 1);
     
     configPrompt = DialogPrompt("Configuration menu.", Color::Black, 15, 50.0f, 78.0f, Color::White, Color(140, 140, 140), Vector2f(418.0f, 260.0f));
-    configPrompt.optionButtons.emplace_back("Close", Color::Black, 15, 181.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
+    configPrompt.optionButtons.emplace_back("Save Changes", Color::Black, 15, 220.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::fileOption, 6);
+    configPrompt.optionButtons.emplace_back("Cancel", Color::Black, 15, 90.0f, 230.0f, Color(240, 240, 240), Color(188, 214, 255), closeAllDialogPrompts);
     configPrompt.optionFields.emplace_back("Slow TPS limit:   ", "", Color::Black, 15, 90.0f, 40.0f, Color::White, Color(214, 229, 255), 9);
     configPrompt.optionFields.emplace_back("Medium TPS limit: ", "", Color::Black, 15, 90.0f, 70.0f, Color::White, Color(214, 229, 255), 9);
     configPrompt.optionFields.emplace_back("Fast TPS limit:   ", "", Color::Black, 15, 90.0f, 100.0f, Color::White, Color(214, 229, 255), 9);
