@@ -502,6 +502,7 @@ UserInterface::UserInterface() {
     toolsMenu.addMenuButton(TextButton("  Cut                          Ctrl+X", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 8));
     toolsMenu.addMenuButton(TextButton("  Copy                         Ctrl+C", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 9));
     toolsMenu.addMenuButton(TextButton("  Paste                        Ctrl+V", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 10));
+    toolsMenu.addMenuButton(TextButton("    (Shift+Right Click = Force Paste)", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), nullptr));
     toolsMenu.addMenuButton(TextButton("  Delete                          DEL", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 11));
     toolsMenu.addMenuButton(TextButton("  Wire Tool                         W", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 12));
     toolsMenu.addMenuButton(TextButton("  Selection Query                   Q", Color::Black, 15, 0.0f, 0.0f, Color(240, 240, 240), Color(188, 214, 255), Simulator::toolsOption, 13));
