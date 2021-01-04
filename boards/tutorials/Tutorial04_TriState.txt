@@ -17,7 +17,8 @@ and on states during a tick, this causes them to sort of cancel each other out (
 Conflict state behaves just like tri-state does, but will also pause the simulation and highlight the offending wire(s) when it occurs (the "pause on
 state conflict" can be disabled in the configuration). Both of these new states were added to better simulate how real hardware works (tri-state is
 often referred to as a "floating" connection, and conflicting states lead to a short circuit). This also breaks a lot of circuits built prior to
-version 1.1, so to get the old behavior back an option is available in the configuration.
+version 1.1, so to get the old behavior back an option is available in the configuration. Note that in real hardware, disconnected wires are also in
+tri-state. To simplify circuit designs a bit, these wires are simply pulled to the off state in this simulator.
 
 The examples below demonstrate these new changes. The second one to the left is a 4-bit multiplexer, it selects one of N inputs to send to the output
 (in this case, N is just two). Tip: another handy tool that was added is the selection query tool (select a 1-wide area and press q). This tool can

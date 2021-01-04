@@ -1,8 +1,0 @@
-A = 0    // Count from 0 to 15.
-B = 15
-JR = 7
-DATAIO 0 A output
-A = A + 1
-JUMPIF B < A
-PC = 3
-HALT

@@ -1,0 +1,63 @@
+version: 1.0
+width: 53
+height: 33
+data: {
+extraLogicStates: 0
+}
+notes: {
+Latches and flip-flops are a common method of storing data in electrical circuits. The top three circuits from left to right are: an RS NOR latch, an
+RS NAND latch, and a compact RS latch. The RS latch can be "set" by applying a pulse to input S, this turns the output Q on. The output will stay on
+even if S is turned off. The latch can be "reset" by pulsing input R to turn Q back off. The second output is Q' which matches Q inverted (unless the
+latch is in an invalid state because both inputs are on). Note that an input signal must be at least 2 ticks in length, replace the switches with
+buttons and press one to find out what happens when this is not the case.
+
+The middle three circuits from left to right are: D latch (using NAND), D latch (using NOR/AND), and an example of chaining D latches together.
+The D latch has a "data" input and an "enable" input. Whenever input E is on the output matches input D, but when E is off the output remembers the
+previous value of input D. These latches can be chained together to conditionally save some binary data passing through a bus line.
+
+The bottom three are: D flip-flop, another D flip-flop I found online, a more compact version of the last one, and a T flip-flop. The D flip-flop is
+similar to the D latch, but instead of an "enable" input there is "clock" which triggers the flip-flop only at a clock edge. This means that the
+output only changes to match input D during the transition of input C from on to off (in this case, the flip-flop is triggered on falling clock
+edge). This is useful (especially in real hardware) so that we do not have to provide a clock signal with an exact on duration because this is hard
+to tweak and still get consistent behavior. Since we can guarantee exact timings of components in this simulator, latches may be preferred in a lot
+of cases as they generally take up half as much space and have lower propagation delay. The last circuit on the right, the T flip-flop, is a
+variation of a D flip-flop where the output is inverted and wired back into the input. This makes the circuit toggle states when a clock pulse
+arrives (there is also an extra inverter at the clock input to make the flip-flop trigger on rising clock edge instead, I personally find rising edge
+more intuitive). T flip-flops can also be chained together (output of last one goes into the clock of next one) to make a simple binary counter.
+}
+
+************************************************************************************************************
+*                                                                                                          *
+*  sR-->p--v-..      sS-->N==>b--v-..        sR-->pv-..                                                    *
+*      "=; |                 "=; |           sS--^P'                                                       *
+*      ,-[-'                 ,-[-'                                                                         *
+*  sS-->P^===##      sR-->N==>B^===##                                                                      *
+*                                                                                                          *
+*                                                                                                          *
+*                                                                                                          *
+*  sD            sD            s     s     s     s                                                         *
+*  >---vN        >---vN        |     |     |     |                                                         *
+*  |-v-[-sE      |-v-[-sE      >---vN>---vN>---vN>---vN                                                    *
+*  vB^-vB        va^-va        |-v-[-|-v-[-|-v-[-|-v-[-sE                                                  *
+*  vb<B"         vP<p'         vB^-vBvB^-vBvB^-vBvB^-vB                                                    *
+*  >-'           >="           vb<B" vb<B" vb<B" vb<B"                                                     *
+*  ..            ##            >-'   >-'   >-'   >-'                                                       *
+*                              ..    ..    ..    ..                                                        *
+*                                                                                                          *
+*                                                                                                          *
+*                                                                                                          *
+*  sD              sD-->Bv=>b--v-,                     sD-->Bv=>bv->Bv=>bv-..        ;=======<N------,     *
+*  >---vN            ,-' [ "=; | '--->Bv=>b--v-..          >->B^B' >=>b^B'           "=>bv->Bv=>Bv=>b+-..  *
+*  |-v-[-v-sC        | ;=" ,-[-'   ;=" [ "=; |         sC--^->N===="                   >=>B^b" >->B^B'     *
+*  vB^-vB|           >->B==>B"     [ ;=" ,-[-'                                     sT>N^=>n----'           *
+*  vb<B" |         sC^----->N======^=>b-->B^===##                                                          *
+*  >-'   vN                                                                                                *
+*  |     [                                                                                                 *
+*  >---vN[                                                                                                 *
+*  |=v=[="                                                                                                 *
+*  vB^=vb                                                                                                  *
+*  vb<B'                                                                                                   *
+*  >-'                                                                                                     *
+*  ..                                                                                                      *
+*                                                                                                          *
+************************************************************************************************************

@@ -1,0 +1,33 @@
+version: 1.0
+width: 59
+height: 15
+data: {
+extraLogicStates: 0
+}
+notes: {
+These are probably the most basic circuits to add two binary numbers. The left RCA just performs addition while the right version includes a
+subtraction mode that can be toggled on or off. Inputs are provided from the upper row of switches (input A) and the lower row (input B), and the
+output is the lowest row of LEDs. An additional output on the left is the "carry out", but this is ignored most of the time when doing arithmetic.
+This design is also easily tileable to any number of bits that may be needed.
+
+In the configuration below, the left circuit is computing 9 + 10 = 19 and the right circuit is computing 5 - 2 = 3 (you can also check this using the
+query tool on the rows of LEDs, use the "LEDs only" setting).
+}
+
+************************************************************************************************************************
+*                                                                                                                      *
+*      ..    ..    ..    ..    ##    ..    ..    ##                ..    ..    ..    ..    ..    ##    ..    ##        *
+*      s     s     s     s     S     s     s     S                 s     s     s     s     s     S     s     S         *
+*      |     |     |     |     [     |     |     [                 |     |     |     |     |     [     |     [         *
+*      |   ..|   ..|   ..|   ..[   ##|   ..|   ##[   ..            |   ..|   ..|   ..|   ..|   ..[   ..|   ##[   ..    *
+*      |   s |   s |   s |   s [   S |   s |   S [   s             |   s |   s |   s |   s |   s [   s |   S [   s     *
+*      >-vx< >-vx< >-vx< >-vx< >=vx<.>-vx< >-vX<.>=vX<             | ;=vX| ;=vX| ;=vX| ;=vX| ;=vX[ ;=vX| ;=vx[ ;=vX    *
+*      va|-' va|-' va|-' va|-' vA|=" va|-' va[=" va[-'         S-==|=^=[=|=^=[=|=^=[=|=^=[=|=^=[=[=^=[=|=^=|=[=^=[=;   *
+*  ..--< >-vx< >-vx< >-vx< >-vX<.>-vx< >-vx< >=vX< >=vX<           >-vX<.>-vX<.>-vX<.>-vX<.>-vX<.>=vx<.>-vx< >=vx<.[   *
+*      ^-<a|-^-<a|-^-<a|-^-<a[=^=<a|-^-<a|-^-<a[-^-<a[-'           va[=" va[=" va[=" va[=" va[=" vA|=" va|-' vA|=" [   *
+*          |     |     |     [     |     |     [     [         ##==<.>=vx<.>=vx<.>=vx<.>=vx<.>=vx<.>-vx< >-vX<.>-vX<.  *
+*          ..    ..    ..    ##    ..    ..    ##    ##            ^=<A|=^=<A|=^=<A|=^=<A|=^=<A|=^=<a|-^-<a[=^=<a[="   *
+*                                                                      |     |     |     |     |     |     [     [     *
+*                                                                      ..    ..    ..    ..    ..    ..    ##    ##    *
+*                                                                                                                      *
+************************************************************************************************************************
