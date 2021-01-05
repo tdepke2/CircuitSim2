@@ -1,0 +1,36 @@
+version: 1.0
+width: 56
+height: 19
+data: {
+extraLogicStates: 1
+}
+notes: {
+New add-3 modules for binary to decimal converters. The original design with a few fixes is on the left and the improved version is on the right (the
+other two are just previous iterations of the improved one). The improved version does take up more space and use more gates, but is slightly faster
+than the original, it also aligns nicely with a shift register. The improved design has a propagation delay of 3 ticks and a contamination delay of 1
+tick. This means when the inputs are changed it takes at least 1 tick before the output starts to change and no more than 3 ticks for the output to
+stabilize (if the sim is paused and inputs are changed, you actually have to press Tab at most 4 times to account for the extra 1 tick delay of
+switches).
+}
+
+******************************************************************************************************************
+*                                                                                                                *
+*    ..  ..  ..  ..      ..    ..    ..    ..                ..    ..    ..    ..        ..    ..    ..    ..    *
+*    | ,-|---^o  |       |     |     '-----|-------,         |   ,-|-----^o,   |         |   ,-|-----^o--, '-,   *
+*    | | '-, ^a; |       |     |           '-----, |         |   | '---, ^a|-, |         |   | | ,-vN^a--|-, |   *
+*  ,-' | ,-|-|-^B<       |     ^o<a--,           | |         | ,-|-----|-< | | |         | ,-|-|-^-[-<   | | |   *
+*  | ,-^a|-|-|---<       |   ;=^a|===|===v=;     | |         | | |   vN|-|-|-< |         | >-^a'-<o<a|=<N|-< |   *
+*  >-|---|-|-|---^x      |   ^N|-|-v-|-, [ ^N    | |         | >-^a,->a^o| | | |       ,-^o<a[-v-|-' >-, | | |   *
+*  ^o< ,-|-|-|---<       | ,---|-|-|-^-|-[-<     | |         | va[-< ^N|-< | | |       ^a|---[-< ^a--|-|-|-< |   *
+*  | >->a|-^o>-vo<       | vav-+-|-|---va^=|=va, | |         '-<o[-|-, | | | | |       | >---[-|-^->a|-|-< | |   *
+*  '-|-<a|-|-|-< |       '-<o<a|-|-< ,-|---|-^-|-|-^o,         ^a[-< >-^a| | | |       | | >N<.| >N^=|=>a>o|-'   *
+*    | '-+-^a|=<N|       ,-^---|-' | '->o--|---|-' | |         '-[-|-|-^-|-|-< |       | | '-[-+-|---|-' | |     *
+*    sw  sx  sy  sz      |     |   '-v-|---|-v-|---^a|       ,---[-|-^->a|-< | |       | >->N>a|-|---|---' |     *
+*                        >->N==|=====|=^a--+->a|---[-'       | ;=<.| ;=<.| | | |       '-|---^-|-^---|-----<     *
+*                        >-,   >->Nv=|="   |   |   [         | ^N[ >-[-va< | | |         sw    sx    sy    sz    *
+*                        sw|   sx  [ sy    sz  |   [         | '-[-< ^N'-|->o|-'                                 *
+*                          '-------[-----------'   [         >->Nva|-^---|-|-^-,                                 *
+*                                  "==============="         |   '-|-----|-'   |                                 *
+*                                                            sw    sx    sy    sz                                *
+*                                                                                                                *
+******************************************************************************************************************

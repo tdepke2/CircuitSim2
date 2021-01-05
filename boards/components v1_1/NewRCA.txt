@@ -1,0 +1,25 @@
+version: 1.0
+width: 41
+height: 13
+data: {
+extraLogicStates: 1
+}
+notes: {
+New design for ripple carry adder (with subtraction). See carry lookahead adder for a faster adder design.
+}
+
+************************************************************************************
+*                                                                                  *
+*    s       s         s           sA    sA    sA    sA    sA    sA    sA          *
+*    >---vx--<         |   s       |   sB|   sB|   sB|   sB|   sB|   sB|   sB      *
+*    |   |   |         |-v-|-      |-v-|-|-v-|-|-v-|-|-v-|-|-v-|-|-v-|-|-v-|-v-s-  *
+*    va--|---'         | '-vx      | '-vx| '-vx| '-vx| '-vx| '-vx| '-vx| '-vx|     *
+*    |   |             >-vx<       >-vx< >-vx< >-vx< >-vx< >-vx< >-vx< >-vx< |     *
+*  ..<o  >-vxv-s       va|-'       va|-' va|-' va|-' va|-' va|-' va|-' va|-' |     *
+*    |   | | |         <o| ,-      <o| ,-<o| ,-<o| ,-<o| ,-<o| ,-<o| ,-<o| ,-'     *
+*    '---<a|-'         ^a< |       ^a< | ^a< | ^a< | ^a< | ^a< | ^a< | ^a< |       *
+*          ..          | vx<       | vx< | vx< | vx< | vx< | vx< | vx< | vx<       *
+*                      '-|-'       '-|-' '-|-' '-|-' '-|-' '-|-' '-|-' '-|-'       *
+*                        ..          ..    ..    ..    ..    ..    ..    ..        *
+*                                                                                  *
+************************************************************************************
