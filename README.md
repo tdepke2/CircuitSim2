@@ -4,7 +4,7 @@
 
 ## About This Project ##
 
-CircuitSim2 is an open-source development platform for digital logic circuits. Circuits are designed by placing tiles onto a grid, each element (such as a wire, switch, LED, or logic gate) takes up one of the grid squares. Tiles that are adjacent to one another and connect together will transfer a logic signal (either LOW or HIGH). By combining lots of these gates and wires into a module to abstract the design, some complex circuitry can be created such as state machines, computational hardware, and even computers.
+CircuitSim2 is an open-source development platform for digital logic circuits. Circuits are designed by placing tiles onto a grid, each element (such as a wire, switch, LED, or logic gate) takes up one of the grid squares. Tiles that are adjacent to one another and connect together will transfer a logic signal (either low, high, or tri-state). By combining lots of these gates and wires into a module to abstract the design, some complex circuitry can be created such as state machines, computational hardware, and even computers.
 
 This project is ideal if you need a quick prototype for a logic circuit when working closely with low level hardware. Using Verilog or just building a circuit on a breadboard are other alternatives to this, but these methods can take some time. As a bonus, it is very easy to see the inner workings of circuits built with this tool and this makes debugging a breeze. If you've never even heard of digital logic before then you might be interested in this if you like to create stuff. Some tutorials are provided to cover the basics.
 
