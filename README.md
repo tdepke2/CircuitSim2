@@ -12,7 +12,7 @@ This project is ideal if you need a quick prototype for a logic circuit when wor
 
 Currently, CircuitSim2 is only available for Windows but a Linux/MacOS build may be available in the future.
 
-[The latest build can be found here.](https://github.com/tdepke2/CircuitSim2/releases/latest/download/CircuitSim2_x86.zip)
+[The latest build can be found here.](https://github.com/tdepke2/CircuitSim2/releases/download/v1.1/CircuitSim2-1.1-x86.zip)
 
 Just unzip the file and it should be good to go. If running it gives an error that MSVCPxyz.dll is missing then just run the installer for the Visual C++ runtime in "redist/vcredist_x86.exe" and try again. If you prefer to compile this project yourself, the latest build was compiled with Visual Studio 2017 and SFML 2.5.1 (but newer versions should work as well).
 
