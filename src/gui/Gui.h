@@ -1,24 +1,23 @@
 #pragma once
 
-//class Widget;
+#include <gui/Container.h>
 
-#include <SFML/Graphics.hpp>
 #include <memory>
+#include <SFML/Graphics.hpp>
 #include <vector>
 
 namespace gui {
+    class Widget;
+}
 
-class Widget;
+namespace gui {
 
-class Gui : public sf::Drawable {
+class Gui : public sf::Drawable, public Container {
 public:
     Gui();
-    void addWidget(std::shared_ptr<Widget> w);
 
 private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-
-    std::vector<std::shared_ptr<Widget>> _widgets;
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
 }

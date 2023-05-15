@@ -1,8 +1,9 @@
 #include <gui/Button.h>
 #include <gui/Gui.h>
+#include <gui/themes/DefaultTheme.h>
 
-#include <SFML/Graphics.hpp>
 #include <iostream>
+#include <SFML/Graphics.hpp>
 
 int main() {
     std::cout << "Starting gui demo\n";
@@ -12,8 +13,9 @@ int main() {
     shape.setFillColor(sf::Color::Green);
 
     gui::Gui myGui;
-    auto button = gui::Button::create();
-    myGui.addWidget(button);
+    auto theme = gui::DefaultTheme::create();
+    auto button = gui::Button::create(theme);
+    myGui.addChild(button);
 
     while (window.isOpen()) {
         sf::Event event;

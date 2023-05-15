@@ -1,13 +1,14 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <memory>
+#include <SFML/Graphics.hpp>
 
 namespace gui {
 
 class Widget : public sf::Drawable {
 public:
     //static std::shared_ptr<Widget> create();
+    virtual ~Widget() = default;
 
 protected:
     Widget();

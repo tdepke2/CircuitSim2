@@ -7,13 +7,9 @@ Gui::Gui() {
 
 }
 
-void Gui::addWidget(std::shared_ptr<Widget> w) {
-    _widgets.push_back(w);
-}
-
 void Gui::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    for (auto w : _widgets) {
-        target.draw(*w, states);
+    for (auto child : getChildren()) {
+        target.draw(*child, states);
     }
 }
 
