@@ -1,9 +1,7 @@
-Debug/
-Release/
+/.cache/
+/build*/
 boards/wip/
-CircuitSim2.exe
-*.vcxproj
-*.filters
-*.aps
-*.user
-*.o
+compile_commands.json
+*.sublime-project
+*.sublime-workspace
+*.DS_Store
