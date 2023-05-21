@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <functional>
 
 
@@ -9,6 +10,7 @@
 
 
 
+#include <type_traits>
 #include <unordered_map>
 
 namespace gui {
@@ -77,35 +79,31 @@ public:
 template<typename... Targs>
 class Callback final {
 public:
-    union {
-        std::function<void(Targs...)> withArgs;
-        std::function<void()> noArgs;
-    };
-    enum class Type {
+    enum class Tag {
         withArgs, noArgs
-    } type;
-    Callback(std::function<void(Targs...)> func) : withArgs(std::move(func)), type(Type::withArgs) { std::cout << "Callback(std::function<void(Targs...)>\n"; }
-    Callback(std::function<void()> func) : noArgs(std::move(func)), type(Type::noArgs) { std::cout << "Callback(std::function<void()>\n"; }
+    };
+    Callback(std::function<void(Targs...)> func) noexcept : withArgs_(std::move(func)), tag_(Tag::withArgs) { std::cout << "Callback(std::function<void(Targs...)>\n"; }
+    Callback(std::function<void()> func) noexcept : noArgs_(std::move(func)), tag_(Tag::noArgs) { std::cout << "Callback(std::function<void()>\n"; }
     ~Callback() {
-        if (type == Type::withArgs) {
+        if (tag_ == Tag::withArgs) {
             std::cout << "~Callback() with args\n";
-            withArgs.~function();
+            withArgs_.~function();
         } else {
             std::cout << "~Callback() no args\n";
-            noArgs.~function();
+            noArgs_.~function();
         }
     }
-    Callback(const Callback& other) : type(other.type) {
-        if (other.type == Type::withArgs) {
+    Callback(const Callback& other) noexcept : tag_(other.tag_) {
+        if (other.tag_ == Tag::withArgs) {
             std::cout << "Callback(const Callback& other) with args\n";
-            ::new(&withArgs) auto(other.withArgs);
+            ::new(&withArgs_) auto(other.withArgs_);
         } else {
             std::cout << "Callback(const Callback& other) no args\n";
-            ::new(&noArgs) auto(other.noArgs);
+            ::new(&noArgs_) auto(other.noArgs_);
         }
     }
-    Callback& operator=(Callback other) {
-        if (other.type == Type::withArgs) {
+    Callback& operator=(Callback other) noexcept {
+        if (other.tag_ == Tag::withArgs) {
             std::cout << "Callback& operator=(Callback other) with args\n";
         } else {
             std::cout << "Callback& operator=(Callback other) no args\n";
@@ -113,20 +111,18 @@ public:
         swap(*this, other);
         return *this;
     }
-    Callback(Callback&& other) noexcept : type(other.type) {
-        if (other.type == Type::withArgs) {
+    Callback(Callback&& other) noexcept : tag_(other.tag_) {
+        if (other.tag_ == Tag::withArgs) {
             std::cout << "Callback(Callback&& other) with args\n";
-            ::new(&withArgs) auto(std::move(other.withArgs));
+            ::new(&withArgs_) auto(std::move(other.withArgs_));
         } else {
             std::cout << "Callback(Callback&& other) no args\n";
-            ::new(&noArgs) auto(std::move(other.noArgs));
+            ::new(&noArgs_) auto(std::move(other.noArgs_));
         }
     }
-    //Callback& operator=(Callback&& other) = delete;
-
     friend void swap(Callback& a, Callback& b) noexcept {
         using std::swap;
-        if (a.type != b.type) {
+        if (a.tag_ != b.tag_) {
             std::cout << "swap() with different Callback types\n";
             // If types don't line up, just force a reallocation for each object.
             Callback<Targs...> temp = std::move(a);
@@ -134,14 +130,37 @@ public:
             ::new(&a) Callback(std::move(b));
             b.~Callback();
             ::new(&b) Callback(std::move(temp));
-        } else if (a.type == Type::withArgs) {
+        } else if (a.tag_ == Tag::withArgs) {
             std::cout << "swap() withArgs\n";
-            swap(a.withArgs, b.withArgs);
+            swap(a.withArgs_, b.withArgs_);
         } else {
             std::cout << "swap() noArgs\n";
-            swap(a.noArgs, b.noArgs);
+            swap(a.noArgs_, b.noArgs_);
         }
     }
+
+    Tag getTag() const {
+        return tag_;
+    }
+
+    template<Tag tag, typename = typename std::enable_if<tag == Tag::withArgs>::type>
+    const std::function<void(Targs...)>& value() const {
+        assert(tag_ == Tag::withArgs);
+        return withArgs_;
+    }
+
+    template<Tag tag, typename = typename std::enable_if<tag == Tag::noArgs>::type>
+    const std::function<void()>& value() const {
+        assert(tag_ == Tag::noArgs);
+        return noArgs_;
+    }
+
+private:
+    union {
+        std::function<void(Targs...)> withArgs_;
+        std::function<void()> noArgs_;
+    };
+    Tag tag_;
 };
 
 template<typename... Targs>
@@ -182,11 +201,12 @@ public:
         callbacks_.clear();
     }
     void emit(Targs... funcArgs) const {
+        using Tag = typename Callback<Targs...>::Tag;
         for (const auto& c : callbacks_) {
-            if (c.second.type == Callback<Targs...>::Type::withArgs) {
-                c.second.withArgs(funcArgs...);
+            if (c.second.getTag() == Tag::withArgs) {
+                c.second.template value<Tag::withArgs>()(funcArgs...);
             } else {
-                c.second.noArgs();
+                c.second.template value<Tag::noArgs>()();
             }
         }
     }

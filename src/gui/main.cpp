@@ -31,22 +31,39 @@ int main() {
     //button->setSize(sf::Vector2f(40, 30));
     auto ret = button->onPress.connect(&func);
     std::cout << "connect gave " << ret << "\n";
-    //ret = button->onPress.connect(&func2);
-    //std::cout << "connect gave " << ret << "\n";
+    ret = button->onPress.connect(&func2);
+    std::cout << "connect gave " << ret << "\n";
     myGui.addChild(button);
 
+    // Value ctors
     gui::Callback<int> cb(&func);
     gui::Callback<int> cb2(&func2);
-
+    // Copy ctor
     gui::Callback<int> cb3 = cb;
-    cb3 = cb;
-    cb = cb3;
-    //cb3 = gui::Callback<int>(&func);
-
+    gui::Callback<int> cb4 = cb2;
+    // Move ctor
+    gui::Callback<int> cb5 = gui::Callback<int>(&func);
+    gui::Callback<int> cb6 = gui::Callback<int>(&func2);
+    // Swap function
+    swap(cb5, cb6);
+    swap(cb, cb6);
+    swap(cb2, cb5);
+    // Copy assignment
+    cb3 = cb5;
+    cb4 = cb6;
+    // Move assignment
+    cb3 = gui::Callback<int>(&func);
+    cb4 = gui::Callback<int>(&func2);
+    // Test with unordered_map and dtor
     std::unordered_map<unsigned int, gui::Callback<int>> stuff;
     stuff.emplace(1, &func);
     stuff.emplace(2, &func2);
     stuff.emplace(3, gui::Callback<int>(&func));
+    stuff.clear();
+    cb3.value<gui::Callback<int>::Tag::noArgs>()();
+    cb4.value<gui::Callback<int>::Tag::withArgs>()(123);
+    // Throws runtime error as intended
+    //cb3.value<gui::Callback<int>::Tag::withArgs>()(123);
 
     while (window.isOpen()) {
         sf::Event event;
