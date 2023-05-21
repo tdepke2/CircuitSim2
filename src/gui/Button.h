@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gui/Signal.h>
 #include <gui/Widget.h>
 
 #include <memory>
@@ -13,7 +14,7 @@ namespace gui {
 
 class ButtonStyle {
 public:
-    ButtonStyle();
+    ButtonStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -42,9 +43,9 @@ public:
     const sf::Color& getTextFillColor() const;
 
     void setFillColorDown(const sf::Color& color);
-    void setTextPadding(float padding);
+    void setTextPadding(const sf::Vector2f& padding);
     const sf::Color& getFillColorDown() const;
-    float getTextPadding() const;
+    const sf::Vector2f& getTextPadding() const;
 
     std::shared_ptr<ButtonStyle> clone() const;
 
@@ -52,7 +53,7 @@ private:
     sf::RectangleShape rect_;
     sf::Text text_;
     sf::Color colorUp_, colorDown_;
-    float textPadding_;
+    sf::Vector2f textPadding_;
 
     friend class Button;
 };
@@ -65,15 +66,22 @@ public:
 
     void setSize(const sf::Vector2f& size);
     void setLabel(const sf::String& label);
+    void setAutoResize(bool autoResize);
     const sf::Vector2f& getSize() const;
     const sf::String& getLabel() const;
+    bool getAutoResize() const;
 
     void setStyle(std::shared_ptr<ButtonStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
     std::shared_ptr<ButtonStyle> getStyle();
 
+    virtual sf::FloatRect getBounds() const override;
+    virtual void handleMousePress(sf::Mouse::Button button, int x, int y) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, int x, int y) override;
+
+    Signal<int> onPress;
+
 protected:
-    Button(std::shared_ptr<Theme> theme);
     Button(std::shared_ptr<ButtonStyle> style);
 
 private:
@@ -88,12 +96,15 @@ private:
 FIXME stuck here, how do we reference the style as either the local one or global one? also should we pass the style in ctor instead of the theme?
 imagine we have a bunch of bold buttons, they all should share a style but not need to be allocated an entire theme.
 
+should be resolved now after changes
 */
 
 
 
     sf::Vector2f size_;
     sf::String label_;
+    bool autoResize_;
+    bool isPressed_;
 };
 
 }

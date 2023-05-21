@@ -14,10 +14,12 @@ namespace gui {
 
 class Gui : public sf::Drawable, public Container {
 public:
-    Gui();
+    virtual ~Gui() = default;
+
+    void handleEvent(const sf::Event& event);
 
 private:
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
 }

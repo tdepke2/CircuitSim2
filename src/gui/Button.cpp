@@ -5,10 +5,6 @@
 namespace gui {
 
 
-ButtonStyle::ButtonStyle() {
-    // FIXME: set default style here?
-}
-
 // sf::Shape interface.
 void ButtonStyle::setTexture(const sf::Texture* texture, bool resetRect) {
     rect_.setTexture(texture, resetRect);
@@ -82,13 +78,13 @@ const sf::Color& ButtonStyle::getTextFillColor() const {
 void ButtonStyle::setFillColorDown(const sf::Color& color) {
     colorDown_ = color;
 }
-void ButtonStyle::setTextPadding(float padding) {
+void ButtonStyle::setTextPadding(const sf::Vector2f& padding) {
     textPadding_ = padding;
 }
 const sf::Color& ButtonStyle::getFillColorDown() const {
     return colorDown_;
 }
-float ButtonStyle::getTextPadding() const {
+const sf::Vector2f& ButtonStyle::getTextPadding() const {
     return textPadding_;
 }
 
@@ -108,7 +104,7 @@ std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
 
 
 std::shared_ptr<Button> Button::create(std::shared_ptr<Theme> theme) {
-    return std::shared_ptr<Button>(new Button(theme));
+    return std::shared_ptr<Button>(new Button(theme->getButtonStyle()));
 }
 std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style) {
     return std::shared_ptr<Button>(new Button(style));
@@ -119,12 +115,26 @@ void Button::setSize(const sf::Vector2f& size) {
 }
 void Button::setLabel(const sf::String& label) {
     label_ = label;
+    if (autoResize_) {
+        style_->text_.setString(label_);
+        const auto bounds = style_->text_.getLocalBounds();
+        size_ = sf::Vector2f(
+            2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
+            2.0f * (bounds.top + style_->textPadding_.y) + bounds.height
+        );
+    }
+}
+void Button::setAutoResize(bool autoResize) {
+    autoResize_ = autoResize;
 }
 const sf::Vector2f& Button::getSize() const {
     return size_;
 }
 const sf::String& Button::getLabel() const {
     return label_;
+}
+bool Button::getAutoResize() const {
+    return autoResize_;
 }
 
 void Button::setStyle(std::shared_ptr<ButtonStyle> style) {
@@ -139,19 +149,31 @@ std::shared_ptr<ButtonStyle> Button::getStyle() {
     return style_;
 }
 
-Button::Button(std::shared_ptr<Theme> theme) {
-    style_ = theme->getButtonStyle();
+sf::FloatRect Button::getBounds() const {
+    return {getPosition(), size_};
 }
-Button::Button(std::shared_ptr<ButtonStyle> style) {
-    style_ = style;
+void Button::handleMousePress(sf::Mouse::Button button, int x, int y) {
+    onPress.emit(456);
+}
+void Button::handleMouseRelease(sf::Mouse::Button button, int x, int y) {
+
+}
+
+Button::Button(std::shared_ptr<ButtonStyle> style) :
+    style_(style),
+    styleCopied_(false),
+    autoResize_(true),
+    isPressed_(false) {
 }
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
-    
+
     style_->rect_.setSize(size_);
+    style_->rect_.setFillColor(isPressed_ ? style_->colorDown_ : style_->colorUp_);
     target.draw(style_->rect_, states);
     style_->text_.setString(label_);
+    style_->text_.setPosition(style_->textPadding_);
     target.draw(style_->text_, states);
 }
 

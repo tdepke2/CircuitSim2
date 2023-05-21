@@ -32,8 +32,12 @@ target_compile_features(CircuitSim2 PRIVATE cxx_std_11)
 
 add_executable(gui_demo
     gui/Button.cpp
+    gui/Container.cpp
     gui/Gui.cpp
+    gui/Theme.cpp
     gui/Widget.cpp
+    gui/themes/DefaultTheme.cpp
+    gui/Signal.cpp
     gui/main.cpp
 )
 target_include_directories(gui_demo PRIVATE .)

@@ -9,6 +9,8 @@ namespace gui {
 
 class Theme {
 public:
+    virtual ~Theme() = default;
+
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() = 0;
 
 protected:

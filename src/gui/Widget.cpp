@@ -6,8 +6,12 @@ namespace gui {
     return std::make_shared<Widget>();
 }*/
 
-Widget::Widget() {
+bool Widget::isMouseHovering(int x, int y) const {
+    return getBounds().contains(x, y);
+}
+void Widget::handleMousePress(sf::Mouse::Button button, int x, int y) {
 
 }
+void Widget::handleMouseRelease(sf::Mouse::Button button, int x, int y) {}
 
 }
