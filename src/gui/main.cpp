@@ -33,6 +33,11 @@ int main() {
     std::cout << "connect gave " << ret << "\n";
     ret = button->onPress.connect(&func2);
     std::cout << "connect gave " << ret << "\n";
+    ret = button->onPress.connect([&]{ window.close(); });
+    std::cout << "connect gave " << ret << "\n";
+    button->onPress.disconnect(ret);
+    ret = button->onPress.connect([&]{ button->setLabel("nice to meet you"); });
+    std::cout << "connect gave " << ret << "\n";
     myGui.addChild(button);
 
     // Value ctors
