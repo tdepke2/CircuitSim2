@@ -34,6 +34,7 @@ add_executable(gui_demo
     gui/Button.cpp
     gui/Container.cpp
     gui/Gui.cpp
+    gui/Panel.cpp
     gui/Theme.cpp
     gui/Widget.cpp
     gui/themes/DefaultTheme.cpp

@@ -12,7 +12,7 @@ namespace gui {
 
 namespace gui {
 
-class Gui : public sf::Drawable, public Container {
+class Gui : public Container, public sf::Drawable {
 public:
     virtual ~Gui() = default;
 

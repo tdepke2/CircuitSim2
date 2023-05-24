@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SFML/System/Vector2.hpp"
+#include "SFML/Window/Mouse.hpp"
 #include <gui/Signal.h>
 #include <gui/Widget.h>
 
@@ -79,7 +81,9 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, int x, int y) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, int x, int y) override;
 
-    Signal<int> onPress;
+    Signal<Widget*, sf::Mouse::Button, sf::Vector2f> onMousePress;
+    Signal<Widget*, sf::Mouse::Button, sf::Vector2f> onMouseRelease;
+    Signal<Widget*, sf::Vector2f> onClick;
 
 protected:
     Button(std::shared_ptr<ButtonStyle> style);

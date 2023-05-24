@@ -1,10 +1,12 @@
-#include "gui/Signal.h"
 #include <gui/Button.h>
 #include <gui/Gui.h>
+#include <gui/Panel.h>
+#include <gui/Signal.h>
 #include <gui/themes/DefaultTheme.h>
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <unordered_map>
 
 void func() {
     std::cout << "func called\n";
@@ -29,16 +31,27 @@ int main() {
     auto button = gui::Button::create(theme);
     button->setLabel(sf::String("hello!"));
     //button->setSize(sf::Vector2f(40, 30));
-    auto ret = button->onPress.connect(&func);
+    auto ret = button->onClick.connect(&func);
     std::cout << "connect gave " << ret << "\n";
-    ret = button->onPress.connect(&func2);
+    //ret = button->onClick.connect(&func2);
+    //std::cout << "connect gave " << ret << "\n";
+    ret = button->onClick.connect([&]{ window.close(); });
     std::cout << "connect gave " << ret << "\n";
-    ret = button->onPress.connect([&]{ window.close(); });
-    std::cout << "connect gave " << ret << "\n";
-    button->onPress.disconnect(ret);
-    ret = button->onPress.connect([&]{ button->setLabel("nice to meet you"); });
+    button->onClick.disconnect(ret);
+    ret = button->onClick.connect([&]{ button->setLabel("nice to meet you"); });
     std::cout << "connect gave " << ret << "\n";
     myGui.addChild(button);
+
+    auto panel = gui::Panel::create(theme);
+    panel->setSize(sf::Vector2f(200, 150));
+    panel->setPosition(50.0f, 50.0f);
+    myGui.addChild(panel);
+
+    auto button2 = gui::Button::create(theme);
+    button2->setPosition(5.0f, 5.0f);
+    button2->setLabel(sf::String("click me"));
+    button2->onClick.connect([&]{ std::cout << "button2 clicked\n"; button2->setLabel(button2->getLabel() + "?"); });
+    panel->addChild(button2);
 
     // Value ctors
     gui::Callback<int> cb(&func);

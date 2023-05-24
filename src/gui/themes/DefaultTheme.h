@@ -13,12 +13,13 @@ public:
 
     static std::shared_ptr<Theme> create();
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() override;
+    virtual std::shared_ptr<PanelStyle> getPanelStyle() override;
 
 protected:
     DefaultTheme();
 
 private:
-    sf::Font font_;
+    sf::Font consolasFont_;
 };
 
 }

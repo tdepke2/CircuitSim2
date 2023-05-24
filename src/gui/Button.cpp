@@ -153,10 +153,13 @@ sf::FloatRect Button::getBounds() const {
     return {getPosition(), size_};
 }
 void Button::handleMousePress(sf::Mouse::Button button, int x, int y) {
-    onPress.emit(456);
+    onMousePress.emit(this, button, sf::Vector2f(0.0f, 0.0f));  // FIXME ##########################
+    if (button <= sf::Mouse::Button::Middle) {
+        onClick.emit(this, sf::Vector2f(0.0f, 0.0f));
+    }
 }
 void Button::handleMouseRelease(sf::Mouse::Button button, int x, int y) {
-
+    onMouseRelease.emit(this, button, sf::Vector2f(0.0f, 0.0f));
 }
 
 Button::Button(std::shared_ptr<ButtonStyle> style) :
