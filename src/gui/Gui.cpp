@@ -34,13 +34,13 @@ void Gui::handleEvent(const sf::Event& event) {
         }
         for (const auto& w : lastWidgetsUnderMouse_) {
             if (widgetsUnderMouse_.count(w) == 0 && w->isEnabled()) {
-                w->onMouseLeave.emit(w.get());
+                w->handleMouseLeft();
             }
         }
     } else if (event.type == sf::Event::MouseLeft) {
         for (const auto& w : widgetsUnderMouse_) {
             if (w->isEnabled()) {
-                w->onMouseLeave.emit(w.get());
+                w->handleMouseLeft();
             }
         }
         widgetsUnderMouse_.clear();
@@ -55,7 +55,7 @@ void Gui::handleEvent(const sf::Event& event) {
 void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {
     widgetsUnderMouse_.emplace(widget);
     if (lastWidgetsUnderMouse_.count(widget) == 0 && widget->isEnabled()) {
-        widget->onMouseEnter.emit(widget.get());
+        widget->handleMouseEntered();
     }
 }
 

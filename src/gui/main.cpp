@@ -113,7 +113,7 @@ int main() {
     button2->onMouseLeave.connect(&mouseLeave);
 
     sf::Image paintImage;
-    paintImage.create(70, 50, sf::Color::White);
+    paintImage.create(70, 50, sf::Color(25, 25, 25));
     sf::Texture paintTexture;
     auto paintButton = createPaintButton(theme, &paintImage, &paintTexture);
     panel->addChild(paintButton);

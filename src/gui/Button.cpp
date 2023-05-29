@@ -148,16 +148,25 @@ void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mous
         return;
     }
     const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
-    onMousePress.emit(this, button, mouseWidgetLocal);
     if (button <= sf::Mouse::Button::Middle) {
+        isPressed_ = true;
         onClick.emit(this, mouseWidgetLocal);
     }
+    onMousePress.emit(this, button, mouseWidgetLocal);
 }
 void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
     if (!isEnabled()) {
         return;
     }
+    if (button <= sf::Mouse::Button::Middle) {
+        isPressed_ = false;
+    }
     onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
+}
+
+void Button::handleMouseLeft() {
+    isPressed_ = false;
+    Widget::handleMouseLeft();
 }
 
 Button::Button(std::shared_ptr<ButtonStyle> style) :

@@ -51,6 +51,13 @@ void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
 
 }
 
+void Widget::handleMouseEntered() {
+    onMouseEnter.emit(this);
+}
+void Widget::handleMouseLeft() {
+    onMouseLeave.emit(this);
+}
+
 Widget::Widget() :
     parent_(nullptr),
     gui_(nullptr),

@@ -98,6 +98,11 @@ void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mou
     if (!isEnabled()) {
         return;
     }
+    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
+    auto widget = getWidgetUnderMouse(newMouseLocal);
+    if (widget != nullptr) {
+        widget->handleMouseRelease(button, newMouseLocal);
+    }
 }
 
 Panel::Panel(std::shared_ptr<PanelStyle> style) :

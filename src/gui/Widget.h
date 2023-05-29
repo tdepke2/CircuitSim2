@@ -34,6 +34,9 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
 
+    virtual void handleMouseEntered();
+    virtual void handleMouseLeft();
+
     Signal<Widget*> onMouseEnter;
     Signal<Widget*> onMouseLeave;
     // FIXME signals for focus/unfocus?

@@ -79,6 +79,8 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
 
+    virtual void handleMouseLeft() override;
+
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
     Signal<Widget*, const sf::Vector2f&> onClick;
