@@ -89,16 +89,7 @@ const sf::Vector2f& ButtonStyle::getTextPadding() const {
 }
 
 std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
-    auto style = std::make_shared<ButtonStyle>();
-    style->rect_ = rect_;
-    style->text_ = text_;
-    style->colorUp_ = colorUp_;
-    style->colorDown_ = colorDown_;
-    style->textPadding_ = textPadding_;
-
-    // FIXME better to just pass through ctor instead?
-
-    return style;
+    return std::make_shared<ButtonStyle>(*this);
 }
 
 

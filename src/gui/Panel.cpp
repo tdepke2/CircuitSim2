@@ -38,12 +38,7 @@ float PanelStyle::getOutlineThickness() const {
 }
 
 std::shared_ptr<PanelStyle> PanelStyle::clone() const {
-    auto style = std::make_shared<PanelStyle>();
-    style->rect_ = rect_;
-
-    // FIXME better to just pass through ctor instead?
-
-    return style;
+    return std::make_shared<PanelStyle>(*this);
 }
 
 

@@ -16,8 +16,6 @@ namespace gui {
 
 class ButtonStyle {
 public:
-    ButtonStyle() = default;
-
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
     void setTextureRect(const sf::IntRect& rect);
