@@ -60,11 +60,11 @@ private:
     friend class Button;
 };
 
-class Button : public Widget, public sf::Transformable {
+class Button : public Widget {
 public:
     static std::shared_ptr<Button> create(std::shared_ptr<Theme> theme);
     static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style);
-    virtual ~Button() = default;
+    virtual ~Button() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
     void setLabel(const sf::String& label);
@@ -77,13 +77,13 @@ public:
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
     std::shared_ptr<ButtonStyle> getStyle();
 
-    virtual sf::FloatRect getBounds() const override;
-    virtual void handleMousePress(sf::Mouse::Button button, int x, int y) override;
-    virtual void handleMouseRelease(sf::Mouse::Button button, int x, int y) override;
+    virtual sf::FloatRect getLocalBounds() const override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
 
-    Signal<Widget*, sf::Mouse::Button, sf::Vector2f> onMousePress;
-    Signal<Widget*, sf::Mouse::Button, sf::Vector2f> onMouseRelease;
-    Signal<Widget*, sf::Vector2f> onClick;
+    Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
+    Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
+    Signal<Widget*, const sf::Vector2f&> onClick;
 
 protected:
     Button(std::shared_ptr<ButtonStyle> style);

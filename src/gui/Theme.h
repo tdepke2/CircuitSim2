@@ -12,7 +12,7 @@ namespace gui {
 
 class Theme {
 public:
-    virtual ~Theme() = default;
+    virtual ~Theme() noexcept = default;
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() = 0;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() = 0;

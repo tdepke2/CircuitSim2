@@ -3,6 +3,7 @@
 #include <gui/Container.h>
 
 #include <memory>
+#include <set>
 #include <SFML/Graphics.hpp>
 #include <vector>
 
@@ -12,14 +13,20 @@ namespace gui {
 
 namespace gui {
 
-class Gui : public Container, public sf::Drawable {
+class Gui : public ContainerBase, public sf::Drawable {
 public:
-    virtual ~Gui() = default;
+    virtual ~Gui() noexcept = default;
 
+    virtual void addChild(std::shared_ptr<Widget> child) override;
     void handleEvent(const sf::Event& event);
+
+    // Internal
+    void addWidgetUnderMouse(std::shared_ptr<Widget> widget);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+
+    std::set<std::shared_ptr<Widget>> widgetsUnderMouse_, lastWidgetsUnderMouse_;
 };
 
 }

@@ -149,17 +149,24 @@ std::shared_ptr<ButtonStyle> Button::getStyle() {
     return style_;
 }
 
-sf::FloatRect Button::getBounds() const {
-    return {getPosition(), size_};
+sf::FloatRect Button::getLocalBounds() const {
+    return {-getOrigin(), size_};
 }
-void Button::handleMousePress(sf::Mouse::Button button, int x, int y) {
-    onMousePress.emit(this, button, sf::Vector2f(0.0f, 0.0f));  // FIXME ##########################
+void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+    if (!isEnabled()) {
+        return;
+    }
+    const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
+    onMousePress.emit(this, button, mouseWidgetLocal);
     if (button <= sf::Mouse::Button::Middle) {
-        onClick.emit(this, sf::Vector2f(0.0f, 0.0f));
+        onClick.emit(this, mouseWidgetLocal);
     }
 }
-void Button::handleMouseRelease(sf::Mouse::Button button, int x, int y) {
-    onMouseRelease.emit(this, button, sf::Vector2f(0.0f, 0.0f));
+void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+    if (!isEnabled()) {
+        return;
+    }
+    onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
 }
 
 Button::Button(std::shared_ptr<ButtonStyle> style) :
@@ -170,6 +177,9 @@ Button::Button(std::shared_ptr<ButtonStyle> style) :
 }
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if (!isVisible()) {
+        return;
+    }
     states.transform *= getTransform();
 
     style_->rect_.setSize(size_);

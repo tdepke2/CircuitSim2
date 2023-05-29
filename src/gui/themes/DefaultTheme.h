@@ -9,7 +9,7 @@ namespace gui {
 
 class DefaultTheme : public Theme {
 public:
-    virtual ~DefaultTheme() = default;
+    virtual ~DefaultTheme() noexcept = default;
 
     static std::shared_ptr<Theme> create();
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() override;

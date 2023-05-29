@@ -1,3 +1,4 @@
+#include "SFML/Graphics/Texture.hpp"
 #include <gui/Button.h>
 #include <gui/Gui.h>
 #include <gui/Panel.h>
@@ -6,13 +7,54 @@
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <memory>
 #include <unordered_map>
+#include <utility>
 
 void func() {
     std::cout << "func called\n";
 }
 void func2(int n) {
     std::cout << "func2 called with " << n << "\n";
+}
+void mouseClick(gui::Widget* w, const sf::Vector2f& mouseLocal) {
+    std::cout << "mouseClick() at " << mouseLocal.x << ", " << mouseLocal.y << "\n";
+}
+void mouseEnter(gui::Widget* w) {
+    std::cout << "mouseEnter() for " << w << "\n";
+    //w->test__setSelected(true);
+}
+void mouseLeave(gui::Widget* w) {
+    std::cout << "mouseLeave() for " << w << "\n";
+    //w->test__setSelected(false);
+}
+
+sf::Color getRandColor() {
+    return {static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256)};
+}
+
+/**
+ * Create a button that can be painted with randomly colored pixels by clicking
+ * in the button area.
+ */
+auto createPaintButton(std::shared_ptr<gui::Theme> theme, sf::Image* paintImage, sf::Texture* paintTexture) {
+    auto paintButton = gui::Button::create(theme);
+    auto style = paintButton->getStyle();
+    style->setFillColor(sf::Color::White);
+    paintTexture->loadFromImage(*paintImage);
+    style->setTexture(paintTexture, true);
+    paintButton->setSize(sf::Vector2f(paintImage->getSize()));
+    paintButton->onClick.connect([=](gui::Widget* w, const sf::Vector2f& mouseLocal) {
+        std::cout << "(" << std::min(static_cast<unsigned int>(mouseLocal.x), paintImage->getSize().x)
+        << ", " << std::min(static_cast<unsigned int>(mouseLocal.y), paintImage->getSize().y) << ")\n";
+        paintImage->setPixel(
+            std::min(static_cast<unsigned int>(mouseLocal.x), paintImage->getSize().x - 1),
+            std::min(static_cast<unsigned int>(mouseLocal.y), paintImage->getSize().y - 1),
+            getRandColor()
+        );
+        paintTexture->loadFromImage(*paintImage);
+    });
+    return paintButton;
 }
 
 int main() {
@@ -30,8 +72,10 @@ int main() {
 
     auto button = gui::Button::create(theme);
     button->setLabel(sf::String("hello!"));
+    button->setRotation(18.0f);
+    button->setOrigin(button->getSize() * 0.5f);
     //button->setSize(sf::Vector2f(40, 30));
-    auto ret = button->onClick.connect(&func);
+    auto ret = button->onClick.connect(&mouseClick);
     std::cout << "connect gave " << ret << "\n";
     //ret = button->onClick.connect(&func2);
     //std::cout << "connect gave " << ret << "\n";
@@ -42,16 +86,37 @@ int main() {
     std::cout << "connect gave " << ret << "\n";
     myGui.addChild(button);
 
+    std::cout << "button local bounds: L" << button->getLocalBounds().left << " T" << button->getLocalBounds().top << " W" << button->getLocalBounds().width << " H" << button->getLocalBounds().height << "\n";
+
     auto panel = gui::Panel::create(theme);
-    panel->setSize(sf::Vector2f(200, 150));
+    panel->setSize({200, 150});
+    panel->setOrigin(5.0f, 15.0f);
     panel->setPosition(50.0f, 50.0f);
+    panel->setRotation(30.0f);
     myGui.addChild(panel);
 
     auto button2 = gui::Button::create(theme);
-    button2->setPosition(5.0f, 5.0f);
+    button2->setPosition(panel->getSize() * 0.5f);
+    button2->setRotation(-44.0f);
     button2->setLabel(sf::String("click me"));
-    button2->onClick.connect([&]{ std::cout << "button2 clicked\n"; button2->setLabel(button2->getLabel() + "?"); });
+    button2->setSize({160, 50});
+    button2->setOrigin(button2->getSize() * 0.5f);
+    button2->onClick.connect([&]{ std::cout << "button2 clicked\n"; /*button2->setLabel(button2->getLabel() + "?");*/ });
+    button2->onClick.connect(&mouseClick);
     panel->addChild(button2);
+
+    button->onMouseEnter.connect(&mouseEnter);
+    button->onMouseLeave.connect(&mouseLeave);
+    panel->onMouseEnter.connect(&mouseEnter);
+    panel->onMouseLeave.connect(&mouseLeave);
+    button2->onMouseEnter.connect(&mouseEnter);
+    button2->onMouseLeave.connect(&mouseLeave);
+
+    sf::Image paintImage;
+    paintImage.create(70, 50, sf::Color::White);
+    sf::Texture paintTexture;
+    auto paintButton = createPaintButton(theme, &paintImage, &paintTexture);
+    panel->addChild(paintButton);
 
     // Value ctors
     gui::Callback<int> cb(&func);

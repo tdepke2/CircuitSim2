@@ -1,3 +1,4 @@
+#include <gui/Gui.h>
 #include <gui/Panel.h>
 #include <gui/Theme.h>
 
@@ -73,14 +74,35 @@ std::shared_ptr<PanelStyle> Panel::getStyle() {
     return style_;
 }
 
-sf::FloatRect Panel::getBounds() const {
-    return {getPosition(), size_};
+sf::FloatRect Panel::getLocalBounds() const {
+    return {-getOrigin(), size_};
 }
-void Panel::handleMousePress(sf::Mouse::Button button, int x, int y) {
-    forwardMousePress(button, x, y);
+void Panel::handleMouseMove(const sf::Vector2f& mouseLocal) {
+    if (getGui() == nullptr) {
+        return;
+    }
+    getGui()->addWidgetUnderMouse(shared_from_this());
+
+    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
+    auto widget = getWidgetUnderMouse(newMouseLocal);
+    if (widget != nullptr) {
+        widget->handleMouseMove(newMouseLocal);
+    }
 }
-void Panel::handleMouseRelease(sf::Mouse::Button button, int x, int y) {
-    
+void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+    if (!isEnabled()) {
+        return;
+    }
+    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
+    auto widget = getWidgetUnderMouse(newMouseLocal);
+    if (widget != nullptr) {
+        widget->handleMousePress(button, newMouseLocal);
+    }
+}
+void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+    if (!isEnabled()) {
+        return;
+    }
 }
 
 Panel::Panel(std::shared_ptr<PanelStyle> style) :
@@ -89,6 +111,9 @@ Panel::Panel(std::shared_ptr<PanelStyle> style) :
 }
 
 void Panel::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if (!isVisible()) {
+        return;
+    }
     states.transform *= getTransform();
 
     style_->rect_.setSize(size_);

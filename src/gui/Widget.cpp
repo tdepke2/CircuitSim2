@@ -1,3 +1,4 @@
+#include <gui/Gui.h>
 #include <gui/Widget.h>
 
 namespace gui {
@@ -6,26 +7,63 @@ namespace gui {
     return std::make_shared<Widget>();
 }*/
 
-void Widget::setParent(Container* parent) {
-    parent_ = parent;
-}
-
 Container* Widget::getParent() const {
     return parent_;
 }
 
-bool Widget::isMouseHovering(int x, int y) const {
-    return getBounds().contains(x, y);
+Gui* Widget::getGui() const {
+    return gui_;
 }
-void Widget::handleMousePress(sf::Mouse::Button button, int x, int y) {
+
+void Widget::setVisible(bool visible) {
+    visible_ = visible;
+}
+
+bool Widget::isVisible() const {
+    return visible_;
+}
+
+void Widget::setEnabled(bool enabled) {
+    enabled_ = enabled;
+}
+
+bool Widget::isEnabled() const {
+    return enabled_;
+}
+
+sf::Vector2f Widget::toLocalSpace(const sf::Vector2f& point) const {
+    return getInverseTransform().transformPoint(point) - getOrigin();
+}
+
+bool Widget::isMouseHovering(const sf::Vector2f& mouseLocal) const {
+    return getLocalBounds().contains(toLocalSpace(mouseLocal));
+}
+void Widget::handleMouseMove(const sf::Vector2f& mouseLocal) {
+    if (gui_ == nullptr) {
+        return;
+    }
+    gui_->addWidgetUnderMouse(shared_from_this());
+}
+void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
 
 }
-void Widget::handleMouseRelease(sf::Mouse::Button button, int x, int y) {
+void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
 
 }
 
 Widget::Widget() :
-    parent_(nullptr) {
+    parent_(nullptr),
+    gui_(nullptr),
+    visible_(true),
+    enabled_(true) {
+}
+
+void Widget::setParent(Container* parent) {
+    parent_ = parent;
+}
+
+void Widget::setGui(Gui* gui) {
+    gui_ = gui;
 }
 
 }

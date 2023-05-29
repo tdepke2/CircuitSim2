@@ -1,7 +1,6 @@
 #pragma once
 
 #include <gui/Container.h>
-#include <gui/Widget.h>
 
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -36,11 +35,11 @@ private:
     friend class Panel;
 };
 
-class Panel : public Container, public Widget, public sf::Transformable {
+class Panel : public Container {
 public:
     static std::shared_ptr<Panel> create(std::shared_ptr<Theme> theme);
     static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style);
-    virtual ~Panel() = default;
+    virtual ~Panel() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
     const sf::Vector2f& getSize() const;
@@ -49,9 +48,10 @@ public:
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
     std::shared_ptr<PanelStyle> getStyle();
 
-    virtual sf::FloatRect getBounds() const override;
-    virtual void handleMousePress(sf::Mouse::Button button, int x, int y) override;
-    virtual void handleMouseRelease(sf::Mouse::Button button, int x, int y) override;
+    virtual sf::FloatRect getLocalBounds() const override;
+    virtual void handleMouseMove(const sf::Vector2f& mouseLocal) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
 
 protected:
     Panel(std::shared_ptr<PanelStyle> style);
