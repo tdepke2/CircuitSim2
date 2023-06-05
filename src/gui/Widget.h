@@ -23,6 +23,8 @@ public:
     bool isVisible() const;
     void setEnabled(bool enabled);
     bool isEnabled() const;
+    void setFocused(bool focused);
+    bool isFocused() const;
 
     // Converts a point to the `Widget`s local coordinate system, offset by the origin to match up with the local bounds.
     sf::Vector2f toLocalSpace(const sf::Vector2f& point) const;
@@ -33,13 +35,16 @@ public:
     virtual void handleMouseMove(const sf::Vector2f& mouseLocal);
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
+    virtual void handleTextEntered(uint32_t unicode);
 
     virtual void handleMouseEntered();
     virtual void handleMouseLeft();
+    virtual void handleFocusChange(bool focused);
 
     Signal<Widget*> onMouseEnter;
     Signal<Widget*> onMouseLeave;
-    // FIXME signals for focus/unfocus?
+    Signal<Widget*> onFocusGained;
+    Signal<Widget*> onFocusLost;
 
 protected:
     Widget();
@@ -50,7 +55,7 @@ protected:
 private:
     Container* parent_;
     Gui* gui_;
-    bool visible_, enabled_;
+    bool visible_, enabled_, focused_;
 
     friend class Container;
     friend class ContainerBase;

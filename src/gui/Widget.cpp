@@ -31,6 +31,20 @@ bool Widget::isEnabled() const {
     return enabled_;
 }
 
+void Widget::setFocused(bool focused) {
+    if (focused_ == focused || gui_ == nullptr) {
+        return;
+    } else if (focused) {
+        gui_->requestWidgetFocus(shared_from_this());
+    } else {
+        gui_->requestWidgetFocus(nullptr);
+    }
+}
+
+bool Widget::isFocused() const {
+    return focused_;
+}
+
 sf::Vector2f Widget::toLocalSpace(const sf::Vector2f& point) const {
     return getInverseTransform().transformPoint(point) - getOrigin();
 }
@@ -45,9 +59,14 @@ void Widget::handleMouseMove(const sf::Vector2f& mouseLocal) {
     gui_->addWidgetUnderMouse(shared_from_this());
 }
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-
+    if (button <= sf::Mouse::Button::Middle) {
+        setFocused(true);
+    }
 }
 void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+
+}
+void Widget::handleTextEntered(uint32_t unicode) {
 
 }
 
@@ -57,12 +76,21 @@ void Widget::handleMouseEntered() {
 void Widget::handleMouseLeft() {
     onMouseLeave.emit(this);
 }
+void Widget::handleFocusChange(bool focused) {
+    focused_ = focused;
+    if (focused) {
+        onFocusGained.emit(this);
+    } else {
+        onFocusLost.emit(this);
+    }
+}
 
 Widget::Widget() :
     parent_(nullptr),
     gui_(nullptr),
     visible_(true),
-    enabled_(true) {
+    enabled_(true),
+    focused_(false) {
 }
 
 void Widget::setParent(Container* parent) {

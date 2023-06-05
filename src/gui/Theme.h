@@ -6,6 +6,7 @@
 namespace gui {
     class ButtonStyle;
     class PanelStyle;
+    class TextBoxStyle;
 }
 
 namespace gui {
@@ -16,12 +17,14 @@ public:
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() = 0;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() = 0;
+    virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() = 0;
 
 protected:
     Theme();
 
     std::shared_ptr<ButtonStyle> buttonStyle_;
     std::shared_ptr<PanelStyle> panelStyle_;
+    std::shared_ptr<TextBoxStyle> textBoxStyle_;
 };
 
 }

@@ -3,6 +3,7 @@
 #include <gui/Gui.h>
 #include <gui/Panel.h>
 #include <gui/Signal.h>
+#include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
 
 #include <iostream>
@@ -64,7 +65,7 @@ int main() {
     sf::CircleShape shape(100.0f);
     shape.setFillColor(sf::Color::Green);
 
-    gui::Gui myGui;
+    gui::Gui myGui(window);
 
     // FIXME: The lifetime of the theme is bound to the gui (due to font and stuff), make it stored in the gui? maybe not...
     // perhaps instead make it not a pointer (and pass ref to widget ctors) to make it clear.
@@ -74,6 +75,7 @@ int main() {
     button->setLabel(sf::String("hello!"));
     button->setRotation(18.0f);
     button->setOrigin(button->getSize() * 0.5f);
+    button->setPosition(60.0f, 30.0f);
     //button->setSize(sf::Vector2f(40, 30));
     auto ret = button->onClick.connect(&mouseClick);
     std::cout << "connect gave " << ret << "\n";
@@ -118,6 +120,22 @@ int main() {
     auto paintButton = createPaintButton(theme, &paintImage, &paintTexture);
     panel->addChild(paintButton);
 
+    auto textBox = gui::TextBox::create(theme);
+    textBox->setPosition(200.0f, 50.0f);
+
+
+
+    textBox->setOrigin(100.0f, 25.0f); // FIXME this causes problems...
+
+
+
+    textBox->setSize(8);
+    textBox->setText("abc123");
+    textBox->onFocusGained.connect([]{ std::cout << "textBox gained focus\n"; });
+    textBox->onFocusLost.connect([]{ std::cout << "textBox lost focus\n"; });
+    textBox->onClick.connect(&mouseClick);
+    myGui.addChild(textBox);
+
     // Value ctors
     gui::Callback<int> cb(&func);
     gui::Callback<int> cb2(&func2);
@@ -154,6 +172,8 @@ int main() {
             myGui.handleEvent(event);
             if (event.type == sf::Event::Closed) {
                 window.close();
+            } else if (event.type == sf::Event::Resized) {
+                //window.setView(sf::View(sf::FloatRect({0.0f, 0.0f}, sf::Vector2f(window.getSize()))));
             }
         }
 

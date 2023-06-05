@@ -153,6 +153,7 @@ void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mous
         onClick.emit(this, mouseWidgetLocal);
     }
     onMousePress.emit(this, button, mouseWidgetLocal);
+    Widget::handleMousePress(button, mouseLocal);
 }
 void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
     if (!isEnabled()) {
@@ -162,6 +163,7 @@ void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
         isPressed_ = false;
     }
     onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
+    Widget::handleMouseRelease(button, mouseLocal);
 }
 
 void Button::handleMouseLeft() {

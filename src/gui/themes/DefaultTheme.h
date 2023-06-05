@@ -14,6 +14,7 @@ public:
     static std::shared_ptr<Theme> create();
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() override;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() override;
+    virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() override;
 
 protected:
     DefaultTheme();

@@ -37,6 +37,7 @@ add_executable(gui_demo
     gui/Panel.cpp
     gui/Theme.cpp
     gui/Widget.cpp
+    gui/TextBox.cpp
     gui/themes/DefaultTheme.cpp
     gui/Signal.cpp
     gui/main.cpp
