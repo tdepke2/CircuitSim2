@@ -5,11 +5,13 @@
 
 namespace gui {
 
-std::shared_ptr<Theme> DefaultTheme::create() {
-    return std::shared_ptr<Theme>(new DefaultTheme);
+DefaultTheme::DefaultTheme() {
+    if (!consolasFont_.loadFromFile("resources/consolas.ttf")) {
+        throw std::runtime_error("\"resources/consolas.ttf\": Unable to load font file.");
+    }
 }
 
-std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() {
+std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() const {
     if (!buttonStyle_) {
         buttonStyle_ = std::make_shared<ButtonStyle>();
         buttonStyle_->setFillColor({240, 240, 240});
@@ -24,7 +26,7 @@ std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() {
     return buttonStyle_;
 }
 
-std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() {
+std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() const {
     if (!panelStyle_) {
         panelStyle_ = std::make_shared<PanelStyle>();
         panelStyle_->setFillColor(sf::Color::White);
@@ -34,10 +36,12 @@ std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() {
     return panelStyle_;
 }
 
-std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() {
+std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
     if (!textBoxStyle_) {
         textBoxStyle_ = std::make_shared<TextBoxStyle>();
         textBoxStyle_->setFillColor({240, 240, 240});
+        textBoxStyle_->setOutlineColor({190, 190, 190});
+        textBoxStyle_->setOutlineThickness(-1.0f);
 
         textBoxStyle_->setFont(consolasFont_);
         textBoxStyle_->setCharacterSize(15);
@@ -48,12 +52,6 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() {
         textBoxStyle_->setTextPadding({8.0f, 1.0f});
     }
     return textBoxStyle_;
-}
-
-DefaultTheme::DefaultTheme() {
-    if (!consolasFont_.loadFromFile("resources/consolas.ttf")) {
-        throw std::runtime_error("\"resources/consolas.ttf\": Unable to load font file.");
-    }
 }
 
 }

@@ -27,10 +27,17 @@ public:
     // Internal
     void requestWidgetFocus(std::shared_ptr<Widget> widget);
 
+    // Internal
+    void requestRedraw() const;
+
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::RenderWindow& window_;
+    mutable sf::RenderTexture renderTexture_;
+    mutable bool redrawPending_;
+    sf::Sprite renderSprite_;
+
     std::set<std::shared_ptr<Widget>> widgetsUnderMouse_, lastWidgetsUnderMouse_;
     std::shared_ptr<Widget> focusedWidget_;
 };

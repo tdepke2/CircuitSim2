@@ -26,6 +26,11 @@ public:
     void setFocused(bool focused);
     bool isFocused() const;
 
+    void moveToFront();
+    void moveToBack();
+
+    void requestRedraw() const;
+
     // Converts a point to the `Widget`s local coordinate system, offset by the origin to match up with the local bounds.
     sf::Vector2f toLocalSpace(const sf::Vector2f& point) const;
 
@@ -36,6 +41,7 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
     virtual void handleTextEntered(uint32_t unicode);
+    virtual void handleKeyPressed(sf::Keyboard::Key key);
 
     virtual void handleMouseEntered();
     virtual void handleMouseLeft();

@@ -2,6 +2,10 @@
 #include <gui/Button.h>
 #include <gui/Theme.h>
 
+
+#include <iostream>
+
+
 namespace gui {
 
 
@@ -94,8 +98,8 @@ std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
 
 
 
-std::shared_ptr<Button> Button::create(std::shared_ptr<Theme> theme) {
-    return std::shared_ptr<Button>(new Button(theme->getButtonStyle()));
+std::shared_ptr<Button> Button::create(const Theme& theme) {
+    return std::shared_ptr<Button>(new Button(theme.getButtonStyle()));
 }
 std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style) {
     return std::shared_ptr<Button>(new Button(style));
@@ -190,6 +194,8 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     style_->text_.setString(label_);
     style_->text_.setPosition(style_->textPadding_);
     target.draw(style_->text_, states);
+
+    std::cout << "button draw()\n";
 }
 
 }

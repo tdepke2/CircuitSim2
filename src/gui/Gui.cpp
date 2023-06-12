@@ -12,7 +12,11 @@ namespace gui {
 
 Gui::Gui(sf::RenderWindow& window) :
     window_(window),
+    redrawPending_(true),
     focusedWidget_(nullptr) {
+
+    renderTexture_.create(window.getSize().x, window.getSize().y);
+    renderSprite_.setTexture(renderTexture_.getTexture());
 }
 
 void Gui::addChild(std::shared_ptr<Widget> child) {
@@ -66,7 +70,11 @@ void Gui::handleEvent(const sf::Event& event) {
             focusedWidget_->handleTextEntered(event.text.unicode);
         }
     } else if (event.type == sf::Event::KeyPressed) {
-        
+        if (event.key.code == sf::Keyboard::Escape) {
+            requestWidgetFocus(nullptr);
+        } else if (focusedWidget_) {
+            focusedWidget_->handleKeyPressed(event.key.code);
+        }
     }
 }
 
@@ -87,10 +95,27 @@ void Gui::requestWidgetFocus(std::shared_ptr<Widget> widget) {
     focusedWidget_ = widget;
 }
 
+void Gui::requestRedraw() const {
+    redrawPending_ = true;
+}
+
 void Gui::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    for (const auto& child : getChildren()) {
-        target.draw(*child, states);
+    if (redrawPending_) {
+        std::cout << "Gui redraw...\n";
+        renderTexture_.clear({0, 0, 0, 0});
+        for (const auto& child : getChildren()) {
+            renderTexture_.draw(*child, states);
+        }
+        renderTexture_.display();
+        redrawPending_ = false;
     }
+
+
+    // FIXME is it necessary to pass the RenderStates to renderTexture_ above?
+
+
+
+    target.draw(renderSprite_, states);
 }
 
 }

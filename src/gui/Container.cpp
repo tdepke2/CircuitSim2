@@ -2,6 +2,16 @@
 
 namespace gui {
 
+ContainerBase::~ContainerBase() noexcept {
+    removeAllChildren();
+
+
+    // FIXME does this make sense? also what happens if we add a widget to two different containers?
+    // what about adding it to the same one twice?
+
+
+}
+
 bool ContainerBase::removeChild(std::shared_ptr<Widget> child) {
     size_t i = 0;
     for (const auto& c : children_) {
@@ -20,6 +30,31 @@ bool ContainerBase::removeChild(size_t index) {
     children_[index]->setGui(nullptr);
     children_.erase(children_.cbegin() + index);
     return true;
+}
+void ContainerBase::removeAllChildren() {
+    for (const auto& c : children_) {
+        c->setParent(nullptr);
+        c->setGui(nullptr);
+    }
+    children_.clear();
+}
+bool ContainerBase::moveChildToFront(std::shared_ptr<Widget> child) {
+    for (auto& c : children_) {
+        if (c == child) {
+            std::swap(children_.back(), c);
+            return true;
+        }
+    }
+    return false;
+}
+bool ContainerBase::moveChildToBack(std::shared_ptr<Widget> child) {
+    for (auto& c : children_) {
+        if (c == child) {
+            std::swap(children_.front(), c);
+            return true;
+        }
+    }
+    return false;
 }
 const std::vector<std::shared_ptr<Widget>>& ContainerBase::getChildren() const {
     return children_;

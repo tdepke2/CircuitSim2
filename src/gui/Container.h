@@ -10,11 +10,16 @@ namespace gui {
 
 class ContainerBase {
 public:
-    virtual ~ContainerBase() noexcept = default;
+    virtual ~ContainerBase() noexcept;
 
     virtual void addChild(std::shared_ptr<Widget> child) = 0;
     bool removeChild(std::shared_ptr<Widget> child);
     bool removeChild(size_t index);
+    void removeAllChildren();
+    // Swaps the ordering of widgets to ensure the specified child draws on top of others.
+    // Moving to the front means drawing last, so the child actually goes to the back of the container.
+    bool moveChildToFront(std::shared_ptr<Widget> child);
+    bool moveChildToBack(std::shared_ptr<Widget> child);
     const std::vector<std::shared_ptr<Widget>>& getChildren() const;
 
     // The returned Widget will be visible, but may not be enabled.

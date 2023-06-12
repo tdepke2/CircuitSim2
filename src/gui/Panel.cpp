@@ -43,8 +43,8 @@ std::shared_ptr<PanelStyle> PanelStyle::clone() const {
 
 
 
-std::shared_ptr<Panel> Panel::create(std::shared_ptr<Theme> theme) {
-    return std::shared_ptr<Panel>(new Panel(theme->getPanelStyle()));
+std::shared_ptr<Panel> Panel::create(const Theme& theme) {
+    return std::shared_ptr<Panel>(new Panel(theme.getPanelStyle()));
 }
 std::shared_ptr<Panel> Panel::create(std::shared_ptr<PanelStyle> style) {
     return std::shared_ptr<Panel>(new Panel(style));

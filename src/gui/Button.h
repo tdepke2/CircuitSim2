@@ -60,7 +60,7 @@ private:
 
 class Button : public Widget {
 public:
-    static std::shared_ptr<Button> create(std::shared_ptr<Theme> theme);
+    static std::shared_ptr<Button> create(const Theme& theme);
     static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style);
     virtual ~Button() noexcept = default;
 

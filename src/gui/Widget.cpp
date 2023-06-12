@@ -16,6 +16,9 @@ Gui* Widget::getGui() const {
 }
 
 void Widget::setVisible(bool visible) {
+    if (visible_ != visible) {
+        requestRedraw();
+    }
     visible_ = visible;
 }
 
@@ -24,6 +27,9 @@ bool Widget::isVisible() const {
 }
 
 void Widget::setEnabled(bool enabled) {
+    if (enabled_ != enabled) {
+        requestRedraw();
+    }
     enabled_ = enabled;
 }
 
@@ -39,10 +45,35 @@ void Widget::setFocused(bool focused) {
     } else {
         gui_->requestWidgetFocus(nullptr);
     }
+    requestRedraw();
 }
 
 bool Widget::isFocused() const {
     return focused_;
+}
+
+void Widget::moveToFront() {
+    if (parent_ != nullptr) {
+        parent_->moveChildToFront(shared_from_this());
+    } else if (gui_ != nullptr) {
+        gui_->moveChildToFront(shared_from_this());
+    }
+    requestRedraw();
+}
+
+void Widget::moveToBack() {
+    if (parent_ != nullptr) {
+        parent_->moveChildToBack(shared_from_this());
+    } else if (gui_ != nullptr) {
+        gui_->moveChildToBack(shared_from_this());
+    }
+    requestRedraw();
+}
+
+void Widget::requestRedraw() const {
+    if (gui_ != nullptr) {
+        gui_->requestRedraw();
+    }
 }
 
 sf::Vector2f Widget::toLocalSpace(const sf::Vector2f& point) const {
@@ -67,6 +98,9 @@ void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
 
 }
 void Widget::handleTextEntered(uint32_t unicode) {
+
+}
+void Widget::handleKeyPressed(sf::Keyboard::Key key) {
 
 }
 

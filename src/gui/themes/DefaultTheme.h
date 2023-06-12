@@ -9,15 +9,12 @@ namespace gui {
 
 class DefaultTheme : public Theme {
 public:
+    DefaultTheme();
     virtual ~DefaultTheme() noexcept = default;
 
-    static std::shared_ptr<Theme> create();
-    virtual std::shared_ptr<ButtonStyle> getButtonStyle() override;
-    virtual std::shared_ptr<PanelStyle> getPanelStyle() override;
-    virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() override;
-
-protected:
-    DefaultTheme();
+    virtual std::shared_ptr<ButtonStyle> getButtonStyle() const override;
+    virtual std::shared_ptr<PanelStyle> getPanelStyle() const override;
+    virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const override;
 
 private:
     sf::Font consolasFont_;

@@ -35,7 +35,7 @@ private:
 
 class Panel : public Container {
 public:
-    static std::shared_ptr<Panel> create(std::shared_ptr<Theme> theme);
+    static std::shared_ptr<Panel> create(const Theme& theme);
     static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style);
     virtual ~Panel() noexcept = default;
 

@@ -38,7 +38,7 @@ sf::Color getRandColor() {
  * Create a button that can be painted with randomly colored pixels by clicking
  * in the button area.
  */
-auto createPaintButton(std::shared_ptr<gui::Theme> theme, sf::Image* paintImage, sf::Texture* paintTexture) {
+auto createPaintButton(const gui::Theme& theme, sf::Image* paintImage, sf::Texture* paintTexture) {
     auto paintButton = gui::Button::create(theme);
     auto style = paintButton->getStyle();
     style->setFillColor(sf::Color::White);
@@ -67,9 +67,7 @@ int main() {
 
     gui::Gui myGui(window);
 
-    // FIXME: The lifetime of the theme is bound to the gui (due to font and stuff), make it stored in the gui? maybe not...
-    // perhaps instead make it not a pointer (and pass ref to widget ctors) to make it clear.
-    auto theme = gui::DefaultTheme::create();
+    gui::DefaultTheme theme;
 
     auto button = gui::Button::create(theme);
     button->setLabel(sf::String("hello!"));
@@ -123,17 +121,17 @@ int main() {
     auto textBox = gui::TextBox::create(theme);
     textBox->setPosition(200.0f, 50.0f);
 
-
-
-    textBox->setOrigin(100.0f, 25.0f); // FIXME this causes problems...
-
-
-
-    textBox->setSize(8);
+    textBox->setWidthCharacters(8);
+    textBox->setOrigin(textBox->getSize() * 0.5f);
     textBox->setText("abc123");
+    //textBox->setMaxCharacters(10);
+    //textBox->setReadOnly(true);
     textBox->onFocusGained.connect([]{ std::cout << "textBox gained focus\n"; });
     textBox->onFocusLost.connect([]{ std::cout << "textBox lost focus\n"; });
     textBox->onClick.connect(&mouseClick);
+    textBox->onEnterPressed.connect([](gui::Widget* w, const sf::String& text) {
+        std::cout << "Text box entered with: \"" << text.toAnsiString() << "\"\n";
+    });
     myGui.addChild(textBox);
 
     // Value ctors
@@ -177,7 +175,7 @@ int main() {
             }
         }
 
-        window.clear();
+        window.clear(sf::Color(80, 80, 80));
         window.draw(shape);
         window.draw(myGui);
         window.display();

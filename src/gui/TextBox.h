@@ -59,13 +59,18 @@ private:
 
 class TextBox : public Widget {
 public:
-    static std::shared_ptr<TextBox> create(std::shared_ptr<Theme> theme);
+    static std::shared_ptr<TextBox> create(const Theme& theme);
     static std::shared_ptr<TextBox> create(std::shared_ptr<TextBoxStyle> style);
     virtual ~TextBox() noexcept = default;
 
-    void setSize(size_t characterWidth);
+    void setWidthCharacters(size_t widthCharacters);
+    void setMaxCharacters(size_t maxCharacters);
+    void setReadOnly(bool readOnly);
     void setText(const sf::String& text);
-    const sf::Vector2u& getSize() const;
+    const sf::Vector2f& getSize() const;
+    size_t getWidthCharacters() const;
+    size_t getMaxCharacters() const;
+    bool getReadOnly() const;
     const sf::String& getText() const;
 
     void setStyle(std::shared_ptr<TextBoxStyle> style);
@@ -76,23 +81,30 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
     virtual void handleTextEntered(uint32_t unicode) override;
+    virtual void handleKeyPressed(sf::Keyboard::Key key) override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
     Signal<Widget*, const sf::Vector2f&> onClick;
+    Signal<Widget*, const sf::String&> onEnterPressed;
 
 protected:
     TextBox(std::shared_ptr<TextBoxStyle> style);
 
 private:
+    // Internal. Should always be used to set the caret position as this updates the draw position as well.
+    void updateCaretPosition(size_t caretPosition);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<TextBoxStyle> style_;
     bool styleCopied_;
 
-    sf::Vector2u size_;
-    sf::Vector2f boxSize_;
-    sf::String boxString_;
+    size_t widthCharacters_;
+    size_t maxCharacters_;
+    bool readOnly_;
+    sf::Vector2f size_;
+    sf::String boxString_, visibleString_;
+    size_t horizontalScroll_;
     size_t caretPosition_;
     sf::Vector2f caretDrawPosition_;
 };

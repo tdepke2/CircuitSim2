@@ -112,39 +112,48 @@ std::shared_ptr<TextBoxStyle> TextBoxStyle::clone() const {
 
 
 
-std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<Theme> theme) {
-    return std::shared_ptr<TextBox>(new TextBox(theme->getTextBoxStyle()));
+std::shared_ptr<TextBox> TextBox::create(const Theme& theme) {
+    return std::shared_ptr<TextBox>(new TextBox(theme.getTextBoxStyle()));
 }
 std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<TextBoxStyle> style) {
     return std::shared_ptr<TextBox>(new TextBox(style));
 }
 
-void TextBox::setSize(size_t characterWidth) {
+void TextBox::setWidthCharacters(size_t widthCharacters) {
+    widthCharacters_ = widthCharacters;
 
-
-
-    // FIXME this should probably accept a float size?
-    // maybe not, how to trim the text to fit when drawing? the size of the text determines the size of the box.
-
-
-
-    size_.x = characterWidth;
-    size_.y = 1;
-
-    std::string textBounds(characterWidth, 'A');
+    std::string textBounds(widthCharacters, 'A');
     style_->text_.setString(textBounds);
 
     const auto bounds = style_->text_.getLocalBounds();
-    boxSize_ = sf::Vector2f(
+    size_ = sf::Vector2f(
         2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
         2.0f * (bounds.top + style_->textPadding_.y) + bounds.height
     );
+
+    updateCaretPosition(0);
+}
+void TextBox::setMaxCharacters(size_t maxCharacters) {
+    maxCharacters_ = maxCharacters;
+}
+void TextBox::setReadOnly(bool readOnly) {
+    readOnly_ = readOnly;
 }
 void TextBox::setText(const sf::String& text) {
     boxString_ = text;
+    updateCaretPosition(0);
 }
-const sf::Vector2u& TextBox::getSize() const {
+const sf::Vector2f& TextBox::getSize() const {
     return size_;
+}
+size_t TextBox::getWidthCharacters() const {
+    return widthCharacters_;
+}
+size_t TextBox::getMaxCharacters() const {
+    return maxCharacters_;
+}
+bool TextBox::getReadOnly() const {
+    return readOnly_;
 }
 const sf::String& TextBox::getText() const {
     return boxString_;
@@ -163,7 +172,7 @@ std::shared_ptr<TextBoxStyle> TextBox::getStyle() {
 }
 
 sf::FloatRect TextBox::getLocalBounds() const {
-    return {-getOrigin(), boxSize_};
+    return {-getOrigin(), size_};
 }
 void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
     if (!isEnabled()) {
@@ -175,19 +184,19 @@ void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
     }
     onMousePress.emit(this, button, mouseWidgetLocal);
 
-    style_->text_.setString(boxString_);
+    style_->text_.setString(visibleString_);
+    style_->text_.setPosition(style_->textPadding_);
     size_t closestIndex = 0;
     float closestDistance = std::numeric_limits<float>::max();
-    for (size_t i = 0; i <= boxString_.getSize(); ++i) {
-        float distance = fabs(mouseWidgetLocal.x - style_->text_.findCharacterPos(i).x);
+    for (size_t i = 0; i <= visibleString_.getSize(); ++i) {
+        float distance = fabs(mouseWidgetLocal.x + getOrigin().x - style_->text_.findCharacterPos(i).x);
         if (distance < closestDistance) {
             closestIndex = i;
             closestDistance = distance;
         }
     }
-    std::cout << "closest = " << closestIndex << ", " << closestDistance << "\n";
-    caretPosition_ = closestIndex;
-    caretDrawPosition_ = style_->text_.findCharacterPos(closestIndex);
+    std::cout << "mouseWidgetLocal.x = " << mouseWidgetLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
+    updateCaretPosition(closestIndex + horizontalScroll_);
 
     Widget::handleMousePress(button, mouseLocal);
 }
@@ -199,13 +208,79 @@ void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
     Widget::handleMouseRelease(button, mouseLocal);
 }
 void TextBox::handleTextEntered(uint32_t unicode) {
-
+    if (readOnly_) {
+        return;
+    }
+    if (unicode == '\u0008') {    // Backspace.
+        if (caretPosition_ > 0) {
+            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
+                --horizontalScroll_;
+            }
+            boxString_.erase(caretPosition_ - 1, 1);
+            updateCaretPosition(caretPosition_ - 1);
+        }
+    } else if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
+        if (maxCharacters_ == 0 || boxString_.getSize() < maxCharacters_) {
+            boxString_.insert(caretPosition_, sf::String(unicode));
+            updateCaretPosition(caretPosition_ + 1);
+        }
+    } else if (unicode == '\u007f') {    // Delete.
+        if (caretPosition_ < boxString_.getSize() && boxString_.getSize() > 0) {
+            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
+                --horizontalScroll_;
+            }
+            boxString_.erase(caretPosition_, 1);
+            updateCaretPosition(caretPosition_);
+        }
+    }
+}
+void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
+    if (key == sf::Keyboard::Enter) {
+        onEnterPressed.emit(this, boxString_);
+    } else if (key == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {
+        updateCaretPosition(boxString_.getSize());
+    } else if (key == sf::Keyboard::Home && caretPosition_ != 0) {
+        updateCaretPosition(0);
+    } else if (key == sf::Keyboard::Left) {
+        if (readOnly_ && horizontalScroll_ > 0) {
+            updateCaretPosition(horizontalScroll_ - 1);
+        } else if (!readOnly_ && caretPosition_ > 0) {
+            updateCaretPosition(caretPosition_ - 1);
+        }
+    } else if (key == sf::Keyboard::Right) {
+        if (readOnly_ && horizontalScroll_ + widthCharacters_ < boxString_.getSize()) {
+            updateCaretPosition(horizontalScroll_ + widthCharacters_ + 1);
+        } else if (!readOnly_ && caretPosition_ < boxString_.getSize()) {
+            updateCaretPosition(caretPosition_ + 1);
+        }
+    }
 }
 
 TextBox::TextBox(std::shared_ptr<TextBoxStyle> style) :
     style_(style),
     styleCopied_(false),
-    caretPosition_(0) {
+    widthCharacters_(0),
+    maxCharacters_(0),
+    readOnly_(false),
+    horizontalScroll_(0) {
+
+    updateCaretPosition(0);
+}
+
+void TextBox::updateCaretPosition(size_t caretPosition) {
+    caretPosition_ = caretPosition;
+    if (caretPosition < horizontalScroll_) {
+        horizontalScroll_ = caretPosition;
+    } else if (caretPosition > horizontalScroll_ + widthCharacters_) {
+        horizontalScroll_ = caretPosition - widthCharacters_;
+    }
+    visibleString_ = boxString_.substring(horizontalScroll_, widthCharacters_);
+
+    style_->text_.setString(visibleString_);
+    style_->text_.setPosition(style_->textPadding_);
+    caretDrawPosition_ = style_->text_.findCharacterPos(caretPosition - horizontalScroll_);
+
+    std::cout << "TextBox::updateCaretPosition(), caretPosition = " << caretPosition << ", horizontalScroll_ = " << horizontalScroll_ << "\n";
 }
 
 void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -214,12 +289,12 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     states.transform *= getTransform();
 
-    style_->box_.setSize(boxSize_);
+    style_->box_.setSize(size_);
     target.draw(style_->box_, states);
-    style_->text_.setString(boxString_);
+    style_->text_.setString(visibleString_);
     style_->text_.setPosition(style_->textPadding_);
     target.draw(style_->text_, states);
-    if (isFocused()) {
+    if (isFocused() && !readOnly_) {
         style_->caret_.setPosition(caretDrawPosition_);
         target.draw(style_->caret_, states);
     }
