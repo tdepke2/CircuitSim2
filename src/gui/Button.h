@@ -68,6 +68,7 @@ public:
     static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style);
     virtual ~Button() noexcept = default;
 
+    // Setting the size turns off auto-resize.
     void setSize(const sf::Vector2f& size);
     void setLabel(const sf::String& label);
     void setAutoResize(bool autoResize);

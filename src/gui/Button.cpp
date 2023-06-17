@@ -120,6 +120,7 @@ std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style) {
 
 void Button::setSize(const sf::Vector2f& size) {
     size_ = size;
+    autoResize_ = false;
     requestRedraw();
 }
 void Button::setLabel(const sf::String& label) {
