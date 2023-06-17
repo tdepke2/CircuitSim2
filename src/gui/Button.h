@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 
 namespace gui {
+    class Gui;
     class Theme;
 }
 
@@ -16,6 +17,8 @@ namespace gui {
 
 class ButtonStyle {
 public:
+    ButtonStyle(const Gui& gui);
+
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
     void setTextureRect(const sf::IntRect& rect);
@@ -43,17 +46,18 @@ public:
     const sf::Color& getTextFillColor() const;
 
     void setFillColorDown(const sf::Color& color);
-    void setTextPadding(const sf::Vector2f& padding);
+    void setTextPadding(const sf::Vector3f& padding);
     const sf::Color& getFillColorDown() const;
-    const sf::Vector2f& getTextPadding() const;
+    const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<ButtonStyle> clone() const;
 
 private:
+    const Gui& gui_;
     sf::RectangleShape rect_;
     sf::Text text_;
     sf::Color colorUp_, colorDown_;
-    sf::Vector2f textPadding_;
+    sf::Vector3f textPadding_;
 
     friend class Button;
 };
@@ -67,9 +71,11 @@ public:
     void setSize(const sf::Vector2f& size);
     void setLabel(const sf::String& label);
     void setAutoResize(bool autoResize);
+    void setPressed(bool isPressed);
     const sf::Vector2f& getSize() const;
     const sf::String& getLabel() const;
     bool getAutoResize() const;
+    bool isPressed() const;
 
     void setStyle(std::shared_ptr<ButtonStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
@@ -89,23 +95,13 @@ protected:
     Button(std::shared_ptr<ButtonStyle> style);
 
 private:
+    void computeResize() const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ButtonStyle> style_;
     bool styleCopied_;
 
-
-
-/*
-FIXME stuck here, how do we reference the style as either the local one or global one? also should we pass the style in ctor instead of the theme?
-imagine we have a bunch of bold buttons, they all should share a style but not need to be allocated an entire theme.
-
-should be resolved now after changes
-*/
-
-
-
-    sf::Vector2f size_;
+    mutable sf::Vector2f size_;
     sf::String label_;
     bool autoResize_;
     bool isPressed_;

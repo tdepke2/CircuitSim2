@@ -67,7 +67,7 @@ int main() {
 
     gui::Gui myGui(window);
 
-    gui::DefaultTheme theme;
+    gui::DefaultTheme theme(myGui);
 
     auto button = gui::Button::create(theme);
     button->setLabel(sf::String("hello!"));

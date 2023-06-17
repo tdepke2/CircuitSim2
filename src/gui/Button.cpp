@@ -1,29 +1,34 @@
 #include "SFML/System/Vector2.hpp"
 #include <gui/Button.h>
+#include <gui/Gui.h>
 #include <gui/Theme.h>
-
-
-#include <iostream>
-
 
 namespace gui {
 
+ButtonStyle::ButtonStyle(const Gui& gui) :
+    gui_(gui) {
+}
 
 // sf::Shape interface.
 void ButtonStyle::setTexture(const sf::Texture* texture, bool resetRect) {
     rect_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setTextureRect(const sf::IntRect& rect) {
     rect_.setTextureRect(rect);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setFillColor(const sf::Color& color) {
     colorUp_ = color;
+    gui_.requestRedraw();
 }
 void ButtonStyle::setOutlineColor(const sf::Color& color) {
     rect_.setOutlineColor(color);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setOutlineThickness(float thickness) {
     rect_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
 }
 const sf::Texture* ButtonStyle::getTexture() const {
     return rect_.getTexture();
@@ -44,21 +49,27 @@ float ButtonStyle::getOutlineThickness() const {
 // sf::Text interface.
 void ButtonStyle::setFont(const sf::Font& font) {
     text_.setFont(font);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setCharacterSize(unsigned int size) {
     text_.setCharacterSize(size);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setLineSpacing(float spacingFactor) {
     text_.setLineSpacing(spacingFactor);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setLetterSpacing(float spacingFactor) {
     text_.setLetterSpacing(spacingFactor);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setTextStyle(uint32_t style) {
     text_.setStyle(style);
+    gui_.requestRedraw();
 }
 void ButtonStyle::setTextFillColor(const sf::Color& color) {
     text_.setFillColor(color);
+    gui_.requestRedraw();
 }
 const sf::Font* ButtonStyle::getFont() const {
     return text_.getFont();
@@ -81,14 +92,16 @@ const sf::Color& ButtonStyle::getTextFillColor() const {
 
 void ButtonStyle::setFillColorDown(const sf::Color& color) {
     colorDown_ = color;
+    gui_.requestRedraw();
 }
-void ButtonStyle::setTextPadding(const sf::Vector2f& padding) {
+void ButtonStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
+    gui_.requestRedraw();
 }
 const sf::Color& ButtonStyle::getFillColorDown() const {
     return colorDown_;
 }
-const sf::Vector2f& ButtonStyle::getTextPadding() const {
+const sf::Vector3f& ButtonStyle::getTextPadding() const {
     return textPadding_;
 }
 
@@ -107,20 +120,23 @@ std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style) {
 
 void Button::setSize(const sf::Vector2f& size) {
     size_ = size;
+    requestRedraw();
 }
 void Button::setLabel(const sf::String& label) {
     label_ = label;
     if (autoResize_) {
-        style_->text_.setString(label_);
-        const auto bounds = style_->text_.getLocalBounds();
-        size_ = sf::Vector2f(
-            2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
-            2.0f * (bounds.top + style_->textPadding_.y) + bounds.height
-        );
+        computeResize();
     }
+    requestRedraw();
 }
 void Button::setAutoResize(bool autoResize) {
     autoResize_ = autoResize;
+}
+void Button::setPressed(bool isPressed) {
+    if (isPressed_ != isPressed) {
+        isPressed_ = isPressed;
+        requestRedraw();
+    }
 }
 const sf::Vector2f& Button::getSize() const {
     return size_;
@@ -131,10 +147,14 @@ const sf::String& Button::getLabel() const {
 bool Button::getAutoResize() const {
     return autoResize_;
 }
+bool Button::isPressed() const {
+    return isPressed_;
+}
 
 void Button::setStyle(std::shared_ptr<ButtonStyle> style) {
     style_ = style;
     styleCopied_ = false;
+    requestRedraw();
 }
 std::shared_ptr<ButtonStyle> Button::getStyle() {
     if (!styleCopied_) {
@@ -153,7 +173,7 @@ void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mous
     }
     const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
     if (button <= sf::Mouse::Button::Middle) {
-        isPressed_ = true;
+        setPressed(true);
         onClick.emit(this, mouseWidgetLocal);
     }
     onMousePress.emit(this, button, mouseWidgetLocal);
@@ -164,14 +184,14 @@ void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
         return;
     }
     if (button <= sf::Mouse::Button::Middle) {
-        isPressed_ = false;
+        setPressed(false);
     }
     onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
     Widget::handleMouseRelease(button, mouseLocal);
 }
 
 void Button::handleMouseLeft() {
-    isPressed_ = false;
+    setPressed(false);
     Widget::handleMouseLeft();
 }
 
@@ -182,20 +202,31 @@ Button::Button(std::shared_ptr<ButtonStyle> style) :
     isPressed_(false) {
 }
 
+void Button::computeResize() const {
+    style_->text_.setString(label_);
+    const auto bounds = style_->text_.getLocalBounds();
+    size_ = sf::Vector2f(
+        2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
+        2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
+    );
+}
+
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (!isVisible()) {
         return;
     }
     states.transform *= getTransform();
 
+    if (autoResize_) {
+        computeResize();
+    } else {
+        style_->text_.setString(label_);
+    }
     style_->rect_.setSize(size_);
     style_->rect_.setFillColor(isPressed_ ? style_->colorDown_ : style_->colorUp_);
     target.draw(style_->rect_, states);
-    style_->text_.setString(label_);
-    style_->text_.setPosition(style_->textPadding_);
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
-
-    std::cout << "button draw()\n";
 }
 
 }

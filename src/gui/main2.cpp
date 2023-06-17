@@ -4,6 +4,7 @@
 #include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
 
+#include <array>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -57,7 +58,7 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
     greetButton->setLabel(sf::String("hello!"));
     greetButton->setRotation(18.0f);
     greetButton->setOrigin(greetButton->getSize() * 0.5f);
-    greetButton->setPosition(160.0f, 130.0f);
+    greetButton->setPosition(130.0f, 100.0f);
     greetButton->setScale(1.6f, 2.5f);
     greetButton->onClick.connect([=]{ greetButton->setLabel("nice to meet you"); });
     myGui.addChild(greetButton);
@@ -65,47 +66,85 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto hideButton = gui::Button::create(theme);
     connectDebugSignals(hideButton.get(), "hideButton");
     hideButton->setLabel("click to hide");
-    hideButton->setPosition(40.0f, 40.0f);
+    hideButton->setPosition(10.0f, 10.0f);
     hideButton->onClick.connect([=]{ hideButton->setVisible(false); });
     myGui.addChild(hideButton);
 
     auto disableButton = gui::Button::create(theme);
     connectDebugSignals(disableButton.get(), "disableButton");
     disableButton->setLabel("click to disable");
-    disableButton->setPosition(200.0f, 40.0f);
+    disableButton->setPosition(200.0f, 10.0f);
     disableButton->onClick.connect([=]{ disableButton->setEnabled(false); });
     myGui.addChild(disableButton);
 
     auto resetButton = gui::Button::create(theme);
     connectDebugSignals(resetButton.get(), "resetButton");
     resetButton->setLabel("click to reset others");
-    resetButton->setPosition(40.0f, 100.0f);
+    resetButton->setPosition(10.0f, 70.0f);
     resetButton->onClick.connect([=]{ hideButton->setVisible(true); disableButton->setEnabled(true); });
     myGui.addChild(resetButton);
 
     auto buttonA = gui::Button::create(theme);
     connectDebugSignals(buttonA.get(), "buttonA");
     buttonA->setLabel("A (front)");
-    buttonA->setPosition(40.0f, 200.0f);
-    buttonA->onClick.connect([=]{ buttonA->moveToFront(); });
+    buttonA->setPosition(10.0f, 170.0f);
+    buttonA->onClick.connect([=]{ buttonA->sendToFront(); });
     myGui.addChild(buttonA);
 
     auto buttonB = gui::Button::create(theme);
     connectDebugSignals(buttonB.get(), "buttonB");
     buttonB->setLabel("B (front)");
-    buttonB->setPosition(80.0f, 200.0f);
-    buttonB->onClick.connect([=]{ buttonB->moveToFront(); });
+    buttonB->setPosition(50.0f, 170.0f);
+    buttonB->onClick.connect([=]{ buttonB->sendToFront(); });
     myGui.addChild(buttonB);
 
     auto buttonC = gui::Button::create(theme);
     connectDebugSignals(buttonC.get(), "buttonC");
     buttonC->setLabel("C (back)");
-    buttonC->setPosition(60.0f, 215.0f);
-    buttonC->onClick.connect([=]{ buttonC->moveToBack(); });
+    buttonC->setPosition(30.0f, 185.0f);
+    buttonC->onClick.connect([=]{ buttonC->sendToBack(); });
     myGui.addChild(buttonC);
 
 
-    // FIXME add some more for style stuff?
+    auto moveButton = gui::Button::create(theme);
+    connectDebugSignals(moveButton.get(), "moveButton");
+    moveButton->setLabel("Hover to move");
+    moveButton->setPosition(200.0f, 70.0f);
+    moveButton->onMouseEnter.connect([=]{ moveButton->setPosition(200.0f, 60.0f); moveButton->setRotation(15); });
+    moveButton->onMouseLeave.connect([=]{ moveButton->setPosition(200.0f, 70.0f); moveButton->setRotation(0); });
+    myGui.addChild(moveButton);
+
+
+    auto customStyled1 = gui::Button::create(theme);
+    connectDebugSignals(customStyled1.get(), "customStyled1");
+    auto customButtonStyle = customStyled1->getStyle();
+    customButtonStyle->setTextPadding({0, 0, customButtonStyle->getTextPadding().z});
+    customStyled1->setLabel("custom");
+    customStyled1->setPosition(200.0f, 120.0f);
+    customStyled1->onMouseEnter.connect([=]{ customButtonStyle->setTextStyle(sf::Text::Bold); });
+    customStyled1->onMouseLeave.connect([=]{ customButtonStyle->setTextStyle(sf::Text::Regular); });
+    myGui.addChild(customStyled1);
+
+    auto customStyled2 = gui::Button::create(customStyled1->getStyle());
+    connectDebugSignals(customStyled2.get(), "customStyled2");
+    customStyled2->setLabel("styled");
+    customStyled2->setPosition(200.0f, 150.0f);
+    customStyled2->onMouseEnter.connect([=]{ customStyled1->getStyle()->setTextStyle(sf::Text::Bold); });
+    customStyled2->onMouseLeave.connect([=]{ customStyled1->getStyle()->setTextStyle(sf::Text::Regular); });
+    myGui.addChild(customStyled2);
+
+    // This button switches to a different style on hover and also disables auto-resize.
+    auto customStyled3 = gui::Button::create(customStyled1->getStyle());
+    connectDebugSignals(customStyled3.get(), "customStyled3");
+    customStyled3->setLabel("buttons");
+    customStyled3->setAutoResize(false);
+    customStyled3->setPosition(200.0f, 180.0f);
+    customStyled3->onMouseEnter.connect([=]{ customStyled3->getStyle()->setTextStyle(sf::Text::Underlined); customStyled3->getStyle()->setFillColor({90, 90, 200}); });
+    customStyled3->onMouseLeave.connect([=]{ customStyled3->getStyle()->setTextStyle(sf::Text::Regular); });
+    myGui.addChild(customStyled3);
+
+    customButtonStyle->setFillColor({20, 20, 200});
+
 }
 
 int main() {
@@ -113,7 +152,7 @@ int main() {
 
     gui::Gui myGui(window);
 
-    gui::DefaultTheme theme;
+    gui::DefaultTheme theme(myGui);
 
     const std::array<std::string, 2> sceneNames = {
         "Empty",

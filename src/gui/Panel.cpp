@@ -4,22 +4,30 @@
 
 namespace gui {
 
+PanelStyle::PanelStyle(const Gui& gui) :
+    gui_(gui) {
+}
 
 // sf::Shape interface.
 void PanelStyle::setTexture(const sf::Texture* texture, bool resetRect) {
     rect_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
 }
 void PanelStyle::setTextureRect(const sf::IntRect& rect) {
     rect_.setTextureRect(rect);
+    gui_.requestRedraw();
 }
 void PanelStyle::setFillColor(const sf::Color& color) {
     rect_.setFillColor(color);
+    gui_.requestRedraw();
 }
 void PanelStyle::setOutlineColor(const sf::Color& color) {
     rect_.setOutlineColor(color);
+    gui_.requestRedraw();
 }
 void PanelStyle::setOutlineThickness(float thickness) {
     rect_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
 }
 const sf::Texture* PanelStyle::getTexture() const {
     return rect_.getTexture();
@@ -52,6 +60,7 @@ std::shared_ptr<Panel> Panel::create(std::shared_ptr<PanelStyle> style) {
 
 void Panel::setSize(const sf::Vector2f& size) {
     size_ = size;
+    requestRedraw();
 }
 const sf::Vector2f& Panel::getSize() const {
     return size_;
@@ -60,6 +69,7 @@ const sf::Vector2f& Panel::getSize() const {
 void Panel::setStyle(std::shared_ptr<PanelStyle> style) {
     style_ = style;
     styleCopied_ = false;
+    requestRedraw();
 }
 std::shared_ptr<PanelStyle> Panel::getStyle() {
     if (!styleCopied_) {

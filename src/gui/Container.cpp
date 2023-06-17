@@ -26,31 +26,35 @@ bool ContainerBase::removeChild(size_t index) {
     if (index >= children_.size()) {
         return false;
     }
-    children_[index]->setParent(nullptr);
-    children_[index]->setGui(nullptr);
+    children_[index]->setParentAndGui(nullptr, nullptr);
     children_.erase(children_.cbegin() + index);
     return true;
 }
 void ContainerBase::removeAllChildren() {
     for (const auto& c : children_) {
-        c->setParent(nullptr);
-        c->setGui(nullptr);
+        c->setParentAndGui(nullptr, nullptr);
     }
     children_.clear();
 }
-bool ContainerBase::moveChildToFront(std::shared_ptr<Widget> child) {
-    for (auto& c : children_) {
-        if (c == child) {
-            std::swap(children_.back(), c);
+bool ContainerBase::sendChildToFront(std::shared_ptr<Widget> child) {
+    for (size_t i = 0; i < children_.size(); ++i) {
+        if (children_[i] == child) {
+            for (size_t j = i + 1; j < children_.size(); ++j) {
+                std::swap(children_[j - 1], children_[j]);
+            }
+            child->requestRedraw();
             return true;
         }
     }
     return false;
 }
-bool ContainerBase::moveChildToBack(std::shared_ptr<Widget> child) {
-    for (auto& c : children_) {
-        if (c == child) {
-            std::swap(children_.front(), c);
+bool ContainerBase::sendChildToBack(std::shared_ptr<Widget> child) {
+    for (size_t i = 0; i < children_.size(); ++i) {
+        if (children_[i] == child) {
+            for (size_t j = i; j > 0; --j) {
+                std::swap(children_[j - 1], children_[j]);
+            }
+            child->requestRedraw();
             return true;
         }
     }
@@ -72,14 +76,13 @@ Widget* ContainerBase::getWidgetUnderMouse(const sf::Vector2f& mouseLocal) const
 
 void Container::addChild(std::shared_ptr<Widget> child) {
     children_.push_back(child);
-    child->setParent(this);
-    child->setGui(getGui());
+    child->setParentAndGui(this, getGui());
 }
 
-void Container::setGui(Gui* gui) {
-    Widget::setGui(gui);
+void Container::setParentAndGui(Container* parent, Gui* gui) {
+    Widget::setParentAndGui(parent, gui);
     for (const auto& c : children_) {
-        c->setGui(gui);
+        c->setParentAndGui(c->getParent(), gui);
     }
 }
 

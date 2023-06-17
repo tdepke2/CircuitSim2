@@ -1,3 +1,4 @@
+#include <gui/Gui.h>
 #include <gui/TextBox.h>
 #include <gui/Theme.h>
 
@@ -17,21 +18,30 @@
 
 namespace gui {
 
+TextBoxStyle::TextBoxStyle(const Gui& gui) :
+    gui_(gui) {
+}
+
 // sf::Shape interface.
 void TextBoxStyle::setTexture(const sf::Texture* texture, bool resetRect) {
     box_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setTextureRect(const sf::IntRect& rect) {
     box_.setTextureRect(rect);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setFillColor(const sf::Color& color) {
     box_.setFillColor(color);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setOutlineColor(const sf::Color& color) {
     box_.setOutlineColor(color);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setOutlineThickness(float thickness) {
     box_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
 }
 const sf::Texture* TextBoxStyle::getTexture() const {
     return box_.getTexture();
@@ -52,21 +62,27 @@ float TextBoxStyle::getOutlineThickness() const {
 // sf::Text interface.
 void TextBoxStyle::setFont(const sf::Font& font) {
     text_.setFont(font);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setCharacterSize(unsigned int size) {
     text_.setCharacterSize(size);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setLineSpacing(float spacingFactor) {
     text_.setLineSpacing(spacingFactor);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setLetterSpacing(float spacingFactor) {
     text_.setLetterSpacing(spacingFactor);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setTextStyle(uint32_t style) {
     text_.setStyle(style);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setTextFillColor(const sf::Color& color) {
     text_.setFillColor(color);
+    gui_.requestRedraw();
 }
 const sf::Font* TextBoxStyle::getFont() const {
     return text_.getFont();
@@ -89,12 +105,15 @@ const sf::Color& TextBoxStyle::getTextFillColor() const {
 
 void TextBoxStyle::setCaretSize(const sf::Vector2f& size) {
     caret_.setSize(size);
+    gui_.requestRedraw();
 }
 void TextBoxStyle::setCaretFillColor(const sf::Color& color) {
     caret_.setFillColor(color);
+    gui_.requestRedraw();
 }
-void TextBoxStyle::setTextPadding(const sf::Vector2f& padding) {
+void TextBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
+    gui_.requestRedraw();
 }
 const sf::Vector2f& TextBoxStyle::getCaretSize() const {
     return caret_.getSize();
@@ -102,7 +121,7 @@ const sf::Vector2f& TextBoxStyle::getCaretSize() const {
 const sf::Color& TextBoxStyle::getCaretFillColor() const {
     return caret_.getFillColor();
 }
-const sf::Vector2f& TextBoxStyle::getTextPadding() const {
+const sf::Vector3f& TextBoxStyle::getTextPadding() const {
     return textPadding_;
 }
 
@@ -128,7 +147,7 @@ void TextBox::setWidthCharacters(size_t widthCharacters) {
     const auto bounds = style_->text_.getLocalBounds();
     size_ = sf::Vector2f(
         2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
-        2.0f * (bounds.top + style_->textPadding_.y) + bounds.height
+        2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
     );
 
     updateCaretPosition(0);
@@ -138,6 +157,7 @@ void TextBox::setMaxCharacters(size_t maxCharacters) {
 }
 void TextBox::setReadOnly(bool readOnly) {
     readOnly_ = readOnly;
+    requestRedraw();
 }
 void TextBox::setText(const sf::String& text) {
     boxString_ = text;
@@ -162,6 +182,7 @@ const sf::String& TextBox::getText() const {
 void TextBox::setStyle(std::shared_ptr<TextBoxStyle> style) {
     style_ = style;
     styleCopied_ = false;
+    requestRedraw();
 }
 std::shared_ptr<TextBoxStyle> TextBox::getStyle() {
     if (!styleCopied_) {
@@ -185,7 +206,7 @@ void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
     onMousePress.emit(this, button, mouseWidgetLocal);
 
     style_->text_.setString(visibleString_);
-    style_->text_.setPosition(style_->textPadding_);
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     size_t closestIndex = 0;
     float closestDistance = std::numeric_limits<float>::max();
     for (size_t i = 0; i <= visibleString_.getSize(); ++i) {
@@ -277,10 +298,11 @@ void TextBox::updateCaretPosition(size_t caretPosition) {
     visibleString_ = boxString_.substring(horizontalScroll_, widthCharacters_);
 
     style_->text_.setString(visibleString_);
-    style_->text_.setPosition(style_->textPadding_);
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     caretDrawPosition_ = style_->text_.findCharacterPos(caretPosition - horizontalScroll_);
 
     std::cout << "TextBox::updateCaretPosition(), caretPosition = " << caretPosition << ", horizontalScroll_ = " << horizontalScroll_ << "\n";
+    requestRedraw();
 }
 
 void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -292,7 +314,7 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     style_->box_.setSize(size_);
     target.draw(style_->box_, states);
     style_->text_.setString(visibleString_);
-    style_->text_.setPosition(style_->textPadding_);
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
     if (isFocused() && !readOnly_) {
         style_->caret_.setPosition(caretDrawPosition_);

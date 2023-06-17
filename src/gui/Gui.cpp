@@ -21,8 +21,7 @@ Gui::Gui(sf::RenderWindow& window) :
 
 void Gui::addChild(std::shared_ptr<Widget> child) {
     children_.push_back(child);
-    child->setParent(nullptr);
-    child->setGui(this);
+    child->setParentAndGui(nullptr, this);
 }
 
 void Gui::handleEvent(const sf::Event& event) {
@@ -88,9 +87,11 @@ void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {
 void Gui::requestWidgetFocus(std::shared_ptr<Widget> widget) {
     if (focusedWidget_) {
         focusedWidget_->handleFocusChange(false);
+        requestRedraw();
     }
     if (widget) {
         widget->handleFocusChange(true);
+        requestRedraw();
     }
     focusedWidget_ = widget;
 }

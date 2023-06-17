@@ -12,10 +12,33 @@ namespace gui {
 
 namespace gui {
 
-class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable, public sf::Transformable {
+class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
     //static std::shared_ptr<Widget> create();
     virtual ~Widget() noexcept = default;
+
+    // sf::Transformable interface.
+    // The functions from sf::Transformable are reimplemented here instead of
+    // having Widget inherit from the class so that we can track changes to
+    // state that require a redraw of the object.
+    void setPosition(float x, float y);
+    void setPosition(const sf::Vector2f& position);
+    void setRotation(float angle);
+    void setScale(float factorX, float factorY);
+    void setScale(const sf::Vector2f& factors);
+    void setOrigin(float x, float y);
+    void setOrigin(const sf::Vector2f& origin);
+    const sf::Vector2f& getPosition() const;
+    float getRotation() const;
+    const sf::Vector2f& getScale() const;
+    const sf::Vector2f& getOrigin() const;
+    void move(float offsetX, float offsetY);
+    void move(const sf::Vector2f& offset);
+    void rotate(float angle);
+    void scale(float factorX, float factorY);
+    void scale(const sf::Vector2f& factor);
+    const sf::Transform& getTransform() const;
+    const sf::Transform& getInverseTransform() const;
 
     Container* getParent() const;
     Gui* getGui() const;
@@ -26,8 +49,8 @@ public:
     void setFocused(bool focused);
     bool isFocused() const;
 
-    void moveToFront();
-    void moveToBack();
+    void sendToFront();
+    void sendToBack();
 
     void requestRedraw() const;
 
@@ -55,10 +78,10 @@ public:
 protected:
     Widget();
 
-    void setParent(Container* parent);
-    virtual void setGui(Gui* gui);
+    virtual void setParentAndGui(Container* parent, Gui* gui);
 
 private:
+    sf::Transformable transformable_;
     Container* parent_;
     Gui* gui_;
     bool visible_, enabled_, focused_;

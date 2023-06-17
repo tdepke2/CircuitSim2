@@ -7,6 +7,7 @@
 #include <SFML/Graphics.hpp>
 
 namespace gui {
+    class Gui;
     class Theme;
 }
 
@@ -14,6 +15,8 @@ namespace gui {
 
 class TextBoxStyle {
 public:
+    TextBoxStyle(const Gui& gui);
+
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
     void setTextureRect(const sf::IntRect& rect);
@@ -42,17 +45,18 @@ public:
 
     void setCaretSize(const sf::Vector2f& size);
     void setCaretFillColor(const sf::Color& color);
-    void setTextPadding(const sf::Vector2f& padding);
+    void setTextPadding(const sf::Vector3f& padding);
     const sf::Vector2f& getCaretSize() const;
     const sf::Color& getCaretFillColor() const;
-    const sf::Vector2f& getTextPadding() const;
+    const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<TextBoxStyle> clone() const;
 
 private:
+    const Gui& gui_;
     sf::RectangleShape box_, caret_;
     sf::Text text_;
-    sf::Vector2f textPadding_;
+    sf::Vector3f textPadding_;
 
     friend class TextBox;
 };

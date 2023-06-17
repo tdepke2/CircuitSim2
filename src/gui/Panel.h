@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 
 namespace gui {
+    class Gui;
     class Theme;
 }
 
@@ -13,6 +14,8 @@ namespace gui {
 
 class PanelStyle {
 public:
+    PanelStyle(const Gui& gui);
+
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
     void setTextureRect(const sf::IntRect& rect);
@@ -28,6 +31,7 @@ public:
     std::shared_ptr<PanelStyle> clone() const;
 
 private:
+    const Gui& gui_;
     sf::RectangleShape rect_;
 
     friend class Panel;

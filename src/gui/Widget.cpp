@@ -1,11 +1,78 @@
 #include <gui/Gui.h>
 #include <gui/Widget.h>
 
+
+#include <iostream>
+
+
+
 namespace gui {
 
 /*std::shared_ptr<Widget> Widget::create() {
     return std::make_shared<Widget>();
 }*/
+
+void Widget::setPosition(float x, float y) {
+    transformable_.setPosition(x, y);
+    requestRedraw();
+}
+void Widget::setPosition(const sf::Vector2f& position) {
+    setPosition(position.x, position.y);
+}
+void Widget::setRotation(float angle) {
+    transformable_.setRotation(angle);
+    requestRedraw();
+}
+void Widget::setScale(float factorX, float factorY) {
+    transformable_.setScale(factorX, factorY);
+    requestRedraw();
+}
+void Widget::setScale(const sf::Vector2f& factors) {
+    setScale(factors.x, factors.y);
+}
+void Widget::setOrigin(float x, float y) {
+    transformable_.setOrigin(x, y);
+    requestRedraw();
+}
+void Widget::setOrigin(const sf::Vector2f& origin) {
+    setOrigin(origin.x, origin.y);
+}
+const sf::Vector2f& Widget::getPosition() const {
+    return transformable_.getPosition();
+}
+float Widget::getRotation() const {
+    return transformable_.getRotation();
+}
+const sf::Vector2f& Widget::getScale() const {
+    return transformable_.getScale();
+}
+const sf::Vector2f& Widget::getOrigin() const {
+    return transformable_.getOrigin();
+}
+void Widget::move(float offsetX, float offsetY) {
+    transformable_.move(offsetX, offsetY);
+    requestRedraw();
+}
+void Widget::move(const sf::Vector2f& offset) {
+    move(offset.x, offset.y);
+}
+void Widget::rotate(float angle) {
+    transformable_.rotate(angle);
+    requestRedraw();
+}
+void Widget::scale(float factorX, float factorY) {
+    transformable_.scale(factorX, factorY);
+    requestRedraw();
+}
+void Widget::scale(const sf::Vector2f& factor) {
+    scale(factor.x, factor.y);
+}
+const sf::Transform& Widget::getTransform() const {
+    return transformable_.getTransform();
+}
+const sf::Transform& Widget::getInverseTransform() const {
+    return transformable_.getInverseTransform();
+}
 
 Container* Widget::getParent() const {
     return parent_;
@@ -45,32 +112,30 @@ void Widget::setFocused(bool focused) {
     } else {
         gui_->requestWidgetFocus(nullptr);
     }
-    requestRedraw();
 }
 
 bool Widget::isFocused() const {
     return focused_;
 }
 
-void Widget::moveToFront() {
+void Widget::sendToFront() {
     if (parent_ != nullptr) {
-        parent_->moveChildToFront(shared_from_this());
+        parent_->sendChildToFront(shared_from_this());
     } else if (gui_ != nullptr) {
-        gui_->moveChildToFront(shared_from_this());
+        gui_->sendChildToFront(shared_from_this());
     }
-    requestRedraw();
 }
 
-void Widget::moveToBack() {
+void Widget::sendToBack() {
     if (parent_ != nullptr) {
-        parent_->moveChildToBack(shared_from_this());
+        parent_->sendChildToBack(shared_from_this());
     } else if (gui_ != nullptr) {
-        gui_->moveChildToBack(shared_from_this());
+        gui_->sendChildToBack(shared_from_this());
     }
-    requestRedraw();
 }
 
 void Widget::requestRedraw() const {
+    std::cout << "Widget::requestRedraw() from " << this << (gui_ != nullptr ? "" : " (gui_ null)") << "\n";
     if (gui_ != nullptr) {
         gui_->requestRedraw();
     }
@@ -127,12 +192,15 @@ Widget::Widget() :
     focused_(false) {
 }
 
-void Widget::setParent(Container* parent) {
+void Widget::setParentAndGui(Container* parent, Gui* gui) {
     parent_ = parent;
-}
-
-void Widget::setGui(Gui* gui) {
+    if (gui_ != nullptr) {
+        gui_->requestRedraw();
+    }
     gui_ = gui;
+    if (gui != nullptr) {
+        gui->requestRedraw();
+    }
 }
 
 }

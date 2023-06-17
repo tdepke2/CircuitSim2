@@ -9,7 +9,7 @@ namespace gui {
 
 class DefaultTheme : public Theme {
 public:
-    DefaultTheme();
+    DefaultTheme(const Gui& gui);
     virtual ~DefaultTheme() noexcept = default;
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() const override;
@@ -18,6 +18,7 @@ public:
 
 private:
     sf::Font consolasFont_;
+    float consolasMaxHeightRatio_;
 };
 
 }
