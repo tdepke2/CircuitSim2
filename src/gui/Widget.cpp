@@ -83,6 +83,15 @@ Gui* Widget::getGui() const {
 }
 
 void Widget::setVisible(bool visible) {
+    if (!visible) {
+        setFocused(false);
+
+
+        // FIXME is this correct behavior? For this to work it also needs some changes to order of derived classes calls to handleMousePress()
+        // We also should have Container override this as well as setEnabled()
+
+
+    }
     if (visible_ != visible) {
         requestRedraw();
     }
@@ -94,6 +103,9 @@ bool Widget::isVisible() const {
 }
 
 void Widget::setEnabled(bool enabled) {
+    if (!enabled) {
+        setFocused(false);
+    }
     if (enabled_ != enabled) {
         requestRedraw();
     }

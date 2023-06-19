@@ -18,6 +18,9 @@ public:
     Gui(sf::RenderWindow& window);
     virtual ~Gui() noexcept = default;
 
+    void setSmooth(bool smooth);
+    bool isSmooth() const;
+
     virtual void addChild(std::shared_ptr<Widget> child) override;
     void handleEvent(const sf::Event& event);
 
