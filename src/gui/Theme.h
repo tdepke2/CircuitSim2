@@ -6,6 +6,7 @@
 namespace gui {
     class ButtonStyle;
     class Gui;
+    class MenuBarStyle;
     class PanelStyle;
     class TextBoxStyle;
 }
@@ -20,6 +21,7 @@ public:
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() const = 0;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() const = 0;
     virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const = 0;
+    virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const = 0;
 
 protected:
     // Creates a string with some ASCII characters and measures the bounds, this
@@ -32,6 +34,7 @@ protected:
     mutable std::shared_ptr<ButtonStyle> buttonStyle_;
     mutable std::shared_ptr<PanelStyle> panelStyle_;
     mutable std::shared_ptr<TextBoxStyle> textBoxStyle_;
+    mutable std::shared_ptr<MenuBarStyle> menuBarStyle_;
 };
 
 }

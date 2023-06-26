@@ -38,6 +38,10 @@ void click(gui::Widget* w, const sf::Vector2f& pos) {
     std::cout << "  onClick(\t\t" << w << " " << widgetNames[w] << ", \t\t("
     << pos.x << ", " << pos.y << "))\n";
 }
+void enterPressed(gui::Widget* w, const sf::String& text) {
+    std::cout << "  onEnterPressed(\t" << w << " " << widgetNames[w] << ", \t\""
+    << text.toAnsiString() << "\")\n";
+}
 
 void connectDebugSignals(gui::Widget* widget, const std::string& name) {
     assert(widgetNames.emplace(widget, name).second);
@@ -51,6 +55,13 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
     button->onMousePress.connect(mousePress);
     button->onMouseRelease.connect(mouseRelease);
     button->onClick.connect(click);
+}
+void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(textBox), name);
+    textBox->onMousePress.connect(mousePress);
+    textBox->onMouseRelease.connect(mouseRelease);
+    textBox->onClick.connect(click);
+    textBox->onEnterPressed.connect(enterPressed);
 }
 
 void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -148,6 +159,60 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
 }
 
+void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto hideBox = gui::TextBox::create(theme);
+    connectDebugSignals(hideBox.get(), "hideBox");
+    hideBox->setWidthCharacters(16);
+    hideBox->setText("right click hide");
+    hideBox->setPosition(10.0f, 10.0f);
+    hideBox->onMousePress.connect([=](gui::Widget* w, sf::Mouse::Button button, const sf::Vector2f& pos){
+        if (button == sf::Mouse::Right) {
+            hideBox->setVisible(false);
+        }
+    });
+    myGui.addChild(hideBox);
+
+    auto disableBox = gui::TextBox::create(theme);
+    connectDebugSignals(disableBox.get(), "disableBox");
+    disableBox->setWidthCharacters(16);
+    disableBox->setText("right click disable");
+    disableBox->setPosition(200.0f, 10.0f);
+    disableBox->onMousePress.connect([=](gui::Widget* w, sf::Mouse::Button button, const sf::Vector2f& pos){
+        if (button == sf::Mouse::Right) {
+            disableBox->setEnabled(false);
+        }
+    });
+    myGui.addChild(disableBox);
+
+    auto resetBox = gui::TextBox::create(theme);
+    connectDebugSignals(resetBox.get(), "resetBox");
+    resetBox->setWidthCharacters(16);
+    resetBox->setReadOnly(true);
+    resetBox->setDefaultText("enter to reset  (trimmed text)");
+    resetBox->setPosition(10.0f, 70.0f);
+    resetBox->onEnterPressed.connect([=]{ hideBox->setVisible(true); disableBox->setEnabled(true); });
+    myGui.addChild(resetBox);
+
+    auto maxCharBox = gui::TextBox::create(theme);
+    connectDebugSignals(maxCharBox.get(), "maxCharBox");
+    maxCharBox->setWidthCharacters(16);
+    maxCharBox->setMaxCharacters(9);
+    maxCharBox->setDefaultText("max chars");
+    maxCharBox->setPosition(200.0f, 90.0f);
+    maxCharBox->setRotation(-33.0f);
+    myGui.addChild(maxCharBox);
+    maxCharBox->sendToBack();
+}
+
+void createPanelDemo(gui::Gui& myGui, const gui::Theme& theme) {
+
+
+
+
+
+
+}
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(400, 300), "GUI Test");
 
@@ -155,9 +220,11 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 2> sceneNames = {
+    const std::array<std::string, 4> sceneNames = {
         "Empty",
-        "ButtonDemo"
+        "ButtonDemo",
+        "TextBoxDemo",
+        "PanelDemo"
     };
     size_t currentScene = 0;
     bool sceneChanged = true;
@@ -195,8 +262,15 @@ int main() {
             sceneChanged = false;
 
             std::cout << "Building scene " << sceneNames[currentScene] << "\n";
-            if (currentScene == 1) {
+            if (sceneNames[currentScene] == "Empty") {
+            } else if (sceneNames[currentScene] == "ButtonDemo") {
                 createButtonDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "TextBoxDemo") {
+                createTextBoxDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "PanelDemo") {
+                createPanelDemo(myGui, theme);
+            } else {
+                std::cerr << "Failed to build scene: name not found.\n";
             }
         }
 

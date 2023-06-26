@@ -43,9 +43,11 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setDefaultTextFillColor(const sf::Color& color);
     void setCaretSize(const sf::Vector2f& size);
     void setCaretFillColor(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getDefaultTextFillColor() const;
     const sf::Vector2f& getCaretSize() const;
     const sf::Color& getCaretFillColor() const;
     const sf::Vector3f& getTextPadding() const;
@@ -56,6 +58,7 @@ private:
     const Gui& gui_;
     sf::RectangleShape box_, caret_;
     sf::Text text_;
+    sf::Color textColor_, defaultTextColor_;
     sf::Vector3f textPadding_;
 
     friend class TextBox;
@@ -71,11 +74,13 @@ public:
     void setMaxCharacters(size_t maxCharacters);
     void setReadOnly(bool readOnly);
     void setText(const sf::String& text);
+    void setDefaultText(const sf::String& text);
     const sf::Vector2f& getSize() const;
     size_t getWidthCharacters() const;
     size_t getMaxCharacters() const;
     bool getReadOnly() const;
     const sf::String& getText() const;
+    const sf::String& getDefaultText() const;
 
     void setStyle(std::shared_ptr<TextBoxStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
@@ -107,7 +112,7 @@ private:
     size_t maxCharacters_;
     bool readOnly_;
     sf::Vector2f size_;
-    sf::String boxString_, visibleString_;
+    sf::String boxString_, defaultString_, visibleString_;
     size_t horizontalScroll_;
     size_t caretPosition_;
     sf::Vector2f caretDrawPosition_;

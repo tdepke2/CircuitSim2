@@ -81,7 +81,7 @@ void TextBoxStyle::setTextStyle(uint32_t style) {
     gui_.requestRedraw();
 }
 void TextBoxStyle::setTextFillColor(const sf::Color& color) {
-    text_.setFillColor(color);
+    textColor_ = color;
     gui_.requestRedraw();
 }
 const sf::Font* TextBoxStyle::getFont() const {
@@ -100,9 +100,13 @@ uint32_t TextBoxStyle::getTextStyle() const {
     return text_.getStyle();
 }
 const sf::Color& TextBoxStyle::getTextFillColor() const {
-    return text_.getFillColor();
+    return textColor_;
 }
 
+void TextBoxStyle::setDefaultTextFillColor(const sf::Color& color) {
+    defaultTextColor_ = color;
+    gui_.requestRedraw();
+}
 void TextBoxStyle::setCaretSize(const sf::Vector2f& size) {
     caret_.setSize(size);
     gui_.requestRedraw();
@@ -114,6 +118,9 @@ void TextBoxStyle::setCaretFillColor(const sf::Color& color) {
 void TextBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
+}
+const sf::Color& TextBoxStyle::getDefaultTextFillColor() const {
+    return defaultTextColor_;
 }
 const sf::Vector2f& TextBoxStyle::getCaretSize() const {
     return caret_.getSize();
@@ -163,6 +170,10 @@ void TextBox::setText(const sf::String& text) {
     boxString_ = text;
     updateCaretPosition(0);
 }
+void TextBox::setDefaultText(const sf::String& text) {
+    defaultString_ = text;
+    updateCaretPosition(0);
+}
 const sf::Vector2f& TextBox::getSize() const {
     return size_;
 }
@@ -177,6 +188,9 @@ bool TextBox::getReadOnly() const {
 }
 const sf::String& TextBox::getText() const {
     return boxString_;
+}
+const sf::String& TextBox::getDefaultText() const {
+    return defaultString_;
 }
 
 void TextBox::setStyle(std::shared_ptr<TextBoxStyle> style) {
@@ -308,7 +322,13 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     style_->box_.setSize(size_);
     target.draw(style_->box_, states);
-    style_->text_.setString(visibleString_);
+    if (boxString_.isEmpty() && !defaultString_.isEmpty() && (!isFocused() || readOnly_)) {
+        style_->text_.setString(defaultString_.substring(0, widthCharacters_));
+        style_->text_.setFillColor(style_->defaultTextColor_);
+    } else {
+        style_->text_.setString(visibleString_);
+        style_->text_.setFillColor(style_->textColor_);
+    }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
     if (isFocused() && !readOnly_) {

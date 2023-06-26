@@ -1,4 +1,5 @@
 #include <gui/Button.h>
+#include <gui/MenuBar.h>
 #include <gui/Panel.h>
 #include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
@@ -55,11 +56,28 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
         textBoxStyle_->setCharacterSize(15);
         textBoxStyle_->setTextFillColor(sf::Color::Black);
 
+        textBoxStyle_->setDefaultTextFillColor({100, 100, 100});
         textBoxStyle_->setCaretSize({2.0f, 16.0f});
         textBoxStyle_->setCaretFillColor({0, 255, 255});
         textBoxStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
     return textBoxStyle_;
+}
+
+std::shared_ptr<MenuBarStyle> DefaultTheme::getMenuBarStyle() const {
+    if (!menuBarStyle_) {
+        menuBarStyle_ = std::make_shared<MenuBarStyle>(gui_);
+        menuBarStyle_->setFillColor({240, 240, 240});
+        menuBarStyle_->setOutlineColor({190, 190, 190});
+        menuBarStyle_->setOutlineThickness(-1.0f);
+
+        menuBarStyle_->setFont(consolasFont_);
+        menuBarStyle_->setCharacterSize(15);
+        menuBarStyle_->setTextFillColor(sf::Color::Black);
+
+        menuBarStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    }
+    return menuBarStyle_;
 }
 
 }
