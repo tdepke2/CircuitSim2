@@ -79,10 +79,37 @@ void Container::addChild(std::shared_ptr<Widget> child) {
     child->setParentAndGui(this, getGui());
 }
 
+void Container::setVisible(bool visible) {
+    if (!visible) {
+        for (const auto& c : children_) {
+            c->setFocused(false);
+        }
+    }
+    Widget::setVisible(visible);
+}
+
+void Container::setEnabled(bool enabled) {
+    if (!enabled) {
+        for (const auto& c : children_) {
+            c->setFocused(false);
+        }
+    }
+    Widget::setEnabled(enabled);
+}
+
 void Container::setParentAndGui(Container* parent, Gui* gui) {
     Widget::setParentAndGui(parent, gui);
     for (const auto& c : children_) {
         c->setParentAndGui(c->getParent(), gui);
+    }
+}
+
+void Container::addWidgetUnderMouse(const sf::Vector2f& mouseLocal) {
+    Widget::addWidgetUnderMouse(mouseLocal);
+    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
+    auto widget = getWidgetUnderMouse(newMouseLocal);
+    if (widget != nullptr) {
+        widget->addWidgetUnderMouse(newMouseLocal);
     }
 }
 

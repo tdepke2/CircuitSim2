@@ -38,8 +38,12 @@ public:
 
     virtual void addChild(std::shared_ptr<Widget> child) override;
 
+    virtual void setVisible(bool visible) override;
+    virtual void setEnabled(bool enabled) override;
+
 protected:
     virtual void setParentAndGui(Container* parent, Gui* gui) override;
+    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseLocal) override;
 };
 
 }

@@ -85,12 +85,6 @@ Gui* Widget::getGui() const {
 void Widget::setVisible(bool visible) {
     if (!visible) {
         setFocused(false);
-
-
-        // FIXME is this correct behavior? For this to work it also needs some changes to order of derived classes calls to handleMousePress()
-        // We also should have Container override this as well as setEnabled()
-
-
     }
     if (visible_ != visible) {
         requestRedraw();
@@ -161,10 +155,7 @@ bool Widget::isMouseHovering(const sf::Vector2f& mouseLocal) const {
     return getLocalBounds().contains(toLocalSpace(mouseLocal));
 }
 void Widget::handleMouseMove(const sf::Vector2f& mouseLocal) {
-    if (gui_ == nullptr) {
-        return;
-    }
-    gui_->addWidgetUnderMouse(shared_from_this());
+
 }
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
     if (button <= sf::Mouse::Button::Middle) {
@@ -212,6 +203,12 @@ void Widget::setParentAndGui(Container* parent, Gui* gui) {
     gui_ = gui;
     if (gui != nullptr) {
         gui->requestRedraw();
+    }
+}
+
+void Widget::addWidgetUnderMouse(const sf::Vector2f& mouseLocal) {
+    if (gui_ != nullptr) {
+        gui_->addWidgetUnderMouse(shared_from_this());
     }
 }
 

@@ -5,6 +5,7 @@
 #include <gui/themes/DefaultTheme.h>
 
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -39,7 +40,7 @@ void click(gui::Widget* w, const sf::Vector2f& pos) {
 }
 
 void connectDebugSignals(gui::Widget* widget, const std::string& name) {
-    widgetNames.emplace(widget, name);
+    assert(widgetNames.emplace(widget, name).second);
     widget->onMouseEnter.connect(mouseEnter);
     widget->onMouseLeave.connect(mouseLeave);
     widget->onFocusGained.connect(focusGained);
@@ -188,6 +189,8 @@ int main() {
         if (sceneChanged) {
             sceneButton->setLabel("Scene: " + sceneNames[currentScene] + " (left/right click here)");
             myGui.removeAllChildren();
+            widgetNames.clear();
+            assert(widgetNames.emplace(sceneButton.get(), "sceneButton").second);
             myGui.addChild(sceneButton);
             sceneChanged = false;
 

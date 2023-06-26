@@ -36,7 +36,7 @@ void Gui::handleEvent(const sf::Event& event) {
     if (event.type == sf::Event::MouseButtonPressed) {
         const auto mouseGlobal = window_.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
         auto widget = getWidgetUnderMouse(mouseGlobal);
-        if (widget != nullptr) {
+        if (widget != nullptr && widget->isEnabled()) {
             widget->handleMousePress(event.mouseButton.button, mouseGlobal);
         } else if (event.mouseButton.button <= sf::Mouse::Button::Middle) {
             requestWidgetFocus(nullptr);
@@ -44,7 +44,7 @@ void Gui::handleEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseButtonReleased) {
         const auto mouseGlobal = window_.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
         auto widget = getWidgetUnderMouse(mouseGlobal);
-        if (widget != nullptr) {
+        if (widget != nullptr && widget->isEnabled()) {
             widget->handleMouseRelease(event.mouseButton.button, mouseGlobal);
         }
     } else if (event.type == sf::Event::MouseMoved) {
@@ -54,7 +54,10 @@ void Gui::handleEvent(const sf::Event& event) {
         const auto mouseGlobal = window_.mapPixelToCoords({event.mouseMove.x, event.mouseMove.y});
         auto widget = getWidgetUnderMouse(mouseGlobal);
         if (widget != nullptr) {
-            widget->handleMouseMove(mouseGlobal);
+            widget->addWidgetUnderMouse(mouseGlobal);
+            if (widget->isEnabled()) {
+                widget->handleMouseMove(mouseGlobal);
+            }
         }
         for (const auto& w : lastWidgetsUnderMouse_) {
             if (widgetsUnderMouse_.count(w) == 0 && w->isEnabled()) {
@@ -73,13 +76,13 @@ void Gui::handleEvent(const sf::Event& event) {
 
     } else if (event.type == sf::Event::TextEntered) {
         std::cout << "char code " << event.text.unicode << "\n";
-        if (focusedWidget_) {
+        if (focusedWidget_ && focusedWidget_->isEnabled()) {
             focusedWidget_->handleTextEntered(event.text.unicode);
         }
     } else if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Escape) {
             requestWidgetFocus(nullptr);
-        } else if (focusedWidget_) {
+        } else if (focusedWidget_ && focusedWidget_->isEnabled()) {
             focusedWidget_->handleKeyPressed(event.key.code);
         }
     }

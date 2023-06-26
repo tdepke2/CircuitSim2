@@ -42,9 +42,9 @@ public:
 
     Container* getParent() const;
     Gui* getGui() const;
-    void setVisible(bool visible);
+    virtual void setVisible(bool visible);
     bool isVisible() const;
-    void setEnabled(bool enabled);
+    virtual void setEnabled(bool enabled);
     bool isEnabled() const;
     void setFocused(bool focused);
     bool isFocused() const;
@@ -60,6 +60,9 @@ public:
     // Get the bounding rectangle in local space, based on the origin and size of the `Widget`.
     virtual sf::FloatRect getLocalBounds() const = 0;
     virtual bool isMouseHovering(const sf::Vector2f& mouseLocal) const;
+    // When adding overrides to the handle* functions, the base class version
+    // should be called at the beginning or end depending on the context (e.g.
+    // handleMousePress() at the beginning, handleMouseRelease() at the end).
     virtual void handleMouseMove(const sf::Vector2f& mouseLocal);
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
@@ -79,6 +82,7 @@ protected:
     Widget();
 
     virtual void setParentAndGui(Container* parent, Gui* gui);
+    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseLocal);
 
 private:
     sf::Transformable transformable_;

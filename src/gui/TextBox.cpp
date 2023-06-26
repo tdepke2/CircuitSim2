@@ -196,9 +196,7 @@ sf::FloatRect TextBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
 void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    if (!isEnabled()) {
-        return;
-    }
+    Widget::handleMousePress(button, mouseLocal);
     const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
     if (button <= sf::Mouse::Button::Middle) {
         onClick.emit(this, mouseWidgetLocal);
@@ -218,17 +216,13 @@ void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
     }
     std::cout << "mouseWidgetLocal.x = " << mouseWidgetLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
     updateCaretPosition(closestIndex + horizontalScroll_);
-
-    Widget::handleMousePress(button, mouseLocal);
 }
 void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    if (!isEnabled()) {
-        return;
-    }
     onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
     Widget::handleMouseRelease(button, mouseLocal);
 }
 void TextBox::handleTextEntered(uint32_t unicode) {
+    Widget::handleTextEntered(unicode);
     if (readOnly_) {
         return;
     }
@@ -256,6 +250,7 @@ void TextBox::handleTextEntered(uint32_t unicode) {
     }
 }
 void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
+    Widget::handleKeyPressed(key);
     if (key == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
     } else if (key == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {

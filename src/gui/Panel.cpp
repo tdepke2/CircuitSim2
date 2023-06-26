@@ -83,35 +83,29 @@ sf::FloatRect Panel::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
 void Panel::handleMouseMove(const sf::Vector2f& mouseLocal) {
+    Container::handleMouseMove(mouseLocal);
     auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
     auto widget = getWidgetUnderMouse(newMouseLocal);
     if (widget != nullptr) {
         widget->handleMouseMove(newMouseLocal);
     }
-    Widget::handleMouseMove(mouseLocal);
 }
 void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    if (!isEnabled()) {
-        return;
-    }
     auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
     auto widget = getWidgetUnderMouse(newMouseLocal);
     if (widget != nullptr) {
         widget->handleMousePress(button, newMouseLocal);
     } else {
-        Widget::handleMousePress(button, mouseLocal);
+        Container::handleMousePress(button, mouseLocal);
     }
 }
 void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    if (!isEnabled()) {
-        return;
-    }
     auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
     auto widget = getWidgetUnderMouse(newMouseLocal);
     if (widget != nullptr) {
         widget->handleMouseRelease(button, newMouseLocal);
     } else {
-        Widget::handleMouseRelease(button, mouseLocal);
+        Container::handleMouseRelease(button, mouseLocal);
     }
 }
 
