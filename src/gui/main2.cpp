@@ -1,5 +1,6 @@
 #include <gui/Button.h>
 #include <gui/Gui.h>
+#include <gui/MenuBar.h>
 #include <gui/Panel.h>
 #include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
@@ -204,13 +205,27 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     maxCharBox->sendToBack();
 }
 
-void createPanelDemo(gui::Gui& myGui, const gui::Theme& theme) {
+void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto menuBar = gui::MenuBar::create(theme);
+    // connect debug signals...
+    menuBar->setWidth(300.0f);
+    menuBar->setPosition(15.0f, 25.0f);
 
+    gui::MenuList menuList("menu1");
+    menuList.items.emplace_back("item1", "Shift+A");
+    menuList.items.emplace_back("item2", "Shift+B");
+    menuList.items.emplace_back("item3", "", false);
+    menuBar->addMenu(menuList);
 
+    menuList.name = "menu2";
+    menuBar->addMenu(menuList);
 
+    menuList.name = "menu3";
+    menuList.items.clear();
+    menuList.items.emplace_back("quit", "Alt+Q");
+    menuBar->addMenu(menuList);
 
-
-
+    myGui.addChild(menuBar);
 }
 
 int main() {
@@ -224,7 +239,7 @@ int main() {
         "Empty",
         "ButtonDemo",
         "TextBoxDemo",
-        "PanelDemo"
+        "FullDemo"
     };
     size_t currentScene = 0;
     bool sceneChanged = true;
@@ -267,8 +282,8 @@ int main() {
                 createButtonDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "TextBoxDemo") {
                 createTextBoxDemo(myGui, theme);
-            } else if (sceneNames[currentScene] == "PanelDemo") {
-                createPanelDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "FullDemo") {
+                createFullDemo(myGui, theme);
             } else {
                 std::cerr << "Failed to build scene: name not found.\n";
             }
