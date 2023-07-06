@@ -153,7 +153,7 @@ void TextBox::setWidthCharacters(size_t widthCharacters) {
 
     const auto bounds = style_->text_.getLocalBounds();
     size_ = sf::Vector2f(
-        2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
+        2.0f * style_->textPadding_.x + bounds.left + bounds.width,
         2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
     );
 

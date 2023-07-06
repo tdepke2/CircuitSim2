@@ -39,6 +39,7 @@ public:
 
 private:
     sf::Vector2f labelPosition_, menuSize_;
+    float labelWidth_;
 
     friend class MenuBar;
 };
@@ -48,16 +49,28 @@ public:
     MenuBarStyle(const Gui& gui);
 
     // sf::Shape interface.
-    void setTexture(const sf::Texture* texture, bool resetRect = false);
-    void setTextureRect(const sf::IntRect& rect);
-    void setFillColor(const sf::Color& color);
-    void setOutlineColor(const sf::Color& color);
-    void setOutlineThickness(float thickness);
-    const sf::Texture* getTexture() const;
-    const sf::IntRect& getTextureRect() const;
-    const sf::Color& getFillColor() const;
-    const sf::Color& getOutlineColor() const;
-    float getOutlineThickness() const;
+    void setBarTexture(const sf::Texture* texture, bool resetRect = false);
+    void setBarTextureRect(const sf::IntRect& rect);
+    void setBarFillColor(const sf::Color& color);
+    void setBarOutlineColor(const sf::Color& color);
+    void setBarOutlineThickness(float thickness);
+    const sf::Texture* getBarTexture() const;
+    const sf::IntRect& getBarTextureRect() const;
+    const sf::Color& getBarFillColor() const;
+    const sf::Color& getBarOutlineColor() const;
+    float getBarOutlineThickness() const;
+
+    // sf::Shape interface.
+    void setMenuTexture(const sf::Texture* texture, bool resetRect = false);
+    void setMenuTextureRect(const sf::IntRect& rect);
+    void setMenuFillColor(const sf::Color& color);
+    void setMenuOutlineColor(const sf::Color& color);
+    void setMenuOutlineThickness(float thickness);
+    const sf::Texture* getMenuTexture() const;
+    const sf::IntRect& getMenuTextureRect() const;
+    const sf::Color& getMenuFillColor() const;
+    const sf::Color& getMenuOutlineColor() const;
+    float getMenuOutlineThickness() const;
 
     // sf::Text interface.
     void setFont(const sf::Font& font);
@@ -73,16 +86,20 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
-    void setTextPadding(const sf::Vector3f& padding);
-    const sf::Vector3f& getTextPadding() const;
+    void setBarTextPadding(const sf::Vector3f& padding);
+    void setMenuTextPadding(const sf::Vector3f& padding);
+    void setHighlightFillColor(const sf::Color& color);
+    const sf::Vector3f& getBarTextPadding() const;
+    const sf::Vector3f& getMenuTextPadding() const;
+    const sf::Color& getHighlightFillColor() const;
 
     std::shared_ptr<MenuBarStyle> clone() const;
 
 private:
     const Gui& gui_;
-    sf::RectangleShape menu_;   // FIXME add another one for the menu vs bar??? ##############################
+    sf::RectangleShape bar_, menu_, highlight_;
     sf::Text text_;
-    sf::Vector3f textPadding_;
+    sf::Vector3f barTextPadding_, menuTextPadding_;
 
     friend class MenuBar;
 };
@@ -107,8 +124,13 @@ public:
 
     virtual sf::FloatRect getLocalBounds() const override;
     virtual bool isMouseHovering(const sf::Vector2f& mouseLocal) const override;
+
+    virtual void handleMouseMove(const sf::Vector2f& mouseLocal) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
+
+    //virtual void handleMouseEntered();  // FIXME which of these do we really need? ######################################
+    //virtual void handleMouseLeft();
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
@@ -127,7 +149,8 @@ private:
 
     sf::Vector2f barSize_;
     std::vector<MenuList> menus_;
-    size_t activeMenu_;
+    int selectedMenu_;
+    bool menuIsOpen_;
 };
 
 }

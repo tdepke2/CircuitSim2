@@ -201,7 +201,7 @@ void Button::computeResize() const {
     style_->text_.setString(label_);
     const auto bounds = style_->text_.getLocalBounds();
     size_ = sf::Vector2f(
-        2.0f * (bounds.left + style_->textPadding_.x) + bounds.width,
+        2.0f * style_->textPadding_.x + bounds.left + bounds.width,
         2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
     );
 }

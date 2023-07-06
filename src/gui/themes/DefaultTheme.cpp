@@ -67,15 +67,21 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
 std::shared_ptr<MenuBarStyle> DefaultTheme::getMenuBarStyle() const {
     if (!menuBarStyle_) {
         menuBarStyle_ = std::make_shared<MenuBarStyle>(gui_);
-        menuBarStyle_->setFillColor({240, 240, 240});
-        menuBarStyle_->setOutlineColor({190, 190, 190});
-        menuBarStyle_->setOutlineThickness(-1.0f);
+        menuBarStyle_->setBarFillColor({240, 240, 240});
+        menuBarStyle_->setBarOutlineColor({190, 190, 190});
+        menuBarStyle_->setBarOutlineThickness(-1.0f);
+
+        menuBarStyle_->setMenuFillColor({240, 240, 240});
+        menuBarStyle_->setMenuOutlineColor({190, 190, 190});
+        menuBarStyle_->setMenuOutlineThickness(-1.0f);
 
         menuBarStyle_->setFont(consolasFont_);
         menuBarStyle_->setCharacterSize(15);
         menuBarStyle_->setTextFillColor(sf::Color::Black);
 
-        menuBarStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setBarTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setMenuTextPadding({16.0f, 1.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setHighlightFillColor(sf::Color::Blue);
     }
     return menuBarStyle_;
 }

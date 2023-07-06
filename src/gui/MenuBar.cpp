@@ -21,39 +21,76 @@ MenuBarStyle::MenuBarStyle(const Gui& gui) :
 }
 
 // sf::Shape interface.
-void MenuBarStyle::setTexture(const sf::Texture* texture, bool resetRect) {
+void MenuBarStyle::setBarTexture(const sf::Texture* texture, bool resetRect) {
+    bar_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setBarTextureRect(const sf::IntRect& rect) {
+    bar_.setTextureRect(rect);
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setBarFillColor(const sf::Color& color) {
+    bar_.setFillColor(color);
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setBarOutlineColor(const sf::Color& color) {
+    bar_.setOutlineColor(color);
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setBarOutlineThickness(float thickness) {
+    bar_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
+}
+const sf::Texture* MenuBarStyle::getBarTexture() const {
+    return bar_.getTexture();
+}
+const sf::IntRect& MenuBarStyle::getBarTextureRect() const {
+    return bar_.getTextureRect();
+}
+const sf::Color& MenuBarStyle::getBarFillColor() const {
+    return bar_.getFillColor();
+}
+const sf::Color& MenuBarStyle::getBarOutlineColor() const {
+    return bar_.getOutlineColor();
+}
+float MenuBarStyle::getBarOutlineThickness() const {
+    return bar_.getOutlineThickness();
+}
+
+// sf::Shape interface.
+void MenuBarStyle::setMenuTexture(const sf::Texture* texture, bool resetRect) {
     menu_.setTexture(texture, resetRect);
     gui_.requestRedraw();
 }
-void MenuBarStyle::setTextureRect(const sf::IntRect& rect) {
+void MenuBarStyle::setMenuTextureRect(const sf::IntRect& rect) {
     menu_.setTextureRect(rect);
     gui_.requestRedraw();
 }
-void MenuBarStyle::setFillColor(const sf::Color& color) {
+void MenuBarStyle::setMenuFillColor(const sf::Color& color) {
     menu_.setFillColor(color);
     gui_.requestRedraw();
 }
-void MenuBarStyle::setOutlineColor(const sf::Color& color) {
+void MenuBarStyle::setMenuOutlineColor(const sf::Color& color) {
     menu_.setOutlineColor(color);
     gui_.requestRedraw();
 }
-void MenuBarStyle::setOutlineThickness(float thickness) {
+void MenuBarStyle::setMenuOutlineThickness(float thickness) {
     menu_.setOutlineThickness(thickness);
     gui_.requestRedraw();
 }
-const sf::Texture* MenuBarStyle::getTexture() const {
+const sf::Texture* MenuBarStyle::getMenuTexture() const {
     return menu_.getTexture();
 }
-const sf::IntRect& MenuBarStyle::getTextureRect() const {
+const sf::IntRect& MenuBarStyle::getMenuTextureRect() const {
     return menu_.getTextureRect();
 }
-const sf::Color& MenuBarStyle::getFillColor() const {
+const sf::Color& MenuBarStyle::getMenuFillColor() const {
     return menu_.getFillColor();
 }
-const sf::Color& MenuBarStyle::getOutlineColor() const {
+const sf::Color& MenuBarStyle::getMenuOutlineColor() const {
     return menu_.getOutlineColor();
 }
-float MenuBarStyle::getOutlineThickness() const {
+float MenuBarStyle::getMenuOutlineThickness() const {
     return menu_.getOutlineThickness();
 }
 
@@ -101,12 +138,26 @@ const sf::Color& MenuBarStyle::getTextFillColor() const {
     return text_.getFillColor();
 }
 
-void MenuBarStyle::setTextPadding(const sf::Vector3f& padding) {
-    textPadding_ = padding;
+void MenuBarStyle::setBarTextPadding(const sf::Vector3f& padding) {
+    barTextPadding_ = padding;
     gui_.requestRedraw();
 }
-const sf::Vector3f& MenuBarStyle::getTextPadding() const {
-    return textPadding_;
+void MenuBarStyle::setMenuTextPadding(const sf::Vector3f& padding) {
+    menuTextPadding_ = padding;
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setHighlightFillColor(const sf::Color& color) {
+    highlight_.setFillColor(color);
+    gui_.requestRedraw();
+}
+const sf::Vector3f& MenuBarStyle::getBarTextPadding() const {
+    return barTextPadding_;
+}
+const sf::Vector3f& MenuBarStyle::getMenuTextPadding() const {
+    return menuTextPadding_;
+}
+const sf::Color& MenuBarStyle::getHighlightFillColor() const {
+    return highlight_.getFillColor();
 }
 
 std::shared_ptr<MenuBarStyle> MenuBarStyle::clone() const {
@@ -124,7 +175,7 @@ std::shared_ptr<MenuBar> MenuBar::create(std::shared_ptr<MenuBarStyle> style) {
 
 void MenuBar::setWidth(float width) {
     barSize_.x = width;
-    barSize_.y = 2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize();
+    barSize_.y = 2.0f * style_->barTextPadding_.y + style_->barTextPadding_.z * style_->getCharacterSize();
     requestRedraw();
 }
 const sf::Vector2f& MenuBar::getSize() const {
@@ -177,6 +228,17 @@ bool MenuBar::isMouseHovering(const sf::Vector2f& mouseLocal) const {
 
 
 }
+
+void MenuBar::handleMouseMove(const sf::Vector2f& mouseLocal) {
+    Widget::handleMouseMove(mouseLocal);
+    for (size_t i = 0; i < menus_.size(); ++i) {
+        if (mouseLocal.x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
+            selectedMenu_ = i;
+            return;
+        }
+    }
+    selectedMenu_ = -1;
+}
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
     //???
 }
@@ -186,16 +248,19 @@ void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
 
 MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style) :
     style_(style),
-    styleCopied_(false) {
+    styleCopied_(false),
+    selectedMenu_(-1),
+    menuIsOpen_(false) {
 }
 
 void MenuBar::updateMenuBar() {
-    sf::Vector2f lastLabelPosition(style_->textPadding_.x, style_->textPadding_.y);
+    sf::Vector2f lastLabelPosition(style_->barTextPadding_.x, style_->barTextPadding_.y);
     for (auto& menu : menus_) {
         menu.labelPosition_ = lastLabelPosition;
         style_->text_.setString(menu.name);
         const auto bounds = style_->text_.getLocalBounds();
-        lastLabelPosition.x += 2.0f * (bounds.left + style_->textPadding_.x) + bounds.width;
+        menu.labelWidth_ = bounds.left + bounds.width;
+        lastLabelPosition.x += 2.0f * style_->barTextPadding_.x + menu.labelWidth_;
     }
     requestRedraw();
 }
@@ -212,6 +277,11 @@ void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     style_->menu_.setSize(barSize_);
     target.draw(style_->menu_, states);
+    if (selectedMenu_ != -1) {
+        style_->highlight_.setPosition(menus_[selectedMenu_].labelPosition_.x - style_->barTextPadding_.x, 0.0f);
+        style_->highlight_.setSize({2.0f * style_->barTextPadding_.x + menus_[selectedMenu_].labelWidth_, barSize_.y});
+        target.draw(style_->highlight_, states);
+    }
     for (const auto& menu : menus_) {
         style_->text_.setString(menu.name);
         style_->text_.setPosition(menu.labelPosition_);
