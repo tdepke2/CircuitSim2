@@ -104,12 +104,12 @@ void Container::setParentAndGui(Container* parent, Gui* gui) {
     }
 }
 
-void Container::addWidgetUnderMouse(const sf::Vector2f& mouseLocal) {
-    Widget::addWidgetUnderMouse(mouseLocal);
-    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
-    auto widget = getWidgetUnderMouse(newMouseLocal);
+void Container::addWidgetUnderMouse(const sf::Vector2f& mouseParent) {
+    Widget::addWidgetUnderMouse(mouseParent);
+    auto mouseLocal = toLocalSpace(mouseParent);
+    auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
-        widget->addWidgetUnderMouse(newMouseLocal);
+        widget->addWidgetUnderMouse(mouseLocal);
     }
 }
 

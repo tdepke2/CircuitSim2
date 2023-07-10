@@ -222,28 +222,36 @@ std::shared_ptr<MenuBarStyle> MenuBar::getStyle() {
 sf::FloatRect MenuBar::getLocalBounds() const {
     return {-getOrigin(), barSize_};
 }
-bool MenuBar::isMouseHovering(const sf::Vector2f& mouseLocal) const {
-    return getLocalBounds().contains(toLocalSpace(mouseLocal));
+bool MenuBar::isMouseHovering(const sf::Vector2f& mouseParent) const {
+    return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
     //???
 
 
 }
 
-void MenuBar::handleMouseMove(const sf::Vector2f& mouseLocal) {
-    Widget::handleMouseMove(mouseLocal);
+void MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
+    Widget::handleMouseMove(mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
+    std::cout << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << ")\n";
+
     for (size_t i = 0; i < menus_.size(); ++i) {
-        if (mouseLocal.x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
-            selectedMenu_ = i;
+        if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
+            selectMenu(i);
             return;
         }
     }
-    selectedMenu_ = -1;
+    selectMenu(-1);
 }
-void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     //???
 }
-void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     //???
+}
+
+void MenuBar::handleMouseLeft() {
+    selectMenu(-1);
+    Widget::handleMouseLeft();
 }
 
 MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style) :
@@ -267,6 +275,13 @@ void MenuBar::updateMenuBar() {
 
 void MenuBar::updateMenu(MenuList& menu) {
 
+}
+
+void MenuBar::selectMenu(int index) {
+    if (selectedMenu_ != index) {
+        selectedMenu_ = index;
+        requestRedraw();
+    }
 }
 
 void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {

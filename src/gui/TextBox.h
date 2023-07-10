@@ -87,8 +87,8 @@ public:
     std::shared_ptr<TextBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
-    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
-    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleTextEntered(uint32_t unicode) override;
     virtual void handleKeyPressed(sf::Keyboard::Key key) override;
 

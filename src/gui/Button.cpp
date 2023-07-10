@@ -168,21 +168,21 @@ std::shared_ptr<ButtonStyle> Button::getStyle() {
 sf::FloatRect Button::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
-void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    Widget::handleMousePress(button, mouseLocal);
-    const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
+void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    Widget::handleMousePress(button, mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Button::Middle) {
         setPressed(true);
-        onClick.emit(this, mouseWidgetLocal);
+        onClick.emit(this, mouseLocal);
     }
-    onMousePress.emit(this, button, mouseWidgetLocal);
+    onMousePress.emit(this, button, mouseLocal);
 }
-void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     if (button <= sf::Mouse::Button::Middle) {
         setPressed(false);
     }
-    onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
-    Widget::handleMouseRelease(button, mouseLocal);
+    onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
+    Widget::handleMouseRelease(button, mouseParent);
 }
 
 void Button::handleMouseLeft() {

@@ -123,14 +123,14 @@ public:
     std::shared_ptr<MenuBarStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
-    virtual bool isMouseHovering(const sf::Vector2f& mouseLocal) const override;
+    virtual bool isMouseHovering(const sf::Vector2f& mouseParent) const override;
 
-    virtual void handleMouseMove(const sf::Vector2f& mouseLocal) override;
-    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
-    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) override;
+    virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 
     //virtual void handleMouseEntered();  // FIXME which of these do we really need? ######################################
-    //virtual void handleMouseLeft();
+    virtual void handleMouseLeft() override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
@@ -142,6 +142,7 @@ protected:
 private:
     void updateMenuBar();
     void updateMenu(MenuList& menu);
+    void selectMenu(int index);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<MenuBarStyle> style_;

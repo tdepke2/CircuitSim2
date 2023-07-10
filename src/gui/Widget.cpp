@@ -147,22 +147,18 @@ void Widget::requestRedraw() const {
     }
 }
 
-sf::Vector2f Widget::toLocalSpace(const sf::Vector2f& point) const {
-    return getInverseTransform().transformPoint(point) - getOrigin();
+bool Widget::isMouseHovering(const sf::Vector2f& mouseParent) const {
+    return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
 }
-
-bool Widget::isMouseHovering(const sf::Vector2f& mouseLocal) const {
-    return getLocalBounds().contains(toLocalSpace(mouseLocal));
-}
-void Widget::handleMouseMove(const sf::Vector2f& mouseLocal) {
+void Widget::handleMouseMove(const sf::Vector2f& mouseParent) {
 
 }
-void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     if (button <= sf::Mouse::Button::Middle) {
         setFocused(true);
     }
 }
-void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
+void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
 
 }
 void Widget::handleTextEntered(uint32_t unicode) {
@@ -206,7 +202,7 @@ void Widget::setParentAndGui(Container* parent, Gui* gui) {
     }
 }
 
-void Widget::addWidgetUnderMouse(const sf::Vector2f& mouseLocal) {
+void Widget::addWidgetUnderMouse(const sf::Vector2f& mouseParent) {
     if (gui_ != nullptr) {
         gui_->addWidgetUnderMouse(shared_from_this());
     }

@@ -82,30 +82,30 @@ std::shared_ptr<PanelStyle> Panel::getStyle() {
 sf::FloatRect Panel::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
-void Panel::handleMouseMove(const sf::Vector2f& mouseLocal) {
-    Container::handleMouseMove(mouseLocal);
-    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
-    auto widget = getWidgetUnderMouse(newMouseLocal);
+void Panel::handleMouseMove(const sf::Vector2f& mouseParent) {
+    Container::handleMouseMove(mouseParent);
+    auto mouseLocal = toLocalSpace(mouseParent);
+    auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
-        widget->handleMouseMove(newMouseLocal);
+        widget->handleMouseMove(mouseLocal);
     }
 }
-void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
-    auto widget = getWidgetUnderMouse(newMouseLocal);
+void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    auto mouseLocal = toLocalSpace(mouseParent);
+    auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
-        widget->handleMousePress(button, newMouseLocal);
+        widget->handleMousePress(button, mouseLocal);
     } else {
-        Container::handleMousePress(button, mouseLocal);
+        Container::handleMousePress(button, mouseParent);
     }
 }
-void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    auto newMouseLocal = getInverseTransform().transformPoint(mouseLocal);
-    auto widget = getWidgetUnderMouse(newMouseLocal);
+void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    auto mouseLocal = toLocalSpace(mouseParent);
+    auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
-        widget->handleMouseRelease(button, newMouseLocal);
+        widget->handleMouseRelease(button, mouseLocal);
     } else {
-        Container::handleMouseRelease(button, mouseLocal);
+        Container::handleMouseRelease(button, mouseParent);
     }
 }
 

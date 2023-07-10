@@ -22,7 +22,8 @@ public:
     bool sendChildToBack(std::shared_ptr<Widget> child);
     const std::vector<std::shared_ptr<Widget>>& getChildren() const;
 
-    // The returned Widget will be visible, but may not be enabled.
+    // The returned Widget will be visible, but may not be enabled. Note that
+    // the given mouse coordinates are in local space (if that applies).
     Widget* getWidgetUnderMouse(const sf::Vector2f& mouseLocal) const;
 
 protected:
@@ -43,7 +44,7 @@ public:
 
 protected:
     virtual void setParentAndGui(Container* parent, Gui* gui) override;
-    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseLocal) override;
+    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseParent) override;
 };
 
 }

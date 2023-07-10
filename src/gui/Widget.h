@@ -54,18 +54,25 @@ public:
 
     void requestRedraw() const;
 
-    // Converts a point to the `Widget`s local coordinate system, offset by the origin to match up with the local bounds.
-    sf::Vector2f toLocalSpace(const sf::Vector2f& point) const;
+    // Converts a point into the `Widget`s local coordinate system.
+    sf::Vector2f toLocalSpace(const sf::Vector2f& point) const {
+        return getInverseTransform().transformPoint(point);
+    }
+    // Also converts to local coordinates like `toLocalSpace()`, but offsets the
+    // point by the origin to match up with the local bounds.
+    sf::Vector2f toLocalOriginSpace(const sf::Vector2f& point) const {
+        return getInverseTransform().transformPoint(point) - getOrigin();
+    }
 
     // Get the bounding rectangle in local space, based on the origin and size of the `Widget`.
     virtual sf::FloatRect getLocalBounds() const = 0;
-    virtual bool isMouseHovering(const sf::Vector2f& mouseLocal) const;
+    virtual bool isMouseHovering(const sf::Vector2f& mouseParent) const;
     // When adding overrides to the handle* functions, the base class version
     // should be called at the beginning or end depending on the context (e.g.
     // handleMousePress() at the beginning, handleMouseRelease() at the end).
-    virtual void handleMouseMove(const sf::Vector2f& mouseLocal);
-    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
-    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal);
+    virtual void handleMouseMove(const sf::Vector2f& mouseParent);
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleTextEntered(uint32_t unicode);
     virtual void handleKeyPressed(sf::Keyboard::Key key);
 
@@ -82,7 +89,7 @@ protected:
     Widget();
 
     virtual void setParentAndGui(Container* parent, Gui* gui);
-    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseLocal);
+    virtual void addWidgetUnderMouse(const sf::Vector2f& mouseParent);
 
 private:
     sf::Transformable transformable_;

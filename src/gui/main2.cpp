@@ -57,12 +57,21 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
     button->onMouseRelease.connect(mouseRelease);
     button->onClick.connect(click);
 }
+void connectDebugSignals(gui::Panel* panel, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(panel), name);
+}
 void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(textBox), name);
     textBox->onMousePress.connect(mousePress);
     textBox->onMouseRelease.connect(mouseRelease);
     textBox->onClick.connect(click);
     textBox->onEnterPressed.connect(enterPressed);
+}
+void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(menuBar), name);
+    menuBar->onMousePress.connect(mousePress);
+    menuBar->onMouseRelease.connect(mouseRelease);
+    menuBar->onClick.connect(click);
 }
 
 void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -207,9 +216,11 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
 void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto menuBar = gui::MenuBar::create(theme);
-    // connect debug signals...
+    connectDebugSignals(menuBar.get(), "menuBar");
     menuBar->setWidth(300.0f);
-    menuBar->setPosition(15.0f, 25.0f);
+    menuBar->setPosition(150.0f, 50.0f);
+    menuBar->setRotation(-9.0f);
+    menuBar->setOrigin(100.0f, 15.0f);
 
     gui::MenuList menuList("menu1");
     menuList.items.emplace_back("item1", "Shift+A");

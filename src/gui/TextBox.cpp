@@ -209,31 +209,31 @@ std::shared_ptr<TextBoxStyle> TextBox::getStyle() {
 sf::FloatRect TextBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
-void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    Widget::handleMousePress(button, mouseLocal);
-    const auto mouseWidgetLocal = toLocalSpace(mouseLocal);
+void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    Widget::handleMousePress(button, mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Button::Middle) {
-        onClick.emit(this, mouseWidgetLocal);
+        onClick.emit(this, mouseLocal);
     }
-    onMousePress.emit(this, button, mouseWidgetLocal);
+    onMousePress.emit(this, button, mouseLocal);
 
     style_->text_.setString(visibleString_);
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     size_t closestIndex = 0;
     float closestDistance = std::numeric_limits<float>::max();
     for (size_t i = 0; i <= visibleString_.getSize(); ++i) {
-        float distance = fabs(mouseWidgetLocal.x + getOrigin().x - style_->text_.findCharacterPos(i).x);
+        float distance = fabs(mouseLocal.x + getOrigin().x - style_->text_.findCharacterPos(i).x);
         if (distance < closestDistance) {
             closestIndex = i;
             closestDistance = distance;
         }
     }
-    std::cout << "mouseWidgetLocal.x = " << mouseWidgetLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
+    std::cout << "mouseLocal.x = " << mouseLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
     updateCaretPosition(closestIndex + horizontalScroll_);
 }
-void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseLocal) {
-    onMouseRelease.emit(this, button, toLocalSpace(mouseLocal));
-    Widget::handleMouseRelease(button, mouseLocal);
+void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
+    Widget::handleMouseRelease(button, mouseParent);
 }
 void TextBox::handleTextEntered(uint32_t unicode) {
     Widget::handleTextEntered(unicode);
