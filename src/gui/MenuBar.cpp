@@ -2,7 +2,7 @@
 #include <gui/MenuBar.h>
 #include <gui/Theme.h>
 
-
+#include <algorithm>
 
 
 
@@ -146,6 +146,10 @@ void MenuBarStyle::setMenuTextPadding(const sf::Vector3f& padding) {
     menuTextPadding_ = padding;
     gui_.requestRedraw();
 }
+void MenuBarStyle::setMinLeftRightTextWidth(float width) {
+    minLeftRightTextWidth_ = width;
+    gui_.requestRedraw();
+}
 void MenuBarStyle::setHighlightFillColor(const sf::Color& color) {
     highlight_.setFillColor(color);
     gui_.requestRedraw();
@@ -155,6 +159,9 @@ const sf::Vector3f& MenuBarStyle::getBarTextPadding() const {
 }
 const sf::Vector3f& MenuBarStyle::getMenuTextPadding() const {
     return menuTextPadding_;
+}
+float MenuBarStyle::getMinLeftRightTextWidth() const {
+    return minLeftRightTextWidth_;
 }
 const sf::Color& MenuBarStyle::getHighlightFillColor() const {
     return highlight_.getFillColor();
@@ -223,10 +230,13 @@ sf::FloatRect MenuBar::getLocalBounds() const {
     return {-getOrigin(), barSize_};
 }
 bool MenuBar::isMouseHovering(const sf::Vector2f& mouseParent) const {
-    return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
-    //???
-
-
+    auto mouseLocal = toLocalOriginSpace(mouseParent);
+    if (menuIsOpen_) {
+        sf::FloatRect menuBounds(-getOrigin() + getOpenMenuPosition(), menus_[selectedMenu_].menuSize_);
+        return getLocalBounds().contains(mouseLocal) || menuBounds.contains(mouseLocal);
+    } else {
+        return getLocalBounds().contains(mouseLocal);
+    }
 }
 
 void MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
@@ -234,23 +244,51 @@ void MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     std::cout << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << ")\n";
 
-    for (size_t i = 0; i < menus_.size(); ++i) {
-        if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
-            selectMenu(i);
-            return;
+    if (mouseLocal.y < -getOrigin().y + barSize_.y) {
+        for (size_t i = 0; i < menus_.size(); ++i) {
+            if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
+                selectMenu(i, menuIsOpen_);
+                return;
+            }
+        }
+        if (!menuIsOpen_) {
+            selectMenu(-1, false);
         }
     }
-    selectMenu(-1);
 }
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    //???
+    Widget::handleMousePress(button, mouseParent);
+
+    auto mouseLocal = toLocalOriginSpace(mouseParent);
+    if (mouseLocal.y < -getOrigin().y + barSize_.y) {
+        // Menu bar clicked.
+        bool clickedItem = false;
+        for (size_t i = 0; i < menus_.size(); ++i) {
+            if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
+                clickedItem = true;
+                selectMenu(i, !menuIsOpen_);
+                break;
+            }
+        }
+        if (!clickedItem) {
+            selectMenu(-1, false);
+        }
+    } else {
+        // Menu item clicked.
+
+
+    }
 }
 void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     //???
+
+    Widget::handleMouseRelease(button, mouseParent);
 }
 
 void MenuBar::handleMouseLeft() {
-    selectMenu(-1);
+    if (!menuIsOpen_) {
+        selectMenu(-1, false);
+    }
     Widget::handleMouseLeft();
 }
 
@@ -274,14 +312,42 @@ void MenuBar::updateMenuBar() {
 }
 
 void MenuBar::updateMenu(MenuList& menu) {
+    float maxMenuWidth = 0.0f;
+    sf::Vector2f lastLeftItemPosition = getOpenMenuPosition() + sf::Vector2f(style_->menuTextPadding_.x, style_->menuTextPadding_.y);
 
+    for (auto& menuItem : menu.items) {
+        style_->text_.setString(menuItem.leftText);
+        const auto leftTextBounds = style_->text_.getLocalBounds();
+        style_->text_.setString(menuItem.rightText);
+        const auto rightTextBounds = style_->text_.getLocalBounds();
+        maxMenuWidth = std::max(
+            maxMenuWidth,
+            2.0f * style_->menuTextPadding_.x + leftTextBounds.left + leftTextBounds.width + style_->minLeftRightTextWidth_ + rightTextBounds.left + rightTextBounds.width
+        );
+
+        menuItem.leftPosition_ = lastLeftItemPosition;
+        menuItem.rightPosition_ = {rightTextBounds.left + rightTextBounds.width, lastLeftItemPosition.y};
+        lastLeftItemPosition.y += 2.0f * style_->menuTextPadding_.y + style_->menuTextPadding_.z * style_->getCharacterSize();
+    }
+    for (auto& menuItem : menu.items) {
+        menuItem.rightPosition_.x = menuItem.leftPosition_.x + maxMenuWidth - menuItem.rightPosition_.x - 2.0f * style_->menuTextPadding_.x;
+    }
+    menu.menuSize_ = {maxMenuWidth, lastLeftItemPosition.y - getOpenMenuPosition().y - style_->menuTextPadding_.y};
 }
 
-void MenuBar::selectMenu(int index) {
-    if (selectedMenu_ != index) {
+void MenuBar::selectMenu(int index, bool isOpen) {
+    if (selectedMenu_ != index || menuIsOpen_ != isOpen) {
         selectedMenu_ = index;
+        menuIsOpen_ = isOpen;
+        if (isOpen && index != -1) {
+            updateMenu(menus_[index]);
+        }
         requestRedraw();
     }
+}
+
+sf::Vector2f MenuBar::getOpenMenuPosition() const {
+    return {menus_[selectedMenu_].labelPosition_.x - style_->barTextPadding_.x, barSize_.y};
 }
 
 void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -290,17 +356,34 @@ void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     states.transform *= getTransform();
 
-    style_->menu_.setSize(barSize_);
-    target.draw(style_->menu_, states);
+    style_->bar_.setSize(barSize_);
+    target.draw(style_->bar_, states);
     if (selectedMenu_ != -1) {
         style_->highlight_.setPosition(menus_[selectedMenu_].labelPosition_.x - style_->barTextPadding_.x, 0.0f);
         style_->highlight_.setSize({2.0f * style_->barTextPadding_.x + menus_[selectedMenu_].labelWidth_, barSize_.y});
         target.draw(style_->highlight_, states);
     }
+
     for (const auto& menu : menus_) {
         style_->text_.setString(menu.name);
         style_->text_.setPosition(menu.labelPosition_);
         target.draw(style_->text_, states);
+    }
+
+    if (menuIsOpen_) {
+        const auto& menu = menus_[selectedMenu_];
+        style_->menu_.setSize(menu.menuSize_);
+        style_->menu_.setPosition(getOpenMenuPosition());
+        target.draw(style_->menu_, states);
+
+        for (const auto& menuItem : menu.items) {
+            style_->text_.setString(menuItem.leftText);
+            style_->text_.setPosition(menuItem.leftPosition_);
+            target.draw(style_->text_, states);
+            style_->text_.setString(menuItem.rightText);
+            style_->text_.setPosition(menuItem.rightPosition_);
+            target.draw(style_->text_, states);
+        }
     }
 }
 

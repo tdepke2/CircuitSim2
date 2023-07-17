@@ -26,6 +26,8 @@ public:
 
 private:
     sf::Vector2f leftPosition_, rightPosition_;
+
+    friend class MenuBar;
 };
 
 struct MenuList {
@@ -88,9 +90,11 @@ public:
 
     void setBarTextPadding(const sf::Vector3f& padding);
     void setMenuTextPadding(const sf::Vector3f& padding);
+    void setMinLeftRightTextWidth(float width);
     void setHighlightFillColor(const sf::Color& color);
     const sf::Vector3f& getBarTextPadding() const;
     const sf::Vector3f& getMenuTextPadding() const;
+    float getMinLeftRightTextWidth() const;
     const sf::Color& getHighlightFillColor() const;
 
     std::shared_ptr<MenuBarStyle> clone() const;
@@ -100,6 +104,7 @@ private:
     sf::RectangleShape bar_, menu_, highlight_;
     sf::Text text_;
     sf::Vector3f barTextPadding_, menuTextPadding_;
+    float minLeftRightTextWidth_;
 
     friend class MenuBar;
 };
@@ -129,7 +134,6 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 
-    //virtual void handleMouseEntered();  // FIXME which of these do we really need? ######################################
     virtual void handleMouseLeft() override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
@@ -142,7 +146,8 @@ protected:
 private:
     void updateMenuBar();
     void updateMenu(MenuList& menu);
-    void selectMenu(int index);
+    void selectMenu(int index, bool isOpen);
+    sf::Vector2f getOpenMenuPosition() const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<MenuBarStyle> style_;

@@ -81,6 +81,7 @@ std::shared_ptr<MenuBarStyle> DefaultTheme::getMenuBarStyle() const {
 
         menuBarStyle_->setBarTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
         menuBarStyle_->setMenuTextPadding({16.0f, 1.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setMinLeftRightTextWidth(10.0f);
         menuBarStyle_->setHighlightFillColor(sf::Color::Blue);
     }
     return menuBarStyle_;
