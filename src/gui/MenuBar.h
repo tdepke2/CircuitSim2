@@ -42,6 +42,7 @@ public:
 private:
     sf::Vector2f labelPosition_, menuSize_;
     float labelWidth_;
+    int selectedItem_;
 
     friend class MenuBar;
 };
@@ -145,8 +146,9 @@ protected:
 
 private:
     void updateMenuBar();
-    void updateMenu(MenuList& menu);
+    void updateMenu(int index);
     void selectMenu(int index, bool isOpen);
+    void selectMenuItem(int index);
     sf::Vector2f getOpenMenuPosition() const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
