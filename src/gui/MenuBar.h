@@ -119,7 +119,9 @@ public:
     void setWidth(float width);
     const sf::Vector2f& getSize() const;
 
-    void addMenu(const MenuList& menu);    // FIXME add with an optional position instead of just the end? #########################
+    void insertMenu(const MenuList& menu);
+    void insertMenu(const MenuList& menu, size_t index);
+    bool removeMenu(size_t index);
     bool removeMenu(const sf::String& name);
     const std::vector<MenuList>& getMenus() const;
     void removeAllMenus();

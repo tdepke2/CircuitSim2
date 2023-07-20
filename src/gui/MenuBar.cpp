@@ -189,9 +189,17 @@ const sf::Vector2f& MenuBar::getSize() const {
     return barSize_;
 }
 
-void MenuBar::addMenu(const MenuList& menu) {
-    menus_.emplace_back(menu);
+void MenuBar::insertMenu(const MenuList& menu) {
+    insertMenu(menu, menus_.size());
+}
+
+void MenuBar::insertMenu(const MenuList& menu, size_t index) {
+    menus_.emplace(menus_.begin() + std::min(index, menus_.size()), menu);
     updateMenuBar();
+}
+
+bool MenuBar::removeMenu(size_t index) {
+    
 }
 
 bool MenuBar::removeMenu(const sf::String& name) {
@@ -404,7 +412,7 @@ void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
         if (menu.selectedItem_ != -1) {
             const auto& menuItem = menu.items[menu.selectedItem_];
-            style_->highlight_.setPosition(menuItem.leftPosition_.x - style_->menuTextPadding_.x, menuItem.leftPosition_.y);
+            style_->highlight_.setPosition(menuItem.leftPosition_.x - style_->menuTextPadding_.x, menuItem.leftPosition_.y - style_->menuTextPadding_.y);
             style_->highlight_.setSize({menu.menuSize_.x, 2.0f * style_->menuTextPadding_.y + style_->menuTextPadding_.z * style_->getCharacterSize()});
             target.draw(style_->highlight_, states);
         }

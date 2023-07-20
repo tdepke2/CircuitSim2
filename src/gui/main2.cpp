@@ -226,15 +226,15 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuList.items.emplace_back("item1", "Shift+A");
     menuList.items.emplace_back("item2", "Shift+B");
     menuList.items.emplace_back("item3", "", false);
-    menuBar->addMenu(menuList);
+    menuBar->insertMenu(menuList);
 
     menuList.name = "menu2";
-    menuBar->addMenu(menuList);
+    menuBar->insertMenu(menuList);
 
     menuList.name = "menu3";
     menuList.items.clear();
     menuList.items.emplace_back("quit", "Alt+Q");
-    menuBar->addMenu(menuList);
+    menuBar->insertMenu(menuList);
 
     myGui.addChild(menuBar);
 }
