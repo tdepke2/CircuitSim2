@@ -3,6 +3,7 @@
 #include <gui/Theme.h>
 
 #include <algorithm>
+#include <stdexcept>
 
 
 
@@ -196,21 +197,19 @@ void MenuBar::insertMenu(const MenuList& menu) {
 void MenuBar::insertMenu(const MenuList& menu, size_t index) {
     menus_.emplace(menus_.begin() + std::min(index, menus_.size()), menu);
     updateMenuBar();
+    selectMenu(selectedMenu_, false);
 }
 
-bool MenuBar::removeMenu(size_t index) {
-    
+void MenuBar::removeMenu(size_t index) {
+    menus_.erase(menus_.begin() + std::min(index, menus_.size()));
+    updateMenuBar();
+    selectMenu(selectedMenu_ < menus_.size() ? selectedMenu_ : -1, false);
 }
 
-bool MenuBar::removeMenu(const sf::String& name) {
-    for (auto it = menus_.cbegin(); it != menus_.cend(); ++it) {
-        if (it->name == name) {
-            menus_.erase(it);
-            updateMenuBar();
-            return true;
-        }
-    }
-    return false;
+void MenuBar::setMenu(const MenuList& menu, size_t index) {
+    menus_[std::min(index, menus_.size())] = menu;
+    updateMenuBar();
+    selectMenu(selectedMenu_, false);
 }
 
 const std::vector<MenuList>& MenuBar::getMenus() const {
@@ -219,6 +218,21 @@ const std::vector<MenuList>& MenuBar::getMenus() const {
 
 void MenuBar::removeAllMenus() {
     menus_.clear();
+    updateMenuBar();
+    selectMenu(-1, false);
+}
+
+const MenuList& MenuBar::findMenu(const sf::String& name) const {
+    return menus_[findMenuIndex(name)];
+}
+
+size_t MenuBar::findMenuIndex(const sf::String& name) const {
+    for (size_t i = 0; i < menus_.size(); ++i) {
+        if (menus_[i].name == name) {
+            return i;
+        }
+    }
+    throw std::out_of_range("MenuBar::findMenuIndex");
 }
 
 void MenuBar::setStyle(std::shared_ptr<MenuBarStyle> style) {

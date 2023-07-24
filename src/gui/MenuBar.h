@@ -121,10 +121,13 @@ public:
 
     void insertMenu(const MenuList& menu);
     void insertMenu(const MenuList& menu, size_t index);
-    bool removeMenu(size_t index);
-    bool removeMenu(const sf::String& name);
+    void removeMenu(size_t index);
+    void setMenu(const MenuList& menu, size_t index);
     const std::vector<MenuList>& getMenus() const;
     void removeAllMenus();
+
+    const MenuList& findMenu(const sf::String& name) const;
+    size_t findMenuIndex(const sf::String& name) const;
 
     void setStyle(std::shared_ptr<MenuBarStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
