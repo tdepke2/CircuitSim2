@@ -43,6 +43,10 @@ void enterPressed(gui::Widget* w, const sf::String& text) {
     std::cout << "  onEnterPressed(\t" << w << " " << widgetNames[w] << ", \t\""
     << text.toAnsiString() << "\")\n";
 }
+void menuItemClick(gui::Widget* w, const gui::MenuList& menu, size_t index) {
+    std::cout << "  onMenuItemClick(\t" << w << " " << widgetNames[w] << ", \t"
+    << &menu << ", " << index << ")\n";
+}
 
 void connectDebugSignals(gui::Widget* widget, const std::string& name) {
     assert(widgetNames.emplace(widget, name).second);
@@ -72,6 +76,7 @@ void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
     menuBar->onMousePress.connect(mousePress);
     menuBar->onMouseRelease.connect(mouseRelease);
     menuBar->onClick.connect(click);
+    menuBar->onMenuItemClick.connect(menuItemClick);
 }
 
 void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {

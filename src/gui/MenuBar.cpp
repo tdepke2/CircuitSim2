@@ -264,58 +264,21 @@ bool MenuBar::isMouseHovering(const sf::Vector2f& mouseParent) const {
 void MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
     Widget::handleMouseMove(mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    std::cout << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << ")\n";
 
-    if (mouseLocal.y + getOrigin().y < barSize_.y) {
-        // Mouse moved over menu bar.
-        selectMenuItem(-1);
-        for (size_t i = 0; i < menus_.size(); ++i) {
-            if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
-                selectMenu(i, menuIsOpen_);
-                return;
-            }
-        }
-        if (!menuIsOpen_) {
-            selectMenu(-1, false);
-        }
-    } else if (menuIsOpen_) {
-        // Mouse moved over menu.
-        const auto& menu = menus_[selectedMenu_];
-        for (size_t i = 1; i < menu.items.size(); ++i) {
-            if (mouseLocal.y + getOrigin().y < menu.items[i].leftPosition_.y - style_->menuTextPadding_.y) {
-                selectMenuItem(i - 1);
-                return;
-            }
-        }
-        selectMenuItem(menu.items.size() - 1);
-    }
+    mouseUpdate(false, mouseLocal);
 }
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
-
     auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (mouseLocal.y + getOrigin().y < barSize_.y) {
-        // Menu bar clicked.
-        bool clickedItem = false;
-        for (size_t i = 0; i < menus_.size(); ++i) {
-            if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
-                clickedItem = true;
-                selectMenu(i, !menuIsOpen_);
-                break;
-            }
-        }
-        if (!clickedItem) {
-            selectMenu(-1, false);
-        }
-    } else {
-        // Menu item clicked.
-
-        // FIXME this is like the same exact code in above function
+    if (button <= sf::Mouse::Button::Middle) {
+        onClick.emit(this, mouseLocal);
     }
+    onMousePress.emit(this, button, mouseLocal);
+
+    mouseUpdate(true, mouseLocal);
 }
 void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    //???
-
+    onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
     Widget::handleMouseRelease(button, mouseParent);
 }
 
@@ -326,6 +289,13 @@ void MenuBar::handleMouseLeft() {
         selectMenuItem(-1);
     }
     Widget::handleMouseLeft();
+}
+
+void MenuBar::handleFocusChange(bool focused) {
+    Widget::handleFocusChange(focused);
+    if (!focused) {
+        selectMenu(-1, false);
+    }
 }
 
 MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style) :
@@ -396,6 +366,36 @@ void MenuBar::selectMenuItem(int index) {
 
 sf::Vector2f MenuBar::getOpenMenuPosition() const {
     return {menus_[selectedMenu_].labelPosition_.x - style_->barTextPadding_.x, barSize_.y};
+}
+
+void MenuBar::mouseUpdate(bool clicked, const sf::Vector2f& mouseLocal) {
+    if (mouseLocal.y + getOrigin().y < barSize_.y) {
+        // Mouse is over menu bar.
+        selectMenuItem(-1);
+        for (size_t i = 0; i < menus_.size(); ++i) {
+            if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
+                selectMenu(i, clicked != menuIsOpen_);
+                return;
+            }
+        }
+        if (clicked || !menuIsOpen_) {
+            selectMenu(-1, false);
+        }
+    } else if (menuIsOpen_) {
+        // Mouse is in a menu.
+        const auto& menu = menus_[selectedMenu_];
+        int selectedMenuItem = menu.items.size() - 1;
+        for (size_t i = 1; i < menu.items.size(); ++i) {
+            if (mouseLocal.y + getOrigin().y < menu.items[i].leftPosition_.y - style_->menuTextPadding_.y) {
+                selectedMenuItem = i - 1;
+                break;
+            }
+        }
+        selectMenuItem(selectedMenuItem);
+        if (clicked) {
+            onMenuItemClick.emit(this, menus_[selectedMenu_], selectedMenuItem);
+        }
+    }
 }
 
 void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {

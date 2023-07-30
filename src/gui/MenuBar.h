@@ -141,10 +141,12 @@ public:
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 
     virtual void handleMouseLeft() override;
+    virtual void handleFocusChange(bool focused) override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
     Signal<Widget*, const sf::Vector2f&> onClick;
+    Signal<Widget*, const MenuList&, size_t> onMenuItemClick;
 
 protected:
     MenuBar(std::shared_ptr<MenuBarStyle> style);
@@ -155,6 +157,7 @@ private:
     void selectMenu(int index, bool isOpen);
     void selectMenuItem(int index);
     sf::Vector2f getOpenMenuPosition() const;
+    void mouseUpdate(bool clicked, const sf::Vector2f& mouseLocal);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<MenuBarStyle> style_;
