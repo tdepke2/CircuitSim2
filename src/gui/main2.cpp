@@ -219,7 +219,7 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     maxCharBox->sendToBack();
 }
 
-void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
+void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto menuBar = gui::MenuBar::create(theme);
     connectDebugSignals(menuBar.get(), "menuBar");
     menuBar->setWidth(300.0f);
@@ -228,20 +228,58 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuBar->setOrigin(100.0f, 15.0f);
 
     gui::MenuList menuList("menu1");
-    menuList.items.emplace_back("item1", "Shift+A");
-    menuList.items.emplace_back("item2", "Shift+B");
-    menuList.items.emplace_back("item3", "", false);
+    menuList.items.emplace_back("hi i am: ", "menu1");
+    menuList.items.emplace_back("insert left", "");
+    menuList.items.emplace_back("insert right", "");
+    menuList.items.emplace_back("remove left", "");
+    menuList.items.emplace_back("remove right", "");
+    menuList.items.emplace_back("remove me", "");
+    menuList.items.emplace_back("???", "", false);
     menuBar->insertMenu(menuList);
 
-    menuList.name = "menu2";
-    menuBar->insertMenu(menuList);
+    menuBar->onMenuItemClick.connect([=](gui::Widget* w, const gui::MenuList& menu, size_t index){
+        size_t menuIndex = menuBar->findMenuIndex(menu.name);
+        gui::MenuList newMenu = menu;
+        newMenu.name += "1";
+        newMenu.items[0].rightText = newMenu.name;
 
-    menuList.name = "menu3";
+        if (menu.items[index].leftText == "insert left") {
+            menuBar->insertMenu(newMenu, menuIndex);
+        } else if (menu.items[index].leftText == "insert right") {
+            menuBar->insertMenu(newMenu, menuIndex + 1);
+        } else if (menu.items[index].leftText == "remove left") {
+            if (menuIndex > 0) {
+                menuBar->removeMenu(menuIndex - 1);
+            } else {
+                std::cout << "No menu on the left side to remove!\n";
+            }
+        } else if (menu.items[index].leftText == "remove right") {
+            menuBar->removeMenu(menuIndex + 1);
+        } else if (menu.items[index].leftText == "remove me") {
+            menuBar->removeMenu(menuIndex);
+        } else {
+            std::cout << "That menu option doesn't do anything :(\n";
+        }
+    });
+
+
+
+
+    // FIXME add additional menu options for testing MenuBar::setMenu() ?
+
+
+
+
+    menuList.name = "file";
     menuList.items.clear();
     menuList.items.emplace_back("quit", "Alt+Q");
     menuBar->insertMenu(menuList);
 
     myGui.addChild(menuBar);
+}
+
+void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    
 }
 
 int main() {
@@ -251,10 +289,11 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 4> sceneNames = {
+    const std::array<std::string, 5> sceneNames = {
         "Empty",
         "ButtonDemo",
         "TextBoxDemo",
+        "MenuBarDemo",
         "FullDemo"
     };
     size_t currentScene = 0;
@@ -298,6 +337,8 @@ int main() {
                 createButtonDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "TextBoxDemo") {
                 createTextBoxDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "MenuBarDemo") {
+                createMenuBarDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "FullDemo") {
                 createFullDemo(myGui, theme);
             } else {

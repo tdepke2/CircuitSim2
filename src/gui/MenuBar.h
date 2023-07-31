@@ -92,11 +92,15 @@ public:
     void setBarTextPadding(const sf::Vector3f& padding);
     void setMenuTextPadding(const sf::Vector3f& padding);
     void setMinLeftRightTextWidth(float width);
+    void setDisabledTextFillColor(const sf::Color& color);
     void setHighlightFillColor(const sf::Color& color);
+    void setDisabledHighlightFillColor(const sf::Color& color);
     const sf::Vector3f& getBarTextPadding() const;
     const sf::Vector3f& getMenuTextPadding() const;
     float getMinLeftRightTextWidth() const;
+    const sf::Color& getDisabledTextFillColor() const;
     const sf::Color& getHighlightFillColor() const;
+    const sf::Color& getDisabledHighlightFillColor() const;
 
     std::shared_ptr<MenuBarStyle> clone() const;
 
@@ -104,6 +108,7 @@ private:
     const Gui& gui_;
     sf::RectangleShape bar_, menu_, highlight_;
     sf::Text text_;
+    sf::Color textColor_, disabledTextColor_, highlightColor_, disabledHighlightColor_;
     sf::Vector3f barTextPadding_, menuTextPadding_;
     float minLeftRightTextWidth_;
 

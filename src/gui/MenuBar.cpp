@@ -117,7 +117,7 @@ void MenuBarStyle::setTextStyle(uint32_t style) {
     gui_.requestRedraw();
 }
 void MenuBarStyle::setTextFillColor(const sf::Color& color) {
-    text_.setFillColor(color);
+    textColor_ = color;
     gui_.requestRedraw();
 }
 const sf::Font* MenuBarStyle::getFont() const {
@@ -136,7 +136,7 @@ uint32_t MenuBarStyle::getTextStyle() const {
     return text_.getStyle();
 }
 const sf::Color& MenuBarStyle::getTextFillColor() const {
-    return text_.getFillColor();
+    return textColor_;
 }
 
 void MenuBarStyle::setBarTextPadding(const sf::Vector3f& padding) {
@@ -151,8 +151,16 @@ void MenuBarStyle::setMinLeftRightTextWidth(float width) {
     minLeftRightTextWidth_ = width;
     gui_.requestRedraw();
 }
+void MenuBarStyle::setDisabledTextFillColor(const sf::Color& color) {
+    disabledTextColor_ = color;
+    gui_.requestRedraw();
+}
 void MenuBarStyle::setHighlightFillColor(const sf::Color& color) {
-    highlight_.setFillColor(color);
+    highlightColor_ = color;
+    gui_.requestRedraw();
+}
+void MenuBarStyle::setDisabledHighlightFillColor(const sf::Color& color) {
+    disabledHighlightColor_ = color;
     gui_.requestRedraw();
 }
 const sf::Vector3f& MenuBarStyle::getBarTextPadding() const {
@@ -164,8 +172,14 @@ const sf::Vector3f& MenuBarStyle::getMenuTextPadding() const {
 float MenuBarStyle::getMinLeftRightTextWidth() const {
     return minLeftRightTextWidth_;
 }
+const sf::Color& MenuBarStyle::getDisabledTextFillColor() const {
+    return disabledTextColor_;
+}
 const sf::Color& MenuBarStyle::getHighlightFillColor() const {
-    return highlight_.getFillColor();
+    return highlightColor_;
+}
+const sf::Color& MenuBarStyle::getDisabledHighlightFillColor() const {
+    return disabledHighlightColor_;
 }
 
 std::shared_ptr<MenuBarStyle> MenuBarStyle::clone() const {
@@ -201,9 +215,9 @@ void MenuBar::insertMenu(const MenuList& menu, size_t index) {
 }
 
 void MenuBar::removeMenu(size_t index) {
-    menus_.erase(menus_.begin() + std::min(index, menus_.size()));
+    menus_.erase(menus_.begin() + std::min(index, menus_.size() - 1));
     updateMenuBar();
-    selectMenu(selectedMenu_ < menus_.size() ? selectedMenu_ : -1, false);
+    selectMenu(selectedMenu_ < menus_.size() ? selectedMenu_ : -1, false);    // FIXME oh no no, this should have created a warning during build. need to fix!!!
 }
 
 void MenuBar::setMenu(const MenuList& menu, size_t index) {
@@ -392,8 +406,9 @@ void MenuBar::mouseUpdate(bool clicked, const sf::Vector2f& mouseLocal) {
             }
         }
         selectMenuItem(selectedMenuItem);
-        if (clicked) {
-            onMenuItemClick.emit(this, menus_[selectedMenu_], selectedMenuItem);
+        if (clicked && menu.items[selectedMenuItem].enabled) {
+            onMenuItemClick.emit(this, menu, selectedMenuItem);
+            selectMenu(-1, false);
         }
     }
 }
@@ -407,11 +422,13 @@ void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     style_->bar_.setSize(barSize_);
     target.draw(style_->bar_, states);
     if (selectedMenu_ != -1) {
+        style_->highlight_.setFillColor(style_->highlightColor_);
         style_->highlight_.setPosition(menus_[selectedMenu_].labelPosition_.x - style_->barTextPadding_.x, 0.0f);
         style_->highlight_.setSize({2.0f * style_->barTextPadding_.x + menus_[selectedMenu_].labelWidth_, barSize_.y});
         target.draw(style_->highlight_, states);
     }
 
+    style_->text_.setFillColor(style_->textColor_);
     for (const auto& menu : menus_) {
         style_->text_.setString(menu.name);
         style_->text_.setPosition(menu.labelPosition_);
@@ -426,12 +443,14 @@ void MenuBar::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
         if (menu.selectedItem_ != -1) {
             const auto& menuItem = menu.items[menu.selectedItem_];
+            style_->highlight_.setFillColor(menuItem.enabled ? style_->highlightColor_ : style_->disabledHighlightColor_);
             style_->highlight_.setPosition(menuItem.leftPosition_.x - style_->menuTextPadding_.x, menuItem.leftPosition_.y - style_->menuTextPadding_.y);
             style_->highlight_.setSize({menu.menuSize_.x, 2.0f * style_->menuTextPadding_.y + style_->menuTextPadding_.z * style_->getCharacterSize()});
             target.draw(style_->highlight_, states);
         }
 
         for (const auto& menuItem : menu.items) {
+            style_->text_.setFillColor(menuItem.enabled ? style_->textColor_ : style_->disabledTextColor_);
             style_->text_.setString(menuItem.leftText);
             style_->text_.setPosition(menuItem.leftPosition_);
             target.draw(style_->text_, states);
