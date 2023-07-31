@@ -27,8 +27,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
         message(STATUS "Build type is not set, select it during build with '--config' option and one of the following: '${CMAKE_CONFIGURATION_TYPES}'.")
     endif()
 
-    set(CMAKE_CXX_EXTENSIONS OFF)
-
     # Place binaries in lib/ or bin/ respectively instead of in the sources directory.
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
