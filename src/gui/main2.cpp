@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <string>
 
 std::map<gui::Widget*, std::string> widgetNames;
 
@@ -180,7 +181,7 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     hideBox->setWidthCharacters(16);
     hideBox->setText("right click hide");
     hideBox->setPosition(10.0f, 10.0f);
-    hideBox->onMousePress.connect([=](gui::Widget* w, sf::Mouse::Button button, const sf::Vector2f& pos){
+    hideBox->onMousePress.connect([=](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
         if (button == sf::Mouse::Right) {
             hideBox->setVisible(false);
         }
@@ -192,7 +193,7 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     disableBox->setWidthCharacters(16);
     disableBox->setText("right click disable");
     disableBox->setPosition(200.0f, 10.0f);
-    disableBox->onMousePress.connect([=](gui::Widget* w, sf::Mouse::Button button, const sf::Vector2f& pos){
+    disableBox->onMousePress.connect([=](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
         if (button == sf::Mouse::Right) {
             disableBox->setEnabled(false);
         }
@@ -228,20 +229,24 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuBar->setOrigin(100.0f, 15.0f);
 
     gui::MenuList menuList("menu1");
-    menuList.items.emplace_back("hi i am: ", "menu1");
+    menuList.items.emplace_back("hi i am:", "menu1");
     menuList.items.emplace_back("insert left", "");
     menuList.items.emplace_back("insert right", "");
     menuList.items.emplace_back("remove left", "");
     menuList.items.emplace_back("remove right", "");
     menuList.items.emplace_back("remove me", "");
     menuList.items.emplace_back("???", "", false);
+    menuList.items.emplace_back("ping", "");
+    menuList.items.emplace_back("pong", "", false);
     menuBar->insertMenu(menuList);
 
-    menuBar->onMenuItemClick.connect([=](gui::Widget* w, const gui::MenuList& menu, size_t index){
+    menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
         size_t menuIndex = menuBar->findMenuIndex(menu.name);
         gui::MenuList newMenu = menu;
-        newMenu.name += "1";
-        newMenu.items[0].rightText = newMenu.name;
+        if (newMenu.name.getSize() > 4) {
+            newMenu.name = "menu" + std::to_string(std::stoi(newMenu.name.substring(4).toAnsiString()) + 1);
+            newMenu.items[0].rightText = newMenu.name;
+        }
 
         if (menu.items[index].leftText == "insert left") {
             menuBar->insertMenu(newMenu, menuIndex);
@@ -257,18 +262,22 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
             menuBar->removeMenu(menuIndex + 1);
         } else if (menu.items[index].leftText == "remove me") {
             menuBar->removeMenu(menuIndex);
+        } else if (menu.items[index].leftText == "ping") {
+            newMenu = menu;
+            newMenu.items[index].rightText = "bounced";
+            newMenu.items[index].enabled = false;
+            newMenu.items[index + 1].enabled = true;
+            menuBar->setMenu(newMenu, menuIndex);
+        } else if (menu.items[index].leftText == "pong") {
+            newMenu = menu;
+            newMenu.items[index].rightText = "bounced again";
+            newMenu.items[index].enabled = false;
+            newMenu.items[index - 1].enabled = true;
+            menuBar->setMenu(newMenu, menuIndex);
         } else {
             std::cout << "That menu option doesn't do anything :(\n";
         }
     });
-
-
-
-
-    // FIXME add additional menu options for testing MenuBar::setMenu() ?
-
-
-
 
     menuList.name = "file";
     menuList.items.clear();
@@ -278,7 +287,7 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     myGui.addChild(menuBar);
 }
 
-void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
+void createFullDemo(gui::Gui& /*myGui*/, const gui::Theme& /*theme*/) {
     
 }
 
@@ -302,7 +311,7 @@ int main() {
     auto sceneButton = gui::Button::create(theme);
     connectDebugSignals(sceneButton.get(), "sceneButton");
     sceneButton->setPosition(0.0f, window.getSize().y - 20.0f);
-    sceneButton->onMousePress.connect([&](gui::Widget* w, sf::Mouse::Button button, const sf::Vector2f& pos) {
+    sceneButton->onMousePress.connect([&](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/) {
         if (button == sf::Mouse::Right && currentScene > 0) {
             --currentScene;
             sceneChanged = true;

@@ -217,7 +217,7 @@ void MenuBar::insertMenu(const MenuList& menu, size_t index) {
 void MenuBar::removeMenu(size_t index) {
     menus_.erase(menus_.begin() + std::min(index, menus_.size() - 1));
     updateMenuBar();
-    selectMenu(selectedMenu_ < menus_.size() ? selectedMenu_ : -1, false);    // FIXME oh no no, this should have created a warning during build. need to fix!!!
+    selectMenu(selectedMenu_ < static_cast<int>(menus_.size()) ? selectedMenu_ : -1, false);
 }
 
 void MenuBar::setMenu(const MenuList& menu, size_t index) {

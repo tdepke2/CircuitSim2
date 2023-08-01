@@ -150,21 +150,21 @@ void Widget::requestRedraw() const {
 bool Widget::isMouseHovering(const sf::Vector2f& mouseParent) const {
     return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
 }
-void Widget::handleMouseMove(const sf::Vector2f& mouseParent) {
+void Widget::handleMouseMove(const sf::Vector2f& /*mouseParent*/) {
 
 }
-void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mouseParent*/) {
     if (button <= sf::Mouse::Button::Middle) {
         setFocused(true);
     }
 }
-void Widget::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+void Widget::handleMouseRelease(sf::Mouse::Button /*button*/, const sf::Vector2f& /*mouseParent*/) {
 
 }
-void Widget::handleTextEntered(uint32_t unicode) {
+void Widget::handleTextEntered(uint32_t /*unicode*/) {
 
 }
-void Widget::handleKeyPressed(sf::Keyboard::Key key) {
+void Widget::handleKeyPressed(sf::Keyboard::Key /*key*/) {
 
 }
 
@@ -202,7 +202,7 @@ void Widget::setParentAndGui(Container* parent, Gui* gui) {
     }
 }
 
-void Widget::addWidgetUnderMouse(const sf::Vector2f& mouseParent) {
+void Widget::addWidgetUnderMouse(const sf::Vector2f& /*mouseParent*/) {
     if (gui_ != nullptr) {
         gui_->addWidgetUnderMouse(shared_from_this());
     }
