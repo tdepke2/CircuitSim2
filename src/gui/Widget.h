@@ -12,6 +12,11 @@ namespace gui {
 
 namespace gui {
 
+// FIXME some words about how signals can be bound, and how it's ok to unbind a signal's handlers without breaking any internal behavior
+
+/**
+ * Abstract base class for a graphical widget that can be drawn to a `Gui`.
+ */
 class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
     //static std::shared_ptr<Widget> create();

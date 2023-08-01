@@ -13,6 +13,16 @@ namespace gui {
 
 namespace gui {
 
+/**
+ * Abstract class providing factory methods for various widget styles. Each
+ * widget style defines colors, padding, alignment, textures, etc. to use when
+ * drawing the widget. The `Theme` should allocate styles as they are needed,
+ * instead of during construction.
+ * 
+ * Note that a theme may need to store objects like `sf::Font` and `sf::Texture`
+ * for widgets to use. Therefore, the lifetime of the `Theme` must be bound to
+ * the `Gui`.
+ */
 class Theme {
 public:
     Theme(const Gui& gui);

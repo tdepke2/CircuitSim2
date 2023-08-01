@@ -8,6 +8,10 @@
 
 namespace gui {
 
+/**
+ * Abstract base class for objects that store `Widget` types. The `Widget`
+ * children are stored in a simple array structure (and drawn in this order).
+ */
 class ContainerBase {
 public:
     virtual ~ContainerBase() noexcept;
@@ -31,8 +35,13 @@ protected:
 };
 
 
-// FIXME: is this the right idea? container should be a widget so that the parent of a widget is a container (and therefore a widget).
-// we also want Gui to be a container, but not a Widget...
+// FIXME move this chunk into a separate source file?
+
+/**
+ * Specialization of a `Widget` that is also a container for other widgets.
+ * 
+ * This class is kept separate from `ContainerBase` so that the `Gui` can be a container and not a widget.
+ */
 class Container : public ContainerBase, public Widget {
 public:
     virtual ~Container() noexcept = default;
