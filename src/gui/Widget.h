@@ -12,10 +12,19 @@ namespace gui {
 
 namespace gui {
 
-// FIXME some words about how signals can be bound, and how it's ok to unbind a signal's handlers without breaking any internal behavior
-
 /**
  * Abstract base class for a graphical widget that can be drawn to a `Gui`.
+ * 
+ * A number of `Signal` members are provided to bind function callbacks in
+ * response to events, use `Signal::connect()` for this purpose. It is also safe
+ * to call `Signal::disconnectAll()` without affecting the internal behavior of
+ * a widget.
+ * 
+ * The functions beginning with "handle" are used internally to respond to
+ * events and such. When adding overrides to these in derived classes, the base
+ * class version should be called at the beginning or end depending on the
+ * context (e.g. `handleMousePress()` at the beginning, `handleMouseRelease()`
+ * at the end).
  */
 class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
@@ -49,6 +58,7 @@ public:
     Gui* getGui() const;
     virtual void setVisible(bool visible);
     bool isVisible() const;
+    // If a widget is not enabled, it no longer receives events.
     virtual void setEnabled(bool enabled);
     bool isEnabled() const;
     void setFocused(bool focused);
@@ -72,9 +82,7 @@ public:
     // Get the bounding rectangle in local space, based on the origin and size of the `Widget`.
     virtual sf::FloatRect getLocalBounds() const = 0;
     virtual bool isMouseHovering(const sf::Vector2f& mouseParent) const;
-    // When adding overrides to the handle* functions, the base class version
-    // should be called at the beginning or end depending on the context (e.g.
-    // handleMousePress() at the beginning, handleMouseRelease() at the end).
+
     virtual void handleMouseMove(const sf::Vector2f& mouseParent);
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent);

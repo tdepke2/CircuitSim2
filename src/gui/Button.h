@@ -15,6 +15,12 @@ namespace gui {
 
 namespace gui {
 
+/**
+ * Visual styling for `Button`.
+ * 
+ * One instance is shared between objects that use the same style, private
+ * members in this class operate as flyweights.
+ */
 class ButtonStyle {
 public:
     ButtonStyle(const Gui& gui);
@@ -62,6 +68,10 @@ private:
     friend class Button;
 };
 
+
+/**
+ * A simple button with a text label.
+ */
 class Button : public Widget {
 public:
     static std::shared_ptr<Button> create(const Theme& theme);
@@ -80,6 +90,7 @@ public:
 
     void setStyle(std::shared_ptr<ButtonStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
+    // To get the global style, get it from the theme.
     std::shared_ptr<ButtonStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;

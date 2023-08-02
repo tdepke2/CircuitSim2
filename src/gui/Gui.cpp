@@ -32,7 +32,7 @@ void Gui::addChild(std::shared_ptr<Widget> child) {
     child->setParentAndGui(nullptr, this);
 }
 
-void Gui::handleEvent(const sf::Event& event) {
+void Gui::processEvent(const sf::Event& event) {
     if (event.type == sf::Event::MouseButtonPressed) {
         const auto mouseGlobal = window_.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
         auto widget = getWidgetUnderMouse(mouseGlobal);

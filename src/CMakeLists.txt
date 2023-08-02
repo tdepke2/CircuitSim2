@@ -38,6 +38,7 @@ target_compile_options(CircuitSim2 PRIVATE
 add_executable(gui_demo
     gui/Button.cpp
     gui/Container.cpp
+    gui/ContainerBase.cpp
     gui/Gui.cpp
     gui/MenuBar.cpp
     gui/Panel.cpp

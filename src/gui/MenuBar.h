@@ -13,6 +13,10 @@ namespace gui {
 
 namespace gui {
 
+/**
+ * A single item in the menu for a `MenuBar`. If not enabled, the item is still
+ * shown in the menu but cannot be selected.
+ */
 struct MenuItem {
 public:
     MenuItem(sf::String leftText = "", sf::String rightText = "", bool enabled = true) :
@@ -30,6 +34,11 @@ private:
     friend class MenuBar;
 };
 
+
+/**
+ * A menu containing `MenuItem` types for adding to a `MenuBar`. The "name" will
+ * appear as a label in the `MenuBar`, and does not have to be unique.
+ */
 struct MenuList {
 public:
     MenuList(sf::String name = "") :
@@ -47,6 +56,13 @@ private:
     friend class MenuBar;
 };
 
+
+/**
+ * Visual styling for `MenuBar`.
+ * 
+ * One instance is shared between objects that use the same style, private
+ * members in this class operate as flyweights.
+ */
 class MenuBarStyle {
 public:
     MenuBarStyle(const Gui& gui);
@@ -115,6 +131,11 @@ private:
     friend class MenuBar;
 };
 
+
+/**
+ * Horizontal menu bar with drop-down menus. Currently does not support nested
+ * menus.
+ */
 class MenuBar : public Widget {
 public:
     static std::shared_ptr<MenuBar> create(const Theme& theme);
@@ -136,6 +157,7 @@ public:
 
     void setStyle(std::shared_ptr<MenuBarStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
+    // To get the global style, get it from the theme.
     std::shared_ptr<MenuBarStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;

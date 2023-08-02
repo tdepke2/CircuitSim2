@@ -13,8 +13,6 @@ namespace gui {
 
 namespace gui {
 
-// FIXME need some notes about how events are sent to target widgets, and how the container passes events to children only within its local bounds (that might also need to be fixed btw?)
-
 /**
  * Top-level context for the graphical user interface. The `Gui` stores `Widget`
  * children for updating and drawing them.
@@ -23,6 +21,13 @@ namespace gui {
  * `requestRedraw()` to trigger drawing during the next call to `Gui::draw()`.
  * The redraw operation draws all of the widgets, so it's ideal to only request
  * drawing during event handling instead of every frame.
+ * 
+ * Events are processed in a simple manner. Mouse events are sent only to the
+ * top-most visible widget the mouse touches (which will include any `Container`
+ * types the widget is in). Text events are only sent to the focused widget.
+ * Also, for mouse events to propagate through a `Container`, the mouse must be
+ * touching the `Container` (a widget outside the bounds of its parent
+ * `Container` will not work).
  * 
  * Much of the GUI framework has taken inspiration from other SFML libraries
  * like TGUI (https://github.com/texus/TGUI/) and SFGUI
@@ -38,7 +43,7 @@ public:
     bool isSmooth() const;
 
     virtual void addChild(std::shared_ptr<Widget> child) override;
-    void handleEvent(const sf::Event& event);
+    void processEvent(const sf::Event& event);
 
     // Internal
     void addWidgetUnderMouse(std::shared_ptr<Widget> widget);

@@ -13,6 +13,12 @@ namespace gui {
 
 namespace gui {
 
+/**
+ * Visual styling for `TextBox`.
+ * 
+ * One instance is shared between objects that use the same style, private
+ * members in this class operate as flyweights.
+ */
 class TextBoxStyle {
 public:
     TextBoxStyle(const Gui& gui);
@@ -64,6 +70,12 @@ private:
     friend class TextBox;
 };
 
+
+/**
+ * An editable text box. Right now only a single line of text can be input. A
+ * limit on the number of characters can be set and editing can be disabled if
+ * needed.
+ */
 class TextBox : public Widget {
 public:
     static std::shared_ptr<TextBox> create(const Theme& theme);
@@ -84,6 +96,7 @@ public:
 
     void setStyle(std::shared_ptr<TextBoxStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
+    // To get the global style, get it from the theme.
     std::shared_ptr<TextBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;

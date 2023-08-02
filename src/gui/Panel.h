@@ -12,6 +12,12 @@ namespace gui {
 
 namespace gui {
 
+/**
+ * Visual styling for `Panel`.
+ * 
+ * One instance is shared between objects that use the same style, private
+ * members in this class operate as flyweights.
+ */
 class PanelStyle {
 public:
     PanelStyle(const Gui& gui);
@@ -37,6 +43,10 @@ private:
     friend class Panel;
 };
 
+
+/**
+ * A rectangular box that contains other widgets.
+ */
 class Panel : public Container {
 public:
     static std::shared_ptr<Panel> create(const Theme& theme);
@@ -48,6 +58,7 @@ public:
 
     void setStyle(std::shared_ptr<PanelStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
+    // To get the global style, get it from the theme.
     std::shared_ptr<PanelStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
