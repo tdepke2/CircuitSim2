@@ -1,10 +1,10 @@
 #include "SFML/Graphics/Texture.hpp"
-#include <gui/Button.h>
 #include <gui/Gui.h>
-#include <gui/Panel.h>
 #include <gui/Signal.h>
-#include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
+#include <gui/widgets/Button.h>
+#include <gui/widgets/Panel.h>
+#include <gui/widgets/TextBox.h>
 
 #include <iostream>
 #include <SFML/Graphics.hpp>

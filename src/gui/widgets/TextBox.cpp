@@ -1,6 +1,6 @@
 #include <gui/Gui.h>
-#include <gui/TextBox.h>
 #include <gui/Theme.h>
+#include <gui/widgets/TextBox.h>
 
 #include <cmath>
 #include <limits>

@@ -35,22 +35,14 @@ target_compile_options(CircuitSim2 PRIVATE
 # also see https://en.sfml-dev.org/forums/index.php?topic=28580.0
 
 
+# Compile the gui_lib.
+add_subdirectory(gui)
+
 add_executable(gui_demo
-    gui/Button.cpp
-    gui/Container.cpp
-    gui/ContainerBase.cpp
-    gui/Gui.cpp
-    gui/MenuBar.cpp
-    gui/Panel.cpp
-    gui/Theme.cpp
-    gui/Widget.cpp
-    gui/TextBox.cpp
-    gui/themes/DefaultTheme.cpp
-    gui/Signal.cpp
     gui/main2.cpp
 )
-target_include_directories(gui_demo PRIVATE .)
-target_link_libraries(gui_demo PRIVATE sfml-graphics)
+
+target_link_libraries(gui_demo PRIVATE gui_lib sfml-graphics)
 target_compile_features(gui_demo PRIVATE cxx_std_11)
 set_target_properties(gui_demo PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_options(gui_demo PRIVATE

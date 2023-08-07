@@ -1,7 +1,7 @@
 #include "SFML/System/Vector2.hpp"
-#include <gui/Button.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
+#include <gui/widgets/Button.h>
 
 namespace gui {
 

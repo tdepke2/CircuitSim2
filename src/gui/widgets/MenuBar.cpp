@@ -1,6 +1,6 @@
 #include <gui/Gui.h>
-#include <gui/MenuBar.h>
 #include <gui/Theme.h>
+#include <gui/widgets/MenuBar.h>
 
 #include <algorithm>
 #include <stdexcept>

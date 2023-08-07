@@ -1,6 +1,6 @@
 #include <gui/Gui.h>
-#include <gui/Panel.h>
 #include <gui/Theme.h>
+#include <gui/widgets/Panel.h>
 
 namespace gui {
 
