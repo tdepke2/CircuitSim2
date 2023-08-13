@@ -1,8 +1,8 @@
-#include <gui/Button.h>
-#include <gui/MenuBar.h>
-#include <gui/Panel.h>
-#include <gui/TextBox.h>
 #include <gui/themes/DefaultTheme.h>
+#include <gui/widgets/Button.h>
+#include <gui/widgets/MenuBar.h>
+#include <gui/widgets/Panel.h>
+#include <gui/widgets/TextBox.h>
 
 
 #include <iostream>
