@@ -28,4 +28,4 @@ protected:
     virtual void addWidgetUnderMouse(const sf::Vector2f& mouseParent) override;
 };
 
-}
+} // namespace gui

@@ -77,4 +77,4 @@ private:
     sf::Vector2f size_;
 };
 
-}
+} // namespace gui

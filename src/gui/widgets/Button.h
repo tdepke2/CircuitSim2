@@ -119,4 +119,4 @@ private:
     bool isPressed_;
 };
 
-}
+} // namespace gui

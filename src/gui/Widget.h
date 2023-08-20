@@ -115,4 +115,4 @@ private:
     friend class Gui;
 };
 
-}
+} // namespace gui

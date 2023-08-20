@@ -287,12 +287,89 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     myGui.addChild(menuBar);
 }
 
-void createFullDemo(gui::Gui& /*myGui*/, const gui::Theme& /*theme*/) {
-    
+void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto menuBar = gui::MenuBar::create(theme);
+    connectDebugSignals(menuBar.get(), "menuBar");
+    menuBar->setWidth(600.0f);
+    menuBar->setPosition(0.0f, 0.0f);
+
+    gui::MenuList fileMenu("File");
+    fileMenu.items.emplace_back("New", "Ctrl+N");
+    fileMenu.items.emplace_back("Open...", "Ctrl+O");
+    fileMenu.items.emplace_back("Save", "Ctrl+S");
+    fileMenu.items.emplace_back("Save As...");
+    fileMenu.items.emplace_back("Rename...");
+    fileMenu.items.emplace_back("Resize...");
+    fileMenu.items.emplace_back("Configuration...");
+    fileMenu.items.emplace_back("Exit");
+    menuBar->insertMenu(fileMenu);
+
+    gui::MenuList viewMenu("View");
+    viewMenu.items.emplace_back("Zoom In", "Mouse Wheel Up");
+    viewMenu.items.emplace_back("Zoom Out", "Mouse Wheel Down");
+    viewMenu.items.emplace_back("Default Zoom");
+    menuBar->insertMenu(viewMenu);
+
+    gui::MenuList runMenu("Run");
+    runMenu.items.emplace_back("Step One Tick", "Tab");
+    menuBar->insertMenu(runMenu);
+
+    gui::MenuList toolsMenu("Tools");
+    toolsMenu.items.emplace_back("Select All", "Ctrl+A");
+    toolsMenu.items.emplace_back("Deselect All", "ESC");
+    toolsMenu.items.emplace_back("Cut", "Ctrl+X");
+    toolsMenu.items.emplace_back("Copy", "Ctrl+C");
+    toolsMenu.items.emplace_back("Paste", "Ctrl+V");
+    toolsMenu.items.emplace_back("  (Shift+Right Click = Force Paste)", "", false);
+    toolsMenu.items.emplace_back("Selection Query", "Q");
+    menuBar->insertMenu(toolsMenu);
+
+    myGui.addChild(menuBar);
+
+    auto renameDialog = gui::Panel::create(theme);
+    connectDebugSignals(renameDialog.get(), "renameDialog");
+    renameDialog->setSize({200.0f, 100.0f});
+    renameDialog->setVisible(false);
+    renameDialog->setPosition(80.0f, 80.0f);
+    myGui.addChild(renameDialog);
+
+    auto renameTextBox = gui::TextBox::create(theme);
+    connectDebugSignals(renameTextBox.get(), "renameTextBox");
+    renameTextBox->setWidthCharacters(8);
+    renameTextBox->setPosition(10.0f, 10.0f);
+    renameDialog->addChild(renameTextBox);
+
+    auto renameCancelButton = gui::Button::create(theme);
+    connectDebugSignals(renameCancelButton.get(), "renameCancelButton");
+    renameCancelButton->setLabel("Cancel");
+    renameCancelButton->setPosition(10.0f, 60.0f);
+    renameCancelButton->onClick.connect([=](){
+        renameDialog->setVisible(false);
+    });
+    renameDialog->addChild(renameCancelButton);
+
+    auto renameSubmitButton = gui::Button::create(theme);
+    connectDebugSignals(renameSubmitButton.get(), "renameSubmitButton");
+    renameSubmitButton->setLabel("Rename");
+    renameSubmitButton->setPosition(100.0f, 60.0f);
+    renameSubmitButton->onClick.connect([=](){
+        renameDialog->setVisible(false);
+        std::cout << "Rename dialog submitted!\n";
+    });
+    renameDialog->addChild(renameSubmitButton);
+
+
+    menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
+        if (menu.name == "File") {
+            if (menu.items[index].leftText == "Rename...") {
+                renameDialog->setVisible(true);
+            }
+        }
+    });
 }
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(400, 300), "GUI Test");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "GUI Test");
 
     gui::Gui myGui(window);
 
@@ -305,7 +382,7 @@ int main() {
         "MenuBarDemo",
         "FullDemo"
     };
-    size_t currentScene = 0;
+    size_t currentScene = 4;
     bool sceneChanged = true;
 
     auto sceneButton = gui::Button::create(theme);
@@ -355,7 +432,7 @@ int main() {
             }
         }
 
-        window.clear(sf::Color(80, 80, 80));
+        window.clear(sf::Color(40, 40, 40));
         window.draw(myGui);
         window.display();
     }

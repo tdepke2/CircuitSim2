@@ -34,4 +34,4 @@ protected:
     std::vector<std::shared_ptr<Widget>> children_;
 };
 
-}
+} // namespace gui

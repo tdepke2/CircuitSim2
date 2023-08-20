@@ -47,4 +47,4 @@ protected:
     mutable std::shared_ptr<MenuBarStyle> menuBarStyle_;
 };
 
-}
+} // namespace gui

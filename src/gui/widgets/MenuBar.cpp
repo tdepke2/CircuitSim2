@@ -3,6 +3,7 @@
 #include <gui/widgets/MenuBar.h>
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 
@@ -14,6 +15,14 @@
 
 
 
+
+namespace {
+
+sf::Vector2f roundVector2f(sf::Vector2f v) {
+    return {std::round(v.x), std::round(v.y)};
+}
+
+}
 
 namespace gui {
 
@@ -322,7 +331,7 @@ MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style) :
 void MenuBar::updateMenuBar() {
     sf::Vector2f lastLabelPosition(style_->barTextPadding_.x, style_->barTextPadding_.y);
     for (auto& menu : menus_) {
-        menu.labelPosition_ = lastLabelPosition;
+        menu.labelPosition_ = roundVector2f(lastLabelPosition);
         style_->text_.setString(menu.name);
         const auto bounds = style_->text_.getLocalBounds();
         menu.labelWidth_ = bounds.left + bounds.width;
@@ -346,12 +355,12 @@ void MenuBar::updateMenu(int index) {
             2.0f * style_->menuTextPadding_.x + leftTextBounds.left + leftTextBounds.width + style_->minLeftRightTextWidth_ + rightTextBounds.left + rightTextBounds.width
         );
 
-        menuItem.leftPosition_ = lastLeftItemPosition;
-        menuItem.rightPosition_ = {rightTextBounds.left + rightTextBounds.width, lastLeftItemPosition.y};
+        menuItem.leftPosition_ = roundVector2f(lastLeftItemPosition);
+        menuItem.rightPosition_ = roundVector2f({rightTextBounds.left + rightTextBounds.width, lastLeftItemPosition.y});
         lastLeftItemPosition.y += 2.0f * style_->menuTextPadding_.y + style_->menuTextPadding_.z * style_->getCharacterSize();
     }
     for (auto& menuItem : menu.items) {
-        menuItem.rightPosition_.x = menuItem.leftPosition_.x + maxMenuWidth - menuItem.rightPosition_.x - 2.0f * style_->menuTextPadding_.x;
+        menuItem.rightPosition_.x = std::round(menuItem.leftPosition_.x + maxMenuWidth - menuItem.rightPosition_.x - 2.0f * style_->menuTextPadding_.x);
     }
     menu.menuSize_ = {maxMenuWidth, lastLeftItemPosition.y - getOpenMenuPosition().y - style_->menuTextPadding_.y};
     menu.selectedItem_ = -1;
@@ -366,6 +375,7 @@ void MenuBar::selectMenu(int index, bool isOpen) {
         menuIsOpen_ = isOpen;
         if (isOpen && index != -1) {
             updateMenu(index);
+            sendToFront();
         }
         requestRedraw();
     }

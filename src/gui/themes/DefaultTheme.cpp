@@ -68,22 +68,20 @@ std::shared_ptr<MenuBarStyle> DefaultTheme::getMenuBarStyle() const {
     if (!menuBarStyle_) {
         menuBarStyle_ = std::make_shared<MenuBarStyle>(gui_);
         menuBarStyle_->setBarFillColor({240, 240, 240});
-        menuBarStyle_->setBarOutlineColor({190, 190, 190});
-        menuBarStyle_->setBarOutlineThickness(-1.0f);
 
         menuBarStyle_->setMenuFillColor({240, 240, 240});
-        menuBarStyle_->setMenuOutlineColor({190, 190, 190});
+        menuBarStyle_->setMenuOutlineColor({140, 140, 140});
         menuBarStyle_->setMenuOutlineThickness(-1.0f);
 
         menuBarStyle_->setFont(consolasFont_);
         menuBarStyle_->setCharacterSize(15);
         menuBarStyle_->setTextFillColor(sf::Color::Black);
 
-        menuBarStyle_->setBarTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
-        menuBarStyle_->setMenuTextPadding({16.0f, 1.0f, consolasMaxHeightRatio_});
-        menuBarStyle_->setMinLeftRightTextWidth(20.0f);
+        menuBarStyle_->setBarTextPadding({10.0f, 3.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setMenuTextPadding({18.0f, 3.0f, consolasMaxHeightRatio_});
+        menuBarStyle_->setMinLeftRightTextWidth(40.0f);
         menuBarStyle_->setDisabledTextFillColor({127, 127, 127});
-        menuBarStyle_->setHighlightFillColor(sf::Color::Blue);
+        menuBarStyle_->setHighlightFillColor({188, 214, 255});
         menuBarStyle_->setDisabledHighlightFillColor({180, 180, 180});
     }
     return menuBarStyle_;

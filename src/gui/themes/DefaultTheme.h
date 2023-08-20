@@ -22,4 +22,4 @@ private:
     float consolasMaxHeightRatio_;
 };
 
-}
+} // namespace gui

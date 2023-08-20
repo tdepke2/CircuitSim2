@@ -196,4 +196,4 @@ private:
     bool menuIsOpen_;
 };
 
-}
+} // namespace gui

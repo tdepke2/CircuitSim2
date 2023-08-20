@@ -66,4 +66,4 @@ private:
     std::shared_ptr<Widget> focusedWidget_;
 };
 
-}
+} // namespace gui

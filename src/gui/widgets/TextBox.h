@@ -131,4 +131,4 @@ private:
     sf::Vector2f caretDrawPosition_;
 };
 
-}
+} // namespace gui
