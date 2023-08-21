@@ -2,8 +2,8 @@
 
 #include <cassert>
 #include <functional>
-#include <type_traits>
 #include <map>
+#include <type_traits>
 
 namespace gui {
 

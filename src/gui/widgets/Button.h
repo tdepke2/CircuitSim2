@@ -1,7 +1,5 @@
 #pragma once
 
-#include "SFML/System/Vector2.hpp"
-#include "SFML/Window/Mouse.hpp"
 #include <gui/Signal.h>
 #include <gui/Widget.h>
 

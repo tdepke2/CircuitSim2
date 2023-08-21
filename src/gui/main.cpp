@@ -1,4 +1,3 @@
-#include "SFML/Graphics/Texture.hpp"
 #include <gui/Gui.h>
 #include <gui/Signal.h>
 #include <gui/themes/DefaultTheme.h>
@@ -7,8 +6,8 @@
 #include <gui/widgets/TextBox.h>
 
 #include <iostream>
-#include <SFML/Graphics.hpp>
 #include <memory>
+#include <SFML/Graphics.hpp>
 #include <unordered_map>
 #include <utility>
 
