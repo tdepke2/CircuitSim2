@@ -43,6 +43,8 @@ std::shared_ptr<LabelStyle> DefaultTheme::getLabelStyle() const {
         labelStyle_->setFont(consolasFont_);
         labelStyle_->setCharacterSize(15);
         labelStyle_->setTextFillColor(sf::Color::Black);
+
+        labelStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
     return labelStyle_;
 }

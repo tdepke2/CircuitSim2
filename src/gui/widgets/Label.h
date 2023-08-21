@@ -37,19 +37,22 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setTextPadding(const sf::Vector3f& padding);
+    const sf::Vector3f& getTextPadding() const;
+
     std::shared_ptr<LabelStyle> clone() const;
 
 private:
     const Gui& gui_;
     sf::Text text_;
+    sf::Vector3f textPadding_;
 
     friend class Label;
 };
 
 
 /**
- * Basic text which can be used to label other widgets on the `Gui`. Has no size
- * or bounds.
+ * Basic text which can be used to label other widgets on the `Gui`.
  */
 class Label : public Widget {
 public:
@@ -58,6 +61,7 @@ public:
     virtual ~Label() noexcept = default;
 
     void setLabel(const sf::String& label);
+    const sf::Vector2f& getSize() const;
     const sf::String& getLabel() const;
 
     void setStyle(std::shared_ptr<LabelStyle> style);
@@ -71,11 +75,13 @@ protected:
     Label(std::shared_ptr<LabelStyle> style);
 
 private:
+    void computeResize() const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<LabelStyle> style_;
     bool styleCopied_;
 
+    mutable sf::Vector2f size_;
     sf::String label_;
 };
 

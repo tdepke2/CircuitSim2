@@ -52,6 +52,14 @@ const sf::Color& LabelStyle::getTextFillColor() const {
     return text_.getFillColor();
 }
 
+void LabelStyle::setTextPadding(const sf::Vector3f& padding) {
+    textPadding_ = padding;
+    gui_.requestRedraw();
+}
+const sf::Vector3f& LabelStyle::getTextPadding() const {
+    return textPadding_;
+}
+
 std::shared_ptr<LabelStyle> LabelStyle::clone() const {
     return std::make_shared<LabelStyle>(*this);
 }
@@ -67,7 +75,11 @@ std::shared_ptr<Label> Label::create(std::shared_ptr<LabelStyle> style) {
 
 void Label::setLabel(const sf::String& label) {
     label_ = label;
+    computeResize();
     requestRedraw();
+}
+const sf::Vector2f& Label::getSize() const {
+    return size_;
 }
 const sf::String& Label::getLabel() const {
     return label_;
@@ -87,12 +99,21 @@ std::shared_ptr<LabelStyle> Label::getStyle() {
 }
 
 sf::FloatRect Label::getLocalBounds() const {
-    return {-getOrigin(), sf::Vector2f(0.0f, 0.0f)};
+    return {-getOrigin(), size_};
 }
 
 Label::Label(std::shared_ptr<LabelStyle> style) :
     style_(style),
     styleCopied_(false) {
+}
+
+void Label::computeResize() const {
+    style_->text_.setString(label_);
+    const auto bounds = style_->text_.getLocalBounds();
+    size_ = sf::Vector2f(
+        2.0f * style_->textPadding_.x + bounds.left + bounds.width,
+        2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
+    );
 }
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -101,7 +122,8 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     states.transform *= getTransform();
 
-    style_->text_.setString(label_);
+    computeResize();
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
 }
 
