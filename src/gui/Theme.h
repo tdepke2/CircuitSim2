@@ -6,6 +6,7 @@
 namespace gui {
     class ButtonStyle;
     class Gui;
+    class LabelStyle;
     class MenuBarStyle;
     class PanelStyle;
     class TextBoxStyle;
@@ -29,6 +30,7 @@ public:
     virtual ~Theme() noexcept = default;
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() const = 0;
+    virtual std::shared_ptr<LabelStyle> getLabelStyle() const = 0;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() const = 0;
     virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const = 0;
     virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const = 0;
@@ -42,6 +44,7 @@ protected:
 
     const Gui& gui_;
     mutable std::shared_ptr<ButtonStyle> buttonStyle_;
+    mutable std::shared_ptr<LabelStyle> labelStyle_;
     mutable std::shared_ptr<PanelStyle> panelStyle_;
     mutable std::shared_ptr<TextBoxStyle> textBoxStyle_;
     mutable std::shared_ptr<MenuBarStyle> menuBarStyle_;

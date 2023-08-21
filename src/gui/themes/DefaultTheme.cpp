@@ -1,5 +1,6 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/TextBox.h>
@@ -33,6 +34,17 @@ std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() const {
         buttonStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
     return buttonStyle_;
+}
+
+std::shared_ptr<LabelStyle> DefaultTheme::getLabelStyle() const {
+    if (!labelStyle_) {
+        labelStyle_ = std::make_shared<LabelStyle>(gui_);
+
+        labelStyle_->setFont(consolasFont_);
+        labelStyle_->setCharacterSize(15);
+        labelStyle_->setTextFillColor(sf::Color::Black);
+    }
+    return labelStyle_;
 }
 
 std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() const {

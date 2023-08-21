@@ -1,6 +1,7 @@
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/TextBox.h>
@@ -61,6 +62,9 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
     button->onMousePress.connect(mousePress);
     button->onMouseRelease.connect(mouseRelease);
     button->onClick.connect(click);
+}
+void connectDebugSignals(gui::Label* label, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(label), name);
 }
 void connectDebugSignals(gui::Panel* panel, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(panel), name);
@@ -333,10 +337,16 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     renameDialog->setPosition(80.0f, 80.0f);
     myGui.addChild(renameDialog);
 
+    auto renameLabel = gui::Label::create(theme);
+    connectDebugSignals(renameLabel.get(), "renameLabel");
+    renameLabel->setLabel("Name:");
+    renameLabel->setPosition(10.0f, 10.0f);
+    renameDialog->addChild(renameLabel);
+
     auto renameTextBox = gui::TextBox::create(theme);
     connectDebugSignals(renameTextBox.get(), "renameTextBox");
     renameTextBox->setWidthCharacters(8);
-    renameTextBox->setPosition(10.0f, 10.0f);
+    renameTextBox->setPosition(100.0f, 10.0f);
     renameDialog->addChild(renameTextBox);
 
     auto renameCancelButton = gui::Button::create(theme);

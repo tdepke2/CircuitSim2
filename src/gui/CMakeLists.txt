@@ -7,6 +7,7 @@ set(HEADER_LIST
     themes/DefaultTheme.h
     Widget.h
     widgets/Button.h
+    widgets/Label.h
     widgets/MenuBar.h
     widgets/Panel.h
     widgets/TextBox.h
@@ -21,6 +22,7 @@ add_library(gui_lib
     themes/DefaultTheme.cpp
     Widget.cpp
     widgets/Button.cpp
+    widgets/Label.cpp
     widgets/MenuBar.cpp
     widgets/Panel.cpp
     widgets/TextBox.cpp
