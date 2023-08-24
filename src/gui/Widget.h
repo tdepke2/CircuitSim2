@@ -93,6 +93,11 @@ public:
     virtual void handleMouseLeft();
     virtual void handleFocusChange(bool focused);
 
+
+    // FIXME handleMouseLeft() should be thrown when a widget hides, may want an isMouseHovering() func.
+    // could we also make the handle() funcs protected?
+
+
     Signal<Widget*> onMouseEnter;
     Signal<Widget*> onMouseLeave;
     Signal<Widget*> onFocusGained;

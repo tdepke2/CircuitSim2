@@ -49,8 +49,10 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setFillColorHover(const sf::Color& color);
     void setFillColorDown(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getFillColorHover() const;
     const sf::Color& getFillColorDown() const;
     const sf::Vector3f& getTextPadding() const;
 
@@ -60,7 +62,7 @@ private:
     const Gui& gui_;
     sf::RectangleShape rect_;
     sf::Text text_;
-    sf::Color colorUp_, colorDown_;
+    sf::Color colorUp_, colorHover_, colorDown_;
     sf::Vector3f textPadding_;
 
     friend class Button;
@@ -95,6 +97,7 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 
+    virtual void handleMouseEntered() override;
     virtual void handleMouseLeft() override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
@@ -114,7 +117,7 @@ private:
     mutable sf::Vector2f size_;
     sf::String label_;
     bool autoResize_;
-    bool isPressed_;
+    bool isHovered_, isPressed_;
 };
 
 } // namespace gui

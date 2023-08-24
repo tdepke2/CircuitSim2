@@ -89,6 +89,10 @@ const sf::Color& ButtonStyle::getTextFillColor() const {
     return text_.getFillColor();
 }
 
+void ButtonStyle::setFillColorHover(const sf::Color& color) {
+    colorHover_ = color;
+    gui_.requestRedraw();
+}
 void ButtonStyle::setFillColorDown(const sf::Color& color) {
     colorDown_ = color;
     gui_.requestRedraw();
@@ -96,6 +100,9 @@ void ButtonStyle::setFillColorDown(const sf::Color& color) {
 void ButtonStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
+}
+const sf::Color& ButtonStyle::getFillColorHover() const {
+    return colorHover_;
 }
 const sf::Color& ButtonStyle::getFillColorDown() const {
     return colorDown_;
@@ -184,7 +191,15 @@ void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
     Widget::handleMouseRelease(button, mouseParent);
 }
 
+void Button::handleMouseEntered() {
+    Widget::handleMouseEntered();
+    isHovered_ = true;
+    requestRedraw();
+}
+
 void Button::handleMouseLeft() {
+    isHovered_ = false;
+    requestRedraw();
     setPressed(false);
     Widget::handleMouseLeft();
 }
@@ -193,6 +208,7 @@ Button::Button(std::shared_ptr<ButtonStyle> style) :
     style_(style),
     styleCopied_(false),
     autoResize_(true),
+    isHovered_(false),
     isPressed_(false) {
 }
 
@@ -217,7 +233,13 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->text_.setString(label_);
     }
     style_->rect_.setSize(size_);
-    style_->rect_.setFillColor(isPressed_ ? style_->colorDown_ : style_->colorUp_);
+    if (isPressed_) {
+        style_->rect_.setFillColor(style_->colorDown_);
+    } else if (isHovered_) {
+        style_->rect_.setFillColor(style_->colorHover_);
+    } else {
+        style_->rect_.setFillColor(style_->colorUp_);
+    }
     target.draw(style_->rect_, states);
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);

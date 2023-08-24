@@ -30,6 +30,7 @@ std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() const {
         buttonStyle_->setCharacterSize(15);
         buttonStyle_->setTextFillColor(sf::Color::Black);
 
+        buttonStyle_->setFillColorHover({219, 233, 255});
         buttonStyle_->setFillColorDown({188, 214, 255});
         buttonStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
