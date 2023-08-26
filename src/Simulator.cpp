@@ -16,12 +16,17 @@
 #include <stdexcept>
 #include <thread>
 #include <typeinfo>
-#include <windows.h>
+
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <unistd.h>
+#endif
 
 const unsigned int Simulator::FRAMERATE_LIMIT = 60;
 const Vector2u Simulator::INITIAL_WINDOW_SIZE(1300, 900);
 Simulator::Configuration Simulator::config;
-atomic<Simulator::State> Simulator::state = State::Uninitialized;
+atomic<Simulator::State> Simulator::state(State::Uninitialized);
 Simulator::SimSpeed Simulator::simSpeed = SimSpeed::Medium;
 mt19937 Simulator::mainRNG;
 mutex Simulator::renderMutex, Simulator::renderReadyMutex;
@@ -36,7 +41,7 @@ Board* Simulator::wireVerticalBoardPtr = nullptr;
 Board* Simulator::wireHorizontalBoardPtr = nullptr;
 UserInterface* Simulator::userInterfacePtr = nullptr;
 Text* Simulator::wireToolLabelPtr = nullptr;
-char Simulator::directoryPath[260];
+string Simulator::directoryPath;
 Direction Simulator::currentTileDirection = NORTH;
 bool Simulator::editMode = true, Simulator::copyBufferVisible = false, Simulator::wireToolVerticalFirst = true;
 Vector2i Simulator::mouseStart(0, 0), Simulator::tileCursor(-1, -1), Simulator::selectionStart(-1, -1), Simulator::wireToolStart(-1, -1);
@@ -48,12 +53,24 @@ const Simulator::Configuration& Simulator::getConfig() {
     return config;
 }
 
-const Vector2u& Simulator::getWindowSize() {
+const Vector2u Simulator::getWindowSize() {
     return windowPtr->getSize();
 }
 
 const UserInterface* Simulator::getUserInterface() {
     return userInterfacePtr;
+}
+
+// Gets the cwd of current process. There is a better option in c++17 to do
+// this, but this simple implementation should work in most cases.
+string getWorkingDirectory() {
+    char path[260];
+    #ifdef _WIN32
+        GetCurrentDirectory(sizeof(path), path);
+    #else
+        getcwd(path, sizeof(path));
+    #endif
+    return string(path);
 }
 
 int Simulator::start() {
@@ -64,15 +81,17 @@ int Simulator::start() {
         renderMutex.lock();
         assert(state == State::Uninitialized);
         state = State::Running;
-        SetConsoleCtrlHandler(NULL, TRUE);    // Disable control signals (like Ctrl + C) in log window in case the user tries to close application this way.
-        signal(SIGBREAK, terminationHandler);    // If log window closed, need to clean up in the few milliseconds available before program goes down.
+        #ifdef _WIN32
+            SetConsoleCtrlHandler(NULL, TRUE);    // Disable control signals (like Ctrl + C) in log window in case the user tries to close application this way.
+            signal(SIGBREAK, terminationHandler);    // If log window closed, need to clean up in the few milliseconds available before program goes down.
+        #endif
         mainRNG.seed(static_cast<unsigned long>(chrono::high_resolution_clock::now().time_since_epoch().count()));
         windowPtr = new RenderWindow(VideoMode(INITIAL_WINDOW_SIZE.x, INITIAL_WINDOW_SIZE.y), "[CircuitSim2] Loading...", Style::Default, ContextSettings(0, 0, 4));
         windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
         renderThread = thread(renderLoop);
         
-        GetCurrentDirectory(sizeof(directoryPath), directoryPath);    // Load file resources and create boards.
+        directoryPath = getWorkingDirectory();    // Load file resources and create boards.
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
         Image appIcon;
         if (!appIcon.loadFromFile("resources/icon.png")) {
@@ -80,7 +99,7 @@ int Simulator::start() {
         }
         windowPtr->setIcon(appIcon.getSize().x, appIcon.getSize().y, appIcon.getPixelsPtr());
         Board::loadFont("resources/consolas.ttf");
-        Board::newBoardDefaultPath = string(directoryPath) + "\\boards\\NewBoard.txt";
+        Board::newBoardDefaultPath = directoryPath + "\\boards\\NewBoard.txt";
         boardPtr = new Board();
         currentTileBoardPtr = new Board();
         copyBufferBoardPtr = new Board();
@@ -88,7 +107,7 @@ int Simulator::start() {
         wireHorizontalBoardPtr = new Board();
         userInterfacePtr = new UserInterface();
         
-        openConfig(string(directoryPath) + "\\resources\\config.ini", false);    // Load the configuration file.
+        openConfig(directoryPath + "/resources/config.ini", false);    // Load the configuration file.
         Tile::currentUpdateTime = 1;
         boardPtr->newBoard();
         Board::enableExtraLogicStates = config.triStateLogicDefault;
@@ -249,7 +268,8 @@ void Simulator::fileOption(int option) {
             return;
         }
         UserInterface::closeAllDialogPrompts();
-        
+
+        #ifdef _WIN32
         OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
         char filename[260];
         ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
@@ -305,6 +325,11 @@ void Simulator::fileOption(int option) {
             viewOption(3);
             UserInterface::pushMessage("Error: Exception in file access. " + string(ex.what()), true);
         }
+        #else
+
+        assert(false);    // FIXME: need to implement file open on non-windows arch.
+
+        #endif
     } else if (option == 2) {    // Save board.
         try {
             boardPtr->saveFile(boardPtr->name + ".txt");
@@ -404,7 +429,7 @@ void Simulator::fileOption(int option) {
                     Board::enableExtraLogicStates = userInterfacePtr->configPrompt.optionChecks[1].isChecked();
                 }
                 config.pauseOnConflict = userInterfacePtr->configPrompt.optionChecks[2].isChecked();
-                openConfig(string(directoryPath) + "\\resources\\config.ini", true);
+                openConfig(directoryPath + "/resources/config.ini", true);
                 UserInterface::closeAllDialogPrompts();
             } catch (exception& ex) {
                 UserInterface::pushMessage("Error: " + string(ex.what()), true);

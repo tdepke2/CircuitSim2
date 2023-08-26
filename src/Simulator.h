@@ -28,7 +28,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static const Vector2u INITIAL_WINDOW_SIZE;
     
     static const Configuration& getConfig();
-    static const Vector2u& getWindowSize();
+    static const Vector2u getWindowSize();
     static const UserInterface* getUserInterface();
     static int start();    // Main thread, handles window event processing and simulation updates.
     static int randomInteger(int min, int max);    // Generates a random integer between min and max inclusive.
@@ -65,7 +65,7 @@ class Simulator {    // Singleton class that controls the simulation logic. Incl
     static Board* wireHorizontalBoardPtr;
     static UserInterface* userInterfacePtr;    // Displays the dropdown menu, dialog prompts, and event messages.
     static Text* wireToolLabelPtr;    // Displays the distance measurement for the wire tool.
-    static char directoryPath[260];    // Base path to the application directory.
+    static string directoryPath;    // Base path to the application directory.
     static Direction currentTileDirection;
     static bool editMode, copyBufferVisible, wireToolVerticalFirst;
     static Vector2i mouseStart, tileCursor, selectionStart, wireToolStart;

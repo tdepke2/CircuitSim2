@@ -6,7 +6,6 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
-#include <windows.h>
 
 using namespace std;
 using namespace sf;
