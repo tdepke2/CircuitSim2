@@ -1,3 +1,42 @@
+New ideas and improvements:
+    - New feature: Tick warp.
+        * Allows stepping a specified amount of ticks at max speed.
+    - New feature: Integrated console.
+        * No more wack ass separate console, yay!
+        * Helps with debugging and running commands.
+    - New feature: Chunk minimap.
+        * Displays a map that updates when viewing an area.
+        * Also shows chunk updates, for debugging.
+    - Chunk-based rendering:
+        * Chunks should allow infinite sized circuits without the lag.
+        * Loaded chunks and rendered chunks need to be separate concepts, no point drawing chunks that aren't visible.
+        * Use a lazy-draw idea where the tiles only redraw if the state is different from what it was in the last render.
+    - Chunk-based simulation:
+        * Chunk loads when update propagates into it.
+        * Chunks that are loaded can safely be unloaded when no updates left in chunk.
+        * For temporal efficiency, chunks should not unload if they are used often.
+            - The more often a chunk is loaded, the longer it sticks around until unloading (up to a limit).
+            - Maybe use a periodic chunk cleanup system like Minecraft does?
+    - Chunk-based storage:
+        * Chunks can be grouped together in a square area and stored to disk much like region files in Minecraft.
+        * Gonna want a more efficient file format for this too.
+    - Less dynamic allocation:
+        * Move away from the pure "Tile*** stores the board" concept. Should be possible to store tiles in a numerical array at a much smaller memory cost.
+        * The polymorphism and OO design with the current setup is a useful concept to have though, would be nice to keep that but use a different data layout under the hood.
+    - Wire improvements:
+        * Long wires run DFS on a lot of tiles, eats up most of the tick time.
+        * A wire can instead run DFS before the tick, and cache positions of tiles and endpoints.
+            - May only be wanted if wire is a certain length so that performance of short wires is still good, idk.
+        * With the chunk design, maybe each wire is only cached per chunk? This way the wire tile coordinates are small, but DFS still runs across chunks.
+            - Also prevents wires with a massive number of tiles and endpoints (like in matrix memory).
+    - Multithreaded simulation tick:
+        * Optimization, should only be considered much later on.
+        * If choosing wire improvements where each wire stores all endpoints, we have perfect knowledge of what tiles the wire can affect.
+        * Threads could each be assigned a group of wires to chug through, use a producer/consumer pattern to allow thread to pull a new group when done.
+        * If using the "wire per chunk" design instead, this still works if wire endpoints are either stored per chunk (chunk index and tile index, takes extra memory) or a separate endpoint lookup table is provided.
+        * Still need atomic operations when modifying a gate/LED/other-endpoint state in the case that multiple wires connect to a tile.
+        * In practice, this would only improve performance for circuits with parallel design.
+
 TODO:
     - Smart pointers, specifically in Simulator class.
         * Probably won't happen now as project is finished, but will keep in mind for future work.
