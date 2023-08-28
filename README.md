@@ -1,6 +1,6 @@
 # CircuitSim2 #
 
-![image1](/image1.png)
+![image1](image1.png)
 
 ## About This Project ##
 
@@ -24,14 +24,14 @@ That's all for now, happy circuit building!
 
 ## Screenshots ##
 
-![image2](/image2.png)
+![image2](image2.png)
 
 Some examples of components that can be used to construct circuits, and the wire tool making a new path.
 
-![image3](/image3.gif)
+![image3](image3.gif)
 
 Quick demo of a binary-to-decimal converter in action. The binary input is provided at the bottom of the circuit.
 
-![image4](/image4.png)
+![image4](image4.png)
 
 A carry lookahead adder computing 31 + 9. The result can be easily converted to decimal and checked with the query tool.
