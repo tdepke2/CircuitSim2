@@ -6,6 +6,7 @@
 #include "TileSwitch.h"
 #include "TileWire.h"
 #include "UserInterface.h"
+
 #include <cassert>
 #include <cctype>
 #include <chrono>
@@ -13,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <portable-file-dialogs.h>
 #include <stdexcept>
 #include <thread>
 #include <typeinfo>
@@ -90,6 +92,12 @@ int Simulator::start() {
         windowPtr->setFramerateLimit(FRAMERATE_LIMIT);
         windowPtr->setActive(false);
         renderThread = thread(renderLoop);
+
+        if (!pfd::settings::available()) {
+            // FIXME: we should have a fallback implementation when pfd is not supported.
+            throw runtime_error("Portable File Dialogs are not available on this platform.");
+        }
+        pfd::settings::verbose(true);
         
         directoryPath = getWorkingDirectory();    // Load file resources and create boards.
         Board::loadTextures("resources/texturePackGrid.png", "resources/texturePackNoGrid.png", Vector2u(32, 32));
@@ -99,7 +107,7 @@ int Simulator::start() {
         }
         windowPtr->setIcon(appIcon.getSize().x, appIcon.getSize().y, appIcon.getPixelsPtr());
         Board::loadFont("resources/consolas.ttf");
-        Board::newBoardDefaultPath = directoryPath + "\\boards\\NewBoard.txt";
+        Board::newBoardDefaultPath = directoryPath + pfd::path::separator() + "boards" + pfd::path::separator() + "NewBoard.txt";
         boardPtr = new Board();
         currentTileBoardPtr = new Board();
         copyBufferBoardPtr = new Board();
@@ -269,54 +277,38 @@ void Simulator::fileOption(int option) {
         }
         UserInterface::closeAllDialogPrompts();
 
-        #ifdef _WIN32
-        OPENFILENAME fileDialog;    // https://docs.microsoft.com/en-us/windows/desktop/dlgbox/using-common-dialog-boxes
-        char filename[260];
-        ZeroMemory(&fileDialog, sizeof(fileDialog));    // Initialize fileDialog.
-        fileDialog.lStructSize = sizeof(fileDialog);
-        fileDialog.hwndOwner = windowPtr->getSystemHandle();
-        fileDialog.lpstrFilter = "All types (*.*)\0*.*\0Text file (*.txt)\0*.txt\0";
-        fileDialog.nFilterIndex = 2;
-        fileDialog.lpstrFile = filename;
-        fileDialog.lpstrFile[0] = '\0';    // Set to null string so that GetOpenFileName does not initialize itself with the filename.
-        fileDialog.nMaxFile = sizeof(filename);
-        fileDialog.lpstrFileTitle = NULL;
-        fileDialog.nMaxFileTitle = 0;
-        fileDialog.lpstrInitialDir = "boards";
-        fileDialog.lpstrDefExt = "txt";
-        
+        // FIXME: the HWND doesn't seem to get passed to pfd even though the current thread has the window context, seems like a bug in pfd. Doesn't matter too much.
+        //cout << "Got request to open/save file." << endl;
+        //cout << "windowPtr->getSystemHandle() = " << windowPtr->getSystemHandle() << endl;
+        //cout << "GetActiveWindow() =            " << GetActiveWindow() << endl;
+
         try {
             if (option == 1) {
-                fileDialog.lpstrTitle = "Open Board File";
-                fileDialog.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                auto openDialog = pfd::open_file("Open Board File", "boards", {
+                    "Plain Text (*.txt)", "*.txt",
+                    "All Files (*.*)", "*"
+                }, pfd::opt::none).result();
                 
-                if (GetOpenFileName(&fileDialog) == TRUE) {
+                if (!openDialog.empty()) {
                     toolsOption(1);
                     if (tileCursor != Vector2i(-1, -1)) {
                         boardPtr->getTile(tileCursor)->setHighlight(false);
                         tileCursor = Vector2i(-1, -1);
                     }
                     Tile::currentUpdateTime = 1;
-                    boardPtr->loadFile(string(filename));
+                    boardPtr->loadFile(openDialog[0]);
                     viewOption(3);
                 } else {
                     cout << "No file selected." << endl;
                 }
             } else {
-                strcpy_s(filename, 260, boardPtr->name.substr(boardPtr->name.rfind('\\') + 1).c_str());
-                fileDialog.lpstrTitle = "Save As Board File";
-                fileDialog.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+                auto saveDialog = pfd::save_file("Save As Board File", boardPtr->name + ".txt", {    // FIXME: it seems like the board should have name and file path attributes instead of doing this.
+                    "Plain Text (*.txt)", "*.txt",
+                    "All Files (*.*)", "*"
+                }, pfd::opt::none).result();
                 
-                if (GetSaveFileName(&fileDialog) == TRUE) {
-                    string filenameStr(filename);    // Decapitalize the file extension before saving.
-                    size_t dotPosition = filenameStr.rfind('.');
-                    if (dotPosition != string::npos) {
-                        while (dotPosition < filenameStr.length()) {
-                            filenameStr[dotPosition] = tolower(filenameStr[dotPosition]);
-                            ++dotPosition;
-                        }
-                    }
-                    boardPtr->saveFile(filenameStr);
+                if (!saveDialog.empty()) {
+                    boardPtr->saveFile(saveDialog);
                 } else {
                     cout << "No file selected." << endl;
                 }
@@ -325,11 +317,6 @@ void Simulator::fileOption(int option) {
             viewOption(3);
             UserInterface::pushMessage("Error: Exception in file access. " + string(ex.what()), true);
         }
-        #else
-
-        assert(false);    // FIXME: need to implement file open on non-windows arch.
-
-        #endif
     } else if (option == 2) {    // Save board.
         try {
             boardPtr->saveFile(boardPtr->name + ".txt");
@@ -339,7 +326,7 @@ void Simulator::fileOption(int option) {
         UserInterface::closeAllDialogPrompts();
     } else if (option == 4) {    // Rename board.
         if (!userInterfacePtr->renamePrompt.visible) {
-            userInterfacePtr->renamePrompt.optionFields[0].setString(boardPtr->name.substr(boardPtr->name.rfind('\\') + 1));
+            userInterfacePtr->renamePrompt.optionFields[0].setString(boardPtr->name.substr(boardPtr->name.rfind(pfd::path::separator()[0]) + 1));
             userInterfacePtr->renamePrompt.show();
         } else {
             try {
@@ -347,7 +334,7 @@ void Simulator::fileOption(int option) {
                 if (newName.find('/') != string::npos || newName.find('\\') != string::npos) {
                     throw runtime_error("Name cannot use slash or backslash, use \"Save As...\" to change board path.");
                 }
-                size_t lastSlashPosition = boardPtr->name.rfind('\\');
+                size_t lastSlashPosition = boardPtr->name.rfind(pfd::path::separator()[0]);
                 if (lastSlashPosition != string::npos) {
                     newPath = boardPtr->name.substr(0, lastSlashPosition + 1) + newName;
                 } else {

@@ -16,7 +16,7 @@ add_executable(CircuitSim2
 target_include_directories(CircuitSim2 PRIVATE .)
 
 # Link to libraries and set C++ compilation version.
-target_link_libraries(CircuitSim2 PRIVATE sfml-graphics)
+target_link_libraries(CircuitSim2 PRIVATE sfml-graphics portable_file_dialogs)
 target_compile_features(CircuitSim2 PRIVATE cxx_std_11)
 set_target_properties(CircuitSim2 PROPERTIES CXX_EXTENSIONS OFF)
 

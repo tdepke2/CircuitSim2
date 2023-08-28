@@ -51,14 +51,28 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(WARNINGS_AS_ERRORS OFF)
 endif()
 
-# Import the SFML library.
 include(FetchContent)
+
+# Import the SFML library.
+message(STATUS "Fetching sources for SFML...")
 FetchContent_Declare(
     SFML
     GIT_REPOSITORY https://github.com/SFML/SFML.git
     GIT_TAG 2.6.x
 )
 FetchContent_MakeAvailable(SFML)
+
+# Import portable-file-dialogs for native system file dialogs.
+# Some other options were considered too and may be relevant in future:
+# https://sourceforge.net/projects/tinyfiledialogs/
+# https://github.com/btzy/nativefiledialog-extended
+message(STATUS "Fetching sources for portable-file-dialogs...")
+FetchContent_Declare(
+    portable_file_dialogs
+    GIT_REPOSITORY https://github.com/samhocevar/portable-file-dialogs.git
+    GIT_TAG 7f852d88a480020d7f91957cbcefe514fc95000c    # Latest commit as of writing.
+)
+FetchContent_MakeAvailable(portable_file_dialogs)
 
 # Run the next CMakeLists file (builds the executable).
 add_subdirectory(src)
