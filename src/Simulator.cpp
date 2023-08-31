@@ -284,7 +284,7 @@ void Simulator::fileOption(int option) {
 
         try {
             if (option == 1) {
-                auto openDialog = pfd::open_file("Open Board File", "boards", {
+                auto openDialog = pfd::open_file("Open Board File", directoryPath + "/boards", {
                     "Plain Text (*.txt)", "*.txt",
                     "All Files (*.*)", "*"
                 }, pfd::opt::none).result();
