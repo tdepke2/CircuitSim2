@@ -12,6 +12,7 @@ Chunk update and file format used in Minecraft:
 
 
 Some interesting Factorio Friday Facts:
+* https://www.factorio.com/blog/post/fff-374 - Improved robot logistics
 * https://www.factorio.com/blog/post/fff-366 - Good design philosophy
 * https://www.factorio.com/blog/post/fff-364 - Multithreaded belts
 * https://www.factorio.com/blog/post/fff-322 - Particle system optimization

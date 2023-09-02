@@ -46,3 +46,6 @@ target_compile_options(gui_demo PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
+
+# Build the new experimental app.
+add_subdirectory(exp)
