@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <Tile.h>
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -15,9 +16,14 @@ int main() {
 
     try {
         board.loadFromFile("boards/components/Add3Module.txt");
+
     } catch (std::exception& ex) {
         std::cerr << ex.what() << "\n";
     }
+
+    auto tile = board.accessTile(0, 0);
+    std::cout << "attempt to getHighlight()\n";
+    tile.getHighlight();
 
     while (window.isOpen()) {
         sf::Event event;

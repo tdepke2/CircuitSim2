@@ -1,5 +1,7 @@
 #include <Board.h>
+#include <Tile.h>
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 
@@ -7,6 +9,11 @@ Board::Board(sf::Texture* tilesetGrid) :
     tilesetGrid_(tilesetGrid) {
 
     chunks_.emplace(0, Chunk(tilesetGrid->getSize().x, 32));
+}
+
+Tile Board::accessTile(int x, int y) {
+    auto chunk = getChunk(x, y);
+    return chunk.accessTile(x % Chunk::WIDTH, y % Chunk::WIDTH);
 }
 
 void Board::loadFromFile(const std::string& filename) {
@@ -129,6 +136,16 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
         }
     } else {
         throw std::runtime_error("unexpected board file data.");
+    }
+}
+
+const Chunk& Board::getChunk(int x, int y) const {
+    uint64_t mapIndex = static_cast<uint64_t>(y / Chunk::WIDTH) << 32 | static_cast<uint32_t>(x / Chunk::WIDTH);
+    auto chunk = chunks_.find(mapIndex);
+    if (chunk != chunks_.end()) {
+        return chunk->second;
+    } else {
+        assert(false);
     }
 }
 

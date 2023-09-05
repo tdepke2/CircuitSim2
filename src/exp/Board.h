@@ -3,12 +3,16 @@
 #include <Chunk.h>
 
 #include <map>
+#include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
+
+class Tile;
 
 class Board : public sf::Drawable, public sf::Transformable {
 public:
     Board(sf::Texture* tilesetGrid);
+    Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile(const std::string& filename);
 
@@ -21,10 +25,11 @@ private:
         unsigned int height = 0;
         bool enableExtraLogicStates = false;
         std::string notesString = "";
-        unsigned int x = 0;
-        unsigned int y = 0;
+        int x = 0;
+        int y = 0;
     };
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState);
+    const Chunk& getChunk(int x, int y) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
