@@ -1,5 +1,7 @@
 #include <Board.h>
 #include <Tile.h>
+#include <tiles/Blank.h>
+#include <tiles/Wire.h>
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -23,7 +25,12 @@ int main() {
 
     auto tile = board.accessTile(0, 0);
     std::cout << "attempt to getHighlight()\n";
-    tile.getHighlight();
+    tile.setHighlight(true);
+    std::cout << tile.getHighlight() << "\n";
+    tile.setType(Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
+    std::cout << "dir=" << tile.getDirection() << ", state=" << tile.getState() << "\n";
+
+    board.debugPrintChunk(0);
 
     while (window.isOpen()) {
         sf::Event event;

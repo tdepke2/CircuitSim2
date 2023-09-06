@@ -2,34 +2,78 @@
 
 #include <memory>
 
-/*
-Wire::Wire(WireType::t type, Direction::t direction, State::t state1, State::t state2) {
-    type_ = type;
-    if (type == WireType::straight) {
-        direction_ = static_cast<Direction::t>(direction % 2);
-    } else if (type == WireType::junction || type == WireType::crossover) {
-        direction_ = Direction::north;
-    } else {
-        direction_ = direction;
-    }
-    state1_ = state1;
-    if (type == WireType::crossover) {
-        state2_ = state2;
-    } else {
-        state2_ = State::low;
-    }
-}*/
-
 Wire* Wire::instance() {
     static std::unique_ptr<Wire> wire(new Wire());
     return wire.get();
 }
 
-bool Wire::getHighlight(Chunk& chunk, unsigned int tileIndex) const {
-    std::cout << "getHighlight()\n";
-    return false;
+void Wire::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) {
+    auto& tileData = getTileData(chunk, tileIndex);
+    if (tileData.id == TileId::wireStraight) {
+        tileData.dir = static_cast<Direction::t>(direction % 2);
+    } else if (tileData.id == TileId::wireJunction) {
+    } else if (tileData.id != TileId::wireCrossover) {
+        tileData.dir = direction;
+    } else if (direction % 2 == 1) {
+        // When a crossover wire rotates an odd number of times, the two states just flip.
+        auto tempState = tileData.state1;
+        tileData.state1 = tileData.state2;
+        tileData.state2 = tempState;
+    }
 }
 
-void Wire::setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight) {
-    std::cout << "setHighlight()\n";
+void Wire::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
+    auto& tileData = getTileData(chunk, tileIndex);
+    tileData.state1 = state;
+    if (tileData.id == TileId::wireCrossover) {
+        tileData.state2 = state;
+    }
+}
+
+void Wire::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
+    auto& tileData = getTileData(chunk, tileIndex);
+    if (tileData.id == TileId::wireCorner) {
+        if (!acrossHorizontal) {
+            tileData.dir = static_cast<Direction::t>(3 - tileData.dir);
+        } else if (tileData.dir % 2 == 0) {
+            tileData.dir = static_cast<Direction::t>(tileData.dir + 1);
+        } else {
+            tileData.dir = static_cast<Direction::t>(tileData.dir - 1);
+        }
+    } else if (tileData.id == TileId::wireTee && ((!acrossHorizontal && tileData.dir % 2 == 0) || (acrossHorizontal && tileData.dir % 2 == 1))) {
+        tileData.dir = static_cast<Direction::t>((tileData.dir + 2) % 4);
+    }
+}
+
+void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
+    auto& tileData = getTileData(chunk, tileIndex);
+    if (tileData.id == TileId::wireJunction) {
+        tileData.id = TileId::wireCrossover;
+        tileData.state2 = tileData.state1;
+    } else if (tileData.id == TileId::wireCrossover) {
+        tileData.id = TileId::wireJunction;
+        tileData.state2 = State::low;
+    }
+}
+
+void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t tileId, Direction::t direction, State::t state1, State::t state2) {
+    auto& tileData = getTileData(chunk, tileIndex);
+    tileData.id = tileId;
+    tileData.state1 = state1;
+    if (tileId == TileId::wireCrossover) {
+        tileData.state2 = state2;
+    } else {
+        tileData.state2 = State::low;
+    }
+
+    if (tileId == TileId::wireStraight) {
+        tileData.dir = static_cast<Direction::t>(direction % 2);
+    } else if (tileId == TileId::wireJunction || tileId == TileId::wireCrossover) {
+        tileData.dir = Direction::north;
+    } else if (tileId == TileId::wireCorner || tileId == TileId::wireTee) {
+        tileData.dir = direction;
+    } else {
+        assert(false);
+    }
+    tileData.meta = 0;
 }

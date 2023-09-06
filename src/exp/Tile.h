@@ -1,18 +1,28 @@
 #pragma once
 
-class Chunk;
+#include <Chunk.h>
+
 class TileType;
+class Blank;
+class Wire;
 
 class Tile {
 public:
-    // should we make a pack() function here that converts to uint32_t, or does that belong in the Chunk?
-    // Board needs to build a Tile from chunk data when requested.
-    // A Tile needs to be packed and saved into a chunk through the board.
-    // We should limit exposure to the way chunks work in the board, interface should not allow manipulation of chunks.
-
     Tile(TileType* type, Chunk& chunk, unsigned int tileIndex);
-    bool getHighlight() const;
+    void setType(Blank* type);
+    void setType(Wire* type, TileId::t tileId = TileId::wireStraight, Direction::t direction = Direction::north, State::t state1 = State::low, State::t state2 = State::low);
+    TileType* getType();
+    Chunk& getChunk();
+    unsigned int getIndex() const;
+
+    void setDirection(Direction::t direction);
     void setHighlight(bool highlight);
+    void setState(State::t state);
+    Direction::t getDirection() const;
+    bool getHighlight() const;
+    State::t getState() const;
+    void flip(bool acrossHorizontal);
+    void alternativeTile();
 
 private:
     TileType* tileType_;

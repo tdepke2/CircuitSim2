@@ -53,6 +53,7 @@ public:
 
     Chunk(unsigned int textureWidth, unsigned int tileWidth);
     Tile accessTile(unsigned int x, unsigned int y);
+    void debugPrintChunk();
 
 private:
     void redrawTile(unsigned int x, unsigned int y);
@@ -61,4 +62,6 @@ private:
     TileData tiles_[WIDTH * WIDTH];
     sf::VertexArray vertices_;
     unsigned int textureWidth_, tileWidth_;
+
+    friend class TileType;
 };

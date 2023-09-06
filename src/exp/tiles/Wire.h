@@ -11,23 +11,6 @@
 
 class Chunk;
 
-namespace WireType {
-    enum t : int {
-        straight = 0, corner, tee, junction, crossover
-    };
-}
-
-/*
-class Wire : public Tile {
-public:
-    Wire(WireType::t type = WireType::straight, Direction::t direction = Direction::north, State::t state1 = State::low, State::t state2 = State::low);
-
-private:
-    WireType::t type_;
-    Direction::t direction_;
-    State::t state1_, state2_;
-};*/
-
 class Wire : public TileType {
 public:
     static Wire* instance();
@@ -36,11 +19,17 @@ public:
     Wire& operator=(const Wire& wire) = delete;
     Wire& operator=(Wire&& wire) = delete;
 
-    virtual bool getHighlight(Chunk& chunk, unsigned int tileIndex) const override;
-    virtual void setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight) override;
+    virtual void setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) override;
+    virtual void setState(Chunk& chunk, unsigned int tileIndex, State::t state) override;
+    virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
+    virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
 
 private:
     Wire() {
         std::cout << "Wire class has been constructed.\n";
     }
+
+    void init(Chunk& chunk, unsigned int tileIndex, TileId::t tileId, Direction::t direction, State::t state1, State::t state2);
+
+    friend class Tile;
 };

@@ -1,6 +1,12 @@
 #include <Chunk.h>
 #include <Tile.h>
+#include <tiles/Blank.h>
 #include <tiles/Wire.h>
+
+
+
+
+#include <iomanip>
 
 uint8_t textureLookup[512];
 void buildTextureLookup() {
@@ -19,6 +25,7 @@ void buildTextureLookup() {
 }
 
 Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :
+    tiles_{},
     textureWidth_(textureWidth),
     tileWidth_(tileWidth) {
 
@@ -49,9 +56,21 @@ Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :
 Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     TileData tileData = tiles_[y * WIDTH + x];
     if (tileData.id == TileId::blank) {
-
+        return {Blank::instance(), *this, y * WIDTH + x};
+    } else if (tileData.id <= TileId::wireCrossover) {
+        return {Wire::instance(), *this, y * WIDTH + x};
+    } else {
+        assert(false);
     }
-    return Tile(Wire::instance(), *this, y * WIDTH + x);
+}
+
+void Chunk::debugPrintChunk() {
+    for (unsigned int y = 0; y < WIDTH; ++y) {
+        for (unsigned int x = 0; x < WIDTH; ++x) {
+            std::cout << std::setw(8) << std::hex << *reinterpret_cast<uint32_t*>(&tiles_[y * WIDTH + x]) << " ";
+        }
+        std::cout << "\n";
+    }
 }
 
 void Chunk::redrawTile(unsigned int x, unsigned int y) {

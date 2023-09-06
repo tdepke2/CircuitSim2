@@ -12,7 +12,7 @@ Board::Board(sf::Texture* tilesetGrid) :
 }
 
 Tile Board::accessTile(int x, int y) {
-    auto chunk = getChunk(x, y);
+    auto& chunk = getChunk(x, y);
     return chunk.accessTile(x % Chunk::WIDTH, y % Chunk::WIDTH);
 }
 
@@ -139,7 +139,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
     }
 }
 
-const Chunk& Board::getChunk(int x, int y) const {
+Chunk& Board::getChunk(int x, int y) {
     uint64_t mapIndex = static_cast<uint64_t>(y / Chunk::WIDTH) << 32 | static_cast<uint32_t>(x / Chunk::WIDTH);
     auto chunk = chunks_.find(mapIndex);
     if (chunk != chunks_.end()) {
