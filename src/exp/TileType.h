@@ -1,6 +1,9 @@
 #pragma once
 
-#include <Chunk.h>
+#include <Tile.h>
+
+class Chunk;
+class TileData;
 
 class TileType {
 public:

@@ -1,6 +1,8 @@
 #include <Chunk.h>
-#include <Tile.h>
 #include <tiles/Blank.h>
+#include <tiles/Gate.h>
+#include <tiles/Input.h>
+#include <tiles/Led.h>
 #include <tiles/Wire.h>
 
 
@@ -56,9 +58,15 @@ Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :
 Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     TileData tileData = tiles_[y * WIDTH + x];
     if (tileData.id == TileId::blank) {
-        return {Blank::instance(), *this, y * WIDTH + x};
+        return {tiles::Blank::instance(), *this, y * WIDTH + x};
     } else if (tileData.id <= TileId::wireCrossover) {
-        return {Wire::instance(), *this, y * WIDTH + x};
+        return {tiles::Wire::instance(), *this, y * WIDTH + x};
+    } else if (tileData.id <= TileId::inButton) {
+        return {tiles::Input::instance(), *this, y * WIDTH + x};
+    } else if (tileData.id == TileId::outLed) {
+        return {tiles::Led::instance(), *this, y * WIDTH + x};
+    } else if (tileData.id <= TileId::gateXnor) {
+        return {tiles::Gate::instance(), *this, y * WIDTH + x};
     } else {
         assert(false);
     }

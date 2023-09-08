@@ -1,4 +1,9 @@
+#include <Chunk.h>
 #include <tiles/Blank.h>
+
+#include <memory>
+
+namespace tiles {
 
 Blank* Blank::instance() {
     static std::unique_ptr<Blank> blank(new Blank());
@@ -16,4 +21,6 @@ void Blank::init(Chunk& chunk, unsigned int tileIndex) {
     tileData.state2 = State::disconnected;
     tileData.dir = Direction::north;
     tileData.meta = 0;
+}
+
 }

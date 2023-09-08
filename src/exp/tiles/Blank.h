@@ -1,10 +1,17 @@
 #pragma once
 
+#include <Tile.h>
 #include <TileType.h>
 
 
 
+
+
 #include <iostream>
+
+class Chunk;
+
+namespace tiles {
 
 class Blank : public TileType {
 public:
@@ -24,5 +31,7 @@ private:
 
     void init(Chunk& chunk, unsigned int tileIndex);
 
-    friend class Tile;
+    friend class ::Tile;
 };
+
+} // namespace tiles

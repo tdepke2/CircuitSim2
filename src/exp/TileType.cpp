@@ -1,3 +1,4 @@
+#include <Chunk.h>
 #include <TileType.h>
 
 void TileType::setDirection(Chunk& /*chunk*/, unsigned int /*tileIndex*/, Direction::t /*direction*/) {}

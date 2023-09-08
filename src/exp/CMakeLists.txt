@@ -4,6 +4,9 @@ add_executable(CircuitSim2_experimental
     main.cpp
     Tile.cpp
     tiles/Blank.cpp
+    tiles/Gate.cpp
+    tiles/Input.cpp
+    tiles/Led.cpp
     tiles/Wire.cpp
     TileType.cpp
 )

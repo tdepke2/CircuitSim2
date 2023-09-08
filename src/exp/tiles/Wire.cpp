@@ -1,6 +1,10 @@
+#include <Chunk.h>
 #include <tiles/Wire.h>
 
+#include <cassert>
 #include <memory>
+
+namespace tiles {
 
 Wire* Wire::instance() {
     static std::unique_ptr<Wire> wire(new Wire());
@@ -56,24 +60,26 @@ void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
     }
 }
 
-void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t tileId, Direction::t direction, State::t state1, State::t state2) {
+void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {
     auto& tileData = getTileData(chunk, tileIndex);
-    tileData.id = tileId;
+    tileData.id = wireId;
     tileData.state1 = state1;
-    if (tileId == TileId::wireCrossover) {
+    if (wireId == TileId::wireCrossover) {
         tileData.state2 = state2;
     } else {
         tileData.state2 = State::low;
     }
 
-    if (tileId == TileId::wireStraight) {
+    if (wireId == TileId::wireStraight) {
         tileData.dir = static_cast<Direction::t>(direction % 2);
-    } else if (tileId == TileId::wireJunction || tileId == TileId::wireCrossover) {
+    } else if (wireId == TileId::wireJunction || wireId == TileId::wireCrossover) {
         tileData.dir = Direction::north;
-    } else if (tileId == TileId::wireCorner || tileId == TileId::wireTee) {
+    } else if (wireId == TileId::wireCorner || wireId == TileId::wireTee) {
         tileData.dir = direction;
     } else {
         assert(false);
     }
     tileData.meta = 0;
+}
+
 }

@@ -1,20 +1,39 @@
+#include <Chunk.h>
 #include <Tile.h>
-#include <TileType.h>
 #include <tiles/Blank.h>
+#include <tiles/Gate.h>
+#include <tiles/Input.h>
+#include <tiles/Led.h>
 #include <tiles/Wire.h>
+#include <TileType.h>
 
 Tile::Tile(TileType* type, Chunk& chunk, unsigned int tileIndex) :
     tileType_(type), chunk_(chunk), tileIndex_(tileIndex) {
 }
 
-void Tile::setType(Blank* type) {
+void Tile::setType(tiles::Blank* type) {
     tileType_ = type;
     type->init(chunk_, tileIndex_);
 }
 
-void Tile::setType(Wire* type, TileId::t tileId, Direction::t direction, State::t state1, State::t state2) {
+void Tile::setType(tiles::Gate* type, TileId::t gateId, Direction::t direction, State::t state) {
     tileType_ = type;
-    type->init(chunk_, tileIndex_, tileId, direction, state1, state2);
+    type->init(chunk_, tileIndex_, gateId, direction, state);
+}
+
+void Tile::setType(tiles::Input* type, TileId::t inputId, State::t state, char keycode) {
+    tileType_ = type;
+    type->init(chunk_, tileIndex_, inputId, state, keycode);
+}
+
+void Tile::setType(tiles::Led* type, State::t state) {
+    tileType_ = type;
+    type->init(chunk_, tileIndex_, state);
+}
+
+void Tile::setType(tiles::Wire* type, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {
+    tileType_ = type;
+    type->init(chunk_, tileIndex_, wireId, direction, state1, state2);
 }
 
 TileType* Tile::getType() {

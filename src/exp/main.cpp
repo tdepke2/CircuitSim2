@@ -27,8 +27,8 @@ int main() {
     std::cout << "attempt to getHighlight()\n";
     tile.setHighlight(true);
     std::cout << tile.getHighlight() << "\n";
-    tile.setType(Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
-    std::cout << "dir=" << tile.getDirection() << ", state=" << tile.getState() << "\n";
+    tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
+    std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
 
     board.debugPrintChunk(0);
 
