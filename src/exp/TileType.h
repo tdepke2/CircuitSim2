@@ -3,7 +3,7 @@
 #include <Tile.h>
 
 class Chunk;
-class TileData;
+struct TileData;
 
 class TileType {
 public:

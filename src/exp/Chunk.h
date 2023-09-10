@@ -23,7 +23,7 @@ static_assert(TileId::count <= 32, "TileId::t is expected to fit within a 5 bit 
 
 class Chunk : public sf::Drawable {
 public:
-    static constexpr int WIDTH = 8;
+    static constexpr int WIDTH = 16;
 
     static uint8_t textureLookup[];
     static void buildTextureLookup();

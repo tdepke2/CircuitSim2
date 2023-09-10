@@ -2,12 +2,14 @@
 
 #include <Chunk.h>
 
+#include <array>
 #include <map>
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
 
 class Tile;
+struct TileSymbol;
 
 class Board : public sf::Drawable, public sf::Transformable {
 public:
@@ -31,7 +33,7 @@ private:
         int x = 0;
         int y = 0;
     };
-    void parseFile(const std::string& line, int lineNumber, ParseState& parseState);
+    void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
     Chunk& getChunk(int x, int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 

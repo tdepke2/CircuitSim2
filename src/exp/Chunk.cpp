@@ -31,10 +31,6 @@ Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :
     textureWidth_(textureWidth),
     tileWidth_(tileWidth) {
 
-    for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
-        tiles_[i].id = static_cast<TileId::t>(i);
-    }
-
     vertices_.setPrimitiveType(sf::Triangles);
     vertices_.resize(WIDTH * WIDTH * 6);
     for (unsigned int y = 0; y < WIDTH; ++y) {
@@ -68,6 +64,7 @@ Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     } else if (tileData.id <= TileId::gateXnor) {
         return {tiles::Gate::instance(), *this, y * WIDTH + x};
     } else {
+        std::cout << "unknown tile id " << tileData.id << "\n";
         assert(false);
     }
 }
