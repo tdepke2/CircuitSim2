@@ -17,7 +17,7 @@ void Input::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
 
 void Input::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
 
-void Input::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
+void Input::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {
     // FIXME need to open up a dialog prompt to allow configuration.
 }
 

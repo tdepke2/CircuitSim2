@@ -132,7 +132,7 @@ void Board::loadFromFile(const std::string& filename) {
     std::cout << "notesString = \"" << parseState.notesString << "\"\n";
 }
 
-void Board::saveToFile(const std::string& filename) {
+void Board::saveToFile(const std::string& /*filename*/) {
 
 }
 
@@ -151,7 +151,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
             throw std::runtime_error("incorrect length of line (expected " + std::to_string(parseState.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
         }
         parseState.x = 0;
-        while (parseState.x < parseState.width) {
+        while (parseState.x < static_cast<int>(parseState.width)) {
             TileSymbol symbol(line[parseState.x * 2 + 1], line[parseState.x * 2 + 2]);
             auto foundSymbol = symbolLookup.find(symbol);
             if (foundSymbol == symbolLookup.end()) {
@@ -231,7 +231,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
         }
         std::cout << "\n";
         ++parseState.y;
-        if (parseState.y == parseState.height) {
+        if (parseState.y == static_cast<int>(parseState.height)) {
             parseState.lastField = "tilesEnd";
             std::cout << "========== END OF TILES ==========\n";
         }
