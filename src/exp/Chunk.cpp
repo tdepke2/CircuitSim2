@@ -10,20 +10,71 @@
 
 #include <iomanip>
 
-uint8_t textureLookup[512];
-void buildTextureLookup() {
+uint8_t Chunk::textureLookup[512];
+
+TileData::TileData() :
+    id(TileId::blank),
+    state1(State::disconnected),
+    state2(State::disconnected),
+    dir(Direction::north),
+    highlight(false),
+    meta(0) {
+}
+
+TileData::TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir, bool highlight, uint16_t meta) :
+    id(id),
+    state1(state1),
+    state2(state2),
+    dir(dir),
+    highlight(highlight),
+    meta(meta) {
+}
+
+uint16_t TileData::getTextureHash() const {
+    return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
+}
+
+void Chunk::buildTextureLookup() {
     uint8_t textureId = 0;
-    for (TileId::t id = TileId::blank; id < TileId::count; id = static_cast<TileId::t>(id + 1)) {
-        if (id == TileId::blank) {
-            textureLookup[id] = textureId++;
-        } else if (id < TileId::wireCrossover) {
-            textureLookup[(static_cast<uint16_t>(State::disconnected) << 7) | (static_cast<uint16_t>(State::low) << 5) | id] = textureId++;
-            textureLookup[(static_cast<uint16_t>(State::disconnected) << 7) | (static_cast<uint16_t>(State::high) << 5) | id] = textureId++;
-            textureLookup[(static_cast<uint16_t>(State::disconnected) << 7) | (static_cast<uint16_t>(State::middle) << 5) | id] = textureId++;
-        } else if (id == TileId::wireCrossover) {
-            // FIXME need to continue here.
+    TileId::t id = TileId::blank;
+
+    auto addThreeTextures = [&textureId](TileId::t id, State::t state2) {
+        textureLookup[TileData(id, State::low, state2).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::high, state2).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::middle, state2).getTextureHash()] = textureId++;
+    };
+
+    // Blank tile.
+    textureLookup[id] = textureId++;
+    id = static_cast<TileId::t>(id + 1);
+
+    // Wire tiles besides crossover have 3 textures.
+    for (; id < TileId::wireCrossover; id = static_cast<TileId::t>(id + 1)) {
+        addThreeTextures(id, State::low);
+    }
+
+    // Crossover wire has 9 textures.
+    addThreeTextures(id, State::low);
+    addThreeTextures(id, State::high);
+    addThreeTextures(id, State::middle);
+    id = static_cast<TileId::t>(id + 1);
+
+    // Switch, button, and diode each have 2 textures.
+    for (; id < TileId::gateDiode; id = static_cast<TileId::t>(id + 1)) {
+        textureLookup[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
+    }
+
+    // Gates each have 9 textures, and gates that support 3 inputs have an additional 3 textures.
+    for (; id < TileId::count; id = static_cast<TileId::t>(id + 1)) {
+        addThreeTextures(id, State::disconnected);
+        addThreeTextures(id, State::low);
+        addThreeTextures(id, State::high);
+        if (id >= TileId::gateAnd) {
+            addThreeTextures(id, State::middle);
         }
     }
+    std::cout << "building textureLookup finished, final textureId is " << textureId << "\n";
 }
 
 Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :

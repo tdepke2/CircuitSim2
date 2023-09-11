@@ -15,6 +15,10 @@ struct TileData {
     bool    highlight : 1;
     uint8_t           : 1;
     uint16_t     meta : 16;
+
+    TileData();
+    TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir = Direction::north, bool highlight = false, uint16_t meta = 0);
+    uint16_t getTextureHash() const;
 };
 //#pragma pack(pop)
 
@@ -25,7 +29,7 @@ class Chunk : public sf::Drawable {
 public:
     static constexpr int WIDTH = 16;
 
-    static uint8_t textureLookup[];
+    static uint8_t textureLookup[512];
     static void buildTextureLookup();
 
     Chunk(unsigned int textureWidth, unsigned int tileWidth);
