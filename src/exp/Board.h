@@ -20,6 +20,9 @@ public:
     void debugPrintChunk(uint64_t i) {
         chunks_.at(i).debugPrintChunk();
     }
+    void debugRedrawChunk(uint64_t i) {
+        chunks_.at(i).forceRedraw();
+    }
 
 private:
     struct ParseState {

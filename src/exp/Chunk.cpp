@@ -10,16 +10,8 @@
 
 #include <iomanip>
 
-uint8_t Chunk::textureLookup[512];
-
-TileData::TileData() :
-    id(TileId::blank),
-    state1(State::disconnected),
-    state2(State::disconnected),
-    dir(Direction::north),
-    highlight(false),
-    meta(0) {
-}
+unsigned int Chunk::textureWidth_, Chunk::tileWidth_;
+uint8_t Chunk::textureLookup_[512];
 
 TileData::TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir, bool highlight, uint16_t meta) :
     id(id),
@@ -34,18 +26,21 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
-void Chunk::buildTextureLookup() {
+void Chunk::setupTextureData(unsigned int textureWidth, unsigned int tileWidth) {
+    textureWidth_ = textureWidth;
+    tileWidth_ = tileWidth;
+
     uint8_t textureId = 0;
     TileId::t id = TileId::blank;
 
     auto addThreeTextures = [&textureId](TileId::t id, State::t state2) {
-        textureLookup[TileData(id, State::low, state2).getTextureHash()] = textureId++;
-        textureLookup[TileData(id, State::high, state2).getTextureHash()] = textureId++;
-        textureLookup[TileData(id, State::middle, state2).getTextureHash()] = textureId++;
+        textureLookup_[TileData(id, State::low, state2).getTextureHash()] = textureId++;
+        textureLookup_[TileData(id, State::high, state2).getTextureHash()] = textureId++;
+        textureLookup_[TileData(id, State::middle, state2).getTextureHash()] = textureId++;
     };
 
     // Blank tile.
-    textureLookup[id] = textureId++;
+    textureLookup_[id] = textureId++;
     id = static_cast<TileId::t>(id + 1);
 
     // Wire tiles besides crossover have 3 textures.
@@ -61,8 +56,8 @@ void Chunk::buildTextureLookup() {
 
     // Switch, button, and diode each have 2 textures.
     for (; id < TileId::gateDiode; id = static_cast<TileId::t>(id + 1)) {
-        textureLookup[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
-        textureLookup[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
+        textureLookup_[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
+        textureLookup_[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
     }
 
     // Gates each have 9 textures, and gates that support 3 inputs have an additional 3 textures.
@@ -74,13 +69,11 @@ void Chunk::buildTextureLookup() {
             addThreeTextures(id, State::middle);
         }
     }
-    std::cout << "building textureLookup finished, final textureId is " << textureId << "\n";
+    std::cout << "building textureLookup_ finished, final textureId is " << static_cast<int>(textureId) << "\n";
 }
 
-Chunk::Chunk(unsigned int textureWidth, unsigned int tileWidth) :
-    tiles_{},
-    textureWidth_(textureWidth),
-    tileWidth_(tileWidth) {
+Chunk::Chunk() :
+    tiles_{} {
 
     vertices_.setPrimitiveType(sf::Triangles);
     vertices_.resize(WIDTH * WIDTH * 6);
@@ -120,10 +113,18 @@ Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     }
 }
 
+void Chunk::forceRedraw() {
+    for (unsigned int y = 0; y < WIDTH; ++y) {
+        for (unsigned int x = 0; x < WIDTH; ++x) {
+            redrawTile(x, y);
+        }
+    }
+}
+
 void Chunk::debugPrintChunk() {
     for (unsigned int y = 0; y < WIDTH; ++y) {
         for (unsigned int x = 0; x < WIDTH; ++x) {
-            std::cout << std::setw(8) << std::hex << *reinterpret_cast<uint32_t*>(&tiles_[y * WIDTH + x]) << " ";
+            std::cout << std::setw(8) << std::hex << *reinterpret_cast<uint32_t*>(&tiles_[y * WIDTH + x]) << std::dec << " ";
         }
         std::cout << "\n";
     }
@@ -133,16 +134,23 @@ void Chunk::redrawTile(unsigned int x, unsigned int y) {
     sf::Vertex* tileVertices = &vertices_[(y * WIDTH + x) * 6];
     TileData tileData = tiles_[y * WIDTH + x];
 
-    unsigned int textureId = tileData.id;
+    unsigned int textureId = textureLookup_[tileData.getTextureHash()];
 
     float tx = static_cast<float>(static_cast<unsigned int>(textureId % (textureWidth_ / tileWidth_)) * tileWidth_);
     float ty = static_cast<float>(static_cast<unsigned int>(textureId / (textureWidth_ / tileWidth_)) * tileWidth_);
-    tileVertices[0].texCoords = {tx, ty};
-    tileVertices[1].texCoords = {tx + tileWidth_, ty};
-    tileVertices[2].texCoords = {tx + tileWidth_, ty + tileWidth_};
-    tileVertices[3].texCoords = {tx + tileWidth_, ty + tileWidth_};
-    tileVertices[4].texCoords = {tx, ty + tileWidth_};
-    tileVertices[5].texCoords = {tx, ty};
+
+    sf::Vector2f texCoordsQuad[4] = {
+        {tx, ty},
+        {tx + tileWidth_, ty},
+        {tx + tileWidth_, ty + tileWidth_},
+        {tx, ty + tileWidth_}
+    };
+    tileVertices[0].texCoords = texCoordsQuad[(4 - tileData.dir) % 4];
+    tileVertices[1].texCoords = texCoordsQuad[(5 - tileData.dir) % 4];
+    tileVertices[2].texCoords = texCoordsQuad[(6 - tileData.dir) % 4];
+    tileVertices[3].texCoords = texCoordsQuad[(6 - tileData.dir) % 4];
+    tileVertices[4].texCoords = texCoordsQuad[(7 - tileData.dir) % 4];
+    tileVertices[5].texCoords = texCoordsQuad[(4 - tileData.dir) % 4];
 }
 
 void Chunk::draw(sf::RenderTarget& target, sf::RenderStates states) const {

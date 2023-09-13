@@ -74,7 +74,7 @@ namespace TileSymbolIndex {
 Board::Board(sf::Texture* tilesetGrid) :
     tilesetGrid_(tilesetGrid) {
 
-    chunks_.emplace(0, Chunk(tilesetGrid->getSize().x, 32));
+    chunks_.emplace(0, Chunk());
 }
 
 Tile Board::accessTile(int x, int y) {

@@ -16,7 +16,9 @@ struct TileData {
     uint8_t           : 1;
     uint16_t     meta : 16;
 
-    TileData();
+    // Default initialization specifies that all values (including padding) will be zero-initialized.
+    TileData() = default;
+    // Note that this ctor does not initialize the padding bits.
     TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir = Direction::north, bool highlight = false, uint16_t meta = 0);
     uint16_t getTextureHash() const;
 };
@@ -29,20 +31,22 @@ class Chunk : public sf::Drawable {
 public:
     static constexpr int WIDTH = 16;
 
-    static uint8_t textureLookup[512];
-    static void buildTextureLookup();
+    static void setupTextureData(unsigned int textureWidth, unsigned int tileWidth);
 
-    Chunk(unsigned int textureWidth, unsigned int tileWidth);
+    Chunk();
     Tile accessTile(unsigned int x, unsigned int y);
+    void forceRedraw();
     void debugPrintChunk();
 
 private:
+    static unsigned int textureWidth_, tileWidth_;
+    static uint8_t textureLookup_[512];
+
     void redrawTile(unsigned int x, unsigned int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     TileData tiles_[WIDTH * WIDTH];
     sf::VertexArray vertices_;
-    unsigned int textureWidth_, tileWidth_;
 
     friend class TileType;
 };
