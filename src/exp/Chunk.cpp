@@ -12,6 +12,7 @@
 
 unsigned int Chunk::textureWidth_, Chunk::tileWidth_;
 uint8_t Chunk::textureLookup_[512];
+unsigned int Chunk::textureHighlightStart_;
 
 TileData::TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir, bool highlight, uint16_t meta) :
     id(id),
@@ -26,9 +27,10 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
-void Chunk::setupTextureData(unsigned int textureWidth, unsigned int tileWidth) {
-    textureWidth_ = textureWidth;
+void Chunk::setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth) {
+    textureWidth_ = textureSize.x;
     tileWidth_ = tileWidth;
+    textureHighlightStart_ = (textureSize.x / tileWidth / 2) * (textureSize.y / tileWidth / 4);
 
     uint8_t textureId = 0;
     TileId::t id = TileId::blank;
@@ -134,10 +136,10 @@ void Chunk::redrawTile(unsigned int x, unsigned int y) {
     sf::Vertex* tileVertices = &vertices_[(y * WIDTH + x) * 6];
     TileData tileData = tiles_[y * WIDTH + x];
 
-    unsigned int textureId = textureLookup_[tileData.getTextureHash()];
+    unsigned int textureId = textureLookup_[tileData.getTextureHash()] + (tileData.highlight ? textureHighlightStart_ : 0);
 
-    float tx = static_cast<float>(static_cast<unsigned int>(textureId % (textureWidth_ / tileWidth_)) * tileWidth_);
-    float ty = static_cast<float>(static_cast<unsigned int>(textureId / (textureWidth_ / tileWidth_)) * tileWidth_);
+    float tx = static_cast<float>(static_cast<unsigned int>(textureId % (textureWidth_ / tileWidth_ / 2)) * tileWidth_ * 2 + static_cast<unsigned int>(tileWidth_ / 2));
+    float ty = static_cast<float>(static_cast<unsigned int>(textureId / (textureWidth_ / tileWidth_ / 2)) * tileWidth_ * 2 + static_cast<unsigned int>(tileWidth_ / 2));
 
     sf::Vector2f texCoordsQuad[4] = {
         {tx, ty},

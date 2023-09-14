@@ -5,24 +5,62 @@
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <string>
+
+void clampToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::Vector2u& bottomRight, const sf::Vector2u& borderSize) {
+    sf::Vector2u borderTopLeft(topLeft - borderSize), borderBottomRight(bottomRight + borderSize);
+    for (unsigned int y = borderTopLeft.y; y < borderBottomRight.y; ++y) {
+        for (unsigned int x = borderTopLeft.x; x < borderBottomRight.x; ++x) {
+            if (x < topLeft.x || x >= bottomRight.x || y < topLeft.y || y >= bottomRight.y) {
+                unsigned int xTarget = std::min(std::max(x, topLeft.x), bottomRight.x - 1);
+                unsigned int yTarget = std::min(std::max(y, topLeft.y), bottomRight.y - 1);
+                image.setPixel(x, y, image.getPixel(xTarget, yTarget));
+            }
+        }
+    }
+}
+
+sf::Texture loadTileset(const std::string& filename, unsigned int tileWidth) {
+    sf::Image tileset;
+    if (!tileset.loadFromFile(filename)) {
+        std::cerr << "Failed to load texture file.\n";
+        exit(-1);
+    }
+    sf::Texture result;
+    result.create(tileset.getSize().x * 2, tileset.getSize().y * 4);
+    sf::Image fullTileset;
+    fullTileset.create(tileset.getSize().x * 2, tileset.getSize().y * 2, sf::Color::Red);
+
+    for (unsigned int y = 0; y < tileset.getSize().y; y += tileWidth) {
+        for (unsigned int x = 0; x < tileset.getSize().x; x += tileWidth) {
+            sf::Vector2u tileTopLeft(x * 2 + tileWidth / 2, y * 2 + tileWidth / 2);
+            fullTileset.copy(tileset, tileTopLeft.x, tileTopLeft.y, sf::IntRect(x, y, tileWidth, tileWidth));
+            clampToEdge(fullTileset, tileTopLeft, tileTopLeft + sf::Vector2u(tileWidth, tileWidth), sf::Vector2u(tileWidth / 2, tileWidth / 2));
+        }
+    }
+    result.update(fullTileset, 0, 0);
+
+    for (unsigned int y = 0; y < fullTileset.getSize().y; ++y) {
+        for (unsigned int x = 0; x < fullTileset.getSize().x; ++x) {
+            fullTileset.setPixel(x, y, fullTileset.getPixel(x, y) + sf::Color(100, 100, 100));
+        }
+    }
+    result.update(fullTileset, 0, tileset.getSize().y * 2);
+    std::cout << "Built tileset texture with size " << result.getSize().x << " x " << result.getSize().y << "\n";
+    return result;
+}
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
 
-    sf::Texture tilesetGrid;
-    if (!tilesetGrid.loadFromFile("resources/texturePackGrid.png")) {
-        std::cerr << "Failed to load texture file.\n";
-        return -1;
-    }
+    sf::Texture tilesetGrid = loadTileset("resources/texturePackNoGrid.png", 32);
+
     tilesetGrid.setSmooth(true);
     if (!tilesetGrid.generateMipmap()) {
         std::cerr << "Warn: \"resources/texturePackGrid.png\": Unable to generate mipmap for texture.\n";
     }
-    // FIXME this fixed the issue with weird pixel alignment, but now the lack of texture borders is noticeable
 
-
-
-    Chunk::setupTextureData(tilesetGrid.getSize().x, 32);
+    Chunk::setupTextureData(tilesetGrid.getSize(), 32);
     Board board(&tilesetGrid);
 
     try {
@@ -38,6 +76,7 @@ int main() {
     std::cout << tile.getHighlight() << "\n";
     //tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     //std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
+    board.accessTile(2, 2).setHighlight(true);
 
     board.debugPrintChunk(0);
     board.debugRedrawChunk(0);

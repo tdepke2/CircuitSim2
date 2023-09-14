@@ -31,7 +31,7 @@ class Chunk : public sf::Drawable {
 public:
     static constexpr int WIDTH = 16;
 
-    static void setupTextureData(unsigned int textureWidth, unsigned int tileWidth);
+    static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);
 
     Chunk();
     Tile accessTile(unsigned int x, unsigned int y);
@@ -41,6 +41,7 @@ public:
 private:
     static unsigned int textureWidth_, tileWidth_;
     static uint8_t textureLookup_[512];
+    static unsigned int textureHighlightStart_;
 
     void redrawTile(unsigned int x, unsigned int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
