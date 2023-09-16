@@ -2,6 +2,7 @@ add_executable(CircuitSim2_experimental
     Board.cpp
     Chunk.cpp
     main.cpp
+    ResourceManager.cpp
     Tile.cpp
     tiles/Blank.cpp
     tiles/Gate.cpp

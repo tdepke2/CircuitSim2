@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
@@ -7,6 +8,7 @@
 
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
@@ -71,10 +73,81 @@ namespace TileSymbolIndex {
 
 
 
-Board::Board(sf::Texture* tilesetGrid) :
-    tilesetGrid_(tilesetGrid) {
+sf::Texture* Board::tilesetGrid_;
+sf::Texture* Board::tilesetNoGrid_;
+unsigned int Board::tileWidth_;
 
+void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::Vector2u& bottomRight, const sf::Vector2u& borderSize) {
+    sf::Vector2u borderTopLeft(topLeft - borderSize), borderBottomRight(bottomRight + borderSize);
+    for (unsigned int y = borderTopLeft.y; y < borderBottomRight.y; ++y) {
+        for (unsigned int x = borderTopLeft.x; x < borderBottomRight.x; ++x) {
+            if (x < topLeft.x || x >= bottomRight.x || y < topLeft.y || y >= bottomRight.y) {
+                unsigned int xTarget = std::min(std::max(x, topLeft.x), bottomRight.x - 1);
+                unsigned int yTarget = std::min(std::max(y, topLeft.y), bottomRight.y - 1);
+                image.setPixel(x, y, image.getPixel(xTarget, yTarget));
+            }
+        }
+    }
+}
+
+void loadTileset(const std::string& filename, sf::Texture* target, unsigned int tileWidth) {
+    sf::Image tileset;
+    if (!tileset.loadFromFile(filename)) {
+        std::cerr << "Failed to load texture file.\n";
+        exit(-1);
+    }
+    target->create(tileset.getSize().x * 2, tileset.getSize().y * 4);
+    sf::Image fullTileset;
+    fullTileset.create(tileset.getSize().x * 2, tileset.getSize().y * 2, sf::Color::Red);
+
+    for (unsigned int y = 0; y < tileset.getSize().y; y += tileWidth) {
+        for (unsigned int x = 0; x < tileset.getSize().x; x += tileWidth) {
+            sf::Vector2u tileTopLeft(x * 2 + tileWidth / 2, y * 2 + tileWidth / 2);
+            fullTileset.copy(tileset, tileTopLeft.x, tileTopLeft.y, sf::IntRect(x, y, tileWidth, tileWidth));
+            clampImageToEdge(fullTileset, tileTopLeft, tileTopLeft + sf::Vector2u(tileWidth, tileWidth), sf::Vector2u(tileWidth / 2, tileWidth / 2));
+        }
+    }
+    target->update(fullTileset, 0, 0);
+
+    for (unsigned int y = 0; y < fullTileset.getSize().y; ++y) {
+        for (unsigned int x = 0; x < fullTileset.getSize().x; ++x) {
+            fullTileset.setPixel(x, y, fullTileset.getPixel(x, y) + sf::Color(100, 100, 100));
+        }
+    }
+    target->update(fullTileset, 0, tileset.getSize().y * 2);
+    std::cout << "Built tileset texture with size " << target->getSize().x << " x " << target->getSize().y << "\n";
+}
+
+void Board::setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth) {
+    tileWidth_ = tileWidth;
+
+    tilesetGrid_ = &resource.getTexture(filenameGrid, true);
+    loadTileset(filenameGrid, tilesetGrid_, tileWidth);
+    tilesetGrid_->setSmooth(true);
+    if (!tilesetGrid_->generateMipmap()) {
+        std::cerr << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture.\n";
+    }
+
+    tilesetNoGrid_ = &resource.getTexture(filenameNoGrid, true);
+    loadTileset(filenameNoGrid, tilesetNoGrid_, tileWidth);
+    tilesetNoGrid_->setSmooth(true);
+    if (!tilesetNoGrid_->generateMipmap()) {
+        std::cerr << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture.\n";
+    }
+
+    Chunk::setupTextureData(tilesetGrid_->getSize(), tileWidth);
+}
+
+Board::Board() {
     chunks_.emplace(0, Chunk());
+}
+
+void Board::setView(const sf::View& view) {
+    currentView_ = view;
+}
+
+const sf::View& Board::getView() const {
+    return currentView_;
 }
 
 Tile Board::accessTile(int x, int y) {
@@ -259,6 +332,8 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
         if (parseState.width > 0 && parseState.height > 0) {
             maxSize_.x = ((parseState.width - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH;
             maxSize_.y = ((parseState.height - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH;
+        } else {
+            maxSize_ = {0, 0};
         }
 
     } else if (parseState.lastField == "height:" && line == "data: {") {
@@ -305,8 +380,45 @@ Chunk& Board::getChunk(int x, int y) {
 
 void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
+
+
+    sf::Vector2i topLeft = {
+        static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((currentView_.getCenter().y - currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+    };
+    sf::Vector2i bottomRight = {
+        static_cast<int>(std::floor((currentView_.getCenter().x + currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+    };
+    //std::cout << bottomRight.x << "    " << bottomRight.y << "\n";
+    int totalDrawn = 0;
+    int totalEmpty = 0;
+
+    sf::Transform originalTransform = states.transform;
+
     states.texture = tilesetGrid_;
-    for (const auto& chunk : chunks_) {
-        target.draw(chunk.second, states);
+    for (int y = topLeft.y; y <= bottomRight.y; ++y) {
+        for (int x = topLeft.x; x <= bottomRight.x; ++x) {
+            states.transform = sf::Transform(originalTransform).translate(
+                static_cast<float>(x * Chunk::WIDTH * static_cast<int>(tileWidth_)),
+                static_cast<float>(y * Chunk::WIDTH * static_cast<int>(tileWidth_))
+            );
+            auto chunk = chunks_.find(static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x));
+            if (chunk != chunks_.end()) {
+                target.draw(chunk->second, states);
+            } else {
+                target.draw(emptyChunk_, states);
+                ++totalEmpty;
+            }
+            // FIXME faster to instead walk the iterator in the inner loop? we would need to assume there are holes, so walk one at a time and read the chunk if it lines up with index. #########################
+            ++totalDrawn;
+        }
     }
+
+    //states.texture = tilesetGrid_;
+    //target.draw(emptyChunk_, states);
+    //states.transform = states.transform.translate(1 * Chunk::WIDTH * tileWidth_, 1 * Chunk::WIDTH * tileWidth_);
+    //target.draw(chunks_.at(0), states);
+
+    //std::cout << "d: " << totalDrawn << " e: " << totalEmpty << "\n";
 }
