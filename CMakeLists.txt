@@ -74,5 +74,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(portable_file_dialogs)
 
+# Import spdlog for logging utilities.
+message(STATUS "Fetching sources for spdlog...")
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.12.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 # Run the next CMakeLists file (builds the executable).
 add_subdirectory(src)

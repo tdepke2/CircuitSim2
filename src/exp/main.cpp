@@ -6,9 +6,14 @@
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <spdlog/spdlog.h>
 #include <string>
 
 int main() {
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+    spdlog::info("Logging level set to {}.", spdlog::level::to_string_view(spdlog::get_level()));
+    spdlog::info("Initializing RenderWindow.");
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
 
     ResourceManager resource;
