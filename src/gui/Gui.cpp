@@ -14,7 +14,7 @@ Gui::Gui(sf::RenderWindow& window) :
     redrawPending_(true),
     focusedWidget_(nullptr) {
 
-    renderTexture_.create(window.getSize().x, window.getSize().y);
+    renderTexture_.create(window.getSize().x, window.getSize().y);    // FIXME this never checks for failure, also shouldn't the texture get resized when the window changes size?
     renderSprite_.setTexture(renderTexture_.getTexture());
 }
 

@@ -53,4 +53,5 @@ private:
     std::map<uint64_t, Chunk> chunks_;
     sf::View currentView_;
     Chunk emptyChunk_;    // FIXME used for testing now to render empty chunk, should be changed to just be a deterministic section of the chunk rendertarget cache.
+    sf::RenderTexture testChunkRenderCache_;
 };

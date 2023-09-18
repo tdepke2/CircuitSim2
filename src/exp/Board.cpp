@@ -140,6 +140,12 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
 
 Board::Board() {
     chunks_.emplace(0, Chunk());
+
+    if (!testChunkRenderCache_.create(4096, 4096)) {
+        assert(false);
+    }
+    testChunkRenderCache_.clear(sf::Color::Red);
+    testChunkRenderCache_.display();
 }
 
 void Board::setView(const sf::View& view) {
@@ -396,7 +402,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     sf::Transform originalTransform = states.transform;
 
-    states.texture = tilesetGrid_;
+    states.texture = &testChunkRenderCache_.getTexture();//tilesetGrid_;
     for (int y = topLeft.y; y <= bottomRight.y; ++y) {
         for (int x = topLeft.x; x <= bottomRight.x; ++x) {
             states.transform = sf::Transform(originalTransform).translate(

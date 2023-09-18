@@ -57,3 +57,19 @@ private:
 }
 
 override operator= to allow a tile to change its type?
+
+## Rendering ##
+
+Tiles are rendered in the rectangular region the user is viewing, we'll call this the view window.
+Some things to note about this window:
+
+* The window can change size.
+* The window can zoom (change scale).
+* The window can move (change center).
+
+In order to render the tiles, we'll use a RenderTexture to cache previously rendered chunks and a VertexBuffer to map to the chunks in the RenderTexture.
+This will be done for multiple levels-of-detail (selected based on the zoom level).
+Chunks still render by drawing a VertexArray to the RenderTexture, updates should be infrequent enough to not matter.
+The size of the RT and VBO is dependent on the window size, if the window width increases then double the width of RT and VBO as needed.
+For LOD 0, the size of RT and VBO is equal and large enough to fit the window size (at the max before the next LOD) with one extra row and column of chunks.
+For the next LOD, VBO should double in width and height but the texture size will not change (the texture gets subdivided).
