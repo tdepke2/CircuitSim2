@@ -13,3 +13,15 @@ sf::Texture& ResourceManager::getTexture(const std::string& filename, bool initE
     }
     return newTex;
 }
+
+sf::Font& ResourceManager::getFont(const std::string& filename) {
+    auto font = fonts_.find(filename);
+    if (font != fonts_.end()) {
+        return font->second;
+    }
+    sf::Font& newFont = fonts_[filename];
+    if (!newFont.loadFromFile(filename)) {
+        throw std::runtime_error("\"" + filename + "\": unable to load font file.");
+    }
+    return newFont;
+}

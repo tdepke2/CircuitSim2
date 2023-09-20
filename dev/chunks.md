@@ -60,12 +60,12 @@ override operator= to allow a tile to change its type?
 
 ## Rendering ##
 
-Tiles are rendered in the rectangular region the user is viewing, we'll call this the view window.
-Some things to note about this window:
+Tiles are rendered in the rectangular region the user is viewing within the application window.
+Some things to note about the view and the window:
 
 * The window can change size.
-* The window can zoom (change scale).
-* The window can move (change center).
+* The view can zoom (change scale).
+* The view can move (change center).
 
 In order to render the tiles, we'll use a RenderTexture to cache previously rendered chunks and a VertexBuffer to map to the chunks in the RenderTexture.
 This will be done for multiple levels-of-detail (selected based on the zoom level).

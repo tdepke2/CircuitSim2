@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <DebugScreen.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
@@ -15,14 +16,17 @@ int main() {
     spdlog::info("Logging level set to {}.", spdlog::level::to_string_view(spdlog::get_level()));
     spdlog::info("Initializing RenderWindow.");
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
+    window.setVerticalSyncEnabled(true);
 
     ResourceManager resource;
+    DebugScreen debugScreen(resource.getFont("resources/consolas.ttf"), 16);
+    debugScreen.setVisible(true);
 
     Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", 32);
     Board board;
 
     try {
-        board.loadFromFile("boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
+        board.loadFromFile("boards/ComputerGame.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
 
     } catch (std::exception& ex) {
         std::cerr << ex.what() << "\n";
@@ -37,12 +41,13 @@ int main() {
     board.accessTile(2, 2).setHighlight(true);
 
     board.debugPrintChunk(0);
-    board.debugRedrawChunk(0);
+    board.debugRedrawChunks();
 
     sf::View fullWindowView(window.getDefaultView());
     sf::View boardView(window.getDefaultView());
     float zoomLevel = 1.0f;
     sf::Vector2i lastMousePos;
+    sf::Clock frameTimer;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -64,6 +69,10 @@ int main() {
                     zoomLevel += zoomDelta;
                     boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
                 }
+            } else if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::F3) {
+                    debugScreen.setVisible(!debugScreen.isVisible());
+                }
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
@@ -72,10 +81,25 @@ int main() {
             }
         }
 
+        debugScreen.getField(DebugScreen::Field::frameTime).setString(
+            fmt::format("Frame: {}ms", frameTimer.restart().asMilliseconds())
+        );
+        debugScreen.getField(DebugScreen::Field::view).setString(
+            fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardView.getCenter().x, boardView.getCenter().y)
+        );
+        debugScreen.getField(DebugScreen::Field::chunk).setString(
+            fmt::format("Chunk: {} visible", board.debugGetChunksDrawn())
+        );
+
         window.clear();
+
         window.setView(boardView);
         board.setView(boardView);
         window.draw(board);
+
+        window.setView(fullWindowView);
+        window.draw(debugScreen);
+
         window.display();
     }
 

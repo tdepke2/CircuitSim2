@@ -11,6 +11,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 struct TileSymbol {
     char a, b;
@@ -138,14 +139,8 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     Chunk::setupTextureData(tilesetGrid_->getSize(), tileWidth);
 }
 
-Board::Board() {
-    chunks_.emplace(0, Chunk());
-
-    if (!testChunkRenderCache_.create(4096, 4096)) {
-        assert(false);
-    }
-    testChunkRenderCache_.clear(sf::Color::Red);
-    testChunkRenderCache_.display();
+Board::Board() :
+    debugChunksDrawn_(0) {
 }
 
 void Board::setView(const sf::View& view) {
@@ -175,11 +170,11 @@ void Board::loadFromFile(const std::string& filename) {
             symbolLookup.emplace(TILE_SYMBOLS[i], i);
         }
 
-        std::cout << "symbolLookup contents:\n";
+        /*std::cout << "symbolLookup contents:\n";
         for (const auto& x : symbolLookup) {
             std::cout << x.first.a << x.first.b << " -> " << x.second << "\n";
         }
-        std::cout << "\n";
+        std::cout << "\n";*/
     }
 
     std::string line;
@@ -215,8 +210,12 @@ void Board::saveToFile(const std::string& /*filename*/) {
 
 }
 
+unsigned int Board::debugGetChunksDrawn() const {
+    return debugChunksDrawn_;
+}
+
 void Board::parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup) {
-    std::cout << "Parse line [" << line << "]\n";
+    //std::cout << "Parse line [" << line << "]\n";
 
     if (line.length() == 0) {
         if (parseState.lastField == "notes: {") {
@@ -224,7 +223,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
         }
     } else if (parseState.lastField == "tiles") {
         if (parseState.y == 0) {
-            std::cout << "========== START OF TILES ==========\n";
+            //std::cout << "========== START OF TILES ==========\n";
         }
         if (line.length() != parseState.width * 2 + 2) {
             throw std::runtime_error("incorrect length of line (expected " + std::to_string(parseState.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
@@ -244,7 +243,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
             }
 
             unsigned int symbolId = foundSymbol->second;
-            std::cout << symbolId << " ";
+            //std::cout << symbolId << " ";
             Tile tile = accessTile(parseState.x, parseState.y);
             if (symbolId == TileSymbolIndex::blank) {
                 // Blank tile.
@@ -308,11 +307,11 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
 
             ++parseState.x;
         }
-        std::cout << "\n";
+        //std::cout << "\n";
         ++parseState.y;
         if (parseState.y == static_cast<int>(parseState.height)) {
             parseState.lastField = "tilesEnd";
-            std::cout << "========== END OF TILES ==========\n";
+            //std::cout << "========== END OF TILES ==========\n";
         }
     } else if (parseState.lastField == "" && line.find("version:") == 0) {
         parseState.lastField = "version:";
@@ -380,7 +379,8 @@ Chunk& Board::getChunk(int x, int y) {
     if (chunk != chunks_.end()) {
         return chunk->second;
     } else {
-        assert(false);
+        spdlog::debug("Allocating new chunk at ({}, {})", x / Chunk::WIDTH, y / Chunk::WIDTH);
+        return chunks_.emplace(mapIndex, Chunk()).first->second;
     }
 }
 
@@ -402,7 +402,8 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     sf::Transform originalTransform = states.transform;
 
-    states.texture = &testChunkRenderCache_.getTexture();//tilesetGrid_;
+    states.texture = tilesetGrid_;
+    debugChunksDrawn_ = 0;
     for (int y = topLeft.y; y <= bottomRight.y; ++y) {
         for (int x = topLeft.x; x <= bottomRight.x; ++x) {
             states.transform = sf::Transform(originalTransform).translate(
@@ -417,7 +418,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 ++totalEmpty;
             }
             // FIXME faster to instead walk the iterator in the inner loop? we would need to assume there are holes, so walk one at a time and read the chunk if it lines up with index. #########################
-            ++totalDrawn;
+            ++debugChunksDrawn_;
         }
     }
 

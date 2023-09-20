@@ -1,6 +1,7 @@
 add_executable(CircuitSim2_experimental
     Board.cpp
     Chunk.cpp
+    DebugScreen.cpp
     main.cpp
     ResourceManager.cpp
     Tile.cpp

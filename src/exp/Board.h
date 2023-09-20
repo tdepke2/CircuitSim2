@@ -25,9 +25,12 @@ public:
     void debugPrintChunk(uint64_t i) {
         chunks_.at(i).debugPrintChunk();
     }
-    void debugRedrawChunk(uint64_t i) {
-        chunks_.at(i).forceRedraw();
+    void debugRedrawChunks() {
+        for (auto& chunk : chunks_) {
+            chunk.second.forceRedraw();
+        }
     }
+    unsigned int debugGetChunksDrawn() const;
 
 private:
     static sf::Texture* tilesetGrid_;
@@ -54,4 +57,5 @@ private:
     sf::View currentView_;
     Chunk emptyChunk_;    // FIXME used for testing now to render empty chunk, should be changed to just be a deterministic section of the chunk rendertarget cache.
     sf::RenderTexture testChunkRenderCache_;
+    mutable unsigned int debugChunksDrawn_;
 };
