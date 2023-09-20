@@ -140,6 +140,8 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
 }
 
 Board::Board() :
+    debugChunkBorder_(sf::Lines),
+    debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
 }
 
@@ -208,6 +210,10 @@ void Board::loadFromFile(const std::string& filename) {
 
 void Board::saveToFile(const std::string& /*filename*/) {
 
+}
+
+void Board::debugSetDrawChunkBorder(bool enabled) {
+    debugDrawChunkBorder_ = enabled;
 }
 
 unsigned int Board::debugGetChunksDrawn() const {
@@ -421,6 +427,8 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             ++debugChunksDrawn_;
         }
     }
+    states.texture = nullptr;
+    states.transform = originalTransform;
 
     //states.texture = tilesetGrid_;
     //target.draw(emptyChunk_, states);
@@ -428,4 +436,27 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     //target.draw(chunks_.at(0), states);
 
     //std::cout << "d: " << totalDrawn << " e: " << totalEmpty << "\n";
+
+    if (debugDrawChunkBorder_) {
+        debugChunkBorder_.resize((bottomRight.x - topLeft.x + 1) * (bottomRight.y - topLeft.y + 1) * 4);
+        const int chunkDistance = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        unsigned int i = 0;
+        for (int y = topLeft.y; y <= bottomRight.y; ++y) {
+            float yChunkPos = static_cast<float>(y * chunkDistance);
+            for (int x = topLeft.x; x <= bottomRight.x; ++x) {
+                float xChunkPos = static_cast<float>(x * chunkDistance);
+
+                debugChunkBorder_[i + 0].position = {xChunkPos, yChunkPos};
+                debugChunkBorder_[i + 0].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 1].position = {xChunkPos + chunkDistance, yChunkPos};
+                debugChunkBorder_[i + 1].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 2].position = {xChunkPos, yChunkPos};
+                debugChunkBorder_[i + 2].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 3].position = {xChunkPos, yChunkPos + chunkDistance};
+                debugChunkBorder_[i + 3].color = sf::Color::Yellow;
+                i += 4;
+            }
+        }
+        target.draw(debugChunkBorder_, states);
+    }
 }

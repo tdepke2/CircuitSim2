@@ -24,6 +24,7 @@ int main() {
 
     Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", 32);
     Board board;
+    board.debugSetDrawChunkBorder(true);
 
     try {
         board.loadFromFile("boards/ComputerGame.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
@@ -72,6 +73,7 @@ int main() {
             } else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::F3) {
                     debugScreen.setVisible(!debugScreen.isVisible());
+                    board.debugSetDrawChunkBorder(debugScreen.isVisible());
                 }
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});

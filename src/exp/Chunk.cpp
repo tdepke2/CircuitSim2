@@ -75,10 +75,9 @@ void Chunk::setupTextureData(const sf::Vector2u& textureSize, unsigned int tileW
 }
 
 Chunk::Chunk() :
-    tiles_{} {
+    tiles_{},
+    vertices_(sf::Triangles, WIDTH * WIDTH * 6) {
 
-    vertices_.setPrimitiveType(sf::Triangles);
-    vertices_.resize(WIDTH * WIDTH * 6);
     for (unsigned int y = 0; y < WIDTH; ++y) {
         for (unsigned int x = 0; x < WIDTH; ++x) {
             sf::Vertex* tileVertices = &vertices_[(y * WIDTH + x) * 6];
