@@ -139,18 +139,34 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     Chunk::setupTextureData(tilesetGrid_->getSize(), tileWidth);
 }
 
-Board::Board() :
+Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
+    maxSize_(),
+    chunks_(),
+    currentView_(),
+    currentZoom_(0.0f),
+    chunkRenderCache_(LEVELS_OF_DETAIL),
+    emptyChunk_(),
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
 }
 
-void Board::setView(const sf::View& view) {
+void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugScreen) {
     currentView_ = view;
-}
+    currentZoom_ = zoom;
 
-const sf::View& Board::getView() const {
-    return currentView_;
+    int currentLod = static_cast<int>(std::max(std::floor(std::log2(currentZoom_)), 0.0f));
+    debugScreen.getField("lod").setString(fmt::format("Lod: {}", currentLod));
+
+    sf::Vector2f lodMaxView = view.getSize() / currentZoom_ * static_cast<float>(1 << (currentLod + 1));
+    float x = std::ceil(std::round(lodMaxView.x) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f;
+    float y = std::ceil(std::round(lodMaxView.y) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f;
+    int x2 = 1 << static_cast<int>(std::ceil(std::log2(x)));
+    int y2 = 1 << static_cast<int>(std::ceil(std::log2(y)));
+
+    // this calculation still needs work, it should only be applied to the first lod level and shouldn't change from zooming.
+
+    debugScreen.getField("lodRange").setString(fmt::format("Range: {}, {} (rounded up to {}, {})", x, y, x2, y2));
 }
 
 Tile Board::accessTile(int x, int y) {
@@ -445,15 +461,19 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             float yChunkPos = static_cast<float>(y * chunkDistance);
             for (int x = topLeft.x; x <= bottomRight.x; ++x) {
                 float xChunkPos = static_cast<float>(x * chunkDistance);
+                sf::Color borderColor = sf::Color::Blue;
+                if (chunks_.find(static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x)) != chunks_.end()) {
+                    borderColor = sf::Color::Yellow;
+                }
 
                 debugChunkBorder_[i + 0].position = {xChunkPos, yChunkPos};
-                debugChunkBorder_[i + 0].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 0].color = borderColor;
                 debugChunkBorder_[i + 1].position = {xChunkPos + chunkDistance, yChunkPos};
-                debugChunkBorder_[i + 1].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 1].color = borderColor;
                 debugChunkBorder_[i + 2].position = {xChunkPos, yChunkPos};
-                debugChunkBorder_[i + 2].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 2].color = borderColor;
                 debugChunkBorder_[i + 3].position = {xChunkPos, yChunkPos + chunkDistance};
-                debugChunkBorder_[i + 3].color = sf::Color::Yellow;
+                debugChunkBorder_[i + 3].color = borderColor;
                 i += 4;
             }
         }

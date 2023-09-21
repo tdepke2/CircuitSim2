@@ -7,7 +7,11 @@
 class DebugScreen : public sf::Drawable {
 public:
     enum class Field {
-        frameTime, view, chunk, count
+        frameTime,
+        view,
+        zoom,
+        chunk,
+        count
     };
 
     DebugScreen(const sf::Font& font, unsigned int characterSize);

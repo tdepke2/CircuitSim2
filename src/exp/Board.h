@@ -7,6 +7,14 @@
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <unordered_map>
+
+
+
+
+#include <DebugScreen.h>
+
+
 
 class ResourceManager;
 class Tile;
@@ -14,11 +22,11 @@ struct TileSymbol;
 
 class Board : public sf::Drawable, public sf::Transformable {
 public:
+    static constexpr int LEVELS_OF_DETAIL = 5;
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
     Board();
-    void setView(const sf::View& view);
-    const sf::View& getView() const;
+    void setRenderArea(const sf::View& view, float zoom, DebugScreen& debugScreen);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile(const std::string& filename);
@@ -49,15 +57,22 @@ private:
         int x = 0;
         int y = 0;
     };
+
+    struct ChunkRender {
+        sf::RenderTexture texture;
+        sf::VertexBuffer buffer;
+    };
+
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
     Chunk& getChunk(int x, int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
-    std::map<uint64_t, Chunk> chunks_;
+    std::unordered_map<uint64_t, Chunk> chunks_;
     sf::View currentView_;
+    float currentZoom_;
+    std::vector<ChunkRender> chunkRenderCache_;
     Chunk emptyChunk_;    // FIXME used for testing now to render empty chunk, should be changed to just be a deterministic section of the chunk rendertarget cache.
-    sf::RenderTexture testChunkRenderCache_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
     mutable unsigned int debugChunksDrawn_;

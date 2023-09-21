@@ -66,7 +66,10 @@ int main() {
             } else if (event.type == sf::Event::MouseWheelScrolled) {
                 float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
                 float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel * -0.04f;
-                if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < 20.0f) {
+                constexpr float maxZoom = 20.0f;
+                static_assert(maxZoom < (1 << Board::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
+
+                if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
                     zoomLevel += zoomDelta;
                     boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
                 }
@@ -89,6 +92,9 @@ int main() {
         debugScreen.getField(DebugScreen::Field::view).setString(
             fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardView.getCenter().x, boardView.getCenter().y)
         );
+        debugScreen.getField(DebugScreen::Field::zoom).setString(
+            fmt::format("Zoom: {}", zoomLevel)
+        );
         debugScreen.getField(DebugScreen::Field::chunk).setString(
             fmt::format("Chunk: {} visible", board.debugGetChunksDrawn())
         );
@@ -96,7 +102,7 @@ int main() {
         window.clear();
 
         window.setView(boardView);
-        board.setView(boardView);
+        board.setRenderArea(boardView, zoomLevel, debugScreen);
         window.draw(board);
 
         window.setView(fullWindowView);
