@@ -20,6 +20,8 @@ class ResourceManager;
 class Tile;
 struct TileSymbol;
 
+using ChunkCoords = uint64_t;
+
 class Board : public sf::Drawable, public sf::Transformable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
@@ -30,7 +32,7 @@ public:
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile(const std::string& filename);
-    void debugPrintChunk(uint64_t i) {
+    void debugPrintChunk(ChunkCoords i) {
         chunks_.at(i).debugPrintChunk();
     }
     void debugRedrawChunks() {
@@ -58,9 +60,23 @@ private:
         int y = 0;
     };
 
+    struct ChunkRenderBlock {
+        static constexpr ChunkCoords emptyChunkCoords = 0x7fffffff7fffffff;
+
+        ChunkCoords coords;
+        int textureIndex = -1;
+        float adjustedChebyshev;
+    };
+    friend bool operator<(const Board::ChunkRenderBlock& lhs, const Board::ChunkRenderBlock& rhs);
+
     struct ChunkRender {
         sf::RenderTexture texture;
         sf::VertexBuffer buffer;
+        std::vector<ChunkRenderBlock> blocks;
+
+        ChunkRender() :
+            texture(), buffer(sf::Triangles), blocks() {
+        }
     };
 
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
@@ -68,11 +84,12 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
-    std::unordered_map<uint64_t, Chunk> chunks_;
+    std::unordered_map<ChunkCoords, Chunk> chunks_;
     sf::View currentView_;
     float currentZoom_;
     std::vector<ChunkRender> chunkRenderCache_;
-    Chunk emptyChunk_;    // FIXME used for testing now to render empty chunk, should be changed to just be a deterministic section of the chunk rendertarget cache.
+    Chunk emptyChunk_;
+    sf::Vector2i lastVisibleTopLeft_, lastVisibleBottomRight_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
     mutable unsigned int debugChunksDrawn_;

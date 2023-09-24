@@ -2,6 +2,8 @@
 
 #include <Tile.h>
 
+#include <array>
+#include <bitset>
 #include <cassert>
 #include <SFML/Graphics.hpp>
 
@@ -48,6 +50,8 @@ private:
 
     TileData tiles_[WIDTH * WIDTH];
     sf::VertexArray vertices_;
+    std::array<int, 8> renderBlocks_;
+    std::bitset<8> renderDirty_;
 
     friend class TileType;
 };

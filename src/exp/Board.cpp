@@ -6,11 +6,12 @@
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 
-#include <array>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <spdlog/spdlog.h>
 
 struct TileSymbol {
@@ -146,9 +147,23 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     currentZoom_(0.0f),
     chunkRenderCache_(LEVELS_OF_DETAIL),
     emptyChunk_(),
+    lastVisibleTopLeft_(0, 0),
+    lastVisibleBottomRight_(-1, -1),
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
+}
+
+inline ChunkCoords packChunkCoords(int x, int y) {
+    return static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x);
+}
+
+inline int unpackChunkCoordsX(ChunkCoords coords) {
+    return static_cast<int32_t>(coords);
+}
+
+inline int unpackChunkCoordsY(ChunkCoords coords) {
+    return static_cast<int32_t>(coords >> 32);
 }
 
 void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugScreen) {
@@ -158,15 +173,80 @@ void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugSc
     int currentLod = static_cast<int>(std::max(std::floor(std::log2(currentZoom_)), 0.0f));
     debugScreen.getField("lod").setString(fmt::format("Lod: {}", currentLod));
 
-    sf::Vector2f lodMaxView = view.getSize() / currentZoom_ * static_cast<float>(1 << (currentLod + 1));
-    float x = std::ceil(std::round(lodMaxView.x) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f;
-    float y = std::ceil(std::round(lodMaxView.y) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f;
-    int x2 = 1 << static_cast<int>(std::ceil(std::log2(x)));
-    int y2 = 1 << static_cast<int>(std::ceil(std::log2(y)));
+    // Determine the dimensions of the VertexBuffer we need to draw all of the
+    // visible chunks at the max zoom level (for current level-of-detail). Round
+    // this up to the nearest power of 2.
+    const sf::Vector2f maxViewSize = view.getSize() / currentZoom_ * static_cast<float>(1 << (currentLod + 1));
+    const sf::Vector2f maxChunkArea = {
+        std::ceil(std::round(maxViewSize.x) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f,
+        std::ceil(std::round(maxViewSize.y) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f
+    };
+    const sf::Vector2u roundedChunkArea = {
+        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
+        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.y)))
+    };
 
-    // this calculation still needs work, it should only be applied to the first lod level and shouldn't change from zooming.
+    const sf::Vector2u renderTextureSize = roundedChunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod);
+    debugScreen.getField("lodRange").setString(fmt::format("Range: {}, {} (p2 {}, {} tex {}, {})", maxChunkArea.x, maxChunkArea.y, roundedChunkArea.x, roundedChunkArea.y, renderTextureSize.x, renderTextureSize.y));
 
-    debugScreen.getField("lodRange").setString(fmt::format("Range: {}, {} (rounded up to {}, {})", x, y, x2, y2));
+    ChunkRender& currentChunkRender = chunkRenderCache_[currentLod];
+    if (currentChunkRender.texture.getSize() != renderTextureSize) {
+        spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, roundedChunkArea.x, roundedChunkArea.y);
+        if (!currentChunkRender.texture.create(renderTextureSize.x, renderTextureSize.y)) {
+            spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, renderTextureSize.x, renderTextureSize.y);
+        }
+        const unsigned int bufferSize = roundedChunkArea.x * roundedChunkArea.y * 6;
+        if (!currentChunkRender.buffer.create(bufferSize)) {
+            spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
+        }
+        currentChunkRender.blocks.clear();
+        currentChunkRender.blocks.resize(roundedChunkArea.x * roundedChunkArea.y);
+    }
+
+    sf::Vector2i topLeft = {
+        static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((currentView_.getCenter().y - currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+    };
+    sf::Vector2i bottomRight = {
+        static_cast<int>(std::floor((currentView_.getCenter().x + currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+    };
+    if (lastVisibleTopLeft_ != topLeft || lastVisibleBottomRight_ != bottomRight) {
+        spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+        lastVisibleTopLeft_ = topLeft;
+        lastVisibleBottomRight_ = bottomRight;
+
+        sf::Vector2f centerPosition = sf::Vector2f(bottomRight - topLeft) / 2.0f;
+        for (auto& block : currentChunkRender.blocks) {
+            if (block.textureIndex == -1) {
+                block.adjustedChebyshev = std::numeric_limits<float>::max();
+            } else if (block.coords != ChunkRenderBlock::emptyChunkCoords) {
+                block.adjustedChebyshev = std::max(
+                    std::abs(unpackChunkCoordsX(block.coords) - centerPosition.x),
+                    std::abs(unpackChunkCoordsY(block.coords) - centerPosition.y)
+                );
+                // FIXME this is the basic Chebyshev calculation for now, needs to be adjusted since we are working in a rectangle.
+            } else {
+                block.adjustedChebyshev = 0.0f;
+            }
+        }
+        std::stable_sort(currentChunkRender.blocks.begin(), currentChunkRender.blocks.end());
+        spdlog::debug("Sorted chunk render blocks ({}):", currentChunkRender.blocks.size());
+        for (auto& block : currentChunkRender.blocks) {
+            spdlog::debug("  pos ({}, {}), tex {}, adjChebyshev {}", unpackChunkCoordsX(block.coords), unpackChunkCoordsY(block.coords), block.textureIndex, block.adjustedChebyshev);
+        }
+
+        for (int y = topLeft.y; y <= bottomRight.y; ++y) {
+            for (int x = topLeft.x; x <= bottomRight.x; ++x) {
+                auto chunk = chunks_.find(packChunkCoords(x, y));
+                if (chunk != chunks_.end()) {
+                    // check if chunk rendered and is not dirty
+                } else {
+
+                }
+            }
+        }
+    }
 }
 
 Tile Board::accessTile(int x, int y) {
@@ -234,6 +314,10 @@ void Board::debugSetDrawChunkBorder(bool enabled) {
 
 unsigned int Board::debugGetChunksDrawn() const {
     return debugChunksDrawn_;
+}
+
+bool operator<(const Board::ChunkRenderBlock& lhs, const Board::ChunkRenderBlock& rhs) {
+    return lhs.adjustedChebyshev < rhs.adjustedChebyshev;
 }
 
 void Board::parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup) {
@@ -396,7 +480,7 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
 }
 
 Chunk& Board::getChunk(int x, int y) {
-    uint64_t mapIndex = static_cast<uint64_t>(y / Chunk::WIDTH) << 32 | static_cast<uint32_t>(x / Chunk::WIDTH);
+    ChunkCoords mapIndex = packChunkCoords(x / Chunk::WIDTH, y / Chunk::WIDTH);
     auto chunk = chunks_.find(mapIndex);
     if (chunk != chunks_.end()) {
         return chunk->second;
@@ -432,7 +516,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 static_cast<float>(x * Chunk::WIDTH * static_cast<int>(tileWidth_)),
                 static_cast<float>(y * Chunk::WIDTH * static_cast<int>(tileWidth_))
             );
-            auto chunk = chunks_.find(static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x));
+            auto chunk = chunks_.find(packChunkCoords(x, y));
             if (chunk != chunks_.end()) {
                 target.draw(chunk->second, states);
             } else {
@@ -462,7 +546,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             for (int x = topLeft.x; x <= bottomRight.x; ++x) {
                 float xChunkPos = static_cast<float>(x * chunkDistance);
                 sf::Color borderColor = sf::Color::Blue;
-                if (chunks_.find(static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x)) != chunks_.end()) {
+                if (chunks_.find(packChunkCoords(x, y)) != chunks_.end()) {
                     borderColor = sf::Color::Yellow;
                 }
 

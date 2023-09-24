@@ -73,3 +73,14 @@ Chunks still render by drawing a VertexArray to the RenderTexture, updates shoul
 The size of the RT and VBO is dependent on the window size, if the window width increases then double the width of RT and VBO as needed.
 For LOD 0, the size of RT and VBO is equal and large enough to fit the window size (at the max before the next LOD) with one extra row and column of chunks.
 For the next LOD, VBO should double in width and height but the texture size will not change (the texture gets subdivided).
+
+Chunks need a dirty flag to track when redraw is needed (per LOD, make it a bitset?).
+When drawing chunks we should iterate through visible ones and check for the dirty flags.
+Chunks render to a reserved spot in the LOD texture (maybe tracked as part of the chunk data?), this is also per LOD.
+New chunks that appear on screen need to be allocated a spot in LOD texture, when we run out of space some may need to be deallocated.
+Deallocation can be done for off-screen chunks. We could select the furthest one (optimal), the oldest drawn, or the first we find.
+We will need to reserve a spot for the empty chunk, storing it as a member of the board could allow it to be treated the same way as the rest of the chunks instead of needing a special spot for it.
+
+Allocation data structure: std::map<unsigned int, uint64_t> (the int is an index into the texture)
+Wait, maybe just make it a vector?
+Easy to find first available (just loop through) and probably still fast enough to find furthest by searching for largest Manhattan distance (or is it actually the Chebyshev distance?).
