@@ -2,10 +2,8 @@
 
 #include <Tile.h>
 
-#include <array>
-#include <bitset>
 #include <cassert>
-#include <SFML/Graphics.hpp>
+#include <cstdint>
 
 //#pragma pack(push, 1)
 struct TileData {
@@ -29,29 +27,17 @@ struct TileData {
 static_assert(sizeof(TileData) == 4, "Size of TileData struct is expected to be 4 bytes.");
 static_assert(TileId::count <= 32, "TileId::t is expected to fit within a 5 bit value.");
 
-class Chunk : public sf::Drawable {
+class Chunk {
 public:
     static constexpr int WIDTH = 16;
 
-    static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);
-
     Chunk();
     Tile accessTile(unsigned int x, unsigned int y);
-    void forceRedraw();
     void debugPrintChunk();
 
 private:
-    static unsigned int textureWidth_, tileWidth_;
-    static uint8_t textureLookup_[512];
-    static unsigned int textureHighlightStart_;
-
-    void redrawTile(unsigned int x, unsigned int y);
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
     TileData tiles_[WIDTH * WIDTH];
-    sf::VertexArray vertices_;
-    std::array<int, 8> renderBlocks_;
-    std::bitset<8> renderDirty_;
 
+    friend class ChunkDrawable;
     friend class TileType;
 };

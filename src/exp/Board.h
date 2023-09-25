@@ -16,6 +16,7 @@
 
 
 
+class ChunkDrawable;
 class ResourceManager;
 class Tile;
 struct TileSymbol;
@@ -85,6 +86,7 @@ private:
 
     sf::Vector2u maxSize_;
     std::unordered_map<ChunkCoords, Chunk> chunks_;
+    std::unordered_map<ChunkCoords, ChunkDrawable> chunkDrawables_;
     sf::View currentView_;
     float currentZoom_;
     std::vector<ChunkRender> chunkRenderCache_;

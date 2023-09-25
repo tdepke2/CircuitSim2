@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <ChunkDrawable.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Gate.h>
@@ -137,12 +138,13 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
         std::cerr << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture.\n";
     }
 
-    Chunk::setupTextureData(tilesetGrid_->getSize(), tileWidth);
+    ChunkDrawable::setupTextureData(tilesetGrid_->getSize(), tileWidth);
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
     maxSize_(),
     chunks_(),
+    chunkDrawables_(),
     currentView_(),
     currentZoom_(0.0f),
     chunkRenderCache_(LEVELS_OF_DETAIL),
