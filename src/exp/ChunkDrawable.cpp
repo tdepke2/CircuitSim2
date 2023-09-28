@@ -59,7 +59,7 @@ void ChunkDrawable::setupTextureData(const sf::Vector2u& textureSize, unsigned i
     std::cout << "building textureLookup_ finished, final textureId is " << static_cast<int>(textureId) << "\n";
 }
 
-ChunkDrawable::ChunkDrawable(Chunk& chunk) :
+ChunkDrawable::ChunkDrawable(const Chunk* chunk) :
     chunk_(chunk),
     vertices_(sf::Triangles, Chunk::WIDTH * Chunk::WIDTH * 6),
     renderBlocks_{-1, -1, -1, -1, -1, -1, -1, -1},
@@ -93,7 +93,7 @@ void ChunkDrawable::forceRedraw() {
 
 void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) {
     sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
-    TileData tileData = chunk_.tiles_[y * Chunk::WIDTH + x];
+    TileData tileData = chunk_->tiles_[y * Chunk::WIDTH + x];
 
     unsigned int textureId = textureLookup_[tileData.getTextureHash()] + (tileData.highlight ? textureHighlightStart_ : 0);
 

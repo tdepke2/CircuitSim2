@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Chunk.h>
+#include <ChunkRender.h>
+#include <FlatMap.h>
 
 #include <array>
 #include <map>
@@ -61,32 +63,13 @@ private:
         int y = 0;
     };
 
-    struct ChunkRenderBlock {
-        static constexpr ChunkCoords emptyChunkCoords = 0x7fffffff7fffffff;
-
-        ChunkCoords coords;
-        int textureIndex = -1;
-        float adjustedChebyshev;
-    };
-    friend bool operator<(const Board::ChunkRenderBlock& lhs, const Board::ChunkRenderBlock& rhs);
-
-    struct ChunkRender {
-        sf::RenderTexture texture;
-        sf::VertexBuffer buffer;
-        std::vector<ChunkRenderBlock> blocks;
-
-        ChunkRender() :
-            texture(), buffer(sf::Triangles), blocks() {
-        }
-    };
-
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
     Chunk& getChunk(int x, int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
     std::unordered_map<ChunkCoords, Chunk> chunks_;
-    std::unordered_map<ChunkCoords, ChunkDrawable> chunkDrawables_;
+    FlatMap<ChunkCoords, ChunkDrawable> chunkDrawables_;
     sf::View currentView_;
     float currentZoom_;
     std::vector<ChunkRender> chunkRenderCache_;

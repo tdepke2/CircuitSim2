@@ -139,6 +139,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     }
 
     ChunkDrawable::setupTextureData(tilesetGrid_->getSize(), tileWidth);
+    ChunkRender::setupTextureData(tileWidth);
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
@@ -192,18 +193,7 @@ void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugSc
     debugScreen.getField("lodRange").setString(fmt::format("Range: {}, {} (p2 {}, {} tex {}, {})", maxChunkArea.x, maxChunkArea.y, roundedChunkArea.x, roundedChunkArea.y, renderTextureSize.x, renderTextureSize.y));
 
     ChunkRender& currentChunkRender = chunkRenderCache_[currentLod];
-    if (currentChunkRender.texture.getSize() != renderTextureSize) {
-        spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, roundedChunkArea.x, roundedChunkArea.y);
-        if (!currentChunkRender.texture.create(renderTextureSize.x, renderTextureSize.y)) {
-            spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, renderTextureSize.x, renderTextureSize.y);
-        }
-        const unsigned int bufferSize = roundedChunkArea.x * roundedChunkArea.y * 6;
-        if (!currentChunkRender.buffer.create(bufferSize)) {
-            spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
-        }
-        currentChunkRender.blocks.clear();
-        currentChunkRender.blocks.resize(roundedChunkArea.x * roundedChunkArea.y);
-    }
+    currentChunkRender.resize(currentLod, roundedChunkArea);
 
     sf::Vector2i topLeft = {
         static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
@@ -316,10 +306,6 @@ void Board::debugSetDrawChunkBorder(bool enabled) {
 
 unsigned int Board::debugGetChunksDrawn() const {
     return debugChunksDrawn_;
-}
-
-bool operator<(const Board::ChunkRenderBlock& lhs, const Board::ChunkRenderBlock& rhs) {
-    return lhs.adjustedChebyshev < rhs.adjustedChebyshev;
 }
 
 void Board::parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup) {

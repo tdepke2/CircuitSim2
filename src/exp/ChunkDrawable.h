@@ -10,7 +10,7 @@ class ChunkDrawable : public sf::Drawable {
 public:
     static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);
 
-    ChunkDrawable(Chunk& chunk);
+    ChunkDrawable(const Chunk* chunk);
     void forceRedraw();
 
 private:
@@ -21,7 +21,7 @@ private:
     void redrawTile(unsigned int x, unsigned int y);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
-    Chunk& chunk_;
+    const Chunk* chunk_;
     sf::VertexArray vertices_;
     std::array<int, 8> renderBlocks_;
     std::bitset<8> renderDirty_;
