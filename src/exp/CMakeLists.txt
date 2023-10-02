@@ -28,3 +28,18 @@ target_compile_options(CircuitSim2_experimental PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
+
+add_executable(FlatMap_test
+    FlatMap.test.cpp
+)
+target_include_directories(FlatMap_test PRIVATE .)
+target_link_libraries(FlatMap_test PRIVATE spdlog::spdlog)
+target_compile_features(FlatMap_test PRIVATE cxx_std_11)
+set_target_properties(FlatMap_test PROPERTIES
+    CXX_EXTENSIONS OFF
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+target_compile_options(FlatMap_test PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+)
