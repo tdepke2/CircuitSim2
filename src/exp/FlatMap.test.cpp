@@ -160,6 +160,218 @@ void testAccess() {
     std::cout << "wordMap = " << wordMap << "\n";
 }
 
+template<template<typename...> class Map>
+void testIter() {
+    Map<int, std::string> map1 {
+        {101, "emet"},
+        {56, "dolor"},
+        {-4, "lorem"},
+        {79, "sit"},
+        {3, "ipsum"}
+    };
+    std::cout << "map1 forward: { ";
+    for (auto it = map1.cbegin(); it != map1.cend(); ++it) {
+        std::cout << "[" << it->first << "] -> " << it->second << ", ";
+    }
+    std::cout << "}\n";
+    std::cout << "map1 reverse: { ";
+    for (auto it = map1.rbegin(); it != map1.rend(); ++it) {
+        std::cout << "[" << it->first << "] -> " << it->second << ", ";
+    }
+    std::cout << "}\n";
+
+    const Map<int, std::string, std::greater<int>> map2 {
+        {101, "emet"},
+        {56, "dolor"},
+        {-4, "lorem"},
+        {79, "sit"},
+        {3, "ipsum"}
+    };
+    std::cout << "map2 forward: { ";
+    for (auto it = map2.begin(); it != map2.end(); ++it) {
+        std::cout << "[" << it->first << "] -> " << it->second << ", ";
+    }
+    std::cout << "}\n";
+    std::cout << "map2 reverse: { ";
+    for (auto it = map2.crbegin(); it != map2.crend(); ++it) {
+        std::cout << "[" << it->first << "] -> " << it->second << ", ";
+    }
+    std::cout << "}\n";
+
+    Point points[3] = {{2, 0}, {1, 0}, {3, 0}};
+    auto pointCmp = [](const Point* lhs, const Point* rhs) {
+        return lhs->x < rhs->x;
+    };
+    Map<Point*, double, decltype(pointCmp)> magnitudes(
+        {{points, 2}, {points + 1, 1}, {points + 2, 3}},
+        pointCmp
+    );
+
+    // Change each y-coordinate from 0 to the magnitude.
+    for (auto iter = magnitudes.begin(); iter != magnitudes.end(); ++iter) {
+        auto p = iter->first;
+        p->y = magnitudes[p];
+    }
+
+    // Update and print the magnitude of each node.
+    std::cout << "magnitudes = { ";
+    for (auto iter = magnitudes.begin(); iter != magnitudes.end(); ++iter) {
+        auto p = iter->first;
+        magnitudes[p] = std::hypot(p->x, p->y);
+        std::cout << "[(" << p->x << ", " << p->y << ")] -> " << iter->second << ", ";
+    }
+    std::cout << "}\n";
+
+    // Repeat the above with the range-based for loop.
+    std::cout << "magnitudes = { ";
+    for (auto i : magnitudes) {
+        auto p = i.first;
+        p->y = i.second;
+        magnitudes[p] = std::hypot(p->x, p->y);
+        std::cout << "[(" << p->x << ", " << p->y << ")] -> " << magnitudes[p] << ", ";
+    }
+    std::cout << "}\n";
+}
+
+template<typename Iter, typename Key, typename Value>
+void checkInsert(const std::pair<Iter, bool>& result, const std::pair<Key, Value>& expectedNode, bool expectedStatus) {
+    //std::cout << "check {{" << result.first->first << ", " << result.first->second << "}, " << result.second << "}\n";
+    //std::cout << "matches {{" << expectedNode.first << ", " << expectedNode.second << "}, " << expectedStatus << "}\n";
+    assert(result.first->first == expectedNode.first);
+    assert(result.first->second == expectedNode.second);
+    assert(result.second == expectedStatus);
+}
+
+template<typename T>
+class CustomType {
+public:
+    CustomType() {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() default ctor\n";
+    }
+    CustomType(const T& t) : t(t) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() lvalue ctor, t=" << this->t << "\n";
+    }
+    CustomType(T&& t) : t(std::move(t)) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() rvalue ctor, t=" << this->t << "\n";
+    }
+    CustomType(const CustomType& other) : t(other.t) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() copy ctor, t=" << this->t << "\n";
+    }
+    CustomType(CustomType&& other) noexcept : t(std::move(other.t)) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() move ctor, t=" << this->t << "\n";
+    }
+    CustomType& operator=(const CustomType& other) {
+        t = other.t;
+        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() copy assign, t=" << this->t << "\n";
+        return *this;
+    }
+    CustomType& operator=(CustomType&& other) noexcept {
+        t = std::move(other.t);
+        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() move assign, t=" << this->t << "\n";
+        return *this;
+    }
+    ~CustomType() {
+        std::cout << "CustomType<" << typeid(T).name() << ">::~CustomType() dtor, t=" << this->t << "\n";
+    }
+    const T& get() const {
+        return t;
+    }
+
+private:
+    T t;
+
+    friend std::ostream& operator<<(std::ostream& out, const T& t) {
+        return out << "(" << t << ")";
+    }
+};
+
+template<template<typename...> class Map>
+void testModify() {
+    Map<std::string, float> heights;
+    assert(heights.size() == 0 && heights.empty());
+
+    // Insert from rvalue reference.
+    const auto insertResult = heights.insert({"Hinata", 162.8f});
+    checkInsert(insertResult, std::pair<std::string, float>("Hinata", 162.8f), true);
+    assert(heights.size() == 1 && !heights.empty());
+    assert(heights.find("Hinata") == insertResult.first);
+    assert(heights.find("Kageyama") == heights.end());
+
+    // Insert from lvalue reference.
+    const auto insertResult2 = heights.insert(*insertResult.first);
+    checkInsert(insertResult2, *insertResult.first, false);
+    assert(heights.size() == 1 && !heights.empty());
+
+    std::pair<std::string, float> nodeAzumane("Azumane", 184.7f);
+    const auto insertResult3 = heights.insert(nodeAzumane);
+    checkInsert(insertResult3, nodeAzumane, true);
+    assert(heights.size() == 2 && !heights.empty());
+
+    // Insert via forwarding to emplace.
+    const auto insertResult4 = heights.insert(std::pair<std::string, float>{"Kageyama", 180.6f});
+    checkInsert(insertResult4, std::pair<std::string, float>("Kageyama", 180.6f), true);
+    assert(heights.size() == 3 && !heights.empty());
+
+    // Insert from iterator range.
+    Map<std::string, float> heightsCopy;
+    heightsCopy.insert(std::begin(heights), std::end(heights));
+    assert(heightsCopy.size() == 3 && !heightsCopy.empty());
+
+    heights.clear();
+    assert(heights.size() == 0 && heights.empty());
+
+    // Insert from initializer_list.
+    heightsCopy.insert({{"Kozume", 169.2f}, {"Kuroo", 187.7f}});
+    assert(heightsCopy.size() == 5 && !heightsCopy.empty());
+
+    heightsCopy.insert({{"Tsukishima", 188.3f}, {"Kageyama", -99.8f}});
+    assert(heightsCopy.size() == 6 && !heightsCopy.empty());
+
+    heightsCopy.insert({{"Azumane", 0.0f}, {"Azumane", 0.0f}, {"Azumane", 0.0f}});
+    assert(heightsCopy.size() == 6 && !heightsCopy.empty());
+
+    heightsCopy.insert(heightsCopy.begin(), heightsCopy.end());
+    assert(heightsCopy.size() == 6 && !heightsCopy.empty());
+
+    assert(heightsCopy.find("Kozume")->first == "Kozume");
+    assert(heightsCopy.count("Kozume") == 1);
+    assert(heightsCopy.find("Tsukishima")->first == "Tsukishima");
+    assert(heightsCopy.count("Tsukishima") == 1);
+    assert(heightsCopy.find("Ayanami") == heightsCopy.end());
+    assert(heightsCopy.count("Ayanami") == 0);
+
+    std::cout << "heights = " << heightsCopy << "\n";
+
+    Map<std::string, std::string> letters;
+
+    // Use pair's move constructor.
+    letters.emplace(std::make_pair(std::string("a"), std::string("a")));
+
+    // Use pair's converting move constructor.
+    letters.emplace(std::make_pair("b", "abcd"));
+
+    // Use pair's template constructor.
+    letters.emplace("d", "ddd");
+
+    // Use pair's piecewise constructor.
+    letters.emplace(std::piecewise_construct, std::forward_as_tuple("c"), std::forward_as_tuple(10, 'c'));
+
+    std::cout << "letters = " << letters << "\n";
+
+
+
+    // Some quick tests for the CustomType.
+    CustomType<int> x(123);
+    CustomType<int> y(x.get());
+    CustomType<int> z(y);
+    {
+        CustomType<int> temp(42);
+        CustomType<int> w(std::move(temp));
+    }
+    x = CustomType<int>(456);
+    std::cout << "done\n";
+}
+
 int main() {
     spdlog::info("Started FlatMap test.");
 
@@ -204,6 +416,16 @@ int main() {
     testAccess<std::map>();
     std::cout << "\ntestAccess<FlatMap>()\n";
     testAccess<FlatMap>();
+
+    std::cout << "\n\ntestIter<std::map>()\n";
+    testIter<std::map>();
+    std::cout << "\ntestIter<FlatMap>()\n";
+    testIter<FlatMap>();
+
+    std::cout << "\n\ntestModify<std::map>()\n";
+    testModify<std::map>();
+    std::cout << "\ntestModify<FlatMap>()\n";
+    //testModify<FlatMap>();
 
     return 0;
 }
