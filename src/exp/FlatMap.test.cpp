@@ -65,6 +65,9 @@ void testCtor() {
     Map<std::string, int> range2(map1.rbegin(), map1.rend());
     std::cout << "range ctor (reversed) = " << range2 << "\n";
 
+    Map<std::string, int> range3(map1.begin(), map1.begin());
+    std::cout << "range ctor (empty) = " << range3 << "\n";
+
     // Copy constructor.
     Map<std::string, int> copied1(map1);
     std::cout << "copy ctor = " << copied1 << "\n";
@@ -242,46 +245,51 @@ void checkInsert(const std::pair<Iter, bool>& result, const std::pair<Key, Value
     assert(result.second == expectedStatus);
 }
 
+int idCounter = 0;
 template<typename T>
 class CustomType {
 public:
-    CustomType() {
-        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() default ctor\n";
+    CustomType() : t(), id(idCounter++) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() id" << id << " default ctor\n";
     }
-    CustomType(const T& t) : t(t) {
-        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() lvalue ctor, t=" << this->t << "\n";
+    CustomType(const T& t) : t(t), id(idCounter++) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() id" << id << " lvalue ctor, t=" << this->t << "\n";
     }
-    CustomType(T&& t) : t(std::move(t)) {
-        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() rvalue ctor, t=" << this->t << "\n";
+    CustomType(T&& t) : t(std::move(t)), id(idCounter++) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() id" << id << " rvalue ctor, t=" << this->t << "\n";
     }
-    CustomType(const CustomType& other) : t(other.t) {
-        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() copy ctor, t=" << this->t << "\n";
+    CustomType(const CustomType& other) : t(other.t), id(idCounter++) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() id" << id << " copy ctor, t=" << this->t << "\n";
     }
-    CustomType(CustomType&& other) noexcept : t(std::move(other.t)) {
-        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() move ctor, t=" << this->t << "\n";
+    CustomType(CustomType&& other) noexcept : t(std::move(other.t)), id(idCounter++) {
+        std::cout << "CustomType<" << typeid(T).name() << ">::CustomType() id" << id << " move ctor, t=" << this->t << "\n";
     }
     CustomType& operator=(const CustomType& other) {
         t = other.t;
-        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() copy assign, t=" << this->t << "\n";
+        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() id" << id << " copy assign, t=" << this->t << "\n";
         return *this;
     }
     CustomType& operator=(CustomType&& other) noexcept {
         t = std::move(other.t);
-        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() move assign, t=" << this->t << "\n";
+        std::cout << "CustomType<" << typeid(T).name() << ">::operator=() id" << id << " move assign, t=" << this->t << "\n";
         return *this;
     }
     ~CustomType() {
-        std::cout << "CustomType<" << typeid(T).name() << ">::~CustomType() dtor, t=" << this->t << "\n";
+        std::cout << "CustomType<" << typeid(T).name() << ">::~CustomType() id" << id << " dtor, t=" << this->t << "\n";
     }
     const T& get() const {
         return t;
     }
+    bool operator<(const CustomType& other) const {
+        return t < other.t;
+    }
 
 private:
     T t;
+    int id;
 
-    friend std::ostream& operator<<(std::ostream& out, const T& t) {
-        return out << "(" << t << ")";
+    friend std::ostream& operator<<(std::ostream& out, const CustomType& custom) {
+        return out << "(id" << custom.id << ":" << custom.t << ")";
     }
 };
 
@@ -314,11 +322,10 @@ void testModify() {
 
     // Insert from iterator range.
     Map<std::string, float> heightsCopy;
+    heightsCopy.insert(std::begin(heights), std::begin(heights));
+    assert(heightsCopy.size() == 0 && heightsCopy.empty());
     heightsCopy.insert(std::begin(heights), std::end(heights));
     assert(heightsCopy.size() == 3 && !heightsCopy.empty());
-
-    heights.clear();
-    assert(heights.size() == 0 && heights.empty());
 
     // Insert from initializer_list.
     heightsCopy.insert({{"Kozume", 169.2f}, {"Kuroo", 187.7f}});
@@ -330,17 +337,48 @@ void testModify() {
     heightsCopy.insert({{"Azumane", 0.0f}, {"Azumane", 0.0f}, {"Azumane", 0.0f}});
     assert(heightsCopy.size() == 6 && !heightsCopy.empty());
 
-    heightsCopy.insert(heightsCopy.begin(), heightsCopy.end());
-    assert(heightsCopy.size() == 6 && !heightsCopy.empty());
+    // Insert partial duplicates, and a full range.
+    heights.insert(heightsCopy.begin(), heightsCopy.end());
+    assert(heights.size() == 6 && !heights.empty());
+    heights.clear();
+    assert(heights.size() == 0 && heights.empty());
+    heights.insert(heightsCopy.begin(), heightsCopy.end());
+    assert(heights.size() == 6 && !heights.empty());
+    heights.insert(heightsCopy.begin(), heightsCopy.end());
+    assert(heights.size() == 6 && !heights.empty());
+    assert(heights == heightsCopy);
 
-    assert(heightsCopy.find("Kozume")->first == "Kozume");
-    assert(heightsCopy.count("Kozume") == 1);
-    assert(heightsCopy.find("Tsukishima")->first == "Tsukishima");
-    assert(heightsCopy.count("Tsukishima") == 1);
-    assert(heightsCopy.find("Ayanami") == heightsCopy.end());
-    assert(heightsCopy.count("Ayanami") == 0);
+    heights.clear();
+    assert(heights.size() == 0 && heights.empty());
+    heights.swap(heightsCopy);
+    assert(heights.size() == 6 && !heights.empty());
+    assert(heightsCopy.size() == 0 && heightsCopy.empty());
+    assert(heights != heightsCopy);
 
-    std::cout << "heights = " << heightsCopy << "\n";
+    assert(heights.find("Kozume")->first == "Kozume");
+    assert(heights.count("Kozume") == 1);
+    assert(heights.find("Tsukishima")->first == "Tsukishima");
+    assert(heights.count("Tsukishima") == 1);
+    assert(heights.find("Ayanami") == heights.end());
+    assert(heights.count("Ayanami") == 0);
+
+    std::cout << "heights = " << heights << "\n";
+
+    auto eraseResult = heights.erase(heights.find("Kozume"));
+    assert(eraseResult == heights.find("Kuroo"));
+    assert(heights.size() == 5 && !heights.empty());
+    std::cout << "heights (erase Kozume) = " << heights << "\n";
+
+    assert(heights.erase("Azumane") == 1);
+    assert(heights.size() == 4 && !heights.empty());
+    assert(heights.erase("unknown") == 0);
+    assert(heights.size() == 4 && !heights.empty());
+    std::cout << "heights (erase Azumane) = " << heights << "\n";
+
+    eraseResult = heights.erase(heights.find("Kageyama"), heights.find("Tsukishima"));
+    assert(eraseResult == heights.find("Tsukishima"));
+    assert(heights.size() == 2 && !heights.empty());
+    std::cout << "heights (erase [Kageyama, Tsukishima) range)  = " << heights << "\n";
 
     Map<std::string, std::string> letters;
 
@@ -357,19 +395,33 @@ void testModify() {
     letters.emplace(std::piecewise_construct, std::forward_as_tuple("c"), std::forward_as_tuple(10, 'c'));
 
     std::cout << "letters = " << letters << "\n";
+}
 
+template<template<typename...> class Map>
+void testMoveSemantics() {
+    Map<CustomType<std::string>, CustomType<int>> colors;
+    std::cout << "Assign color red from rvalues.\n";
+    colors[CustomType<std::string>("red")] = 0xff0000;
 
+    std::cout << "\nAssign color green from lvalues.\n";
+    CustomType<std::string> greenName("green");
+    CustomType<int> greenColor(0x00ff00);
+    colors[greenName] = greenColor;
 
-    // Some quick tests for the CustomType.
-    CustomType<int> x(123);
-    CustomType<int> y(x.get());
-    CustomType<int> z(y);
-    {
-        CustomType<int> temp(42);
-        CustomType<int> w(std::move(temp));
-    }
-    x = CustomType<int>(456);
-    std::cout << "done\n";
+    std::cout << "\nConstruct copy of colors.\n";
+    decltype(colors) colors2(colors.begin(), colors.end());
+
+    std::cout << "\nInsert blue from lvalue.\n";
+    typename decltype(colors2)::value_type blueValue("blue", 0x0000ff);
+    colors2.insert(blueValue);
+
+    std::cout << "\nInsert yellow from rvalue.\n";
+    colors2.insert(typename decltype(colors2)::value_type("yellow", 0xffff00));
+
+    std::cout << "\nEmplace white from rvalues.\n";
+    colors2.emplace("white", 0xffffff);
+
+    std::cout << "\ncolors2 = " << colors2 << "\n";
 }
 
 int main() {
@@ -407,25 +459,30 @@ int main() {
         ++i;
     }*/
 
-    std::cout << "\n\ntestCtor<std::map>()\n";
+    std::cout << "\n\n======== testCtor<std::map>() ========\n";
     testCtor<std::map>();
-    std::cout << "\ntestCtor<FlatMap>()\n";
+    std::cout << "\n======== testCtor<FlatMap>() ========\n";
     testCtor<FlatMap>();
 
-    std::cout << "\n\ntestAccess<std::map>()\n";
+    std::cout << "\n\n======== testAccess<std::map>() ========\n";
     testAccess<std::map>();
-    std::cout << "\ntestAccess<FlatMap>()\n";
+    std::cout << "\n======== testAccess<FlatMap>() ========\n";
     testAccess<FlatMap>();
 
-    std::cout << "\n\ntestIter<std::map>()\n";
+    std::cout << "\n\n======== testIter<std::map>() ========\n";
     testIter<std::map>();
-    std::cout << "\ntestIter<FlatMap>()\n";
+    std::cout << "\n======== testIter<FlatMap>() ========\n";
     testIter<FlatMap>();
 
-    std::cout << "\n\ntestModify<std::map>()\n";
+    std::cout << "\n\n======== testModify<std::map>() ========\n";
     testModify<std::map>();
-    std::cout << "\ntestModify<FlatMap>()\n";
-    //testModify<FlatMap>();
+    std::cout << "\n======== testModify<FlatMap>() ========\n";
+    testModify<FlatMap>();
+
+    std::cout << "\n\n======== testMoveSemantics<std::map>() ========\n";
+    testMoveSemantics<std::map>();
+    std::cout << "\n======== testMoveSemantics<FlatMap>() ========\n";
+    testMoveSemantics<FlatMap>();
 
     return 0;
 }
