@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
-#include <queue>
+#include <iterator>
 #include <utility>
 #include <vector>
 
@@ -33,117 +33,50 @@ public:
     // middle) to [middle, last). Elements that are not unique from the second
     // range are discarded, reducing the vector size. This is very similar to
     // running std::inplace_merge() and std::unique() on the ranges.
-    void inplaceMergeUnique(iterator first, iterator middle, iterator last) {
-        std::queue<value_type> buffer;
-        while (middle != last) {
-            if (first == middle) {
+    //void inplaceMergeUnique(iterator first, iterator middle, iterator last) {
+        
+    //}
 
-            }
-            if (buffer.empty()) {
-                if (valueToValueComp_(*first, *middle)) {
-                    // first right where it should be
-                    ++first;
-                } else if (valueToValueComp_(*middle, *first)) {
-                    // middle goes first
-                    buffer.push(std::move(*first));
-                    *first = std::move(*middle);
-                    ++first;
-                    ++middle;
-                } else {
-                    // remove middle
-                    ++middle;
+    void mergeUnique(std::vector<value_type>& newValues) {
+        std::stable_sort(newValues.begin(), newValues.end(), valueToValueComp_);
+        newValues.erase(
+            std::unique(newValues.begin(), newValues.end(), [this](const auto& lhs, const auto& rhs) {
+                return !comp_(lhs.first, rhs.first);
+            }),
+            newValues.end()
+        );
+
+        std::vector<value_type> newVec;
+        newVec.reserve(vec_.size() + newValues.size());
+
+        iterator first1 = vec_.begin(), last1 = vec_.end();
+        iterator first2 = newValues.begin(), last2 = newValues.end();
+        while (first1 != last1) {
+            if (first2 == last2) {
+                std::move(first1, last1, std::back_inserter(newVec));
+                vec_.swap(newVec);
+                return;
+            } else if (valueToValueComp_(*first1, *first2)) {
+                // Range 1 has the smaller element.
+                newVec.emplace_back(std::move(*first1));
+                ++first1;
+            } else if (valueToValueComp_(*first2, *first1)) {
+                // Range 2 has the smaller element (or a duplicate).
+                // FIXME after running unique(), couldn't there never be a duplicate?
+                if (newVec.empty() || valueToValueComp_(newVec.back(), *first2)) {
+                    newVec.emplace_back(std::move(*first2));
                 }
+                ++first2;
             } else {
-                if (valueToValueComp_(buffer.front(), *middle)) {
-                    // buffer comes first
-                    buffer.push(std::move(*first));
-                    *first = std::move(buffer.front());
-                    buffer.pop();
-                    ++first;
-                } else if (valueToValueComp_(*middle, buffer.front())) {
-                    // middle goes first
-                    buffer.push(std::move(*first));
-                    *first = std::move(*middle);
-                    ++first;
-                    ++middle;
-                } else {
-                    // remove middle
-                    ++middle;
-                }
+                // Equal, choose from range 1.
+                newVec.emplace_back(std::move(*first1));
+                ++first1;
+                ++first2;
             }
         }
-        while (!buffer.empty()) {
-            // insert buffer at first
-            *first = std::move(buffer.front());
-            buffer.pop();
-            ++first;
-        }
-        vec_.erase(first, last);
+        std::move(first2, last2, std::back_inserter(newVec));
+        vec_.swap(newVec);
     }
-
-/*
-ex first next to middle:
- v  v
-[0, 1, 2, 3, 4]
-less
-    v  v
-[0, 1, 2, 3, 4]
-...
-          v  v
-[0, 1, 2, 3, 4]
-
-
- v  v
-[1, 0, 2, 3]
-greater
-    v  v
-[0, -, 2, 3]    q[1]
-less
-       v  v
-[0, 1, 2, 3]
-
-
- v  v
-[2, 0, 2, 3]
-greater
-    v  v
-[0, -, 2, 3]    q[2]
-equal
-    v     v
-[0, 2, -, 3]
-
-
- v  v
-[0, 0, 1, 2]
-equal
- v     v
-[0, -, 1, 2]
-less
-    v     v
-[0, 1, -, 2]
-
-
- v  v
-[0, 1, 1, 2, 2]
-
-
-ex first all less:
- v        v
-[0, 1, 2, 5, 6, 7]
-
-ex middle all less:
- v        v
-[4, 5, 6, 0, 1, 2]
-
-ex mixed:
- v           v
-[0, 3, 4, 5, 1, 2, 4, 6]
-
-
-in conclusion, in-place merge is very complex and will probably be faster to just merge with a copy.
-still worth testing to confirm this will actually be an improvement over the std::merge/std::unique method.
-
-*/
 
     FlatMap(const Compare& comp = Compare()) :
         vec_(),
@@ -257,30 +190,30 @@ still worth testing to confirm this will actually be an improvement over the std
         vec_.clear();
     }
     std::pair<iterator, bool> insert(const value_type& value) {
-        std::cout << "FlatMap::insert({" << value.first << ", " << value.second << "})\n";
+        //std::cout << "FlatMap::insert({" << value.first << ", " << value.second << "})\n";
         auto pos = std::lower_bound(vec_.begin(), vec_.end(), value.first, valueToKeyComp_);
-        std::cout << "lower_bound found at " << pos - vec_.begin() << "\n";
+        //std::cout << "lower_bound found at " << pos - vec_.begin() << "\n";
         if (pos == vec_.end() || comp_(value.first, pos->first)) {
-            std::cout << "new element added\n";
-            return {vec_.insert(pos, value), true};
+            //std::cout << "new element added\n";
+            return {vec_.emplace(pos, value), true};
         } else {
-            std::cout << "duplicate detected.\n";
+            //std::cout << "duplicate detected.\n";
             return {pos, false};
         }
     }
     std::pair<iterator, bool> insert(value_type&& value) {
-        std::cout << "FlatMap::insert(rvalue ref {" << value.first << ", " << value.second << "})\n";
+        //std::cout << "FlatMap::insert(rvalue ref {" << value.first << ", " << value.second << "})\n";
         auto pos = std::lower_bound(vec_.begin(), vec_.end(), value.first, valueToKeyComp_);
-        std::cout << "lower_bound found at " << pos - vec_.begin() << "\n";
+        //std::cout << "lower_bound found at " << pos - vec_.begin() << "\n";
         if (pos == vec_.end() || comp_(value.first, pos->first)) {
-            std::cout << "new element added\n";
-            return {vec_.insert(pos, std::move(value)), true};
+            //std::cout << "new element added\n";
+            return {vec_.emplace(pos, std::move(value)), true};
         } else {
-            std::cout << "duplicate detected.\n";
+            //std::cout << "duplicate detected.\n";
             return {pos, false};
         }
     }
-    // Note: the behavior is undefined if `first` and `last` are iterators into `*this`.
+    // Note: the behavior is undefined if `first` and `last` are iterators into `*this`. FIXME this should be fixed with new mergeUnique() function?
     template<typename InputIt>
     void insert(InputIt first, InputIt last) {
         if (first == last) {
@@ -322,15 +255,21 @@ still worth testing to confirm this will actually be an improvement over the std
     std::pair<iterator, bool> emplace(Args&&... args) {
         // Constructing a temporary to pass to insert() probably isn't the best
         // way to do this, boost::container::flat_map does something fancy here.
-
-
-        // FIXME idea: use TMP to specialize two emplace functions, one accepts K, V types and other accepts value_type.
-        // now we can get the key without the temporary
-        // hang on, pair can be constructed with piecewise, maybe treat that as special case?
-
-
         return insert(value_type(std::forward<Args>(args)...));
     }
+
+
+    /*template<typename K, typename M>
+    std::pair<iterator, bool> emplace(K&& key, M&& mapped) {
+        auto pos = std::lower_bound(vec_.begin(), vec_.end(), key, valueToKeyComp_);
+        if (pos == vec_.end() || comp_(key, pos->first)) {
+            return {vec_.emplace(pos, std::forward<K>(key), std::forward<M>(mapped)), true};
+        } else {
+            return {pos, false};
+        }
+    }*/
+
+
     iterator erase(iterator pos) {
         return vec_.erase(pos);
     }

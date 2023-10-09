@@ -1,8 +1,12 @@
 #include <FlatMap.h>
 
+#include <array>
+#include <bitset>
+#include <cassert>
+#include <chrono>
 #include <iostream>
 #include <map>
-#include <spdlog/spdlog.h>
+#include <random>
 #include <string>
 
 template<typename T>
@@ -424,15 +428,122 @@ void testMoveSemantics() {
     std::cout << "\ncolors2 = " << colors2 << "\n";
 }
 
+struct MyStruct {
+    MyStruct() : data(), bits() {}
+    MyStruct(int x) : data(), bits(x) { data.fill(x); }
+    std::array<int, 24> data;
+    std::bitset<64> bits;
+
+    friend std::ostream& operator<<(std::ostream& out, const MyStruct& x) {
+        return out << "MyStruct(" << x.data[0] << ", " << x.bits << ")";
+    }
+};
+
+// Randomly chooses to allocate some data in heap, causing fragmentation for
+// objects that don't use contiguous memory (like std::map).
+void randomHeapAllocate(double randVal, std::vector<int*>& numberArray) {
+    if (randVal < 0.75) {
+        numberArray.push_back(new int[64]);
+    }
+}
+
+template<template<typename...> class Map>
+void testPerformance() {
+    std::mt19937 mersenneRand(123);
+    std::uniform_real_distribution<> dist1(0.0, 1.0);
+    std::uniform_int_distribution<> distN(1, 50000);
+    std::vector<int*> numberArray;
+
+    // Emplace single elements randomly.
+    auto t1 = std::chrono::high_resolution_clock::now();
+    Map<int, MyStruct> map1;
+    int map1EmplaceCount = 0;
+    for (int i = 0; i < 50000; ++i) {
+        auto result = map1.emplace(distN(mersenneRand), distN(mersenneRand));
+        map1EmplaceCount += result.second;
+
+        randomHeapAllocate(dist1(mersenneRand), numberArray);
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    // Iteration.
+    long long map1EmplaceSum = 0;
+    for (const auto& v : map1) {
+        map1EmplaceSum += v.second.data[0];
+    }
+    auto t3 = std::chrono::high_resolution_clock::now();
+
+    // Random search.
+    int map1SearchCount = 0;
+    long long map1SearchSum = 0;
+    for (int i = 0; i < 1000; ++i) {
+        auto result = map1.find(distN(mersenneRand));
+        if (result != map1.end()) {
+            ++map1SearchCount;
+            map1SearchSum += result->second.data[0];
+        }
+    }
+    auto t4 = std::chrono::high_resolution_clock::now();
+
+    // Insert range of random elements.
+    Map<double, MyStruct> map2;
+    for (int i = 0; i < 1000; ++i) {
+        map2.insert({
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+            typename decltype(map2)::value_type(dist1(mersenneRand), distN(mersenneRand)),
+        });
+    }
+    auto t5 = std::chrono::high_resolution_clock::now();
+
+    // Iteration part 2.
+    long long map2InsertSum = 0;
+    for (const auto& v : map2) {
+        map2InsertSum += v.second.data[0];
+    }
+    auto t6 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Emplace time: " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << "us\n";
+    std::cout << "map1EmplaceCount = " << map1EmplaceCount << ", numberArray.size() = " << numberArray.size() << "\n\n";
+
+    std::cout << "Iteration time: " << std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() << "us\n";
+    std::cout << "map1EmplaceSum = " << map1EmplaceSum << "\n\n";
+
+    std::cout << "Search time: " << std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() << "us\n";
+    std::cout << "map1SearchCount = " << map1SearchCount << ", map1SearchSum = " << map1SearchSum << "\n\n";
+
+    std::cout << "Insert range time: " << std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() << "us\n";
+    std::cout << "map2.size() = " << map2.size() << "\n\n";
+
+    std::cout << "Iteration time: " << std::chrono::duration_cast<std::chrono::microseconds>(t6 - t5).count() << "us\n";
+    std::cout << "map2InsertSum = " << map2InsertSum << "\n\n";
+
+    for (auto& x : numberArray) {
+        delete[] x;
+    }
+}
+
 int main() {
-    spdlog::info("Started FlatMap test.");
+    std::cout << "Started FlatMap test.\n";
 
     std::map<int, std::string> stuff;
     stuff.key_comp();
+    stuff.emplace(1, "test");
 
-    /*std::less<int> comp;
-    spdlog::info("1<2 is {}, 4<3 is {}", comp(1, 2), comp(4, 3));
-
+    /*
     std::map<int, std::string> m;
     m.insert(decltype(m)::value_type(1, "hello"));
     m.insert({decltype(m)::value_type(2, "world"), decltype(m)::value_type(3, "test")});
@@ -459,7 +570,7 @@ int main() {
         ++i;
     }*/
 
-    std::cout << "\n\n======== testCtor<std::map>() ========\n";
+    /*std::cout << "\n\n======== testCtor<std::map>() ========\n";
     testCtor<std::map>();
     std::cout << "\n======== testCtor<FlatMap>() ========\n";
     testCtor<FlatMap>();
@@ -477,12 +588,17 @@ int main() {
     std::cout << "\n\n======== testModify<std::map>() ========\n";
     testModify<std::map>();
     std::cout << "\n======== testModify<FlatMap>() ========\n";
-    testModify<FlatMap>();
+    testModify<FlatMap>();*/
 
-    std::cout << "\n\n======== testMoveSemantics<std::map>() ========\n";
+    /*std::cout << "\n\n======== testMoveSemantics<std::map>() ========\n";
     testMoveSemantics<std::map>();
     std::cout << "\n======== testMoveSemantics<FlatMap>() ========\n";
-    testMoveSemantics<FlatMap>();
+    testMoveSemantics<FlatMap>();*/
+
+    std::cout << "\n\n======== testPerformance<std::map>() ========\n";
+    testPerformance<std::map>();
+    std::cout << "\n======== testPerformance<FlatMap>() ========\n";
+    testPerformance<FlatMap>();
 
     return 0;
 }
