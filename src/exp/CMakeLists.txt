@@ -33,7 +33,6 @@ add_executable(FlatMap_test
     FlatMap.test.cpp
 )
 target_include_directories(FlatMap_test PRIVATE .)
-target_link_libraries(FlatMap_test PRIVATE spdlog::spdlog)
 target_compile_features(FlatMap_test PRIVATE cxx_std_11)
 set_target_properties(FlatMap_test PROPERTIES
     CXX_EXTENSIONS OFF

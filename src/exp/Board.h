@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Chunk.h>
+#include <ChunkDrawable.h>
 #include <ChunkRender.h>
 #include <FlatMap.h>
 
@@ -18,7 +19,6 @@
 
 
 
-class ChunkDrawable;
 class ResourceManager;
 class Tile;
 struct TileSymbol;
@@ -27,7 +27,6 @@ using ChunkCoords = uint64_t;
 
 class Board : public sf::Drawable, public sf::Transformable {
 public:
-    static constexpr int LEVELS_OF_DETAIL = 5;
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
     Board();
@@ -39,9 +38,9 @@ public:
         chunks_.at(i).debugPrintChunk();
     }
     void debugRedrawChunks() {
-        for (auto& chunk : chunks_) {
-            chunk.second.forceRedraw();
-        }
+        //for (auto& chunk : chunks_) {
+            //chunk.second.forceRedraw();
+        //}
     }
     void debugSetDrawChunkBorder(bool enabled);
     unsigned int debugGetChunksDrawn() const;
@@ -65,6 +64,9 @@ private:
 
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
     Chunk& getChunk(int x, int y);
+public:
+    void updateRender();    // FIXME just call this from draw()? the point was to keep it non-const but that may not be a big deal. could also call after setRenderArea().
+private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
@@ -72,9 +74,10 @@ private:
     FlatMap<ChunkCoords, ChunkDrawable> chunkDrawables_;
     sf::View currentView_;
     float currentZoom_;
-    std::vector<ChunkRender> chunkRenderCache_;
+    int currentLod_;
+    std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
     Chunk emptyChunk_;
-    sf::Vector2i lastVisibleTopLeft_, lastVisibleBottomRight_;
+    sf::IntRect lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
     mutable unsigned int debugChunksDrawn_;

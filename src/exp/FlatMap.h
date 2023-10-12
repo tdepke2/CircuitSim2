@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <cstddef>
 #include <functional>
@@ -5,10 +7,6 @@
 #include <iterator>
 #include <utility>
 #include <vector>
-
-
-
-#include <iostream>
 
 
 template<typename Key, typename T, typename Compare = std::less<Key>>
@@ -29,61 +27,11 @@ public:
     using reverse_iterator = typename std::vector<value_type>::reverse_iterator;
     using const_reverse_iterator = typename std::vector<value_type>::const_reverse_iterator;
 
-    // Performs an in-place merge of two consecutive sorted ranges from [first,
-    // middle) to [middle, last). Elements that are not unique from the second
-    // range are discarded, reducing the vector size. This is very similar to
-    // running std::inplace_merge() and std::unique() on the ranges.
-    //void inplaceMergeUnique(iterator first, iterator middle, iterator last) {
-        
-    //}
-
-    void mergeUnique(std::vector<value_type>& newValues) {
-        std::stable_sort(newValues.begin(), newValues.end(), valueToValueComp_);
-        newValues.erase(
-            std::unique(newValues.begin(), newValues.end(), [this](const auto& lhs, const auto& rhs) {
-                return !comp_(lhs.first, rhs.first);
-            }),
-            newValues.end()
-        );
-
-        std::vector<value_type> newVec;
-        newVec.reserve(vec_.size() + newValues.size());
-
-        iterator first1 = vec_.begin(), last1 = vec_.end();
-        iterator first2 = newValues.begin(), last2 = newValues.end();
-        while (first1 != last1) {
-            if (first2 == last2) {
-                std::move(first1, last1, std::back_inserter(newVec));
-                vec_.swap(newVec);
-                return;
-            } else if (valueToValueComp_(*first1, *first2)) {
-                // Range 1 has the smaller element.
-                newVec.emplace_back(std::move(*first1));
-                ++first1;
-            } else if (valueToValueComp_(*first2, *first1)) {
-                // Range 2 has the smaller element (or a duplicate).
-                // FIXME after running unique(), couldn't there never be a duplicate?
-                if (newVec.empty() || valueToValueComp_(newVec.back(), *first2)) {
-                    newVec.emplace_back(std::move(*first2));
-                }
-                ++first2;
-            } else {
-                // Equal, choose from range 1.
-                newVec.emplace_back(std::move(*first1));
-                ++first1;
-                ++first2;
-            }
-        }
-        std::move(first2, last2, std::back_inserter(newVec));
-        vec_.swap(newVec);
-    }
-
     FlatMap(const Compare& comp = Compare()) :
         vec_(),
         comp_(comp),
         valueToKeyComp_(comp),
         valueToValueComp_(comp) {
-        //vec_.reserve(10);
     }
 
     template<typename InputIt>
@@ -93,19 +41,20 @@ public:
         valueToKeyComp_(comp),
         valueToValueComp_(comp) {
 
-        //vec_.reserve(10);
         std::stable_sort(vec_.begin(), vec_.end(), valueToValueComp_);
         auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const auto& lhs, const auto& rhs) {
             return !comp_(lhs.first, rhs.first);
         });
         vec_.erase(newLast, vec_.end());
+
+        //mergeUnique(first, last);
     }
 
     FlatMap(std::initializer_list<value_type> ilist, const Compare& comp = Compare()) :
         FlatMap(ilist.begin(), ilist.end(), comp) {
     }
 
-    T& at(const Key& key) {    // FIXME how to avoid the code duplication with below?
+    T& at(const Key& key) {
         auto val = find(key);
         if (val == vec_.end()) {
             throw std::out_of_range("FlatMap::at");
@@ -219,34 +168,16 @@ public:
         if (first == last) {
             return;
         }
+
         auto insertStart = vec_.insert(vec_.end(), first, last);
-
-        /*std::cout << "insert() presorted = {";
-        for (const auto& v : vec_) {
-            std::cout << "[" << v.first << "] -> " << v.second << ", ";
-        }
-        std::cout << "}\n";*/
-
         std::stable_sort(insertStart, vec_.end(), valueToValueComp_);
-
-        /*std::cout << "insert() after sort = {";
-        for (const auto& v : vec_) {
-            std::cout << "[" << v.first << "] -> " << v.second << ", ";
-        }
-        std::cout << "}\n";*/
-
         std::inplace_merge(vec_.begin(), insertStart, vec_.end(), valueToValueComp_);
-
-        /*std::cout << "insert() after merge = {";
-        for (const auto& v : vec_) {
-            std::cout << "[" << v.first << "] -> " << v.second << ", ";
-        }
-        std::cout << "}\n";*/
-
         auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const auto& lhs, const auto& rhs) {
             return !comp_(lhs.first, rhs.first);
         });
         vec_.erase(newLast, vec_.end());
+
+        //mergeUnique(first, last);
     }
     void insert(std::initializer_list<value_type> ilist) {
         insert(ilist.begin(), ilist.end());
@@ -258,7 +189,7 @@ public:
         return insert(value_type(std::forward<Args>(args)...));
     }
 
-
+    // Potential improvement to emplace, requires K to match the key type.
     /*template<typename K, typename M>
     std::pair<iterator, bool> emplace(K&& key, M&& mapped) {
         auto pos = std::lower_bound(vec_.begin(), vec_.end(), key, valueToKeyComp_);
@@ -268,7 +199,6 @@ public:
             return {pos, false};
         }
     }*/
-
 
     iterator erase(iterator pos) {
         return vec_.erase(pos);
@@ -325,10 +255,6 @@ public:
         return lhs.vec_ != rhs.vec_;
     }
 
-    std::vector<value_type>& debugGetVec() {
-        return vec_;
-    }
-
 private:
     struct ValueToKeyComparator {
         ValueToKeyComparator(const Compare& c) :
@@ -349,8 +275,60 @@ private:
         Compare c;
     };
 
+    //template<typename InputIt>
+    //void mergeUnique(InputIt first, InputIt last);
+
     std::vector<value_type> vec_;
     Compare comp_;
     ValueToKeyComparator valueToKeyComp_;
     ValueToValueComparator valueToValueComp_;
 };
+
+
+// Tested an alternative to std::inplace_merge() and std::unique(), but resulted
+// in about the same performance.
+// 
+// Merges a range of `value_type` into `vec_` discarding any values with
+// duplicate keys. When removing duplicates, existing values in `vec_` take
+// priority.
+/*template<typename Key, typename T, typename Compare>
+template<typename InputIt>
+void FlatMap<Key, T, Compare>::mergeUnique(InputIt first, InputIt last) {
+    // Ensure range 2 is sorted and has no duplicates.
+    std::vector<value_type> newValues(first, last);
+    std::stable_sort(newValues.begin(), newValues.end(), valueToValueComp_);
+    newValues.erase(
+        std::unique(newValues.begin(), newValues.end(), [this](const auto& lhs, const auto& rhs) {
+            return !comp_(lhs.first, rhs.first);
+        }),
+        newValues.end()
+    );
+
+    std::vector<value_type> newVec;
+    newVec.reserve(vec_.size() + newValues.size());
+
+    // Merge the two ranges, discarding elements that are equal from the second range.
+    iterator first1 = vec_.begin(), last1 = vec_.end();
+    iterator first2 = newValues.begin(), last2 = newValues.end();
+    while (first1 != last1) {
+        if (first2 == last2) {
+            std::move(first1, last1, std::back_inserter(newVec));
+            //newVec.insert(newVec.end(), std::make_move_iterator(first1), std::make_move_iterator(last1));
+            vec_.swap(newVec);
+            return;
+        } else if (valueToValueComp_(*first1, *first2)) {
+            newVec.emplace_back(std::move(*first1));
+            ++first1;
+        } else if (valueToValueComp_(*first2, *first1)) {
+            newVec.emplace_back(std::move(*first2));
+            ++first2;
+        } else {
+            newVec.emplace_back(std::move(*first1));
+            ++first1;
+            ++first2;
+        }
+    }
+    std::move(first2, last2, std::back_inserter(newVec));
+    //newVec.insert(newVec.end(), std::make_move_iterator(first2), std::make_move_iterator(last2));
+    vec_.swap(newVec);
+}*/

@@ -543,8 +543,7 @@ int main() {
     stuff.key_comp();
     stuff.emplace(1, "test");
 
-    /*
-    std::map<int, std::string> m;
+    /*std::map<int, std::string> m;
     m.insert(decltype(m)::value_type(1, "hello"));
     m.insert({decltype(m)::value_type(2, "world"), decltype(m)::value_type(3, "test")});
     m.emplace(4, "...");
@@ -564,13 +563,10 @@ int main() {
     m.at(1) = "cool";
     flat.at(1) = "cool";
 
-    size_t i = 0;
-    for (const auto& x : flat.debugGetVec()) {
-        std::cout << "[" << i << "] " << x.first << " -> [" << x.second << "]\n";
-        ++i;
-    }*/
+    std::cout << "m = " << m << "\n";
+    std::cout << "flat = " << flat << "\n";*/
 
-    /*std::cout << "\n\n======== testCtor<std::map>() ========\n";
+    std::cout << "\n\n======== testCtor<std::map>() ========\n";
     testCtor<std::map>();
     std::cout << "\n======== testCtor<FlatMap>() ========\n";
     testCtor<FlatMap>();
@@ -588,12 +584,12 @@ int main() {
     std::cout << "\n\n======== testModify<std::map>() ========\n";
     testModify<std::map>();
     std::cout << "\n======== testModify<FlatMap>() ========\n";
-    testModify<FlatMap>();*/
+    testModify<FlatMap>();
 
-    /*std::cout << "\n\n======== testMoveSemantics<std::map>() ========\n";
+    std::cout << "\n\n======== testMoveSemantics<std::map>() ========\n";
     testMoveSemantics<std::map>();
     std::cout << "\n======== testMoveSemantics<FlatMap>() ========\n";
-    testMoveSemantics<FlatMap>();*/
+    testMoveSemantics<FlatMap>();
 
     std::cout << "\n\n======== testPerformance<std::map>() ========\n";
     testPerformance<std::map>();

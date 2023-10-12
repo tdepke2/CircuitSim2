@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <ChunkRender.h>
 #include <DebugScreen.h>
 #include <ResourceManager.h>
 #include <Tile.h>
@@ -67,7 +68,7 @@ int main() {
                 float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
                 float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel * -0.04f;
                 constexpr float maxZoom = 20.0f;
-                static_assert(maxZoom < (1 << Board::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
+                static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
                 if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
                     zoomLevel += zoomDelta;
@@ -103,6 +104,7 @@ int main() {
 
         window.setView(boardView);
         board.setRenderArea(boardView, zoomLevel, debugScreen);
+        board.updateRender();
         window.draw(board);
 
         window.setView(fullWindowView);

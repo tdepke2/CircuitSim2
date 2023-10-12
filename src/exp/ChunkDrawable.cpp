@@ -2,6 +2,8 @@
 #include <ChunkDrawable.h>
 #include <Tile.h>
 
+#include <algorithm>
+
 
 
 #include <iostream>
@@ -59,39 +61,49 @@ void ChunkDrawable::setupTextureData(const sf::Vector2u& textureSize, unsigned i
     std::cout << "building textureLookup_ finished, final textureId is " << static_cast<int>(textureId) << "\n";
 }
 
-ChunkDrawable::ChunkDrawable(const Chunk* chunk) :
-    chunk_(chunk),
-    vertices_(sf::Triangles, Chunk::WIDTH * Chunk::WIDTH * 6),
-    renderBlocks_{-1, -1, -1, -1, -1, -1, -1, -1},
+ChunkDrawable::ChunkDrawable() :
+    chunk_(nullptr),
+    vertices_(sf::Triangles),
+    renderIndices_(),
     renderDirty_(-1) {
 
-    for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
-        for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
-            sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
+    renderIndices_.fill(-1);
+}
 
-            float px = static_cast<float>(x * tileWidth_);
-            float py = static_cast<float>(y * tileWidth_);
-            tileVertices[0].position = {px, py};
-            tileVertices[1].position = {px + tileWidth_, py};
-            tileVertices[2].position = {px + tileWidth_, py + tileWidth_};
-            tileVertices[3].position = {px + tileWidth_, py + tileWidth_};
-            tileVertices[4].position = {px, py + tileWidth_};
-            tileVertices[5].position = {px, py};
-
-            redrawTile(x, y);
-        }
+void ChunkDrawable::setChunk(const Chunk* chunk) {
+    chunk_ = chunk;
+    if (chunk != nullptr) {
+        markDirty();
     }
 }
 
-void ChunkDrawable::forceRedraw() {
-    for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
-        for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
-            redrawTile(x, y);
-        }
-    }
+const Chunk* ChunkDrawable::getChunk() const {
+    return chunk_;
 }
 
-void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) {
+void ChunkDrawable::setRenderIndex(int currentLod, int renderIndex) {
+    renderIndices_[currentLod] = renderIndex;
+}
+
+int ChunkDrawable::getRenderIndex(int currentLod) const {
+    return renderIndices_[currentLod];
+}
+
+bool ChunkDrawable::hasAnyRenderIndex() const {
+    return std::any_of(renderIndices_.begin(), renderIndices_.end(), [](int index) {
+        return index != -1;
+    });
+}
+
+void ChunkDrawable::markDirty() {
+    renderDirty_ = -1;
+}
+
+bool ChunkDrawable::isRenderDirty(int currentLod) const {
+    return renderDirty_.test(currentLod);
+}
+
+void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) const {
     sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
     TileData tileData = chunk_->tiles_[y * Chunk::WIDTH + x];
 
@@ -115,5 +127,31 @@ void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) {
 }
 
 void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if (vertices_.getVertexCount() == 0) {
+        vertices_.resize(Chunk::WIDTH * Chunk::WIDTH * 6);
+        for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
+            for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
+                sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
+
+                float px = static_cast<float>(x * tileWidth_);
+                float py = static_cast<float>(y * tileWidth_);
+                tileVertices[0].position = {px, py};
+                tileVertices[1].position = {px + tileWidth_, py};
+                tileVertices[2].position = {px + tileWidth_, py + tileWidth_};
+                tileVertices[3].position = {px + tileWidth_, py + tileWidth_};
+                tileVertices[4].position = {px, py + tileWidth_};
+                tileVertices[5].position = {px, py};
+
+                redrawTile(x, y);
+            }
+        }
+    } else {
+        for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
+            for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
+                redrawTile(x, y);
+            }
+        }
+    }
+
     target.draw(vertices_, states);
 }
