@@ -496,7 +496,9 @@ void Board::updateRender() {
     for (int y = topLeft.y; y <= bottomRight.y; ++y) {
         for (int x = topLeft.x; x <= bottomRight.x; ++x) {
             auto chunkDrawable = chunkDrawables_.find(packChunkCoords(x, y));
-            if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->second.isRenderDirty(currentLod_)) {
+            if (chunkDrawable == chunkDrawables_.end()) {
+                emptyChunkVisible = true;
+            } else if (chunkDrawable->second.isRenderDirty(currentLod_)) {
                 if (chunkDrawable->second.getRenderIndex(currentLod_) == -1) {
                     chunkRenderCache_[currentLod_].allocateBlock(currentLod_, chunkDrawables_, packChunkCoords(x, y), lastVisibleArea_);
 
@@ -507,18 +509,16 @@ void Board::updateRender() {
                 sf::RenderStates states;
                 states.texture = tilesetGrid_;
                 chunkRenderCache_[currentLod_].drawChunk(currentLod_, chunkDrawables_.at(packChunkCoords(x, y)), states);
-            } else {
-                emptyChunkVisible = true;
             }
         }
     }
     if (emptyChunkVisible) {
         // FIXME repeat above steps for empty chunk.
     }
+    chunkRenderCache_[currentLod_].display();
 }
 
 void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    states.transform *= getTransform();
 
     //std::cout << bottomRight.x << "    " << bottomRight.y << "\n";
     /*int totalDrawn = 0;

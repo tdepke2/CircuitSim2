@@ -65,15 +65,16 @@ ChunkDrawable::ChunkDrawable() :
     chunk_(nullptr),
     vertices_(sf::Triangles),
     renderIndices_(),
-    renderDirty_(-1) {
+    renderDirty_() {
 
     renderIndices_.fill(-1);
+    renderDirty_.set();
 }
 
 void ChunkDrawable::setChunk(const Chunk* chunk) {
     chunk_ = chunk;
     if (chunk != nullptr) {
-        markDirty();
+        renderDirty_.set();
     }
 }
 
@@ -83,6 +84,11 @@ const Chunk* ChunkDrawable::getChunk() const {
 
 void ChunkDrawable::setRenderIndex(int currentLod, int renderIndex) {
     renderIndices_[currentLod] = renderIndex;
+
+
+    // FIXME still an issue here, setting the render index should not invalidate the draw for all lods, just set it for the current lod? ###############################
+
+    renderDirty_.set();
 }
 
 int ChunkDrawable::getRenderIndex(int currentLod) const {
@@ -96,7 +102,7 @@ bool ChunkDrawable::hasAnyRenderIndex() const {
 }
 
 void ChunkDrawable::markDirty() {
-    renderDirty_ = -1;
+    renderDirty_.set();
 }
 
 bool ChunkDrawable::isRenderDirty(int currentLod) const {

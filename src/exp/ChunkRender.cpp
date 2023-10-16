@@ -22,6 +22,7 @@ void ChunkRender::setupTextureData(unsigned int tileWidth) {
 ChunkRender::ChunkRender() :
     chunkArea_(0, 0),
     texture_(),
+    textureDirty_(false),
     buffer_(sf::Triangles),
     renderIndexPool_(),
     renderBlocks_() {
@@ -35,6 +36,8 @@ void ChunkRender::resize(int currentLod, const sf::Vector2u& chunkArea) {
         if (!texture_.create(textureSize.x, textureSize.y)) {
             spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, textureSize.x, textureSize.y);
         }
+        texture_.clear(sf::Color::Red);
+        textureDirty_ = true;
         const unsigned int bufferSize = chunkArea.x * chunkArea.y * 6;
         if (!buffer_.create(bufferSize)) {
             spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
@@ -54,12 +57,21 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
         chunkDrawables.at(coords).setRenderIndex(currentLod, renderIndexPool_[poolIndex]);
+        spdlog::debug("Allocated new block (LOD {} at chunk {}, {}) with render index {}.",
+            currentLod, unpackChunkCoordsX(coords), unpackChunkCoordsY(coords), renderIndexPool_[poolIndex]
+        );
         return;
     }
 
     for (auto renderBlock = renderBlocks_.rbegin(); renderBlock != renderBlocks_.rend(); ++renderBlock) {
-        if (!visibleArea.contains(unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords))) {
+        int x = unpackChunkCoordsX(renderBlock->coords);
+        int y = unpackChunkCoordsY(renderBlock->coords);
+        if (x < visibleArea.left || x > visibleArea.left + visibleArea.width || y < visibleArea.top || y > visibleArea.top + visibleArea.height) {
 
+            spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
+                currentLod, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
+                unpackChunkCoordsX(coords), unpackChunkCoordsY(coords)
+            );
             auto chunkDrawableIter = chunkDrawables.find(renderBlock->coords);
             chunkDrawableIter->second.setRenderIndex(currentLod, -1);
             if (chunkDrawableIter->second.getChunk() == nullptr && !chunkDrawableIter->second.hasAnyRenderIndex()) {
@@ -83,7 +95,21 @@ void ChunkRender::drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, 
         static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) % static_cast<int>(chunkArea_.x)) * textureSubdivisionSize),
         static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) / static_cast<int>(chunkArea_.x)) * textureSubdivisionSize)
     );
+    states.transform.scale(
+        1.0f / (1 << currentLod),
+        1.0f / (1 << currentLod)
+    );
+    spdlog::debug("Redrawing LOD {} render index {}.", currentLod, chunkDrawable.getRenderIndex(currentLod));
     texture_.draw(chunkDrawable, states);
+    textureDirty_ = true;
+    chunkDrawable.renderDirty_.reset(currentLod);
+}
+
+void ChunkRender::display() {
+    if (textureDirty_) {
+        texture_.display();
+        textureDirty_ = false;
+    }
 }
 
 bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs) {
@@ -93,6 +119,12 @@ bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlo
 void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     sf::Sprite sprite(texture_.getTexture());
     target.draw(sprite, states);
+    sf::CircleShape c(4.0);
+    c.setFillColor(sf::Color::Red);
+    target.draw(c, states);
+    c.setPosition(sf::Vector2f(texture_.getSize()));
+    c.setFillColor(sf::Color::Green);
+    target.draw(c, states);
     return;
 
     // FIXME 

@@ -25,7 +25,7 @@ struct TileSymbol;
 
 using ChunkCoords = uint64_t;
 
-class Board : public sf::Drawable, public sf::Transformable {
+class Board : public sf::Drawable {
 public:
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
