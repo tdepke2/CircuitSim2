@@ -64,6 +64,7 @@ private:
 
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
     Chunk& getChunk(int x, int y);
+    void pruneChunkDrawables();
 public:
     void updateRender();    // FIXME just call this from draw()? the point was to keep it non-const but that may not be a big deal. could also call after setRenderArea().
 private:

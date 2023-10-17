@@ -481,6 +481,19 @@ Chunk& Board::getChunk(int x, int y) {
     return chunk->second;
 }
 
+void Board::pruneChunkDrawables() {
+    spdlog::debug("Pruning chunkDrawables, size is {}.", chunkDrawables_.size());
+    auto newLast = std::remove_if(chunkDrawables_.begin(), chunkDrawables_.end(), [](decltype(chunkDrawables_)::value_type chunkDrawable) {
+        if (!chunkDrawable.second.hasAnyRenderIndex() && chunkDrawable.second.getChunk() == nullptr) {
+            spdlog::debug("Pruning ChunkDrawable at ({}, {})", unpackChunkCoordsX(chunkDrawable.first), unpackChunkCoordsY(chunkDrawable.first));
+            return true;
+        } else {
+            return false;
+        }
+    });
+    chunkDrawables_.erase(newLast, chunkDrawables_.end());
+}
+
 void Board::updateRender() {
     // FIXME we can get these from lastVisibleArea_, we may want to skip rendering altogether if that's not set.
     sf::Vector2i topLeft = {
@@ -492,7 +505,7 @@ void Board::updateRender() {
         static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
     };
 
-    bool emptyChunkVisible = false;
+    bool emptyChunkVisible = false, allocatedBlock = false;
     for (int y = topLeft.y; y <= bottomRight.y; ++y) {
         for (int x = topLeft.x; x <= bottomRight.x; ++x) {
             auto chunkDrawable = chunkDrawables_.find(packChunkCoords(x, y));
@@ -501,9 +514,10 @@ void Board::updateRender() {
             } else if (chunkDrawable->second.isRenderDirty(currentLod_)) {
                 if (chunkDrawable->second.getRenderIndex(currentLod_) == -1) {
                     chunkRenderCache_[currentLod_].allocateBlock(currentLod_, chunkDrawables_, packChunkCoords(x, y), lastVisibleArea_);
+                    allocatedBlock = true;
 
                     // FIXME couple problems here:
-                    // allocateBlock has the potential to modify FlatMap, invalidating the iterator passed which could be used later.
+                    // allocateBlock has the potential to modify FlatMap, invalidating the iterator passed which could be used later. this is now fixed.
                     // we should improve this to use iteration through the map.
                 }
                 sf::RenderStates states;
@@ -514,6 +528,9 @@ void Board::updateRender() {
     }
     if (emptyChunkVisible) {
         // FIXME repeat above steps for empty chunk.
+    }
+    if (allocatedBlock) {
+        pruneChunkDrawables();
     }
     chunkRenderCache_[currentLod_].display();
 }

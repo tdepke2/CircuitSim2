@@ -2,8 +2,6 @@
 #include <ChunkDrawable.h>
 #include <Tile.h>
 
-#include <algorithm>
-
 
 
 #include <iostream>
@@ -65,6 +63,7 @@ ChunkDrawable::ChunkDrawable() :
     chunk_(nullptr),
     vertices_(sf::Triangles),
     renderIndices_(),
+    renderIndicesSum_(-ChunkRender::LEVELS_OF_DETAIL),
     renderDirty_() {
 
     renderIndices_.fill(-1);
@@ -83,12 +82,10 @@ const Chunk* ChunkDrawable::getChunk() const {
 }
 
 void ChunkDrawable::setRenderIndex(int currentLod, int renderIndex) {
+    renderIndicesSum_ -= renderIndices_[currentLod];
     renderIndices_[currentLod] = renderIndex;
-
-
-    // FIXME still an issue here, setting the render index should not invalidate the draw for all lods, just set it for the current lod? ###############################
-
-    renderDirty_.set();
+    renderIndicesSum_ += renderIndex;
+    renderDirty_.set(currentLod);
 }
 
 int ChunkDrawable::getRenderIndex(int currentLod) const {
@@ -96,9 +93,7 @@ int ChunkDrawable::getRenderIndex(int currentLod) const {
 }
 
 bool ChunkDrawable::hasAnyRenderIndex() const {
-    return std::any_of(renderIndices_.begin(), renderIndices_.end(), [](int index) {
-        return index != -1;
-    });
+    return renderIndicesSum_ != -ChunkRender::LEVELS_OF_DETAIL;
 }
 
 void ChunkDrawable::markDirty() {

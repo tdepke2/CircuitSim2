@@ -72,12 +72,7 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
                 currentLod, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
                 unpackChunkCoordsX(coords), unpackChunkCoordsY(coords)
             );
-            auto chunkDrawableIter = chunkDrawables.find(renderBlock->coords);
-            chunkDrawableIter->second.setRenderIndex(currentLod, -1);
-            if (chunkDrawableIter->second.getChunk() == nullptr && !chunkDrawableIter->second.hasAnyRenderIndex()) {
-                chunkDrawables.erase(chunkDrawableIter);
-            }
-
+            chunkDrawables.at(renderBlock->coords).setRenderIndex(currentLod, -1);
             renderBlock->coords = coords;
             chunkDrawables.at(coords).setRenderIndex(currentLod, renderIndexPool_[renderBlock->poolIndex]);
             return;

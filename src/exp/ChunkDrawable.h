@@ -32,6 +32,7 @@ private:
     const Chunk* chunk_;
     mutable sf::VertexArray vertices_;
     std::array<int, ChunkRender::LEVELS_OF_DETAIL> renderIndices_;
+    int renderIndicesSum_;
     mutable std::bitset<ChunkRender::LEVELS_OF_DETAIL> renderDirty_;
 
     friend class ChunkRender;
