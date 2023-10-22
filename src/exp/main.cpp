@@ -20,8 +20,8 @@ int main() {
     window.setVerticalSyncEnabled(true);
 
     ResourceManager resource;
-    DebugScreen debugScreen(resource.getFont("resources/consolas.ttf"), 16);
-    debugScreen.setVisible(true);
+    DebugScreen::init(resource.getFont("resources/consolas.ttf"), 16, window.getSize());
+    DebugScreen::instance()->setVisible(true);
 
     Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", 32);
     Board board;
@@ -54,6 +54,9 @@ int main() {
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
+            DebugScreen::instance()->processEvent(event);
+            board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
+
             if (event.type == sf::Event::MouseMoved) {
                 if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                     sf::Vector2f newCenter(
@@ -74,11 +77,6 @@ int main() {
                     zoomLevel += zoomDelta;
                     boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
                 }
-            } else if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::F3) {
-                    debugScreen.setVisible(!debugScreen.isVisible());
-                    board.debugSetDrawChunkBorder(debugScreen.isVisible());
-                }
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
@@ -87,28 +85,27 @@ int main() {
             }
         }
 
-        debugScreen.getField(DebugScreen::Field::frameTime).setString(
-            fmt::format("Frame: {}ms", frameTimer.restart().asMilliseconds())
+        DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(
+            fmt::format("Mode: {} (use arrow keys to change), Frame: {}ms", DebugScreen::instance()->getModeString(), frameTimer.restart().asMilliseconds())
         );
-        debugScreen.getField(DebugScreen::Field::view).setString(
+        DebugScreen::instance()->getField(DebugScreen::Field::view).setString(
             fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardView.getCenter().x, boardView.getCenter().y)
         );
-        debugScreen.getField(DebugScreen::Field::zoom).setString(
+        DebugScreen::instance()->getField(DebugScreen::Field::zoom).setString(
             fmt::format("Zoom: {}", zoomLevel)
         );
-        debugScreen.getField(DebugScreen::Field::chunk).setString(
+        DebugScreen::instance()->getField(DebugScreen::Field::chunk).setString(
             fmt::format("Chunk: {} visible", board.debugGetChunksDrawn())
         );
 
         window.clear();
 
         window.setView(boardView);
-        board.setRenderArea(boardView, zoomLevel, debugScreen);
-        board.updateRender();
+        board.setRenderArea(boardView, zoomLevel);
         window.draw(board);
 
         window.setView(fullWindowView);
-        window.draw(debugScreen);
+        window.draw(*DebugScreen::instance());
 
         window.display();
     }

@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <DebugScreen.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Gate.h>
@@ -130,6 +131,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     if (!tilesetGrid_->generateMipmap()) {
         std::cerr << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture.\n";
     }
+    DebugScreen::instance()->registerTexture("tilesetGrid", tilesetGrid_);
 
     tilesetNoGrid_ = &resource.getTexture(filenameNoGrid, true);
     loadTileset(filenameNoGrid, tilesetNoGrid_, tileWidth);
@@ -137,6 +139,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     if (!tilesetNoGrid_->generateMipmap()) {
         std::cerr << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture.\n";
     }
+    DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid_);
 
     ChunkDrawable::setupTextureData(tilesetGrid_->getSize(), tileWidth);
     ChunkRender::setupTextureData(tileWidth);
@@ -150,11 +153,13 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     currentZoom_(0.0f),
     currentLod_(0),
     chunkRenderCache_(),
-    emptyChunk_(),
     lastVisibleArea_(0, 0, -1, -1),
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
+
+    // FIXME this may not be the best way to handle empty chunk, we may want to revert back to keeping an emptyChunk_ member.
+    getChunk(ChunkRender::EMPTY_CHUNK_COORDS);
 }
 
 inline ChunkCoords packChunkCoords(int x, int y) {
@@ -169,11 +174,11 @@ inline int unpackChunkCoordsY(ChunkCoords coords) {
     return static_cast<int32_t>(coords >> 32);
 }
 
-void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugScreen) {
+void Board::setRenderArea(const sf::View& view, float zoom) {
     currentView_ = view;
     currentZoom_ = zoom;
     currentLod_ = static_cast<int>(std::max(std::floor(std::log2(currentZoom_)), 0.0f));
-    debugScreen.getField("lod").setString(fmt::format("Lod: {}", currentLod_));
+    DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", currentLod_));
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the
     // visible chunks at the max zoom level (for current level-of-detail). Round
@@ -189,7 +194,7 @@ void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugSc
     };
 
     const sf::Vector2u renderTextureSize = roundedChunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod_);
-    debugScreen.getField("lodRange").setString(fmt::format("Range: {}, {} (p2 {}, {} tex {}, {})", maxChunkArea.x, maxChunkArea.y, roundedChunkArea.x, roundedChunkArea.y, renderTextureSize.x, renderTextureSize.y));
+    DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (p2 {}, {} tex {}, {})", maxChunkArea.x, maxChunkArea.y, roundedChunkArea.x, roundedChunkArea.y, renderTextureSize.x, renderTextureSize.y));
 
     ChunkRender& currentChunkRender = chunkRenderCache_[currentLod_];
     currentChunkRender.resize(currentLod_, roundedChunkArea);
@@ -204,9 +209,11 @@ void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugSc
     };
     sf::IntRect visibleArea(topLeft, bottomRight - topLeft);
 
+    bool visibleAreaChanged = false;
     if (lastVisibleArea_ != visibleArea) {
         spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
         lastVisibleArea_ = visibleArea;
+        visibleAreaChanged = true;
 
         /*
         sf::Vector2f centerPosition = sf::Vector2f(bottomRight - topLeft) / 2.0f;
@@ -241,10 +248,15 @@ void Board::setRenderArea(const sf::View& view, float zoom, DebugScreen& debugSc
         }
         */
     }
+
+    updateRender();
+    if (visibleAreaChanged) {
+        currentChunkRender.areaChanged(currentLod_, chunkDrawables_, lastVisibleArea_);
+    }
 }
 
 Tile Board::accessTile(int x, int y) {
-    auto& chunk = getChunk(x, y);
+    auto& chunk = getChunk(packChunkCoords(x / Chunk::WIDTH, y / Chunk::WIDTH));
     return chunk.accessTile(x % Chunk::WIDTH, y % Chunk::WIDTH);
 }
 
@@ -469,11 +481,10 @@ void Board::parseFile(const std::string& line, int lineNumber, ParseState& parse
     }
 }
 
-Chunk& Board::getChunk(int x, int y) {
-    ChunkCoords coords = packChunkCoords(x / Chunk::WIDTH, y / Chunk::WIDTH);
+Chunk& Board::getChunk(ChunkCoords coords) {
     auto chunk = chunks_.find(coords);
     if (chunk == chunks_.end()) {
-        spdlog::debug("Allocating new chunk at ({}, {})", x / Chunk::WIDTH, y / Chunk::WIDTH);
+        spdlog::debug("Allocating new chunk at ({}, {})", unpackChunkCoordsX(coords), unpackChunkCoordsY(coords));
 
         chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::tuple<>()).first;
         chunkDrawables_[coords].setChunk(&chunk->second);
@@ -522,12 +533,19 @@ void Board::updateRender() {
                 }
                 sf::RenderStates states;
                 states.texture = tilesetGrid_;
-                chunkRenderCache_[currentLod_].drawChunk(currentLod_, chunkDrawables_.at(packChunkCoords(x, y)), states);
+                chunkRenderCache_[currentLod_].drawChunk(currentLod_, chunkDrawable->second, states);
             }
         }
     }
-    if (emptyChunkVisible) {
-        // FIXME repeat above steps for empty chunk.
+    auto& emptyChunk = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
+    if (emptyChunkVisible && emptyChunk.isRenderDirty(currentLod_)) {
+        if (emptyChunk.getRenderIndex(currentLod_) == -1) {
+            chunkRenderCache_[currentLod_].allocateBlock(currentLod_, chunkDrawables_, ChunkRender::EMPTY_CHUNK_COORDS, lastVisibleArea_);
+            allocatedBlock = true;
+        }
+        sf::RenderStates states;
+        states.texture = tilesetGrid_;
+        chunkRenderCache_[currentLod_].drawChunk(currentLod_, emptyChunk, states);
     }
     if (allocatedBlock) {
         pruneChunkDrawables();

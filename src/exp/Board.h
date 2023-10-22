@@ -12,13 +12,6 @@
 #include <string>
 #include <unordered_map>
 
-
-
-
-#include <DebugScreen.h>
-
-
-
 class ResourceManager;
 class Tile;
 struct TileSymbol;
@@ -30,7 +23,7 @@ public:
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
     Board();
-    void setRenderArea(const sf::View& view, float zoom, DebugScreen& debugScreen);
+    void setRenderArea(const sf::View& view, float zoom);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile(const std::string& filename);
@@ -63,11 +56,9 @@ private:
     };
 
     void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
-    Chunk& getChunk(int x, int y);
+    Chunk& getChunk(ChunkCoords coords);
     void pruneChunkDrawables();
-public:
-    void updateRender();    // FIXME just call this from draw()? the point was to keep it non-const but that may not be a big deal. could also call after setRenderArea().
-private:
+    void updateRender();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxSize_;
@@ -77,7 +68,6 @@ private:
     float currentZoom_;
     int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
-    Chunk emptyChunk_;
     sf::IntRect lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;

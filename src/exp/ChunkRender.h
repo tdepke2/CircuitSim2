@@ -13,6 +13,7 @@ using ChunkCoords = uint64_t;
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
+    static constexpr ChunkCoords EMPTY_CHUNK_COORDS = 0x7fffffff7fffffff;
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
@@ -20,13 +21,12 @@ public:
     void allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea);
     void drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
+    void areaChanged(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
 
 private:
     static unsigned int tileWidth_;
 
     struct RenderBlock {
-        static constexpr ChunkCoords emptyChunkCoords = 0x7fffffff7fffffff;
-
         RenderBlock(ChunkCoords coords, unsigned int poolIndex) :
             coords(coords),
             poolIndex(poolIndex),
@@ -44,7 +44,7 @@ private:
     sf::Vector2u chunkArea_;
     sf::RenderTexture texture_;
     bool textureDirty_;
-    sf::VertexBuffer buffer_;
+    sf::VertexArray buffer_;    // FIXME this should probably be a vbuf but need to test.
     std::vector<int> renderIndexPool_;
     std::vector<RenderBlock> renderBlocks_;
 };

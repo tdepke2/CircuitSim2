@@ -1,14 +1,56 @@
 #include <DebugScreen.h>
 
-DebugScreen::DebugScreen(const sf::Font& font, unsigned int characterSize) :
-    visible_(false),
-    font_(font),
-    characterSize_(characterSize),
-    nextFieldPos_(2.0f, 0.0f) {
+#include <algorithm>
 
-    fields_.reserve(static_cast<size_t>(Field::count));
-    for (size_t i = 0; i < static_cast<size_t>(Field::count); ++i) {
-        fields_.emplace_back(addField(false));
+std::unique_ptr<DebugScreen> DebugScreen::instance_;
+
+void DebugScreen::init(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) {
+    instance_.reset(new DebugScreen(font, characterSize, windowSize));
+}
+
+DebugScreen* DebugScreen::instance() {
+    return instance_.get();
+}
+
+struct DebugScreen::NamedTexture {
+    std::string name;
+    const sf::Texture* texture;
+
+    NamedTexture(std::string name, const sf::Texture* texture) :
+        name(name),
+        texture(texture) {
+    }
+};
+
+void DebugScreen::processEvent(const sf::Event& event) {
+    if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::F3) {
+            visible_ = !visible_;
+        } else if (event.key.code == sf::Keyboard::Up) {
+            mode_ = static_cast<Mode>((static_cast<int>(mode_) + static_cast<int>(Mode::count) - 1) % static_cast<int>(Mode::count));
+        } else if (event.key.code == sf::Keyboard::Down) {
+            mode_ = static_cast<Mode>((static_cast<int>(mode_) + 1) % static_cast<int>(Mode::count));
+        } else if (event.key.code == sf::Keyboard::Left) {
+            --modeStates_[static_cast<int>(mode_)];
+        } else if (event.key.code == sf::Keyboard::Right) {
+            ++modeStates_[static_cast<int>(mode_)];
+        }
+    } else if (event.type == sf::Event::Resized) {
+        windowSize_.x = event.size.width;
+        windowSize_.y = event.size.height;
+    }
+}
+
+DebugScreen::Mode DebugScreen::getMode() const {
+    return mode_;
+}
+
+std::string DebugScreen::getModeString() const {
+    switch (mode_) {
+    case Mode::def:
+        return "default";
+    default:
+        return "texture " + std::to_string(modeStates_[static_cast<int>(mode_)]);
     }
 }
 
@@ -32,6 +74,29 @@ sf::Text& DebugScreen::getField(const std::string& customName) {
     return customFields_.emplace(customName, addField(true)).first->second;
 }
 
+void DebugScreen::registerTexture(const std::string& name, const sf::Texture* texture) {
+    textures_.emplace_back(name, texture);
+}
+
+DebugScreen::DebugScreen(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) :
+    mode_(Mode::def),
+    modeStates_(),
+    visible_(false),
+    font_(font),
+    characterSize_(characterSize),
+    windowSize_(windowSize),
+    nextFieldPos_(2.0f, 0.0f),
+    fields_(),
+    customFields_(),
+    textures_() {
+
+    modeStates_.fill(0);
+    fields_.reserve(static_cast<size_t>(Field::count));
+    for (size_t i = 0; i < static_cast<size_t>(Field::count); ++i) {
+        fields_.emplace_back(addField(false));
+    }
+}
+
 sf::Text DebugScreen::addField(bool isCustom) {
     sf::Text text("", font_, characterSize_);
     text.setPosition(nextFieldPos_);
@@ -49,10 +114,31 @@ void DebugScreen::draw(sf::RenderTarget& target, sf::RenderStates states) const 
         return;
     }
 
-    for (const auto& field : fields_) {
-        target.draw(field, states);
-    }
-    for (const auto& custom : customFields_) {
-        target.draw(custom.second, states);
+    if (mode_ == Mode::def) {
+        for (const auto& field : fields_) {
+            target.draw(field, states);
+        }
+        for (const auto& custom : customFields_) {
+            target.draw(custom.second, states);
+        }
+    } else if (mode_ == Mode::textures) {
+        sf::Text textureField("Texture: none", font_, characterSize_);
+        textureField.setPosition(fields_[0].getPosition() + sf::Vector2f(0.0f, 1.0f * characterSize_));
+        if (modeStates_[static_cast<int>(mode_)] >= 0 && modeStates_[static_cast<int>(mode_)] < static_cast<int>(textures_.size())) {
+            const NamedTexture& namedTex = textures_[modeStates_[static_cast<int>(mode_)]];
+            textureField.setString("Texture: " + namedTex.name + " (size " + std::to_string(namedTex.texture->getSize().x) + " by " + std::to_string(namedTex.texture->getSize().y) + ")");
+
+            float pixelPadding = 2.0f;
+            sf::Sprite sprite(*namedTex.texture);
+            sprite.setPosition(pixelPadding, textureField.getPosition().y + 1.0f * characterSize_ + 4.0f);
+            float scaleX = (windowSize_.x - sprite.getPosition().x - pixelPadding) / namedTex.texture->getSize().x;
+            float scaleY = (windowSize_.y - sprite.getPosition().y - pixelPadding) / namedTex.texture->getSize().y;
+            float scale = std::min(scaleX, scaleY);
+            sprite.setScale(scale, scale);
+            target.draw(sprite, states);
+        }
+
+        target.draw(fields_[0], states);
+        target.draw(textureField, states);
     }
 }
