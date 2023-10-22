@@ -75,6 +75,12 @@ sf::Text& DebugScreen::getField(const std::string& customName) {
 }
 
 void DebugScreen::registerTexture(const std::string& name, const sf::Texture* texture) {
+    for (auto& t : textures_) {
+        if (t.name == name) {
+            t.texture = texture;
+            return;
+        }
+    }
     textures_.emplace_back(name, texture);
 }
 

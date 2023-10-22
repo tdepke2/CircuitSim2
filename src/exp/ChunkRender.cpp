@@ -54,7 +54,7 @@ void ChunkRender::resize(int currentLod, const sf::Vector2u& chunkArea) {
         const int chunkPointWidth = Chunk::WIDTH * static_cast<int>(tileWidth_);
         for (unsigned int y = 0; y < chunkArea.y; ++y) {
             for (unsigned int x = 0; x < chunkArea.x; ++x) {
-                sf::Vertex* tileVertices = &buffer_[(y * chunkArea.y + x) * 6];
+                sf::Vertex* tileVertices = &buffer_[(y * chunkArea.x + x) * 6];
 
                 float px = static_cast<float>(x * chunkPointWidth);
                 float py = static_cast<float>(y * chunkPointWidth);
@@ -137,7 +137,7 @@ void ChunkRender::areaChanged(int currentLod, const FlatMap<ChunkCoords, ChunkDr
     int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
     for (int y = 0; y <= visibleArea.height; ++y) {
         for (int x = 0; x <= visibleArea.width; ++x) {
-            sf::Vertex* tileVertices = &buffer_[(y * chunkArea_.y + x) * 6];
+            sf::Vertex* tileVertices = &buffer_[(y * chunkArea_.x + x) * 6];
             int renderIndex;
             auto chunkDrawable = chunkDrawables.find(packChunkCoords(visibleArea.left + x, visibleArea.top + y));
             // FIXME we could use the existing loop in Board() to do this, bypassing the lookup ###########################
