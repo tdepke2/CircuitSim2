@@ -6,6 +6,7 @@
 #include <tiles/Blank.h>
 #include <tiles/Wire.h>
 
+#include <cmath>
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <spdlog/spdlog.h>
@@ -23,7 +24,8 @@ int main() {
     DebugScreen::init(resource.getFont("resources/consolas.ttf"), 16, window.getSize());
     DebugScreen::instance()->setVisible(true);
 
-    Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", 32);
+    constexpr unsigned int TILE_WIDTH = 32;
+    Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", TILE_WIDTH);
     Board board;
     board.debugSetDrawChunkBorder(true);
 
@@ -47,9 +49,13 @@ int main() {
 
     sf::View fullWindowView(window.getDefaultView());
     sf::View boardView(window.getDefaultView());
+    sf::Vector2i boardViewOffset(0, 0);
     float zoomLevel = 1.0f;
     sf::Vector2i lastMousePos;
     sf::Clock frameTimer;
+
+    //float bigNum = 32000000.0f;
+    //boardView.setCenter({bigNum, bigNum});
 
     while (window.isOpen()) {
         sf::Event event;
@@ -63,7 +69,18 @@ int main() {
                         boardView.getCenter().x + (lastMousePos.x - event.mouseMove.x) * zoomLevel,
                         boardView.getCenter().y + (lastMousePos.y - event.mouseMove.y) * zoomLevel
                     );
-                    boardView.setCenter(newCenter);
+
+                    float chunkWidthTexels = static_cast<float>(TILE_WIDTH * Chunk::WIDTH);
+                    sf::Vector2f modCenter(
+                        std::fmod(newCenter.x - boardView.getSize().x / 2.0f, chunkWidthTexels),
+                        std::fmod(newCenter.y - boardView.getSize().y / 2.0f, chunkWidthTexels)
+                    );
+                    modCenter.x += (modCenter.x < 0.0f ? chunkWidthTexels : 0.0f) + boardView.getSize().x / 2.0f;
+                    modCenter.y += (modCenter.y < 0.0f ? chunkWidthTexels : 0.0f) + boardView.getSize().y / 2.0f;
+
+
+                    boardView.setCenter(modCenter);
+                    spdlog::debug("x={}", modCenter.x);
                 }
                 lastMousePos.x = event.mouseMove.x;
                 lastMousePos.y = event.mouseMove.y;
