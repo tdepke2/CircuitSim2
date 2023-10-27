@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_map>
 
+class OffsetView;
 class ResourceManager;
 class Tile;
 struct TileSymbol;
@@ -23,7 +24,7 @@ public:
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
     Board();
-    void setRenderArea(const sf::View& view, float zoom);
+    void setRenderArea(const OffsetView& offsetView, float zoom);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile(const std::string& filename);
@@ -64,8 +65,6 @@ private:
     sf::Vector2u maxSize_;
     std::unordered_map<ChunkCoords, Chunk> chunks_;
     FlatMap<ChunkCoords, ChunkDrawable> chunkDrawables_;
-    sf::View currentView_;
-    float currentZoom_;
     int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
     sf::IntRect lastVisibleArea_;

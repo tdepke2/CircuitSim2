@@ -1,6 +1,7 @@
 #include <Board.h>
 #include <ChunkRender.h>
 #include <DebugScreen.h>
+#include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
@@ -48,8 +49,10 @@ int main() {
     board.debugRedrawChunks();
 
     sf::View fullWindowView(window.getDefaultView());
-    sf::View boardView(window.getDefaultView());
-    sf::Vector2i boardViewOffset(0, 0);
+    //sf::View boardView(window.getDefaultView());
+    //sf::Vector2i boardViewChunkOffset(0, 0);
+    OffsetView boardView(TILE_WIDTH * Chunk::WIDTH);
+    boardView.setSize(window.getDefaultView().getSize());
     float zoomLevel = 1.0f;
     sf::Vector2i lastMousePos;
     sf::Clock frameTimer;
@@ -70,17 +73,21 @@ int main() {
                         boardView.getCenter().y + (lastMousePos.y - event.mouseMove.y) * zoomLevel
                     );
 
-                    float chunkWidthTexels = static_cast<float>(TILE_WIDTH * Chunk::WIDTH);
+                    /*float chunkWidthTexels = static_cast<float>(TILE_WIDTH * Chunk::WIDTH);
+                    sf::Vector2f halfView = boardView.getSize() / 2.0f;
                     sf::Vector2f modCenter(
-                        std::fmod(newCenter.x - boardView.getSize().x / 2.0f, chunkWidthTexels),
-                        std::fmod(newCenter.y - boardView.getSize().y / 2.0f, chunkWidthTexels)
+                        std::fmod(newCenter.x - halfView.x, chunkWidthTexels),
+                        std::fmod(newCenter.y - halfView.y, chunkWidthTexels)
                     );
-                    modCenter.x += (modCenter.x < 0.0f ? chunkWidthTexels : 0.0f) + boardView.getSize().x / 2.0f;
-                    modCenter.y += (modCenter.y < 0.0f ? chunkWidthTexels : 0.0f) + boardView.getSize().y / 2.0f;
+                    modCenter.x += (modCenter.x < 0.0f ? chunkWidthTexels : 0.0f) + halfView.x;
+                    modCenter.y += (modCenter.y < 0.0f ? chunkWidthTexels : 0.0f) + halfView.y;
 
+                    boardViewChunkOffset.x += std::round((newCenter.x - modCenter.x) / chunkWidthTexels);
+                    boardViewChunkOffset.y += std::round((newCenter.y - modCenter.y) / chunkWidthTexels);
 
-                    boardView.setCenter(modCenter);
-                    spdlog::debug("x={}", modCenter.x);
+                    boardView.setCenter(modCenter);*/
+                    boardView.setCenter(newCenter);
+                    spdlog::debug("x={}\t\toffset={}, {}", boardView.getCenter().x, boardView.getCenterOffset().x, boardView.getCenterOffset().y);
                 }
                 lastMousePos.x = event.mouseMove.x;
                 lastMousePos.y = event.mouseMove.y;
@@ -105,8 +112,9 @@ int main() {
         DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(
             fmt::format("Mode: {} (use arrow keys to change), Frame: {}ms", DebugScreen::instance()->getModeString(), frameTimer.restart().asMilliseconds())
         );
+        sf::Vector2f boardViewApproxCenter(boardView.getCenter() + sf::Vector2f(boardView.getCenterOffset()) * boardView.getViewDivisor());
         DebugScreen::instance()->getField(DebugScreen::Field::view).setString(
-            fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardView.getCenter().x, boardView.getCenter().y)
+            fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardViewApproxCenter.x, boardViewApproxCenter.y)
         );
         DebugScreen::instance()->getField(DebugScreen::Field::zoom).setString(
             fmt::format("Zoom: {}", zoomLevel)
@@ -117,8 +125,11 @@ int main() {
 
         window.clear();
 
-        window.setView(boardView);
+        window.setView(boardView.getView());
         board.setRenderArea(boardView, zoomLevel);
+        //sf::View bc = boardView;
+        //bc.setSize(bc.getSize() * 2.0f);
+        //window.setView(bc);
         window.draw(board);
 
         window.setView(fullWindowView);

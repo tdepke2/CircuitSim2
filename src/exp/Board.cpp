@@ -1,5 +1,6 @@
 #include <Board.h>
 #include <DebugScreen.h>
+#include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Gate.h>
@@ -149,11 +150,9 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     maxSize_(),
     chunks_(),
     chunkDrawables_(),
-    currentView_(),
-    currentZoom_(0.0f),
     currentLod_(0),
     chunkRenderCache_(),
-    lastVisibleArea_(0, 0, -1, -1),
+    lastVisibleArea_(0, 0, 0, 0),
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
@@ -174,16 +173,14 @@ inline int unpackChunkCoordsY(ChunkCoords coords) {
     return static_cast<int32_t>(coords >> 32);
 }
 
-void Board::setRenderArea(const sf::View& view, float zoom) {
-    currentView_ = view;
-    currentZoom_ = zoom;
-    currentLod_ = static_cast<int>(std::max(std::floor(std::log2(currentZoom_)), 0.0f));
+void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
+    currentLod_ = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
     DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", currentLod_));
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the
     // visible chunks at the max zoom level (for current level-of-detail). Round
     // this up to the nearest power of 2.
-    const sf::Vector2f maxViewSize = view.getSize() / currentZoom_ * static_cast<float>(1 << (currentLod_ + 1));
+    const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod_ + 1));
     const sf::Vector2f maxChunkArea = {
         std::ceil(std::round(maxViewSize.x) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f,
         std::ceil(std::round(maxViewSize.y) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f
@@ -200,18 +197,22 @@ void Board::setRenderArea(const sf::View& view, float zoom) {
     currentChunkRender.resize(currentLod_, roundedChunkArea);
 
     sf::Vector2i topLeft = {
-        static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y - currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+        static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
     };
+    topLeft += offsetView.getCenterOffset();
     sf::Vector2i bottomRight = {
-        static_cast<int>(std::floor((currentView_.getCenter().x + currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+        static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
+        static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
     };
-    sf::IntRect visibleArea(topLeft, bottomRight - topLeft);
+    bottomRight += offsetView.getCenterOffset();
+    sf::IntRect visibleArea(topLeft, bottomRight - topLeft + sf::Vector2i(1, 1));
 
     bool visibleAreaChanged = false;
     if (lastVisibleArea_ != visibleArea) {
-        spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+        spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).",
+            visibleArea.left, visibleArea.top, visibleArea.left + visibleArea.width - 1, visibleArea.top + visibleArea.height - 1
+        );
         lastVisibleArea_ = visibleArea;
         visibleAreaChanged = true;
 
@@ -506,19 +507,9 @@ void Board::pruneChunkDrawables() {
 }
 
 void Board::updateRender() {
-    // FIXME we can get these from lastVisibleArea_, we may want to skip rendering altogether if that's not set.
-    sf::Vector2i topLeft = {
-        static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y - currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
-    };
-    sf::Vector2i bottomRight = {
-        static_cast<int>(std::floor((currentView_.getCenter().x + currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
-    };
-
     bool emptyChunkVisible = false, allocatedBlock = false;
-    for (int y = topLeft.y; y <= bottomRight.y; ++y) {
-        for (int x = topLeft.x; x <= bottomRight.x; ++x) {
+    for (int y = lastVisibleArea_.top; y < lastVisibleArea_.top + lastVisibleArea_.height; ++y) {
+        for (int x = lastVisibleArea_.left; x < lastVisibleArea_.left + lastVisibleArea_.width; ++x) {
             auto chunkDrawable = chunkDrawables_.find(packChunkCoords(x, y));
             if (chunkDrawable == chunkDrawables_.end()) {
                 emptyChunkVisible = true;
@@ -592,35 +583,26 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     target.draw(chunkRenderCache_[currentLod_], states);
 
-    sf::Vector2i topLeft = {
-        static_cast<int>(std::floor((currentView_.getCenter().x - currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y - currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
-    };
-    sf::Vector2i bottomRight = {
-        static_cast<int>(std::floor((currentView_.getCenter().x + currentView_.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((currentView_.getCenter().y + currentView_.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
-    };
-
     if (debugDrawChunkBorder_) {
-        debugChunkBorder_.resize((bottomRight.x - topLeft.x + 1) * (bottomRight.y - topLeft.y + 1) * 4);
-        const int chunkDistance = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        debugChunkBorder_.resize(lastVisibleArea_.width * lastVisibleArea_.height * 4);
+        const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
         unsigned int i = 0;
-        for (int y = topLeft.y; y <= bottomRight.y; ++y) {
-            float yChunkPos = static_cast<float>(y * chunkDistance);
-            for (int x = topLeft.x; x <= bottomRight.x; ++x) {
-                float xChunkPos = static_cast<float>(x * chunkDistance);
+        for (int y = 0; y < lastVisibleArea_.height; ++y) {
+            float yChunkPos = static_cast<float>(y * chunkWidthTexels);
+            for (int x = 0; x < lastVisibleArea_.width; ++x) {
+                float xChunkPos = static_cast<float>(x * chunkWidthTexels);
                 sf::Color borderColor = sf::Color::Blue;
-                if (chunks_.find(packChunkCoords(x, y)) != chunks_.end()) {
+                if (chunks_.find(packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) != chunks_.end()) {
                     borderColor = sf::Color::Yellow;
                 }
 
                 debugChunkBorder_[i + 0].position = {xChunkPos, yChunkPos};
                 debugChunkBorder_[i + 0].color = borderColor;
-                debugChunkBorder_[i + 1].position = {xChunkPos + chunkDistance, yChunkPos};
+                debugChunkBorder_[i + 1].position = {xChunkPos + chunkWidthTexels, yChunkPos};
                 debugChunkBorder_[i + 1].color = borderColor;
                 debugChunkBorder_[i + 2].position = {xChunkPos, yChunkPos};
                 debugChunkBorder_[i + 2].color = borderColor;
-                debugChunkBorder_[i + 3].position = {xChunkPos, yChunkPos + chunkDistance};
+                debugChunkBorder_[i + 3].position = {xChunkPos, yChunkPos + chunkWidthTexels};
                 debugChunkBorder_[i + 3].color = borderColor;
                 i += 4;
             }

@@ -91,7 +91,7 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
     for (auto renderBlock = renderBlocks_.rbegin(); renderBlock != renderBlocks_.rend(); ++renderBlock) {
         int x = unpackChunkCoordsX(renderBlock->coords);
         int y = unpackChunkCoordsY(renderBlock->coords);
-        if (x < visibleArea.left || x > visibleArea.left + visibleArea.width || y < visibleArea.top || y > visibleArea.top + visibleArea.height) {
+        if (x < visibleArea.left || x >= visibleArea.left + visibleArea.width || y < visibleArea.top || y >= visibleArea.top + visibleArea.height) {
 
             spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
                 currentLod, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
@@ -135,8 +135,8 @@ void ChunkRender::display() {
 void ChunkRender::areaChanged(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
     spdlog::debug("Chunk area changed, updating buffer.");
     int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
-    for (int y = 0; y <= visibleArea.height; ++y) {
-        for (int x = 0; x <= visibleArea.width; ++x) {
+    for (int y = 0; y < visibleArea.height; ++y) {
+        for (int x = 0; x < visibleArea.width; ++x) {
             sf::Vertex* tileVertices = &buffer_[(y * chunkArea_.x + x) * 6];
             int renderIndex;
             auto chunkDrawable = chunkDrawables.find(packChunkCoords(visibleArea.left + x, visibleArea.top + y));
@@ -167,4 +167,9 @@ bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlo
 void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.texture = &texture_.getTexture();
     target.draw(buffer_, states);
+    sf::CircleShape c(16.0f);
+    c.setFillColor(sf::Color::Magenta);
+    c.setPosition(Chunk::WIDTH * tileWidth_, Chunk::WIDTH * tileWidth_);
+    c.setOrigin(c.getRadius(), c.getRadius());
+    target.draw(c, states);
 }

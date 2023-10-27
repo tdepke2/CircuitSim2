@@ -5,6 +5,7 @@ add_executable(CircuitSim2_experimental
     ChunkRender.cpp
     DebugScreen.cpp
     main.cpp
+    OffsetView.cpp
     ResourceManager.cpp
     Tile.cpp
     tiles/Blank.cpp
