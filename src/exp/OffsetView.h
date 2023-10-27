@@ -5,6 +5,7 @@
 class OffsetView {
 public:
     OffsetView(float viewDivisor);
+    OffsetView(float viewDivisor, const sf::View& view);
     void setCenter(float x, float y);
     void setCenter(const sf::Vector2f& center);
     void setSize(float width, float height);

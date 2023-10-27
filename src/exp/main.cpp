@@ -46,16 +46,18 @@ int main() {
     board.accessTile(2, 2).setHighlight(true);
 
     board.debugPrintChunk(0);
-    board.debugRedrawChunks();
 
     sf::View fullWindowView(window.getDefaultView());
-    //sf::View boardView(window.getDefaultView());
-    //sf::Vector2i boardViewChunkOffset(0, 0);
-    OffsetView boardView(TILE_WIDTH * Chunk::WIDTH);
-    boardView.setSize(window.getDefaultView().getSize());
+    OffsetView boardView(TILE_WIDTH * Chunk::WIDTH, window.getDefaultView());
     float zoomLevel = 1.0f;
     sf::Vector2i lastMousePos;
     sf::Clock frameTimer;
+
+
+    // FIXME left off here, need to test below to ensure board viewing still works near extreme coords.
+    // there's some perf issues with fullscreen at max zoom, too much indexing into FlatMap?
+    // need to fix issue with chunk border artifacts, enable smooth on related textures and maybe add some padding to textures in ChunkRender.
+
 
     //float bigNum = 32000000.0f;
     //boardView.setCenter({bigNum, bigNum});
@@ -64,7 +66,6 @@ int main() {
         sf::Event event;
         while (window.pollEvent(event)) {
             DebugScreen::instance()->processEvent(event);
-            board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
 
             if (event.type == sf::Event::MouseMoved) {
                 if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -72,29 +73,14 @@ int main() {
                         boardView.getCenter().x + (lastMousePos.x - event.mouseMove.x) * zoomLevel,
                         boardView.getCenter().y + (lastMousePos.y - event.mouseMove.y) * zoomLevel
                     );
-
-                    /*float chunkWidthTexels = static_cast<float>(TILE_WIDTH * Chunk::WIDTH);
-                    sf::Vector2f halfView = boardView.getSize() / 2.0f;
-                    sf::Vector2f modCenter(
-                        std::fmod(newCenter.x - halfView.x, chunkWidthTexels),
-                        std::fmod(newCenter.y - halfView.y, chunkWidthTexels)
-                    );
-                    modCenter.x += (modCenter.x < 0.0f ? chunkWidthTexels : 0.0f) + halfView.x;
-                    modCenter.y += (modCenter.y < 0.0f ? chunkWidthTexels : 0.0f) + halfView.y;
-
-                    boardViewChunkOffset.x += std::round((newCenter.x - modCenter.x) / chunkWidthTexels);
-                    boardViewChunkOffset.y += std::round((newCenter.y - modCenter.y) / chunkWidthTexels);
-
-                    boardView.setCenter(modCenter);*/
                     boardView.setCenter(newCenter);
-                    spdlog::debug("x={}\t\toffset={}, {}", boardView.getCenter().x, boardView.getCenterOffset().x, boardView.getCenterOffset().y);
                 }
                 lastMousePos.x = event.mouseMove.x;
                 lastMousePos.y = event.mouseMove.y;
             } else if (event.type == sf::Event::MouseWheelScrolled) {
                 float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
                 float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel * -0.04f;
-                constexpr float maxZoom = 20.0f;
+                constexpr float maxZoom = 31.0f;
                 static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
                 if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
@@ -124,6 +110,8 @@ int main() {
         );
 
         window.clear();
+
+        board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
 
         window.setView(boardView.getView());
         board.setRenderArea(boardView, zoomLevel);

@@ -1,11 +1,21 @@
 #include <OffsetView.h>
 
 #include <cmath>
+#include <spdlog/spdlog.h>
 
 OffsetView::OffsetView(float viewDivisor) :
     viewDivisor_(viewDivisor),
     view_(),
     centerOffset_() {
+}
+
+OffsetView::OffsetView(float viewDivisor, const sf::View& view) :
+    viewDivisor_(viewDivisor),
+    view_(),
+    centerOffset_() {
+
+    view_.setSize(view.getSize());
+    setCenter(view.getCenter());
 }
 
 void OffsetView::setCenter(float x, float y) {
@@ -17,10 +27,14 @@ void OffsetView::setCenter(float x, float y) {
     modCenter.x += (modCenter.x < 0.0f ? viewDivisor_ : 0.0f) + halfView.x;
     modCenter.y += (modCenter.y < 0.0f ? viewDivisor_ : 0.0f) + halfView.y;
 
-    centerOffset_.x += std::round((x - modCenter.x) / viewDivisor_);
-    centerOffset_.y += std::round((y - modCenter.y) / viewDivisor_);
+    centerOffset_.x += std::lround((x - modCenter.x) / viewDivisor_);
+    centerOffset_.y += std::lround((y - modCenter.y) / viewDivisor_);
 
     view_.setCenter(modCenter);
+
+    spdlog::debug("OffsetView center=({}, {})\toffset=({}, {})\tsize=({}, {})",
+        getCenter().x, getCenter().y, getCenterOffset().x, getCenterOffset().y, getSize().x, getSize().y
+    );
 }
 
 void OffsetView::setCenter(const sf::Vector2f& center) {
@@ -29,6 +43,7 @@ void OffsetView::setCenter(const sf::Vector2f& center) {
 
 void OffsetView::setSize(float width, float height) {
     view_.setSize(width, height);
+    setCenter(view_.getCenter());
 }
 
 void OffsetView::setSize(const sf::Vector2f& size) {

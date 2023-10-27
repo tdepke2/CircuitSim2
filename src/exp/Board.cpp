@@ -208,13 +208,11 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     bottomRight += offsetView.getCenterOffset();
     sf::IntRect visibleArea(topLeft, bottomRight - topLeft + sf::Vector2i(1, 1));
 
-    bool visibleAreaChanged = false;
     if (lastVisibleArea_ != visibleArea) {
         spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).",
             visibleArea.left, visibleArea.top, visibleArea.left + visibleArea.width - 1, visibleArea.top + visibleArea.height - 1
         );
         lastVisibleArea_ = visibleArea;
-        visibleAreaChanged = true;
 
         /*
         sf::Vector2f centerPosition = sf::Vector2f(bottomRight - topLeft) / 2.0f;
@@ -251,9 +249,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     }
 
     updateRender();
-    if (visibleAreaChanged) {
-        currentChunkRender.areaChanged(currentLod_, chunkDrawables_, lastVisibleArea_);
-    }
+    currentChunkRender.updateVisibleArea(currentLod_, chunkDrawables_, lastVisibleArea_);
 }
 
 Tile Board::accessTile(int x, int y) {

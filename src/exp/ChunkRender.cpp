@@ -26,7 +26,8 @@ void ChunkRender::setupTextureData(unsigned int tileWidth) {
 }
 
 ChunkRender::ChunkRender() :
-    chunkArea_(0, 0),
+    maxChunkArea_(0, 0),
+    lastVisibleArea_(0, 0, 0, 0),
     texture_(),
     textureDirty_(false),
     buffer_(sf::Triangles),
@@ -34,47 +35,49 @@ ChunkRender::ChunkRender() :
     renderBlocks_() {
 }
 
-void ChunkRender::resize(int currentLod, const sf::Vector2u& chunkArea) {
-    if (chunkArea_ != chunkArea) {
-        chunkArea_ = chunkArea;
-        spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, chunkArea.x, chunkArea.y);
-        const sf::Vector2u textureSize = chunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod);
-        if (!texture_.create(textureSize.x, textureSize.y)) {
-            spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, textureSize.x, textureSize.y);
-        }
-        texture_.clear(sf::Color::Red);
-        textureDirty_ = true;
-        DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(currentLod), &texture_.getTexture());
-
-        const unsigned int bufferSize = chunkArea.x * chunkArea.y * 6;
-        buffer_.resize(bufferSize);
-        //if (!buffer_.create(bufferSize)) {
-        //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
-        //}
-        const int chunkPointWidth = Chunk::WIDTH * static_cast<int>(tileWidth_);
-        for (unsigned int y = 0; y < chunkArea.y; ++y) {
-            for (unsigned int x = 0; x < chunkArea.x; ++x) {
-                sf::Vertex* tileVertices = &buffer_[(y * chunkArea.x + x) * 6];
-
-                float px = static_cast<float>(x * chunkPointWidth);
-                float py = static_cast<float>(y * chunkPointWidth);
-                tileVertices[0].position = {px, py};
-                tileVertices[1].position = {px + chunkPointWidth, py};
-                tileVertices[2].position = {px + chunkPointWidth, py + chunkPointWidth};
-                tileVertices[3].position = {px + chunkPointWidth, py + chunkPointWidth};
-                tileVertices[4].position = {px, py + chunkPointWidth};
-                tileVertices[5].position = {px, py};
-            }
-        }
-
-        renderIndexPool_.resize(chunkArea.x * chunkArea.y);
-        std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
-        renderBlocks_.clear();
-        renderBlocks_.reserve(renderIndexPool_.size());
-
-        // FIXME doesn't clearing the blocks imply that we need to reset the references in chunkDrawables?
-        // ##############################################################################################
+void ChunkRender::resize(int currentLod, const sf::Vector2u& maxChunkArea) {
+    if (maxChunkArea_ == maxChunkArea) {
+        return;
     }
+
+    maxChunkArea_ = maxChunkArea;
+    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, maxChunkArea.x, maxChunkArea.y);
+    const sf::Vector2u textureSize = maxChunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod);
+    if (!texture_.create(textureSize.x, textureSize.y)) {
+        spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, textureSize.x, textureSize.y);
+    }
+    texture_.clear(sf::Color::Red);
+    textureDirty_ = true;
+    DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(currentLod), &texture_.getTexture());
+
+    const unsigned int bufferSize = maxChunkArea.x * maxChunkArea.y * 6;
+    buffer_.resize(bufferSize);
+    //if (!buffer_.create(bufferSize)) {
+    //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
+    //}
+    const int chunkPointWidth = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    for (unsigned int y = 0; y < maxChunkArea.y; ++y) {
+        for (unsigned int x = 0; x < maxChunkArea.x; ++x) {
+            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea.x + x) * 6];
+
+            float px = static_cast<float>(x * chunkPointWidth);
+            float py = static_cast<float>(y * chunkPointWidth);
+            tileVertices[0].position = {px, py};
+            tileVertices[1].position = {px + chunkPointWidth, py};
+            tileVertices[2].position = {px + chunkPointWidth, py + chunkPointWidth};
+            tileVertices[3].position = {px + chunkPointWidth, py + chunkPointWidth};
+            tileVertices[4].position = {px, py + chunkPointWidth};
+            tileVertices[5].position = {px, py};
+        }
+    }
+
+    renderIndexPool_.resize(maxChunkArea.x * maxChunkArea.y);
+    std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
+    renderBlocks_.clear();
+    renderBlocks_.reserve(renderIndexPool_.size());
+
+    // FIXME doesn't clearing the blocks imply that we need to reset the references in chunkDrawables?
+    // ##############################################################################################
 }
 
 void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea) {
@@ -112,8 +115,8 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
 void ChunkRender::drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, sf::RenderStates states) {
     int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
     states.transform.translate(
-        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) % static_cast<int>(chunkArea_.x)) * textureSubdivisionSize),
-        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) / static_cast<int>(chunkArea_.x)) * textureSubdivisionSize)
+        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) % static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize),
+        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) / static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize)
     );
     states.transform.scale(
         1.0f / (1 << currentLod),
@@ -132,24 +135,32 @@ void ChunkRender::display() {
     }
 }
 
-void ChunkRender::areaChanged(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
+void ChunkRender::updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
+    if (lastVisibleArea_ == visibleArea) {
+        return;
+    }
+
+    lastVisibleArea_ = visibleArea;
     spdlog::debug("Chunk area changed, updating buffer.");
     int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
     for (int y = 0; y < visibleArea.height; ++y) {
         for (int x = 0; x < visibleArea.width; ++x) {
-            sf::Vertex* tileVertices = &buffer_[(y * chunkArea_.x + x) * 6];
+            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
             int renderIndex;
             auto chunkDrawable = chunkDrawables.find(packChunkCoords(visibleArea.left + x, visibleArea.top + y));
+
             // FIXME we could use the existing loop in Board() to do this, bypassing the lookup ###########################
+            // along with this, we could update the area before(?) allocateBlock() calls and then remove the visibleArea param from that function.
+
             if (chunkDrawable == chunkDrawables.end()) {
                 renderIndex = chunkDrawables.at(EMPTY_CHUNK_COORDS).getRenderIndex(currentLod);
             } else {
                 renderIndex = chunkDrawable->second.getRenderIndex(currentLod);
             }
-            spdlog::debug("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
+            spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
 
-            float tx = static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(chunkArea_.x)) * textureSubdivisionSize);
-            float ty = static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(chunkArea_.x)) * textureSubdivisionSize);
+            float tx = static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize);
+            float ty = static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize);
             tileVertices[0].texCoords = {tx, ty};
             tileVertices[1].texCoords = {tx + textureSubdivisionSize, ty};
             tileVertices[2].texCoords = {tx + textureSubdivisionSize, ty + textureSubdivisionSize};

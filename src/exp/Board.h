@@ -31,11 +31,6 @@ public:
     void debugPrintChunk(ChunkCoords i) {
         chunks_.at(i).debugPrintChunk();
     }
-    void debugRedrawChunks() {
-        //for (auto& chunk : chunks_) {
-            //chunk.second.forceRedraw();
-        //}
-    }
     void debugSetDrawChunkBorder(bool enabled);
     unsigned int debugGetChunksDrawn() const;
 
