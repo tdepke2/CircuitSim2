@@ -6,8 +6,10 @@
 class ResourceManager {
 public:
     ResourceManager();
+    ~ResourceManager() = default;
     ResourceManager(const ResourceManager& rhs) = delete;
     ResourceManager& operator=(const ResourceManager& rhs) = delete;
+
     sf::Texture& getTexture(const std::string& filename, bool initEmpty = false);
     sf::Font& getFont(const std::string& filename);
 

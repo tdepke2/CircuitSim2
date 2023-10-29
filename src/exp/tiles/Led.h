@@ -16,6 +16,7 @@ namespace tiles {
 class Led : public TileType {
 public:
     static Led* instance();
+    virtual ~Led() = default;
     Led(const Led& led) = delete;
     Led(Led&& led) = delete;
     Led& operator=(const Led& led) = delete;

@@ -218,9 +218,4 @@ sf::Vector2f ChunkRender::getChunkTexCoords(int renderIndex, int textureSubdivis
 void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.texture = &texture_.getTexture();
     target.draw(buffer_, states);
-    sf::CircleShape c(16.0f);
-    c.setFillColor(sf::Color::Magenta);
-    c.setPosition(Chunk::WIDTH * tileWidth_, Chunk::WIDTH * tileWidth_);
-    c.setOrigin(c.getRadius(), c.getRadius());
-    target.draw(c, states);
 }

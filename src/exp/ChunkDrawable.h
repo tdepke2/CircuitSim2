@@ -13,10 +13,12 @@ public:
     static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);
 
     ChunkDrawable();
+    ~ChunkDrawable() = default;
     ChunkDrawable(const ChunkDrawable& rhs) = delete;
-    ChunkDrawable(ChunkDrawable&& rhs) = default;
+    ChunkDrawable(ChunkDrawable&& rhs) noexcept = default;
     ChunkDrawable& operator=(const ChunkDrawable& rhs) = delete;
-    ChunkDrawable& operator=(ChunkDrawable&& rhs) = default;
+    ChunkDrawable& operator=(ChunkDrawable&& rhs) noexcept = default;
+
     void setChunk(const Chunk* chunk);
     const Chunk* getChunk() const;
     void setRenderIndex(int levelOfDetail, int renderIndex);

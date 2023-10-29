@@ -32,8 +32,10 @@ public:
     static constexpr int WIDTH = 16;
 
     Chunk();
+    ~Chunk() = default;
     Chunk(const Chunk& rhs) = delete;
     Chunk& operator=(const Chunk& rhs) = delete;
+
     Tile accessTile(unsigned int x, unsigned int y);
     void debugPrintChunk();
 

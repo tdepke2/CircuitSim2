@@ -17,8 +17,10 @@ public:
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
+    ~ChunkRender() = default;
     ChunkRender(const ChunkRender& rhs) = delete;
     ChunkRender& operator=(const ChunkRender& rhs) = delete;
+
     void setLod(int levelOfDetail);
     int getLod() const;
     void resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);

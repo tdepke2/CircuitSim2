@@ -25,10 +25,11 @@ public:
 
     static void init(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize);
     static DebugScreen* instance();
+    ~DebugScreen() = default;
     DebugScreen(const DebugScreen& rhs) = delete;
-    DebugScreen(DebugScreen&& rhs) = delete;
+    DebugScreen(DebugScreen&& rhs) noexcept = delete;
     DebugScreen& operator=(const DebugScreen& rhs) = delete;
-    DebugScreen& operator=(DebugScreen&& rhs) = delete;
+    DebugScreen& operator=(DebugScreen&& rhs) noexcept = delete;
 
     void processEvent(const sf::Event& event);
     Mode getMode() const;

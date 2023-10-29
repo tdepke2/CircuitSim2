@@ -24,8 +24,10 @@ public:
     static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
 
     Board();
+    ~Board() = default;
     Board(const Board& rhs) = delete;
     Board& operator=(const Board& rhs) = delete;
+
     void setRenderArea(const OffsetView& offsetView, float zoom);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);

@@ -7,6 +7,10 @@ struct TileData;
 
 class TileType {
 public:
+    TileType() = default;
+    TileType(const TileType& rhs) = delete;
+    TileType& operator=(const TileType& rhs) = delete;
+
     virtual void setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction);
     virtual void setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight);
     virtual void setState(Chunk& chunk, unsigned int tileIndex, State::t state);
@@ -17,5 +21,6 @@ public:
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) = 0;
 
 protected:
+    ~TileType() = default;
     TileData& getTileData(Chunk& chunk, unsigned int tileIndex);
 };

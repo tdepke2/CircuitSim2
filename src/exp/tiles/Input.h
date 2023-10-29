@@ -16,6 +16,7 @@ namespace tiles {
 class Input : public TileType {
 public:
     static Input* instance();
+    virtual ~Input() = default;
     Input(const Input& input) = delete;
     Input(Input&& input) = delete;
     Input& operator=(const Input& input) = delete;

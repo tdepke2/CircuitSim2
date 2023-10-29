@@ -16,6 +16,7 @@ namespace tiles {
 class Gate : public TileType {
 public:
     static Gate* instance();
+    virtual ~Gate() = default;
     Gate(const Gate& gate) = delete;
     Gate(Gate&& gate) = delete;
     Gate& operator=(const Gate& gate) = delete;

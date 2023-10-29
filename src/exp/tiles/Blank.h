@@ -16,6 +16,7 @@ namespace tiles {
 class Blank : public TileType {
 public:
     static Blank* instance();
+    virtual ~Blank() = default;
     Blank(const Blank& blank) = delete;
     Blank(Blank&& blank) = delete;
     Blank& operator=(const Blank& blank) = delete;

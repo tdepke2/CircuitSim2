@@ -16,6 +16,7 @@ namespace tiles {
 class Wire : public TileType {
 public:
     static Wire* instance();
+    virtual ~Wire() = default;
     Wire(const Wire& wire) = delete;
     Wire(Wire&& wire) = delete;
     Wire& operator=(const Wire& wire) = delete;
