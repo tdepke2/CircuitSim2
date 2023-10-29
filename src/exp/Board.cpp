@@ -157,6 +157,10 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     debugDrawChunkBorder_(false),
     debugChunksDrawn_(0) {
 
+    for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
+        chunkRenderCache_[i].setLod(i);
+    }
+
     // FIXME this may not be the best way to handle empty chunk, we may want to revert back to keeping an emptyChunk_ member.
     getChunk(ChunkRender::EMPTY_CHUNK_COORDS);
 }
@@ -187,7 +191,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     };
 
     ChunkRender& currentChunkRender = chunkRenderCache_[currentLod_];
-    currentChunkRender.resize(currentLod_, maxChunkArea);
+    currentChunkRender.resize(chunkDrawables_, maxChunkArea);
 
     sf::Vector2i topLeft = {
         static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
@@ -242,7 +246,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     }
 
     updateRender();
-    currentChunkRender.updateVisibleArea(currentLod_, chunkDrawables_, lastVisibleArea_);
+    currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_);
 }
 
 Tile Board::accessTile(int x, int y) {
@@ -484,7 +488,7 @@ Chunk& Board::getChunk(ChunkCoords coords) {
 
 void Board::pruneChunkDrawables() {
     spdlog::debug("Pruning chunkDrawables, size is {}.", chunkDrawables_.size());
-    auto newLast = std::remove_if(chunkDrawables_.begin(), chunkDrawables_.end(), [](decltype(chunkDrawables_)::value_type chunkDrawable) {
+    auto newLast = std::remove_if(chunkDrawables_.begin(), chunkDrawables_.end(), [](const decltype(chunkDrawables_)::value_type& chunkDrawable) {
         if (!chunkDrawable.second.hasAnyRenderIndex() && chunkDrawable.second.getChunk() == nullptr) {
             spdlog::debug("Pruning ChunkDrawable at ({}, {})", unpackChunkCoordsX(chunkDrawable.first), unpackChunkCoordsY(chunkDrawable.first));
             return true;
@@ -504,7 +508,7 @@ void Board::updateRender() {
                 emptyChunkVisible = true;
             } else if (chunkDrawable->second.isRenderDirty(currentLod_)) {
                 if (chunkDrawable->second.getRenderIndex(currentLod_) == -1) {
-                    chunkRenderCache_[currentLod_].allocateBlock(currentLod_, chunkDrawables_, packChunkCoords(x, y), lastVisibleArea_);
+                    chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, packChunkCoords(x, y), lastVisibleArea_);
                     allocatedBlock = true;
 
                     // FIXME couple problems here:
@@ -513,19 +517,19 @@ void Board::updateRender() {
                 }
                 sf::RenderStates states;
                 states.texture = tilesetGrid_;
-                chunkRenderCache_[currentLod_].drawChunk(currentLod_, chunkDrawable->second, states);
+                chunkRenderCache_[currentLod_].drawChunk(chunkDrawable->second, states);
             }
         }
     }
     auto& emptyChunk = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
     if (emptyChunkVisible && emptyChunk.isRenderDirty(currentLod_)) {
         if (emptyChunk.getRenderIndex(currentLod_) == -1) {
-            chunkRenderCache_[currentLod_].allocateBlock(currentLod_, chunkDrawables_, ChunkRender::EMPTY_CHUNK_COORDS, lastVisibleArea_);
+            chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, ChunkRender::EMPTY_CHUNK_COORDS, lastVisibleArea_);
             allocatedBlock = true;
         }
         sf::RenderStates states;
         states.texture = tilesetGrid_;
-        chunkRenderCache_[currentLod_].drawChunk(currentLod_, emptyChunk, states);
+        chunkRenderCache_[currentLod_].drawChunk(emptyChunk, states);
     }
     if (allocatedBlock) {
         pruneChunkDrawables();

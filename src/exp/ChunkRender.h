@@ -17,11 +17,15 @@ public:
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
-    void resize(int currentLod, const sf::Vector2u& maxChunkArea);    // FIXME have currentLod be a member?
-    void allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea);
-    void drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, sf::RenderStates states);
+    ChunkRender(const ChunkRender& rhs) = delete;
+    ChunkRender& operator=(const ChunkRender& rhs) = delete;
+    void setLod(int levelOfDetail);
+    int getLod() const;
+    void resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);
+    void allocateBlock(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea);
+    void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
-    void updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
+    void updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
 
 private:
     static constexpr int CHUNK_PADDING = 1;
@@ -43,6 +47,7 @@ private:
     sf::Vector2f getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+    int levelOfDetail_;
     sf::Vector2u maxChunkArea_;
     sf::IntRect lastVisibleArea_;
     sf::RenderTexture texture_;

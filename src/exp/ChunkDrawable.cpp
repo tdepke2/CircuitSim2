@@ -81,15 +81,15 @@ const Chunk* ChunkDrawable::getChunk() const {
     return chunk_;
 }
 
-void ChunkDrawable::setRenderIndex(int currentLod, int renderIndex) {
-    renderIndicesSum_ -= renderIndices_[currentLod];
-    renderIndices_[currentLod] = renderIndex;
+void ChunkDrawable::setRenderIndex(int levelOfDetail, int renderIndex) {
+    renderIndicesSum_ -= renderIndices_[levelOfDetail];
+    renderIndices_[levelOfDetail] = renderIndex;
     renderIndicesSum_ += renderIndex;
-    renderDirty_.set(currentLod);
+    renderDirty_.set(levelOfDetail);
 }
 
-int ChunkDrawable::getRenderIndex(int currentLod) const {
-    return renderIndices_[currentLod];
+int ChunkDrawable::getRenderIndex(int levelOfDetail) const {
+    return renderIndices_[levelOfDetail];
 }
 
 bool ChunkDrawable::hasAnyRenderIndex() const {
@@ -100,8 +100,8 @@ void ChunkDrawable::markDirty() {
     renderDirty_.set();
 }
 
-bool ChunkDrawable::isRenderDirty(int currentLod) const {
-    return renderDirty_.test(currentLod);
+bool ChunkDrawable::isRenderDirty(int levelOfDetail) const {
+    return renderDirty_.test(levelOfDetail);
 }
 
 void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) const {

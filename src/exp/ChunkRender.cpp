@@ -26,6 +26,7 @@ void ChunkRender::setupTextureData(unsigned int tileWidth) {
 }
 
 ChunkRender::ChunkRender() :
+    levelOfDetail_(0),
     maxChunkArea_(0, 0),
     lastVisibleArea_(0, 0, 0, 0),
     texture_(),
@@ -35,9 +36,17 @@ ChunkRender::ChunkRender() :
     renderBlocks_() {
 }
 
-void ChunkRender::resize(int currentLod, const sf::Vector2u& maxChunkArea) {
+void ChunkRender::setLod(int levelOfDetail) {
+    levelOfDetail_ = levelOfDetail;
+}
+
+int ChunkRender::getLod() const {
+    return levelOfDetail_;
+}
+
+void ChunkRender::resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea) {
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    const int textureSubdivisionSize = chunkWidthTexels / (1 << currentLod);
+    const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
 
     // Apply padding so that chunks in the texture have some border space to avoid texture bleed.
     const sf::Vector2f paddedChunkArea = {
@@ -63,22 +72,22 @@ void ChunkRender::resize(int currentLod, const sf::Vector2u& maxChunkArea) {
         return;
     }
 
-    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y);
-    spdlog::debug("================= maxChunkArea = {}, {} paddedChunkArea = {}, {}", maxChunkArea.x, maxChunkArea.y, paddedChunkArea.x, paddedChunkArea.y);
-    spdlog::debug("================= textureSubdivisionSize = {}, textureSize = {}, {}", textureSubdivisionSize, textureSize.x, textureSize.y);
+    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", levelOfDetail_, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y);
     maxChunkArea_ = adjustedMaxChunkArea;
+    lastVisibleArea_ = {0, 0, 0, 0};
+
     if (!texture_.create(textureSize.x, textureSize.y)) {
-        spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, textureSize.x, textureSize.y);
+        spdlog::error("Failed to create texture for LOD {} (size {} by {}).", levelOfDetail_, textureSize.x, textureSize.y);
     }
     texture_.clear(sf::Color::Black);
     texture_.setSmooth(true);
     textureDirty_ = true;
-    DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(currentLod), &texture_.getTexture());
+    DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(levelOfDetail_), &texture_.getTexture());
 
     const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * 6;
     buffer_.resize(bufferSize);
     //if (!buffer_.create(bufferSize)) {
-    //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
+    //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
     //}
     for (unsigned int y = 0; y < maxChunkArea_.y; ++y) {
         for (unsigned int x = 0; x < maxChunkArea_.x; ++x) {
@@ -95,22 +104,22 @@ void ChunkRender::resize(int currentLod, const sf::Vector2u& maxChunkArea) {
         }
     }
 
+    for (auto& renderBlock : renderBlocks_) {
+        chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);
+    }
     renderIndexPool_.resize(maxChunkArea_.x * maxChunkArea_.y);
     std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
     renderBlocks_.clear();
     renderBlocks_.reserve(renderIndexPool_.size());
-
-    // FIXME doesn't clearing the blocks imply that we need to reset the references in chunkDrawables?
-    // ##############################################################################################
 }
 
-void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea) {
+void ChunkRender::allocateBlock(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea) {
     if (renderBlocks_.size() < renderIndexPool_.size()) {
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
-        chunkDrawables.at(coords).setRenderIndex(currentLod, renderIndexPool_[poolIndex]);
+        chunkDrawables.at(coords).setRenderIndex(levelOfDetail_, renderIndexPool_[poolIndex]);
         spdlog::debug("Allocated new block (LOD {} at chunk {}, {}) with render index {}.",
-            currentLod, unpackChunkCoordsX(coords), unpackChunkCoordsY(coords), renderIndexPool_[poolIndex]
+            levelOfDetail_, unpackChunkCoordsX(coords), unpackChunkCoordsY(coords), renderIndexPool_[poolIndex]
         );
         return;
     }
@@ -121,12 +130,12 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
         if (x < visibleArea.left || x >= visibleArea.left + visibleArea.width || y < visibleArea.top || y >= visibleArea.top + visibleArea.height) {
 
             spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
-                currentLod, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
+                levelOfDetail_, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
                 unpackChunkCoordsX(coords), unpackChunkCoordsY(coords)
             );
-            chunkDrawables.at(renderBlock->coords).setRenderIndex(currentLod, -1);
+            chunkDrawables.at(renderBlock->coords).setRenderIndex(levelOfDetail_, -1);
             renderBlock->coords = coords;
-            chunkDrawables.at(coords).setRenderIndex(currentLod, renderIndexPool_[renderBlock->poolIndex]);
+            chunkDrawables.at(coords).setRenderIndex(levelOfDetail_, renderIndexPool_[renderBlock->poolIndex]);
             return;
 
             // FIXME it seems silly to store renderIndexPool_ if we never deallocate the blocks.
@@ -136,19 +145,19 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
     assert(false);
 }
 
-void ChunkRender::drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, sf::RenderStates states) {
-    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
+void ChunkRender::drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states) {
+    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
     states.transform.translate(
-        getChunkTexCoords(chunkDrawable.getRenderIndex(currentLod), textureSubdivisionSize)
+        getChunkTexCoords(chunkDrawable.getRenderIndex(levelOfDetail_), textureSubdivisionSize)
     );
     states.transform.scale(
-        1.0f / (1 << currentLod),
-        1.0f / (1 << currentLod)
+        1.0f / (1 << levelOfDetail_),
+        1.0f / (1 << levelOfDetail_)
     );
-    spdlog::debug("Redrawing LOD {} render index {}.", currentLod, chunkDrawable.getRenderIndex(currentLod));
+    spdlog::debug("Redrawing LOD {} render index {}.", levelOfDetail_, chunkDrawable.getRenderIndex(levelOfDetail_));
     texture_.draw(chunkDrawable, states);
     textureDirty_ = true;
-    chunkDrawable.renderDirty_.reset(currentLod);
+    chunkDrawable.renderDirty_.reset(levelOfDetail_);
 }
 
 void ChunkRender::display() {
@@ -158,14 +167,14 @@ void ChunkRender::display() {
     }
 }
 
-void ChunkRender::updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
+void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
     if (lastVisibleArea_ == visibleArea) {
         return;
     }
 
     lastVisibleArea_ = visibleArea;
     spdlog::debug("Chunk area changed, updating buffer.");
-    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
+    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
     for (int y = 0; y < visibleArea.height; ++y) {
         for (int x = 0; x < visibleArea.width; ++x) {
             sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
@@ -176,9 +185,9 @@ void ChunkRender::updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, C
             // along with this, we could update the area before(?) allocateBlock() calls and then remove the visibleArea param from that function.
 
             if (chunkDrawable == chunkDrawables.end()) {
-                renderIndex = chunkDrawables.at(EMPTY_CHUNK_COORDS).getRenderIndex(currentLod);
+                renderIndex = chunkDrawables.at(EMPTY_CHUNK_COORDS).getRenderIndex(levelOfDetail_);
             } else {
-                renderIndex = chunkDrawable->second.getRenderIndex(currentLod);
+                renderIndex = chunkDrawable->second.getRenderIndex(levelOfDetail_);
             }
             spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
 

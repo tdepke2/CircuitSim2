@@ -13,13 +13,17 @@ public:
     static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);
 
     ChunkDrawable();
+    ChunkDrawable(const ChunkDrawable& rhs) = delete;
+    ChunkDrawable(ChunkDrawable&& rhs) = default;
+    ChunkDrawable& operator=(const ChunkDrawable& rhs) = delete;
+    ChunkDrawable& operator=(ChunkDrawable&& rhs) = default;
     void setChunk(const Chunk* chunk);
     const Chunk* getChunk() const;
-    void setRenderIndex(int currentLod, int renderIndex);
-    int getRenderIndex(int currentLod) const;
+    void setRenderIndex(int levelOfDetail, int renderIndex);
+    int getRenderIndex(int levelOfDetail) const;
     bool hasAnyRenderIndex() const;
     void markDirty();
-    bool isRenderDirty(int currentLod) const;
+    bool isRenderDirty(int levelOfDetail) const;
 
 private:
     static unsigned int textureWidth_, tileWidth_;

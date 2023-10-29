@@ -2,6 +2,11 @@
 
 #include <stdexcept>
 
+ResourceManager::ResourceManager() :
+    textures_(),
+    fonts_() {
+}
+
 sf::Texture& ResourceManager::getTexture(const std::string& filename, bool initEmpty) {
     auto tex = textures_.find(filename);
     if (tex != textures_.end()) {
