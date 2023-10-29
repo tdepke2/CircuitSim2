@@ -24,6 +24,7 @@ public:
     void updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
 
 private:
+    static constexpr int CHUNK_PADDING = 1;
     static unsigned int tileWidth_;
 
     struct RenderBlock {
@@ -39,6 +40,7 @@ private:
     };
     friend bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs);
 
+    sf::Vector2f getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2u maxChunkArea_;

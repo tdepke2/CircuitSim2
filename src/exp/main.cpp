@@ -54,13 +54,12 @@ int main() {
     sf::Clock frameTimer;
 
 
-    // FIXME left off here, need to test below to ensure board viewing still works near extreme coords.
+    // FIXME
     // there's some perf issues with fullscreen at max zoom, too much indexing into FlatMap?
+    //     Maybe we should run a periodic clean up to trim RenderBlocks that are far enough off screen, for all LODs.
+    //     Will need chunk load/unload process working in order to test this.
     // need to fix issue with chunk border artifacts, enable smooth on related textures and maybe add some padding to textures in ChunkRender.
 
-
-    //float bigNum = 32000000.0f;
-    //boardView.setCenter({bigNum, bigNum});
 
     while (window.isOpen()) {
         sf::Event event;

@@ -36,42 +36,66 @@ ChunkRender::ChunkRender() :
 }
 
 void ChunkRender::resize(int currentLod, const sf::Vector2u& maxChunkArea) {
-    if (maxChunkArea_ == maxChunkArea) {
+    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    const int textureSubdivisionSize = chunkWidthTexels / (1 << currentLod);
+
+    // Apply padding so that chunks in the texture have some border space to avoid texture bleed.
+    const sf::Vector2f paddedChunkArea = {
+        std::ceil(maxChunkArea.x * static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) / textureSubdivisionSize),
+        std::ceil(maxChunkArea.y * static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) / textureSubdivisionSize)
+    };
+
+    // Round up to power of 2 for padded area to ensure POT texture.
+    const sf::Vector2u pow2PaddedChunkArea = {
+        1u << static_cast<unsigned int>(std::ceil(std::log2(paddedChunkArea.x))),
+        1u << static_cast<unsigned int>(std::ceil(std::log2(paddedChunkArea.y)))
+    };
+    const sf::Vector2u textureSize = pow2PaddedChunkArea * static_cast<unsigned int>(textureSubdivisionSize);
+
+    // Strip the padding off to find the usable chunk area in the texture, mathematically this should not be less than the original maxChunkArea.
+    const sf::Vector2u adjustedMaxChunkArea = {
+        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.x / static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) * textureSubdivisionSize)),
+        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.y / static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) * textureSubdivisionSize))
+    };
+
+    DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (adjusted {}, {})", maxChunkArea.x, maxChunkArea.y, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y));
+    if (texture_.getSize() == textureSize) {
         return;
     }
 
-    maxChunkArea_ = maxChunkArea;
-    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, maxChunkArea.x, maxChunkArea.y);
-    const sf::Vector2u textureSize = maxChunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod);
+    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", currentLod, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y);
+    spdlog::debug("================= maxChunkArea = {}, {} paddedChunkArea = {}, {}", maxChunkArea.x, maxChunkArea.y, paddedChunkArea.x, paddedChunkArea.y);
+    spdlog::debug("================= textureSubdivisionSize = {}, textureSize = {}, {}", textureSubdivisionSize, textureSize.x, textureSize.y);
+    maxChunkArea_ = adjustedMaxChunkArea;
     if (!texture_.create(textureSize.x, textureSize.y)) {
         spdlog::error("Failed to create texture for LOD {} (size {} by {}).", currentLod, textureSize.x, textureSize.y);
     }
-    texture_.clear(sf::Color::Red);
+    texture_.clear(sf::Color::Black);
+    texture_.setSmooth(true);
     textureDirty_ = true;
     DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(currentLod), &texture_.getTexture());
 
-    const unsigned int bufferSize = maxChunkArea.x * maxChunkArea.y * 6;
+    const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * 6;
     buffer_.resize(bufferSize);
     //if (!buffer_.create(bufferSize)) {
     //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", currentLod, bufferSize);
     //}
-    const int chunkPointWidth = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    for (unsigned int y = 0; y < maxChunkArea.y; ++y) {
-        for (unsigned int x = 0; x < maxChunkArea.x; ++x) {
-            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea.x + x) * 6];
+    for (unsigned int y = 0; y < maxChunkArea_.y; ++y) {
+        for (unsigned int x = 0; x < maxChunkArea_.x; ++x) {
+            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
 
-            float px = static_cast<float>(x * chunkPointWidth);
-            float py = static_cast<float>(y * chunkPointWidth);
+            float px = static_cast<float>(x * chunkWidthTexels);
+            float py = static_cast<float>(y * chunkWidthTexels);
             tileVertices[0].position = {px, py};
-            tileVertices[1].position = {px + chunkPointWidth, py};
-            tileVertices[2].position = {px + chunkPointWidth, py + chunkPointWidth};
-            tileVertices[3].position = {px + chunkPointWidth, py + chunkPointWidth};
-            tileVertices[4].position = {px, py + chunkPointWidth};
+            tileVertices[1].position = {px + chunkWidthTexels, py};
+            tileVertices[2].position = {px + chunkWidthTexels, py + chunkWidthTexels};
+            tileVertices[3].position = {px + chunkWidthTexels, py + chunkWidthTexels};
+            tileVertices[4].position = {px, py + chunkWidthTexels};
             tileVertices[5].position = {px, py};
         }
     }
 
-    renderIndexPool_.resize(maxChunkArea.x * maxChunkArea.y);
+    renderIndexPool_.resize(maxChunkArea_.x * maxChunkArea_.y);
     std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
     renderBlocks_.clear();
     renderBlocks_.reserve(renderIndexPool_.size());
@@ -113,10 +137,9 @@ void ChunkRender::allocateBlock(int currentLod, FlatMap<ChunkCoords, ChunkDrawab
 }
 
 void ChunkRender::drawChunk(int currentLod, const ChunkDrawable& chunkDrawable, sf::RenderStates states) {
-    int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
+    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
     states.transform.translate(
-        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) % static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize),
-        static_cast<float>(static_cast<int>(chunkDrawable.getRenderIndex(currentLod) / static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize)
+        getChunkTexCoords(chunkDrawable.getRenderIndex(currentLod), textureSubdivisionSize)
     );
     states.transform.scale(
         1.0f / (1 << currentLod),
@@ -142,7 +165,7 @@ void ChunkRender::updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, C
 
     lastVisibleArea_ = visibleArea;
     spdlog::debug("Chunk area changed, updating buffer.");
-    int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
+    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << currentLod);
     for (int y = 0; y < visibleArea.height; ++y) {
         for (int x = 0; x < visibleArea.width; ++x) {
             sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
@@ -159,20 +182,28 @@ void ChunkRender::updateVisibleArea(int currentLod, const FlatMap<ChunkCoords, C
             }
             spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
 
-            float tx = static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize);
-            float ty = static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize);
-            tileVertices[0].texCoords = {tx, ty};
-            tileVertices[1].texCoords = {tx + textureSubdivisionSize, ty};
-            tileVertices[2].texCoords = {tx + textureSubdivisionSize, ty + textureSubdivisionSize};
-            tileVertices[3].texCoords = {tx + textureSubdivisionSize, ty + textureSubdivisionSize};
-            tileVertices[4].texCoords = {tx, ty + textureSubdivisionSize};
-            tileVertices[5].texCoords = {tx, ty};
+            // Apply a small bias to the texture coords to hide the chunk seams.
+            constexpr float texBias = 0.5f;
+            sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize) + sf::Vector2f(texBias, texBias);
+            tileVertices[0].texCoords = {t.x, t.y};
+            tileVertices[1].texCoords = {t.x + textureSubdivisionSize - texBias, t.y};
+            tileVertices[2].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
+            tileVertices[3].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
+            tileVertices[4].texCoords = {t.x, t.y + textureSubdivisionSize - texBias};
+            tileVertices[5].texCoords = {t.x, t.y};
         }
     }
 }
 
 bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs) {
     return lhs.adjustedChebyshev < rhs.adjustedChebyshev;
+}
+
+sf::Vector2f ChunkRender::getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const {
+    return {
+        static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING)),
+        static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING))
+    };
 }
 
 void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const {

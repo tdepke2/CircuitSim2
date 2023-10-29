@@ -178,32 +178,25 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", currentLod_));
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the
-    // visible chunks at the max zoom level (for current level-of-detail). Round
-    // this up to the nearest power of 2.
+    // visible chunks at the max zoom level (for current level-of-detail).
     const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod_ + 1));
-    const sf::Vector2f maxChunkArea = {
-        std::ceil(std::round(maxViewSize.x) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f,
-        std::ceil(std::round(maxViewSize.y) / (Chunk::WIDTH * static_cast<int>(tileWidth_))) + 1.0f
+    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    const sf::Vector2u maxChunkArea = {
+        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.x) / chunkWidthTexels)) + 1,
+        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.y) / chunkWidthTexels)) + 1
     };
-    const sf::Vector2u roundedChunkArea = {
-        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
-        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.y)))
-    };
-
-    const sf::Vector2u renderTextureSize = roundedChunkArea * (static_cast<unsigned int>(Chunk::WIDTH) * tileWidth_) / (1u << currentLod_);
-    DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (p2 {}, {} tex {}, {})", maxChunkArea.x, maxChunkArea.y, roundedChunkArea.x, roundedChunkArea.y, renderTextureSize.x, renderTextureSize.y));
 
     ChunkRender& currentChunkRender = chunkRenderCache_[currentLod_];
-    currentChunkRender.resize(currentLod_, roundedChunkArea);
+    currentChunkRender.resize(currentLod_, maxChunkArea);
 
     sf::Vector2i topLeft = {
-        static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+        static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
+        static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
     topLeft += offsetView.getCenterOffset();
     sf::Vector2i bottomRight = {
-        static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / (Chunk::WIDTH * tileWidth_))),
-        static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / (Chunk::WIDTH * tileWidth_)))
+        static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
+        static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
     bottomRight += offsetView.getCenterOffset();
     sf::IntRect visibleArea(topLeft, bottomRight - topLeft + sf::Vector2i(1, 1));
