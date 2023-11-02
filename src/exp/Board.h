@@ -69,5 +69,4 @@ private:
     sf::IntRect lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
-    mutable unsigned int debugChunksDrawn_;
 };

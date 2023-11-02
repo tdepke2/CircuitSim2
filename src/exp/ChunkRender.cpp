@@ -3,6 +3,7 @@
 #include <ChunkRender.h>
 #include <DebugScreen.h>
 
+#include <algorithm>
 #include <numeric>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -32,6 +33,7 @@ ChunkRender::ChunkRender() :
     texture_(),
     textureDirty_(false),
     buffer_(sf::Triangles),
+    bufferVertices_(),
     renderIndexPool_(),
     renderBlocks_() {
 }
@@ -85,13 +87,14 @@ void ChunkRender::resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, co
     DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(levelOfDetail_), &texture_.getTexture());
 
     const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * 6;
-    buffer_.resize(bufferSize);
-    //if (!buffer_.create(bufferSize)) {
-    //    spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
-    //}
+    //buffer_.resize(bufferSize);
+    bufferVertices_.resize(bufferSize);
+    if (!buffer_.create(bufferSize)) {
+        spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
+    }
     for (unsigned int y = 0; y < maxChunkArea_.y; ++y) {
         for (unsigned int x = 0; x < maxChunkArea_.x; ++x) {
-            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
+            sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
 
             float px = static_cast<float>(x * chunkWidthTexels);
             float py = static_cast<float>(y * chunkWidthTexels);
@@ -177,7 +180,7 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& c
     const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
     for (int y = 0; y < visibleArea.height; ++y) {
         for (int x = 0; x < visibleArea.width; ++x) {
-            sf::Vertex* tileVertices = &buffer_[(y * maxChunkArea_.x + x) * 6];
+            sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
             int renderIndex;
             auto chunkDrawable = chunkDrawables.find(packChunkCoords(visibleArea.left + x, visibleArea.top + y));
 
@@ -202,6 +205,9 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& c
             tileVertices[5].texCoords = {t.x, t.y};
         }
     }
+    buffer_.update(bufferVertices_.data());
+
+    sortRenderBlocks();
 }
 
 bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs) {
@@ -213,6 +219,31 @@ sf::Vector2f ChunkRender::getChunkTexCoords(int renderIndex, int textureSubdivis
         static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING)),
         static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING))
     };
+}
+
+void ChunkRender::sortRenderBlocks() {
+    sf::Vector2f centerPosition = {
+        lastVisibleArea_.left + (lastVisibleArea_.width - 1) / 2.0f,
+        lastVisibleArea_.top + (lastVisibleArea_.height - 1) / 2.0f
+    };
+    for (auto& renderBlock : renderBlocks_) {
+        if (renderBlock.coords != EMPTY_CHUNK_COORDS) {
+            renderBlock.adjustedChebyshev = std::max(
+                std::abs(unpackChunkCoordsX(renderBlock.coords) - centerPosition.x),
+                std::abs(unpackChunkCoordsY(renderBlock.coords) - centerPosition.y)
+            );
+            // FIXME this is the basic Chebyshev calculation for now, needs to be adjusted since we are working in a rectangle.
+        } else {
+            renderBlock.adjustedChebyshev = 0.0f;
+        }
+    }
+    std::sort(renderBlocks_.begin(), renderBlocks_.end());
+    /*spdlog::debug("Sorted chunk render blocks ({}):", renderBlocks_.size());
+    for (auto& renderBlock : renderBlocks_) {
+        spdlog::debug("  pos ({}, {}), renderIndex {}, adjChebyshev {}",
+            unpackChunkCoordsX(renderBlock.coords), unpackChunkCoordsY(renderBlock.coords), renderIndexPool_[renderBlock.poolIndex], renderBlock.adjustedChebyshev
+        );
+    }*/
 }
 
 void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const {

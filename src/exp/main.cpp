@@ -19,7 +19,7 @@ int main() {
     spdlog::info("Logging level set to {}.", spdlog::level::to_string_view(spdlog::get_level()));
     spdlog::info("Initializing RenderWindow.");
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
-    window.setVerticalSyncEnabled(true);
+    //window.setVerticalSyncEnabled(true);
 
     ResourceManager resource;
     DebugScreen::init(resource.getFont("resources/consolas.ttf"), 16, window.getSize());
@@ -44,6 +44,7 @@ int main() {
     //tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     //std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
     board.accessTile(2, 2).setHighlight(true);
+    board.accessTile(-20, -6).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
 
     board.debugPrintChunk(0);
 
@@ -58,7 +59,6 @@ int main() {
     // there's some perf issues with fullscreen at max zoom, too much indexing into FlatMap?
     //     Maybe we should run a periodic clean up to trim RenderBlocks that are far enough off screen, for all LODs.
     //     Will need chunk load/unload process working in order to test this.
-    // need to fix issue with chunk border artifacts, enable smooth on related textures and maybe add some padding to textures in ChunkRender.
 
 
     while (window.isOpen()) {
@@ -82,10 +82,12 @@ int main() {
                 constexpr float maxZoom = 31.0f;
                 static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
-                if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
-                    zoomLevel += zoomDelta;
+                zoomLevel += zoomDelta;
+                zoomLevel = std::min(std::max(zoomLevel, 0.2f), maxZoom);
+                //if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
+                    //zoomLevel += zoomDelta;
                     boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
-                }
+                //}
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
@@ -93,7 +95,9 @@ int main() {
                 window.close();
             }
         }
+        DebugScreen::instance()->profilerEvent("main process_events_done");
 
+        DebugScreen::instance()->profilerEvent("main update_debug");
         DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(
             fmt::format("Mode: {} (use arrow keys to change), Frame: {}ms", DebugScreen::instance()->getModeString(), frameTimer.restart().asMilliseconds())
         );
@@ -108,6 +112,7 @@ int main() {
             fmt::format("Chunk: {} visible", board.debugGetChunksDrawn())
         );
 
+        DebugScreen::instance()->profilerEvent("main draw");
         window.clear();
 
         board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
@@ -122,7 +127,9 @@ int main() {
         window.setView(fullWindowView);
         window.draw(*DebugScreen::instance());
 
+        DebugScreen::instance()->profilerEvent("main display");
         window.display();
+        DebugScreen::instance()->profilerEvent("main finish_loop");
     }
 
     return 0;

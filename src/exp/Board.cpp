@@ -154,8 +154,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     chunkRenderCache_(),
     lastVisibleArea_(0, 0, 0, 0),
     debugChunkBorder_(sf::Lines),
-    debugDrawChunkBorder_(false),
-    debugChunksDrawn_(0) {
+    debugDrawChunkBorder_(false) {
 
     for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
         chunkRenderCache_[i].setLod(i);
@@ -250,8 +249,9 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
 }
 
 Tile Board::accessTile(int x, int y) {
-    auto& chunk = getChunk(packChunkCoords(x / Chunk::WIDTH, y / Chunk::WIDTH));
-    return chunk.accessTile(x % Chunk::WIDTH, y % Chunk::WIDTH);
+    auto& chunk = getChunk(packChunkCoords(static_cast<int>(std::floor(static_cast<double>(x) / Chunk::WIDTH)), static_cast<int>(std::floor(static_cast<double>(y) / Chunk::WIDTH))));
+    // Compute coords in chunk using positive modulus.
+    return chunk.accessTile((x % Chunk::WIDTH + Chunk::WIDTH) % Chunk::WIDTH, (y % Chunk::WIDTH + Chunk::WIDTH) % Chunk::WIDTH);
 }
 
 void Board::loadFromFile(const std::string& filename) {
@@ -313,7 +313,7 @@ void Board::debugSetDrawChunkBorder(bool enabled) {
 }
 
 unsigned int Board::debugGetChunksDrawn() const {
-    return debugChunksDrawn_;
+    return lastVisibleArea_.width * lastVisibleArea_.height;
 }
 
 void Board::parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup) {
@@ -576,11 +576,27 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     target.draw(chunkRenderCache_[currentLod_], states);
 
+    DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
     if (debugDrawChunkBorder_) {
         debugChunkBorder_.resize(lastVisibleArea_.width * lastVisibleArea_.height * 4);
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
         unsigned int i = 0;
         for (int y = 0; y < lastVisibleArea_.height; ++y) {
+
+            // FIXME attempted optimization below is not correct
+
+            // Optimize lookup of the chunkDrawable in the loop by finding first
+            // one at or after the current position, then just increment the
+            // iterator within the loop. This works since the x-coordinate is in
+            // the lower significant bits.
+            /*auto chunkDrawable = std::upper_bound(
+                chunkDrawables_.begin(), chunkDrawables_.end(), packChunkCoords(lastVisibleArea_.left - 1, lastVisibleArea_.top + y),
+                [](const auto& value, const auto& element) {
+                    return (unpackChunkCoordsY(value) != unpackChunkCoordsY(element.first) ? unpackChunkCoordsY(value) < unpackChunkCoordsY(element.first) : unpackChunkCoordsX(value) < unpackChunkCoordsX(element.first));
+                }
+            );*/
+            //auto chunkDrawable = chunkDrawables_.upper_bound(packChunkCoords(lastVisibleArea_.left - 1, lastVisibleArea_.top + y));
+
             float yChunkPos = static_cast<float>(y * chunkWidthTexels);
             for (int x = 0; x < lastVisibleArea_.width; ++x) {
                 float xChunkPos = static_cast<float>(x * chunkWidthTexels);
@@ -588,6 +604,13 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 if (chunks_.find(packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) != chunks_.end()) {
                     borderColor = sf::Color::Yellow;
                 }
+
+                /*if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
+                    if (chunkDrawable->second.getChunk() != nullptr) {
+                        borderColor = sf::Color::Yellow;
+                    }
+                    ++chunkDrawable;
+                }*/
 
                 debugChunkBorder_[i + 0].position = {xChunkPos, yChunkPos};
                 debugChunkBorder_[i + 0].color = borderColor;
@@ -602,4 +625,5 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         }
         target.draw(debugChunkBorder_, states);
     }
+    DebugScreen::instance()->profilerEvent("Board::draw draw_debug_done");
 }

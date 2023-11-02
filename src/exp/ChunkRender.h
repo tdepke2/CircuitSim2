@@ -47,6 +47,7 @@ private:
     friend bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs);
 
     sf::Vector2f getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const;
+    void sortRenderBlocks();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     int levelOfDetail_;
@@ -54,7 +55,9 @@ private:
     sf::IntRect lastVisibleArea_;
     sf::RenderTexture texture_;
     bool textureDirty_;
-    sf::VertexArray buffer_;    // FIXME this should probably be a vbuf but need to test.
+    //sf::VertexArray buffer_;    // FIXME this should probably be a vbuf but need to test.
+    sf::VertexBuffer buffer_;
+    std::vector<sf::Vertex> bufferVertices_;
     std::vector<int> renderIndexPool_;
     std::vector<RenderBlock> renderBlocks_;
 };
