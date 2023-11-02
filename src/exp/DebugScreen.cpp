@@ -1,6 +1,7 @@
 #include <DebugScreen.h>
 
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 std::unique_ptr<DebugScreen> DebugScreen::instance_;
 
@@ -26,6 +27,22 @@ void DebugScreen::processEvent(const sf::Event& event) {
     if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::F3) {
             visible_ = !visible_;
+        } else if (event.key.code == sf::Keyboard::P) {
+            spdlog::info("Captured trace ({} events):", profilerEvents_.size());
+            decltype(profilerEvents_.begin()->second) firstTimePoint;
+            while (!profilerEvents_.empty()) {
+                auto minTimeEvent = profilerEvents_.begin();
+                for (auto profilerEvent = profilerEvents_.begin(); profilerEvent != profilerEvents_.end(); ++profilerEvent) {
+                    if (profilerEvent->second < minTimeEvent->second) {
+                        minTimeEvent = profilerEvent;
+                    }
+                }
+                if (firstTimePoint.time_since_epoch().count() == 0) {
+                    firstTimePoint = minTimeEvent->second;
+                }
+                spdlog::info("  {} at time {}ms", minTimeEvent->first, std::chrono::duration<double, std::milli>(minTimeEvent->second - firstTimePoint).count());
+                profilerEvents_.erase(minTimeEvent);
+            }
         } else if (event.key.code == sf::Keyboard::Up) {
             mode_ = static_cast<Mode>((static_cast<int>(mode_) + static_cast<int>(Mode::count) - 1) % static_cast<int>(Mode::count));
         } else if (event.key.code == sf::Keyboard::Down) {
@@ -84,6 +101,10 @@ void DebugScreen::registerTexture(const std::string& name, const sf::Texture* te
     textures_.emplace_back(name, texture);
 }
 
+void DebugScreen::profilerEvent(const std::string& name) {
+    profilerEvents_[name] = std::chrono::high_resolution_clock::now();
+}
+
 DebugScreen::DebugScreen(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) :
     mode_(Mode::def),
     modeStates_(),
@@ -94,7 +115,8 @@ DebugScreen::DebugScreen(const sf::Font& font, unsigned int characterSize, const
     nextFieldPos_(2.0f, 0.0f),
     fields_(),
     customFields_(),
-    textures_() {
+    textures_(),
+    profilerEvents_() {
 
     modeStates_.fill(0);
     fields_.reserve(static_cast<size_t>(Field::count));

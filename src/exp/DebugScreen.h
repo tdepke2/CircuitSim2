@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
@@ -39,6 +40,7 @@ public:
     sf::Text& getField(Field field);
     sf::Text& getField(const std::string& customName);
     void registerTexture(const std::string& name, const sf::Texture* texture);
+    void profilerEvent(const std::string& name);
 
 private:
     static std::unique_ptr<DebugScreen> instance_;
@@ -59,4 +61,5 @@ private:
     std::vector<sf::Text> fields_;
     std::unordered_map<std::string, sf::Text> customFields_;
     std::vector<NamedTexture> textures_;
+    std::unordered_map<std::string, std::chrono::high_resolution_clock::time_point> profilerEvents_;
 };
