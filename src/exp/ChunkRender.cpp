@@ -4,20 +4,21 @@
 #include <DebugScreen.h>
 
 #include <algorithm>
+#include <limits>
 #include <numeric>
 #include <spdlog/spdlog.h>
 #include <string>
 
 inline ChunkCoords packChunkCoords(int x, int y) {
-    return static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x);
+    return static_cast<uint64_t>(y + std::numeric_limits<int>::min()) << 32 | static_cast<uint32_t>(x + std::numeric_limits<int>::min());
 }
 
 inline int unpackChunkCoordsX(ChunkCoords coords) {
-    return static_cast<int32_t>(coords);
+    return static_cast<int32_t>(coords) - std::numeric_limits<int>::min();
 }
 
 inline int unpackChunkCoordsY(ChunkCoords coords) {
-    return static_cast<int32_t>(coords >> 32);
+    return static_cast<int32_t>(coords >> 32) - std::numeric_limits<int>::min();
 }
 
 unsigned int ChunkRender::tileWidth_;
@@ -87,7 +88,6 @@ void ChunkRender::resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, co
     DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(levelOfDetail_), &texture_.getTexture());
 
     const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * 6;
-    //buffer_.resize(bufferSize);
     bufferVertices_.resize(bufferSize);
     if (!buffer_.create(bufferSize)) {
         spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
@@ -178,19 +178,17 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& c
     lastVisibleArea_ = visibleArea;
     spdlog::debug("Chunk area changed, updating buffer.");
     const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
+    const auto& emptyChunk = chunkDrawables.at(EMPTY_CHUNK_COORDS);
     for (int y = 0; y < visibleArea.height; ++y) {
+        auto chunkDrawable = chunkDrawables.upper_bound(packChunkCoords(visibleArea.left - 1, visibleArea.top + y));
         for (int x = 0; x < visibleArea.width; ++x) {
             sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
             int renderIndex;
-            auto chunkDrawable = chunkDrawables.find(packChunkCoords(visibleArea.left + x, visibleArea.top + y));
-
-            // FIXME we could use the existing loop in Board() to do this, bypassing the lookup ###########################
-            // along with this, we could update the area before(?) allocateBlock() calls and then remove the visibleArea param from that function.
-
-            if (chunkDrawable == chunkDrawables.end()) {
-                renderIndex = chunkDrawables.at(EMPTY_CHUNK_COORDS).getRenderIndex(levelOfDetail_);
+            if (chunkDrawable == chunkDrawables.end() || chunkDrawable->first != packChunkCoords(visibleArea.left + x, visibleArea.top + y)) {
+                renderIndex = emptyChunk.getRenderIndex(levelOfDetail_);
             } else {
                 renderIndex = chunkDrawable->second.getRenderIndex(levelOfDetail_);
+                ++chunkDrawable;
             }
             spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
 

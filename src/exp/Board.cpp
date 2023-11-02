@@ -165,15 +165,15 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
 }
 
 inline ChunkCoords packChunkCoords(int x, int y) {
-    return static_cast<uint64_t>(y) << 32 | static_cast<uint32_t>(x);
+    return static_cast<uint64_t>(y + std::numeric_limits<int>::min()) << 32 | static_cast<uint32_t>(x + std::numeric_limits<int>::min());
 }
 
 inline int unpackChunkCoordsX(ChunkCoords coords) {
-    return static_cast<int32_t>(coords);
+    return static_cast<int32_t>(coords) - std::numeric_limits<int>::min();
 }
 
 inline int unpackChunkCoordsY(ChunkCoords coords) {
-    return static_cast<int32_t>(coords >> 32);
+    return static_cast<int32_t>(coords >> 32) - std::numeric_limits<int>::min();
 }
 
 void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
@@ -500,36 +500,38 @@ void Board::pruneChunkDrawables() {
 }
 
 void Board::updateRender() {
-    bool emptyChunkVisible = false, allocatedBlock = false;
-    for (int y = lastVisibleArea_.top; y < lastVisibleArea_.top + lastVisibleArea_.height; ++y) {
-        for (int x = lastVisibleArea_.left; x < lastVisibleArea_.left + lastVisibleArea_.width; ++x) {
-            auto chunkDrawable = chunkDrawables_.find(packChunkCoords(x, y));
-            if (chunkDrawable == chunkDrawables_.end()) {
-                emptyChunkVisible = true;
-            } else if (chunkDrawable->second.isRenderDirty(currentLod_)) {
-                if (chunkDrawable->second.getRenderIndex(currentLod_) == -1) {
-                    chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, packChunkCoords(x, y), lastVisibleArea_);
-                    allocatedBlock = true;
-
-                    // FIXME couple problems here:
-                    // allocateBlock has the potential to modify FlatMap, invalidating the iterator passed which could be used later. this is now fixed.
-                    // we should improve this to use iteration through the map.
-                }
-                sf::RenderStates states;
-                states.texture = tilesetGrid_;
-                chunkRenderCache_[currentLod_].drawChunk(chunkDrawable->second, states);
-            }
-        }
-    }
-    auto& emptyChunk = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
-    if (emptyChunkVisible && emptyChunk.isRenderDirty(currentLod_)) {
-        if (emptyChunk.getRenderIndex(currentLod_) == -1) {
-            chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, ChunkRender::EMPTY_CHUNK_COORDS, lastVisibleArea_);
+    auto drawChunk = [this](const ChunkDrawable& chunkDrawable, bool& allocatedBlock, ChunkCoords coords) {
+        if (chunkDrawable.getRenderIndex(currentLod_) == -1) {
+            chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, coords, lastVisibleArea_);
             allocatedBlock = true;
         }
         sf::RenderStates states;
         states.texture = tilesetGrid_;
-        chunkRenderCache_[currentLod_].drawChunk(emptyChunk, states);
+        chunkRenderCache_[currentLod_].drawChunk(chunkDrawable, states);
+    };
+
+    bool emptyChunkVisible = false, allocatedBlock = false;
+    for (int y = lastVisibleArea_.top; y < lastVisibleArea_.top + lastVisibleArea_.height; ++y) {
+        // Optimize lookup of the chunkDrawable in the loop by finding first one
+        // at or after the current position, then just increment the iterator
+        // within the loop. This works since the x-coordinate (as unsigned value
+        // in ChunkCoords) is in the lower significant bits, and the ChunkCoords
+        // value is always increasing in the loop.
+        auto chunkDrawable = chunkDrawables_.upper_bound(packChunkCoords(lastVisibleArea_.left - 1, y));
+        for (int x = lastVisibleArea_.left; x < lastVisibleArea_.left + lastVisibleArea_.width; ++x) {
+            if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != packChunkCoords(x, y)) {
+                emptyChunkVisible = true;
+            } else {
+                if (chunkDrawable->second.isRenderDirty(currentLod_)) {
+                    drawChunk(chunkDrawable->second, allocatedBlock, packChunkCoords(x, y));
+                }
+                ++chunkDrawable;
+            }
+        }
+    }
+    const auto& emptyChunk = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
+    if (emptyChunkVisible && emptyChunk.isRenderDirty(currentLod_)) {
+        drawChunk(emptyChunk, allocatedBlock, ChunkRender::EMPTY_CHUNK_COORDS);
     }
     if (allocatedBlock) {
         pruneChunkDrawables();
@@ -538,42 +540,6 @@ void Board::updateRender() {
 }
 
 void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-
-    //std::cout << bottomRight.x << "    " << bottomRight.y << "\n";
-    /*int totalDrawn = 0;
-    int totalEmpty = 0;
-
-    sf::Transform originalTransform = states.transform;
-
-    states.texture = tilesetGrid_;
-    debugChunksDrawn_ = 0;
-    for (int y = topLeft.y; y <= bottomRight.y; ++y) {
-        for (int x = topLeft.x; x <= bottomRight.x; ++x) {
-            states.transform = sf::Transform(originalTransform).translate(
-                static_cast<float>(x * Chunk::WIDTH * static_cast<int>(tileWidth_)),
-                static_cast<float>(y * Chunk::WIDTH * static_cast<int>(tileWidth_))
-            );
-            auto chunk = chunks_.find(packChunkCoords(x, y));
-            if (chunk != chunks_.end()) {
-                target.draw(chunk->second, states);
-            } else {
-                target.draw(emptyChunk_, states);
-                ++totalEmpty;
-            }
-            // FIXME faster to instead walk the iterator in the inner loop? we would need to assume there are holes, so walk one at a time and read the chunk if it lines up with index. #########################
-            ++debugChunksDrawn_;
-        }
-    }
-    states.texture = nullptr;
-    states.transform = originalTransform;*/
-
-    //states.texture = tilesetGrid_;
-    //target.draw(emptyChunk_, states);
-    //states.transform = states.transform.translate(1 * Chunk::WIDTH * tileWidth_, 1 * Chunk::WIDTH * tileWidth_);
-    //target.draw(chunks_.at(0), states);
-
-    //std::cout << "d: " << totalDrawn << " e: " << totalEmpty << "\n";
-
     target.draw(chunkRenderCache_[currentLod_], states);
 
     DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
@@ -582,35 +548,17 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
         unsigned int i = 0;
         for (int y = 0; y < lastVisibleArea_.height; ++y) {
-
-            // FIXME attempted optimization below is not correct
-
-            // Optimize lookup of the chunkDrawable in the loop by finding first
-            // one at or after the current position, then just increment the
-            // iterator within the loop. This works since the x-coordinate is in
-            // the lower significant bits.
-            /*auto chunkDrawable = std::upper_bound(
-                chunkDrawables_.begin(), chunkDrawables_.end(), packChunkCoords(lastVisibleArea_.left - 1, lastVisibleArea_.top + y),
-                [](const auto& value, const auto& element) {
-                    return (unpackChunkCoordsY(value) != unpackChunkCoordsY(element.first) ? unpackChunkCoordsY(value) < unpackChunkCoordsY(element.first) : unpackChunkCoordsX(value) < unpackChunkCoordsX(element.first));
-                }
-            );*/
-            //auto chunkDrawable = chunkDrawables_.upper_bound(packChunkCoords(lastVisibleArea_.left - 1, lastVisibleArea_.top + y));
-
+            auto chunkDrawable = chunkDrawables_.upper_bound(packChunkCoords(lastVisibleArea_.left - 1, lastVisibleArea_.top + y));
             float yChunkPos = static_cast<float>(y * chunkWidthTexels);
             for (int x = 0; x < lastVisibleArea_.width; ++x) {
                 float xChunkPos = static_cast<float>(x * chunkWidthTexels);
                 sf::Color borderColor = sf::Color::Blue;
-                if (chunks_.find(packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) != chunks_.end()) {
-                    borderColor = sf::Color::Yellow;
-                }
-
-                /*if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
+                if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == packChunkCoords(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
                     if (chunkDrawable->second.getChunk() != nullptr) {
                         borderColor = sf::Color::Yellow;
                     }
                     ++chunkDrawable;
-                }*/
+                }
 
                 debugChunkBorder_[i + 0].position = {xChunkPos, yChunkPos};
                 debugChunkBorder_[i + 0].color = borderColor;

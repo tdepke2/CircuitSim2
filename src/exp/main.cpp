@@ -46,7 +46,7 @@ int main() {
     board.accessTile(2, 2).setHighlight(true);
     board.accessTile(-20, -6).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
 
-    board.debugPrintChunk(0);
+    board.debugPrintChunk(0x8000000080000000);
 
     sf::View fullWindowView(window.getDefaultView());
     OffsetView boardView(TILE_WIDTH * Chunk::WIDTH, window.getDefaultView());

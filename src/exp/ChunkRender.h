@@ -13,7 +13,7 @@ using ChunkCoords = uint64_t;
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
-    static constexpr ChunkCoords EMPTY_CHUNK_COORDS = 0x7fffffff7fffffff;
+    static constexpr ChunkCoords EMPTY_CHUNK_COORDS = 0;
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
@@ -55,7 +55,6 @@ private:
     sf::IntRect lastVisibleArea_;
     sf::RenderTexture texture_;
     bool textureDirty_;
-    //sf::VertexArray buffer_;    // FIXME this should probably be a vbuf but need to test.
     sf::VertexBuffer buffer_;
     std::vector<sf::Vertex> bufferVertices_;
     std::vector<int> renderIndexPool_;
