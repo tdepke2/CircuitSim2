@@ -247,6 +247,22 @@ public:
             return pos;
         }
     }
+    iterator lower_bound(const Key& key) {
+        return std::lower_bound(vec_.begin(), vec_.end(), key, valueToKeyComp_);
+    }
+    const_iterator lower_bound(const Key& key) const {
+        return std::lower_bound(vec_.begin(), vec_.end(), key, valueToKeyComp_);
+    }
+    iterator upper_bound(const Key& key) {
+        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const auto& lhs, const auto& rhs) {
+            return comp_(lhs, rhs.first);
+        });
+    }
+    const_iterator upper_bound(const Key& key) const {
+        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const auto& lhs, const auto& rhs) {
+            return comp_(lhs, rhs.first);
+        });
+    }
 
     friend bool operator==(const FlatMap& lhs, const FlatMap& rhs) {
         return lhs.vec_ == rhs.vec_;
