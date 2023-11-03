@@ -209,39 +209,6 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
             visibleArea.left, visibleArea.top, visibleArea.left + visibleArea.width - 1, visibleArea.top + visibleArea.height - 1
         );
         lastVisibleArea_ = visibleArea;
-
-        /*
-        sf::Vector2f centerPosition = sf::Vector2f(bottomRight - topLeft) / 2.0f;
-        for (auto& block : currentChunkRender.blocks) {
-            if (block.textureIndex == -1) {
-                block.adjustedChebyshev = std::numeric_limits<float>::max();
-            } else if (block.coords != ChunkRenderBlock::emptyChunkCoords) {
-                block.adjustedChebyshev = std::max(
-                    std::abs(unpackChunkCoordsX(block.coords) - centerPosition.x),
-                    std::abs(unpackChunkCoordsY(block.coords) - centerPosition.y)
-                );
-                // FIXME this is the basic Chebyshev calculation for now, needs to be adjusted since we are working in a rectangle.
-            } else {
-                block.adjustedChebyshev = 0.0f;
-            }
-        }
-        std::sort(currentChunkRender.blocks.begin(), currentChunkRender.blocks.end());
-        spdlog::debug("Sorted chunk render blocks ({}):", currentChunkRender.blocks.size());
-        for (auto& block : currentChunkRender.blocks) {
-            spdlog::debug("  pos ({}, {}), tex {}, adjChebyshev {}", unpackChunkCoordsX(block.coords), unpackChunkCoordsY(block.coords), block.textureIndex, block.adjustedChebyshev);
-        }
-
-        for (int y = topLeft.y; y <= bottomRight.y; ++y) {
-            for (int x = topLeft.x; x <= bottomRight.x; ++x) {
-                auto chunk = chunks_.find(packChunkCoords(x, y));
-                if (chunk != chunks_.end()) {
-                    // check if chunk rendered and is not dirty
-                } else {
-
-                }
-            }
-        }
-        */
     }
 
     updateRender();

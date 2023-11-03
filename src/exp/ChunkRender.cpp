@@ -227,10 +227,9 @@ void ChunkRender::sortRenderBlocks() {
     for (auto& renderBlock : renderBlocks_) {
         if (renderBlock.coords != EMPTY_CHUNK_COORDS) {
             renderBlock.adjustedChebyshev = std::max(
-                std::abs(unpackChunkCoordsX(renderBlock.coords) - centerPosition.x),
-                std::abs(unpackChunkCoordsY(renderBlock.coords) - centerPosition.y)
+                std::abs(unpackChunkCoordsX(renderBlock.coords) - centerPosition.x) / lastVisibleArea_.width,
+                std::abs(unpackChunkCoordsY(renderBlock.coords) - centerPosition.y) / lastVisibleArea_.height
             );
-            // FIXME this is the basic Chebyshev calculation for now, needs to be adjusted since we are working in a rectangle.
         } else {
             renderBlock.adjustedChebyshev = 0.0f;
         }
