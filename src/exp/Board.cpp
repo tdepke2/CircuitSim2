@@ -215,10 +215,19 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_);
 }
 
+constexpr int constLog2(int x) {
+    return x == 1 ? 0 : 1 + constLog2(x / 2);
+}
+
 Tile Board::accessTile(int x, int y) {
-    auto& chunk = getChunk(packChunkCoords(static_cast<int>(std::floor(static_cast<double>(x) / Chunk::WIDTH)), static_cast<int>(std::floor(static_cast<double>(y) / Chunk::WIDTH))));
-    // Compute coords in chunk using positive modulus.
-    return chunk.accessTile((x % Chunk::WIDTH + Chunk::WIDTH) % Chunk::WIDTH, (y % Chunk::WIDTH + Chunk::WIDTH) % Chunk::WIDTH);
+    // First method using floor division and positive modulus:
+    // chunkCoordinate = static_cast<int>(std::floor(static_cast<double>(x) / Chunk::WIDTH))
+    // positionInChunk = (x % Chunk::WIDTH + Chunk::WIDTH) % Chunk::WIDTH
+
+    // Improved method since Chunk::WIDTH is a power of 2:
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    auto& chunk = getChunk(packChunkCoords(x >> widthLog2, y >> widthLog2));
+    return chunk.accessTile(x & (Chunk::WIDTH - 1), y & (Chunk::WIDTH - 1));
 }
 
 void Board::loadFromFile(const std::string& filename) {

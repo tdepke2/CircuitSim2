@@ -13,6 +13,10 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+
+
+#include <LegacyFileFormat.h>
+
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
@@ -29,6 +33,13 @@ int main() {
     Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", TILE_WIDTH);
     Board board;
     board.debugSetDrawChunkBorder(true);
+
+
+
+    std::unique_ptr<FileStorage> fileStorage(new LegacyFileFormat());
+    fileStorage->saveToFile(board);
+
+
 
     try {
         board.loadFromFile("boards/ComputerGame.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");

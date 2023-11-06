@@ -4,8 +4,11 @@ add_executable(CircuitSim2_experimental
     ChunkDrawable.cpp
     ChunkRender.cpp
     DebugScreen.cpp
+    FileStorage.cpp
+    LegacyFileFormat.cpp
     main.cpp
     OffsetView.cpp
+    RegionFileFormat.cpp
     ResourceManager.cpp
     Tile.cpp
     tiles/Blank.cpp

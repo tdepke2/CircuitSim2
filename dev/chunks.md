@@ -84,3 +84,18 @@ We will need to reserve a spot for the empty chunk, storing it as a member of th
 Allocation data structure: std::map<unsigned int, uint64_t> (the int is an index into the texture)
 Wait, maybe just make it a vector?
 Easy to find first available (just loop through) and probably still fast enough to find furthest by searching for largest Manhattan distance (or is it actually the Chebyshev distance?).
+
+## New File Format ##
+
+```
+<board-name>
+|-- region
+|   |-- 0.0.dat
+|   |-- 1.1.dat
+|   '-- -1.-1.dat
+'-- board.txt
+```
+
+The `board.txt` file is similar to the legacy format, only storing version and some metadata. Each "region" is a 32 by 32 chunk area where the chunk data is saved to a file in the region directory.
+
+Each region file is a binary file containing a 4096 byte header followed by data for each chunk. The header is a lookup table matching each of the 1024 chunks in the region to a 1024 byte sector offset in the file (follows an X -> Y ordering starting from zero, offset is 32 bits). This is based very similarly to the MC Region file format: https://minecraft.wiki/w/Region_file_format
