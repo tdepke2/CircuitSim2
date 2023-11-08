@@ -1,23 +1,22 @@
 #pragma once
 
 #include <Chunk.h>
+#include <ChunkCoords.h>
 #include <ChunkDrawable.h>
 #include <ChunkRender.h>
 #include <FlatMap.h>
 
 #include <array>
-#include <map>
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <unordered_map>
 
+class FileStorage;
 class OffsetView;
 class ResourceManager;
 class Tile;
 struct TileSymbol;
-
-using ChunkCoords = uint64_t;
 
 class Board : public sf::Drawable {
 public:
@@ -29,10 +28,11 @@ public:
     Board& operator=(const Board& rhs) = delete;
 
     void setRenderArea(const OffsetView& offsetView, float zoom);
+    void setMaxSize(const sf::Vector2u& size);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
-    void saveToFile(const std::string& filename);
-    void debugPrintChunk(ChunkCoords i) {
+    void saveToFile();
+    void debugPrintChunk(ChunkCoords::repr i) {
         chunks_.at(i).debugPrintChunk();
     }
     void debugSetDrawChunkBorder(bool enabled);
@@ -43,27 +43,15 @@ private:
     static sf::Texture* tilesetNoGrid_;
     static unsigned int tileWidth_;
 
-    struct ParseState {
-        std::string lastField = "";
-        std::string filename = "";
-        float fileVersion = 1.0;
-        unsigned int width = 0;
-        unsigned int height = 0;
-        bool enableExtraLogicStates = false;
-        std::string notesString = "";
-        int x = 0;
-        int y = 0;
-    };
-
-    void parseFile(const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup);
-    Chunk& getChunk(ChunkCoords coords);
+    Chunk& getChunk(ChunkCoords::repr coords);
     void pruneChunkDrawables();
     void updateRender();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+    std::unique_ptr<FileStorage> fileStorage_;
     sf::Vector2u maxSize_;
-    std::unordered_map<ChunkCoords, Chunk> chunks_;
-    FlatMap<ChunkCoords, ChunkDrawable> chunkDrawables_;
+    std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
+    FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
     sf::IntRect lastVisibleArea_;

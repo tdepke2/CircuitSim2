@@ -9,18 +9,6 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-inline ChunkCoords packChunkCoords(int x, int y) {
-    return static_cast<uint64_t>(y + std::numeric_limits<int>::min()) << 32 | static_cast<uint32_t>(x + std::numeric_limits<int>::min());
-}
-
-inline int unpackChunkCoordsX(ChunkCoords coords) {
-    return static_cast<int32_t>(coords) - std::numeric_limits<int>::min();
-}
-
-inline int unpackChunkCoordsY(ChunkCoords coords) {
-    return static_cast<int32_t>(coords >> 32) - std::numeric_limits<int>::min();
-}
-
 unsigned int ChunkRender::tileWidth_;
 
 void ChunkRender::setupTextureData(unsigned int tileWidth) {
@@ -47,7 +35,7 @@ int ChunkRender::getLod() const {
     return levelOfDetail_;
 }
 
-void ChunkRender::resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea) {
+void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea) {
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
 
@@ -116,25 +104,25 @@ void ChunkRender::resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, co
     renderBlocks_.reserve(renderIndexPool_.size());
 }
 
-void ChunkRender::allocateBlock(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea) {
+void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const sf::IntRect& visibleArea) {
     if (renderBlocks_.size() < renderIndexPool_.size()) {
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
         chunkDrawables.at(coords).setRenderIndex(levelOfDetail_, renderIndexPool_[poolIndex]);
         spdlog::debug("Allocated new block (LOD {} at chunk {}, {}) with render index {}.",
-            levelOfDetail_, unpackChunkCoordsX(coords), unpackChunkCoordsY(coords), renderIndexPool_[poolIndex]
+            levelOfDetail_, ChunkCoords::x(coords), ChunkCoords::y(coords), renderIndexPool_[poolIndex]
         );
         return;
     }
 
     for (auto renderBlock = renderBlocks_.rbegin(); renderBlock != renderBlocks_.rend(); ++renderBlock) {
-        int x = unpackChunkCoordsX(renderBlock->coords);
-        int y = unpackChunkCoordsY(renderBlock->coords);
+        int x = ChunkCoords::x(renderBlock->coords);
+        int y = ChunkCoords::y(renderBlock->coords);
         if (x < visibleArea.left || x >= visibleArea.left + visibleArea.width || y < visibleArea.top || y >= visibleArea.top + visibleArea.height) {
 
             spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
-                levelOfDetail_, unpackChunkCoordsX(renderBlock->coords), unpackChunkCoordsY(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
-                unpackChunkCoordsX(coords), unpackChunkCoordsY(coords)
+                levelOfDetail_, ChunkCoords::x(renderBlock->coords), ChunkCoords::y(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
+                ChunkCoords::x(coords), ChunkCoords::y(coords)
             );
             chunkDrawables.at(renderBlock->coords).setRenderIndex(levelOfDetail_, -1);
             renderBlock->coords = coords;
@@ -170,7 +158,7 @@ void ChunkRender::display() {
     }
 }
 
-void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
+void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
     if (lastVisibleArea_ == visibleArea) {
         return;
     }
@@ -180,11 +168,11 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& c
     const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
     const auto& emptyChunk = chunkDrawables.at(EMPTY_CHUNK_COORDS);
     for (int y = 0; y < visibleArea.height; ++y) {
-        auto chunkDrawable = chunkDrawables.upper_bound(packChunkCoords(visibleArea.left - 1, visibleArea.top + y));
+        auto chunkDrawable = chunkDrawables.upper_bound(ChunkCoords::pack(visibleArea.left - 1, visibleArea.top + y));
         for (int x = 0; x < visibleArea.width; ++x) {
             sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
             int renderIndex;
-            if (chunkDrawable == chunkDrawables.end() || chunkDrawable->first != packChunkCoords(visibleArea.left + x, visibleArea.top + y)) {
+            if (chunkDrawable == chunkDrawables.end() || chunkDrawable->first != ChunkCoords::pack(visibleArea.left + x, visibleArea.top + y)) {
                 renderIndex = emptyChunk.getRenderIndex(levelOfDetail_);
             } else {
                 renderIndex = chunkDrawable->second.getRenderIndex(levelOfDetail_);
@@ -227,8 +215,8 @@ void ChunkRender::sortRenderBlocks() {
     for (auto& renderBlock : renderBlocks_) {
         if (renderBlock.coords != EMPTY_CHUNK_COORDS) {
             renderBlock.adjustedChebyshev = std::max(
-                std::abs(unpackChunkCoordsX(renderBlock.coords) - centerPosition.x) / lastVisibleArea_.width,
-                std::abs(unpackChunkCoordsY(renderBlock.coords) - centerPosition.y) / lastVisibleArea_.height
+                std::abs(ChunkCoords::x(renderBlock.coords) - centerPosition.x) / lastVisibleArea_.width,
+                std::abs(ChunkCoords::y(renderBlock.coords) - centerPosition.y) / lastVisibleArea_.height
             );
         } else {
             renderBlock.adjustedChebyshev = 0.0f;
@@ -238,7 +226,7 @@ void ChunkRender::sortRenderBlocks() {
     /*spdlog::debug("Sorted chunk render blocks ({}):", renderBlocks_.size());
     for (auto& renderBlock : renderBlocks_) {
         spdlog::debug("  pos ({}, {}), renderIndex {}, adjChebyshev {}",
-            unpackChunkCoordsX(renderBlock.coords), unpackChunkCoordsY(renderBlock.coords), renderIndexPool_[renderBlock.poolIndex], renderBlock.adjustedChebyshev
+            ChunkCoords::x(renderBlock.coords), ChunkCoords::y(renderBlock.coords), renderIndexPool_[renderBlock.poolIndex], renderBlock.adjustedChebyshev
         );
     }*/
 }

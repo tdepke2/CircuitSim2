@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ChunkCoords.h>
 #include <FlatMap.h>
 
 #include <cstdint>
@@ -8,12 +9,10 @@
 
 class ChunkDrawable;
 
-using ChunkCoords = uint64_t;
-
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
-    static constexpr ChunkCoords EMPTY_CHUNK_COORDS = 0;
+    static constexpr ChunkCoords::repr EMPTY_CHUNK_COORDS = 0;
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
@@ -23,24 +22,24 @@ public:
 
     void setLod(int levelOfDetail);
     int getLod() const;
-    void resize(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);
-    void allocateBlock(FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, ChunkCoords coords, const sf::IntRect& visibleArea);
+    void resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);
+    void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const sf::IntRect& visibleArea);
     void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
-    void updateVisibleArea(const FlatMap<ChunkCoords, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
+    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
 
 private:
     static constexpr int CHUNK_PADDING = 1;
     static unsigned int tileWidth_;
 
     struct RenderBlock {
-        RenderBlock(ChunkCoords coords, unsigned int poolIndex) :
+        RenderBlock(ChunkCoords::repr coords, unsigned int poolIndex) :
             coords(coords),
             poolIndex(poolIndex),
             adjustedChebyshev(0.0f) {
         }
 
-        ChunkCoords coords;
+        ChunkCoords::repr coords;
         unsigned int poolIndex;
         float adjustedChebyshev;
     };
