@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <memory>
+#include <spdlog/spdlog.h>
 
 namespace tiles {
 
@@ -37,6 +38,10 @@ void Gate::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
             tileData.id = static_cast<TileId::t>(tileData.id - 1);
         }
     }
+}
+
+Gate::Gate() {
+    spdlog::debug("Gate class has been constructed.");
 }
 
 void Gate::init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Direction::t direction, State::t state) {

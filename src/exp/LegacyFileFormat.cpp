@@ -8,7 +8,7 @@
 
 #include <array>
 #include <fstream>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 struct TileSymbol {
     char a, b;
@@ -82,16 +82,10 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
     static std::map<TileSymbol, unsigned int> symbolLookup;
 
     if (symbolLookup.empty()) {
-        std::cout << "First time init symbolLookup.\n";
+        spdlog::debug("First time init symbolLookup.");
         for (size_t i = 0; i < TILE_SYMBOLS.size(); ++i) {
             symbolLookup.emplace(TILE_SYMBOLS[i], i);
         }
-
-        /*std::cout << "symbolLookup contents:\n";
-        for (const auto& x : symbolLookup) {
-            std::cout << x.first.a << x.first.b << " -> " << x.second << "\n";
-        }
-        std::cout << "\n";*/
     }
 
     std::string line;
@@ -114,13 +108,13 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
         throw std::runtime_error("\"" + filename + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
     inputFile.close();
-    std::cout << "Load completed.\n";
 
-    std::cout << "\nfileVersion = " << parseState.fileVersion << "\n";
-    std::cout << "width = " << parseState.width << "\n";
-    std::cout << "height = " << parseState.height << "\n";
-    std::cout << "enableExtraLogicStates = " << parseState.enableExtraLogicStates << "\n";
-    std::cout << "notesString = \"" << parseState.notesString << "\"\n";
+    spdlog::debug("Load completed.");
+    spdlog::debug("fileVersion = {}", parseState.fileVersion);
+    spdlog::debug("width = {}", parseState.width);
+    spdlog::debug("height = {}", parseState.height);
+    spdlog::debug("enableExtraLogicStates = {}", parseState.enableExtraLogicStates);
+    spdlog::debug("notesString = \"{}\"", parseState.notesString);
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
@@ -312,7 +306,7 @@ void LegacyFileFormat::parseFile(Board& board, const std::string& line, int line
         } else if (line == "}") {
             parseState.lastField = "data: }";
         } else {
-            std::cout << "Warn: \"" + parseState.filename + "\" at line " + std::to_string(lineNumber) + ": found some unrecognized data.\n";
+            spdlog::warn("\"{}\" at line {}: found some unrecognized data.", parseState.filename, lineNumber);
         }
     } else if (parseState.lastField == "data: }" && line == "notes: {") {
         parseState.lastField = "notes: {";

@@ -2,11 +2,7 @@
 #include <ChunkDrawable.h>
 #include <Tile.h>
 
-
-
-#include <iostream>
-
-
+#include <spdlog/spdlog.h>
 
 unsigned int ChunkDrawable::textureWidth_, ChunkDrawable::tileWidth_;
 uint8_t ChunkDrawable::textureLookup_[512];
@@ -56,7 +52,7 @@ void ChunkDrawable::setupTextureData(const sf::Vector2u& textureSize, unsigned i
             addThreeTextures(id, State::middle);
         }
     }
-    std::cout << "building textureLookup_ finished, final textureId is " << static_cast<int>(textureId) << "\n";
+    spdlog::debug("Building textureLookup_ finished, final textureId is {}", static_cast<int>(textureId));
 }
 
 ChunkDrawable::ChunkDrawable() :

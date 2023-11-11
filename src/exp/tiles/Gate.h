@@ -3,12 +3,6 @@
 #include <Tile.h>
 #include <TileType.h>
 
-
-
-
-
-#include <iostream>
-
 class Chunk;
 
 namespace tiles {
@@ -28,9 +22,7 @@ public:
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
 
 private:
-    Gate() {
-        std::cout << "Gate class has been constructed.\n";
-    }
+    Gate();
 
     void init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Direction::t direction, State::t state);
 

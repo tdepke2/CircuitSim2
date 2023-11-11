@@ -2,6 +2,7 @@
 #include <tiles/Led.h>
 
 #include <memory>
+#include <spdlog/spdlog.h>
 
 namespace tiles {
 
@@ -18,6 +19,10 @@ void Led::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
 void Led::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
 
 void Led::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
+
+Led::Led() {
+    spdlog::debug("Led class has been constructed.");
+}
 
 void Led::init(Chunk& chunk, unsigned int tileIndex, State::t state) {
     auto& tileData = getTileData(chunk, tileIndex);

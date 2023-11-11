@@ -4,6 +4,7 @@
 #include <ChunkCoords.h>
 #include <ChunkDrawable.h>
 #include <ChunkRender.h>
+#include <FileStorage.h>
 #include <FlatMap.h>
 
 #include <array>
@@ -12,7 +13,6 @@
 #include <string>
 #include <unordered_map>
 
-class FileStorage;
 class OffsetView;
 class ResourceManager;
 class Tile;

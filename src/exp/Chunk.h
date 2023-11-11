@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ostream>
 
 //#pragma pack(push, 1)
 struct TileData {
@@ -44,4 +45,6 @@ private:
 
     friend class ChunkDrawable;
     friend class TileType;
+
+    friend std::ostream& operator<<(std::ostream& out, const Chunk& chunk);
 };

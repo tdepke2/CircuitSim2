@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <memory>
+#include <spdlog/spdlog.h>
 
 namespace tiles {
 
@@ -58,6 +59,10 @@ void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
         tileData.id = TileId::wireJunction;
         tileData.state2 = State::low;
     }
+}
+
+Wire::Wire() {
+    spdlog::debug("Wire class has been constructed.");
 }
 
 void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {

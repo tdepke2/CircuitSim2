@@ -8,14 +8,9 @@
 #include <tiles/Wire.h>
 
 #include <cmath>
-#include <iostream>
 #include <SFML/Graphics.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
-
-
-
-#include <LegacyFileFormat.h>
 
 int main() {
     spdlog::set_level(spdlog::level::debug);
@@ -34,24 +29,15 @@ int main() {
     Board board;
     board.debugSetDrawChunkBorder(true);
 
-
-
-    std::unique_ptr<FileStorage> fileStorage(new LegacyFileFormat());
-    fileStorage->saveToFile(board);
-
-
-
     try {
         board.loadFromFile("boards/ComputerGame.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
 
     } catch (std::exception& ex) {
-        std::cerr << ex.what() << "\n";
+        spdlog::error(ex.what());
     }
 
     auto tile = board.accessTile(0, 0);
-    std::cout << "attempt to getHighlight()\n";
     tile.setHighlight(true);
-    std::cout << tile.getHighlight() << "\n";
     //tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     //std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
     board.accessTile(2, 2).setHighlight(true);

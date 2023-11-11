@@ -1,6 +1,5 @@
 #include <Board.h>
 #include <DebugScreen.h>
-#include <FileStorage.h>
 #include <LegacyFileFormat.h>
 #include <OffsetView.h>
 #include <ResourceManager.h>
@@ -9,9 +8,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <fstream>
-#include <iostream>
-#include <limits>
 #include <spdlog/spdlog.h>
 #include <utility>
 
@@ -35,8 +31,7 @@ void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::V
 void loadTileset(const std::string& filename, sf::Texture* target, unsigned int tileWidth) {
     sf::Image tileset;
     if (!tileset.loadFromFile(filename)) {
-        std::cerr << "Failed to load texture file.\n";
-        exit(-1);
+        throw std::runtime_error("\"" + filename + "\": unable to load texture file.");
     }
     target->create(tileset.getSize().x * 2, tileset.getSize().y * 4);
     sf::Image fullTileset;
@@ -57,7 +52,7 @@ void loadTileset(const std::string& filename, sf::Texture* target, unsigned int 
         }
     }
     target->update(fullTileset, 0, tileset.getSize().y * 2);
-    std::cout << "Built tileset texture with size " << target->getSize().x << " x " << target->getSize().y << "\n";
+    spdlog::debug("Built tileset texture with size {} by {}.", target->getSize().x, target->getSize().y);
 }
 
 void Board::setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth) {
@@ -67,7 +62,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     loadTileset(filenameGrid, tilesetGrid_, tileWidth);
     tilesetGrid_->setSmooth(true);
     if (!tilesetGrid_->generateMipmap()) {
-        std::cerr << "Warn: \"" << filenameGrid << "\": Unable to generate mipmap for texture.\n";
+        spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameGrid);
     }
     DebugScreen::instance()->registerTexture("tilesetGrid", tilesetGrid_);
 
@@ -75,7 +70,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
     loadTileset(filenameNoGrid, tilesetNoGrid_, tileWidth);
     tilesetNoGrid_->setSmooth(true);
     if (!tilesetNoGrid_->generateMipmap()) {
-        std::cerr << "Warn: \"" << filenameNoGrid << "\": Unable to generate mipmap for texture.\n";
+        spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameNoGrid);
     }
     DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid_);
 

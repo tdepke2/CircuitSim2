@@ -2,6 +2,7 @@
 #include <tiles/Input.h>
 
 #include <memory>
+#include <spdlog/spdlog.h>
 
 namespace tiles {
 
@@ -19,6 +20,10 @@ void Input::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHori
 
 void Input::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {
     // FIXME need to open up a dialog prompt to allow configuration.
+}
+
+Input::Input() {
+    spdlog::debug("Input class has been constructed.");
 }
 
 void Input::init(Chunk& chunk, unsigned int tileIndex, TileId::t inputId, State::t state, char keycode) {

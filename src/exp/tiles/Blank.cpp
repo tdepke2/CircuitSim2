@@ -2,6 +2,7 @@
 #include <tiles/Blank.h>
 
 #include <memory>
+#include <spdlog/spdlog.h>
 
 namespace tiles {
 
@@ -13,6 +14,10 @@ Blank* Blank::instance() {
 void Blank::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
 
 void Blank::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
+
+Blank::Blank() {
+    spdlog::debug("Blank class has been constructed.");
+}
 
 void Blank::init(Chunk& chunk, unsigned int tileIndex) {
     auto& tileData = getTileData(chunk, tileIndex);
