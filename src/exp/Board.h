@@ -29,6 +29,8 @@ public:
 
     void setRenderArea(const OffsetView& offsetView, float zoom);
     void setMaxSize(const sf::Vector2u& size);
+    void setExtraLogicStates(bool extraLogicStates);
+    void setNotesString(const sf::String& notes);
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile();
@@ -50,6 +52,8 @@ private:
 
     std::unique_ptr<FileStorage> fileStorage_;
     sf::Vector2u maxSize_;
+    bool extraLogicStates_;
+    sf::Text notesText_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     int currentLod_;

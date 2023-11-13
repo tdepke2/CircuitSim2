@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <fstream>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <utility>
 
 sf::Texture* Board::tilesetGrid_;
@@ -81,6 +83,8 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
     fileStorage_(new LegacyFileFormat()),
     maxSize_(),
+    extraLogicStates_(false),
+    notesText_(),
     chunks_(),
     chunkDrawables_(),
     currentLod_(0),
@@ -140,6 +144,14 @@ void Board::setMaxSize(const sf::Vector2u& size) {
     maxSize_ = size;
 }
 
+void Board::setExtraLogicStates(bool extraLogicStates) {
+    extraLogicStates_ = extraLogicStates;
+}
+
+void Board::setNotesString(const sf::String& notes) {
+    notesText_.setString(notes);
+}
+
 constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
@@ -156,7 +168,23 @@ Tile Board::accessTile(int x, int y) {
 }
 
 void Board::loadFromFile(const std::string& filename) {
-    fileStorage_->loadFromFile(*this, filename);
+    std::ifstream inputFile(filename);
+    float version = FileStorage::getFileVersion(filename, inputFile);
+    if (version < 0.0) {
+        throw std::runtime_error("\"" + filename + "\": unknown file version.");
+    }
+    while (!fileStorage_->validateFileVersion(version)) {
+        fileStorage_.reset(new LegacyFileFormat());
+        if (fileStorage_->validateFileVersion(version)) {
+            break;
+        }
+        //fileStorage_.reset(new RegionFileFormat());
+        if (fileStorage_->validateFileVersion(version)) {
+            break;
+        }
+        throw std::runtime_error("\"" + filename + "\": invalid file version " + std::to_string(version) + ".");
+    }
+    fileStorage_->loadFromFile(*this, filename, inputFile);
 }
 
 void Board::saveToFile() {

@@ -12,6 +12,7 @@ class LegacyFileFormat : public FileStorage {
 public:
     LegacyFileFormat();
 
+    virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const std::string& filename) override;
     virtual void saveToFile(Board& board) override;
 

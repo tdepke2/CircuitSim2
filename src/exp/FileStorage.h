@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <fstream>
 #include <string>
 #include <type_traits>
 #ifdef _MSC_VER
@@ -17,6 +18,9 @@ public:
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
     static inline T byteswap(T n) noexcept;
 
+    static float getFileVersion(const std::string& filename, std::ifstream& inputFile);
+
+    virtual bool validateFileVersion(float version) = 0;
     virtual void loadFromFile(Board& board, const std::string& filename) = 0;
     virtual void saveToFile(Board& board) = 0;
 };

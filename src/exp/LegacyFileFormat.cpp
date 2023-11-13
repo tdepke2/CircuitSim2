@@ -9,6 +9,7 @@
 #include <array>
 #include <fstream>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 
 struct TileSymbol {
     char a, b;
@@ -71,6 +72,10 @@ namespace TileSymbolIndex {
 LegacyFileFormat::LegacyFileFormat() :
     path_("boards" + pathSeparator()),
     name_("NewBoard.txt") {
+}
+
+bool validateFileVersion(float version) {
+    return version == 1.0;
 }
 
 void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
@@ -271,7 +276,7 @@ void LegacyFileFormat::parseFile(Board& board, const std::string& line, int line
     } else if (parseState.lastField == "" && line.find("version:") == 0) {
         parseState.lastField = "version:";
         parseState.fileVersion = std::stof(line.substr(parseState.lastField.length()));
-        if (parseState.fileVersion != 1.0f) {
+        if (!validateFileVersion(parseState.fileVersion)) {
             throw std::runtime_error("invalid file version.");
         }
     } else if (parseState.lastField == "version:" && line.find("width:") == 0) {
