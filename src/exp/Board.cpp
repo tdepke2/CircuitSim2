@@ -168,16 +168,19 @@ Tile Board::accessTile(int x, int y) {
 }
 
 void Board::loadFromFile(const std::string& filename) {
+    spdlog::info("Loading file \"{}\".", filename);
     std::ifstream inputFile(filename);
     float version = FileStorage::getFileVersion(filename, inputFile);
     if (version < 0.0) {
         throw std::runtime_error("\"" + filename + "\": unknown file version.");
     }
     while (!fileStorage_->validateFileVersion(version)) {
+        spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
         fileStorage_.reset(new LegacyFileFormat());
         if (fileStorage_->validateFileVersion(version)) {
             break;
         }
+        spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
         //fileStorage_.reset(new RegionFileFormat());
         if (fileStorage_->validateFileVersion(version)) {
             break;
@@ -188,6 +191,7 @@ void Board::loadFromFile(const std::string& filename) {
 }
 
 void Board::saveToFile() {
+    spdlog::info("Saving file.");
     fileStorage_->saveToFile(*this);
 }
 

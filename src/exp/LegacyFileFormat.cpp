@@ -74,15 +74,76 @@ LegacyFileFormat::LegacyFileFormat() :
     name_("NewBoard.txt") {
 }
 
-bool validateFileVersion(float version) {
+void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state) {
+    //std::cout << "Parse line [" << line << "]\n";
+
+    if (line.length() == 0) {
+        if (state.lastField == "notes: {") {
+            state.notesString.push_back('\n');
+        }
+    } else if (state.lastField == "headerBegin" && line.find("version:") == 0) {
+        state.lastField = "version:";
+        state.fileVersion = std::stof(line.substr(state.lastField.length()));
+        if (!validateFileVersion(state.fileVersion)) {
+            throw std::runtime_error("invalid file version.");
+        }
+    } else if (state.lastField == "version:" && line.find("width:") == 0) {
+        state.lastField = "width:";
+        int width = std::stoi(line.substr(state.lastField.length()));
+        if (width < 0) {
+            throw std::runtime_error("board dimensions cannot be negative.");
+        }
+        state.width = width;
+    } else if (state.lastField == "width:" && line.find("height:") == 0) {
+        state.lastField = "height:";
+        int height = std::stoi(line.substr(state.lastField.length()));
+        if (height < 0) {
+            throw std::runtime_error("board dimensions cannot be negative.");
+        }
+        state.height = height;
+    } else if (state.lastField == "height:" && line == "data: {") {
+        state.lastField = "data: {";
+    } else if (state.lastField == "data: {") {
+        if (line.find("extraLogicStates:") == 0) {
+            state.extraLogicStates = std::stoi(line.substr(17));
+        } else if (line == "}") {
+            state.lastField = "data: }";
+        } else {
+            spdlog::warn("\"{}\" at line {}: found some unrecognized data.", state.filename, lineNumber);
+        }
+    } else if (state.lastField == "data: }" && line == "notes: {") {
+        state.lastField = "notes: {";
+    } else if (state.lastField == "notes: {" && line != "}") {
+        state.notesString += line + "\n";
+    } else if (state.lastField == "notes: {") {
+        state.lastField = "headerEnd";
+
+        if (state.width > 0 && state.height > 0) {
+            board.setMaxSize({
+                ((state.width - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH,
+                ((state.height - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH
+            });
+        } else {
+            board.setMaxSize({0, 0});
+        }
+        board.setExtraLogicStates(state.extraLogicStates);
+        board.setNotesString(state.notesString);
+
+    } else {
+        throw std::runtime_error("unexpected board file data.");
+    }
+}
+
+bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
 
-void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
-    std::ifstream inputFile(filename);
+void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) {
     if (!inputFile.is_open()) {
         throw std::runtime_error("\"" + filename + "\": unable to open file for reading.");
     }
+    inputFile.clear();
+    inputFile.seekg(0);
 
     static std::map<TileSymbol, unsigned int> symbolLookup;
 
@@ -95,17 +156,22 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
 
     std::string line;
     int lineNumber = 0;
-    ParseState parseState;
-    parseState.filename = filename;
+    ParseState state;
+    state.filename = filename;
     try {
+        while (state.lastField != "headerEnd" && std::getline(inputFile, line)) {
+            if (!line.empty() && line.back() == '\r') {
+                line.pop_back();
+            }
+            parseHeader(board, line, ++lineNumber, state);
+        }
         while (std::getline(inputFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
-            ++lineNumber;
-            parseFile(board, line, lineNumber, parseState, symbolLookup);
+            parseTiles(board, line, ++lineNumber, state, symbolLookup);
         }
-        if (parseState.lastField != "done") {
+        if (state.lastField != "done") {
             throw std::runtime_error("missing data, end of file reached.");
         }
     } catch (std::exception& ex) {
@@ -115,11 +181,11 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename) {
     inputFile.close();
 
     spdlog::debug("Load completed.");
-    spdlog::debug("fileVersion = {}", parseState.fileVersion);
-    spdlog::debug("width = {}", parseState.width);
-    spdlog::debug("height = {}", parseState.height);
-    spdlog::debug("enableExtraLogicStates = {}", parseState.enableExtraLogicStates);
-    spdlog::debug("notesString = \"{}\"", parseState.notesString);
+    spdlog::debug("fileVersion = {}", state.fileVersion);
+    spdlog::debug("width = {}", state.width);
+    spdlog::debug("height = {}", state.height);
+    spdlog::debug("extraLogicStates = {}", state.extraLogicStates);
+    spdlog::debug("notesString = \"{}\"", state.notesString);
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
@@ -174,23 +240,21 @@ void LegacyFileFormat::saveToFile(Board& board) {
     out.write(s, 6);
 }
 
-void LegacyFileFormat::parseFile(Board& board, const std::string& line, int lineNumber, ParseState& parseState, const std::map<TileSymbol, unsigned int>& symbolLookup) {
+void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*lineNumber*/, ParseState& state, const std::map<TileSymbol, unsigned int>& symbolLookup) {
     //std::cout << "Parse line [" << line << "]\n";
 
     if (line.length() == 0) {
-        if (parseState.lastField == "notes: {") {
-            parseState.notesString.push_back('\n');
-        }
-    } else if (parseState.lastField == "tiles") {
-        if (parseState.y == 0) {
+        return;
+    } else if (state.lastField == "tiles") {
+        if (state.y == 0) {
             //std::cout << "========== START OF TILES ==========\n";
         }
-        if (line.length() != parseState.width * 2 + 2) {
-            throw std::runtime_error("incorrect length of line (expected " + std::to_string(parseState.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
+        if (line.length() != state.width * 2 + 2) {
+            throw std::runtime_error("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
         }
-        parseState.x = 0;
-        while (parseState.x < static_cast<int>(parseState.width)) {
-            TileSymbol symbol(line[parseState.x * 2 + 1], line[parseState.x * 2 + 2]);
+        state.x = 0;
+        while (state.x < static_cast<int>(state.width)) {
+            TileSymbol symbol(line[state.x * 2 + 1], line[state.x * 2 + 2]);
             auto foundSymbol = symbolLookup.find(symbol);
             if (foundSymbol == symbolLookup.end()) {
                 foundSymbol = symbolLookup.find(TileSymbol(symbol.a, '\0'));
@@ -198,13 +262,13 @@ void LegacyFileFormat::parseFile(Board& board, const std::string& line, int line
                     std::string s;
                     s.push_back(symbol.a);
                     s.push_back(symbol.b);
-                    throw std::runtime_error("invalid symbols \"" + s + "\" at position (" + std::to_string(parseState.x) + ", " + std::to_string(parseState.y) + ").");
+                    throw std::runtime_error("invalid symbols \"" + s + "\" at position (" + std::to_string(state.x) + ", " + std::to_string(state.y) + ").");
                 }
             }
 
             unsigned int symbolId = foundSymbol->second;
             //std::cout << symbolId << " ";
-            Tile tile = board.accessTile(parseState.x, parseState.y);
+            Tile tile = board.accessTile(state.x, state.y);
             if (symbolId == TileSymbolIndex::blank) {
                 // Blank tile.
             } else if (symbolId < TileSymbolIndex::inSwitch) {
@@ -265,70 +329,22 @@ void LegacyFileFormat::parseFile(Board& board, const std::string& line, int line
                 );
             }
 
-            ++parseState.x;
+            ++state.x;
         }
         //std::cout << "\n";
-        ++parseState.y;
-        if (parseState.y == static_cast<int>(parseState.height)) {
-            parseState.lastField = "tilesEnd";
+        ++state.y;
+        if (state.y == static_cast<int>(state.height)) {
+            state.lastField = "tilesEnd";
             //std::cout << "========== END OF TILES ==========\n";
         }
-    } else if (parseState.lastField == "" && line.find("version:") == 0) {
-        parseState.lastField = "version:";
-        parseState.fileVersion = std::stof(line.substr(parseState.lastField.length()));
-        if (!validateFileVersion(parseState.fileVersion)) {
-            throw std::runtime_error("invalid file version.");
+    } else if (state.lastField == "headerEnd" || state.lastField == "tilesEnd") {
+        if (line.length() != state.width * 2 + 2) {
+            throw std::runtime_error("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
         }
-    } else if (parseState.lastField == "version:" && line.find("width:") == 0) {
-        parseState.lastField = "width:";
-        int width = std::stoi(line.substr(parseState.lastField.length()));
-        if (width < 0) {
-            throw std::runtime_error("board dimensions cannot be negative.");
-        }
-        parseState.width = width;
-    } else if (parseState.lastField == "width:" && line.find("height:") == 0) {
-        parseState.lastField = "height:";
-        int height = std::stoi(line.substr(parseState.lastField.length()));
-        if (height < 0) {
-            throw std::runtime_error("board dimensions cannot be negative.");
-        }
-        parseState.height = height;
-
-        if (parseState.width > 0 && parseState.height > 0) {
-            board.setMaxSize({
-                ((parseState.width - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH,
-                ((parseState.height - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH
-            });
+        if (state.lastField == "headerEnd") {
+            state.lastField = "tiles";
         } else {
-            board.setMaxSize({0, 0});
-        }
-
-    } else if (parseState.lastField == "height:" && line == "data: {") {
-        parseState.lastField = "data: {";
-    } else if (parseState.lastField == "data: {") {
-        if (line.find("extraLogicStates:") == 0) {
-            parseState.enableExtraLogicStates = std::stoi(line.substr(17));
-        } else if (line == "}") {
-            parseState.lastField = "data: }";
-        } else {
-            spdlog::warn("\"{}\" at line {}: found some unrecognized data.", parseState.filename, lineNumber);
-        }
-    } else if (parseState.lastField == "data: }" && line == "notes: {") {
-        parseState.lastField = "notes: {";
-    } else if (parseState.lastField == "notes: {") {
-        if (line != "}") {
-            parseState.notesString += line + "\n";
-        } else {
-            parseState.lastField = "notes: }";
-        }
-    } else if (parseState.lastField == "notes: }" || parseState.lastField == "tilesEnd") {
-        if (line.length() != parseState.width * 2 + 2) {
-            throw std::runtime_error("incorrect length of line (expected " + std::to_string(parseState.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
-        }
-        if (parseState.lastField == "notes: }") {
-            parseState.lastField = "tiles";
-        } else {
-            parseState.lastField = "done";
+            state.lastField = "done";
         }
     } else {
         throw std::runtime_error("unexpected board file data.");

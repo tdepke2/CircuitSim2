@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-float getFileVersion(const std::string& filename, std::ifstream& inputFile) {
+float FileStorage::getFileVersion(const std::string& filename, std::ifstream& inputFile) {
     if (!inputFile.is_open()) {
         throw std::runtime_error("\"" + filename + "\": unable to open file for reading.");
     }

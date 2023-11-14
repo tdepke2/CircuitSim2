@@ -21,7 +21,7 @@ public:
     static float getFileVersion(const std::string& filename, std::ifstream& inputFile);
 
     virtual bool validateFileVersion(float version) = 0;
-    virtual void loadFromFile(Board& board, const std::string& filename) = 0;
+    virtual void loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) = 0;
     virtual void saveToFile(Board& board) = 0;
 };
 
