@@ -60,6 +60,10 @@ void Tile::setState(State::t state) {
     tileType_->setState(chunk_, tileIndex_, state);
 }
 
+TileId::t Tile::getId() const {
+    return tileType_->getId(chunk_, tileIndex_);
+}
+
 Direction::t Tile::getDirection() const {
     return tileType_->getDirection(chunk_, tileIndex_);
 }

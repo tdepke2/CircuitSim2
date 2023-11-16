@@ -1,13 +1,15 @@
 #include <Board.h>
 #include <LegacyFileFormat.h>
 #include <Tile.h>
+#include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 
 #include <array>
-#include <fstream>
+#include <iomanip>
+#include <map>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
@@ -22,6 +24,10 @@ struct TileSymbol {
     }
     bool operator<(const TileSymbol& rhs) const {
         return a < rhs.a || (a == rhs.a && b < rhs.b);
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const TileSymbol& symbol) {
+        return out << symbol.a << symbol.b;
     }
 };
 
@@ -46,6 +52,8 @@ constexpr std::array<TileSymbol, 157> TILE_SYMBOLS = {
     "^y",  "^Y",  "`y",  ">y",  ">Y",  "}y",  "vy",  "vY",  ",y",  "<y",  "<Y",  "{y"
 };
 
+std::map<TileSymbol, unsigned int> symbolLookup;
+
 namespace TileSymbolIndex {
     enum t : unsigned int {
         blank = 0,
@@ -69,9 +77,111 @@ namespace TileSymbolIndex {
     };
 }
 
-LegacyFileFormat::LegacyFileFormat() :
-    path_("boards" + pathSeparator()),
-    name_("NewBoard.txt") {
+void setTileFromSymbol(Board& board, int x, int y, const TileSymbol& symbol) {
+    auto foundSymbol = symbolLookup.find(symbol);
+    if (foundSymbol == symbolLookup.end()) {
+        foundSymbol = symbolLookup.find(TileSymbol(symbol.a, '\0'));
+        if (foundSymbol == symbolLookup.end()) {
+            std::string s;
+            s.push_back(symbol.a);
+            s.push_back(symbol.b);
+            throw std::runtime_error("invalid symbols \"" + s + "\" at position (" + std::to_string(x) + ", " + std::to_string(y) + ").");
+        }
+    }
+
+    Tile tile = board.accessTile(x, y);
+    unsigned int symbolId = foundSymbol->second;
+    //std::cout << symbolId << " ";
+    if (symbolId == TileSymbolIndex::blank) {
+        // Blank tile.
+    } else if (symbolId < TileSymbolIndex::inSwitch) {
+        // Wire tile.
+        if (symbolId < TileSymbolIndex::wireCorner) {
+            tile.setType(
+                tiles::Wire::instance(), TileId::wireStraight,
+                static_cast<Direction::t>((symbolId - TileSymbolIndex::wireStraight) / 3),
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireStraight) % 3 + 1)
+            );
+        } else if (symbolId < TileSymbolIndex::wireTee) {
+            tile.setType(
+                tiles::Wire::instance(), TileId::wireCorner,
+                static_cast<Direction::t>((symbolId - TileSymbolIndex::wireCorner) / 3),
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireCorner) % 3 + 1)
+            );
+        } else if (symbolId < TileSymbolIndex::wireJunction) {
+            tile.setType(
+                tiles::Wire::instance(), TileId::wireTee,
+                static_cast<Direction::t>((symbolId - TileSymbolIndex::wireTee) / 3),
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireTee) % 3 + 1)
+            );
+        } else if (symbolId < TileSymbolIndex::wireCrossover) {
+            tile.setType(
+                tiles::Wire::instance(), TileId::wireJunction,
+                Direction::north,
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireJunction) % 3 + 1)
+            );
+        } else {
+            tile.setType(
+                tiles::Wire::instance(), TileId::wireCrossover,
+                Direction::north,
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireCrossover) % 3 + 1),
+                static_cast<State::t>((symbolId - TileSymbolIndex::wireCrossover) / 3 + 1)
+            );
+        }
+    } else if (symbolId < TileSymbolIndex::outLed) {
+        // Input tile.
+        tile.setType(
+            tiles::Input::instance(),
+            static_cast<TileId::t>((symbolId - TileSymbolIndex::inSwitch) / 2 + TileId::inSwitch),
+            static_cast<State::t>((symbolId - TileSymbolIndex::inSwitch) % 2 + 1),
+            symbol.b
+        );
+    } else if (symbolId < TileSymbolIndex::gateDiode) {
+        // Output tile.
+        tile.setType(
+            tiles::Led::instance(),
+            static_cast<State::t>((symbolId - TileSymbolIndex::outLed) % 2 + 1)
+        );
+    } else {
+        // Gate tile.
+        tile.setType(
+            tiles::Gate::instance(),
+            static_cast<TileId::t>((symbolId - TileSymbolIndex::gateDiode) / 12 + TileId::gateDiode),
+            static_cast<Direction::t>((symbolId - TileSymbolIndex::gateDiode) / 3 % 4),
+            static_cast<State::t>((symbolId - TileSymbolIndex::gateDiode) % 3 + 1)
+        );
+    }
+}
+
+TileSymbol tileToSymbol(Board& board, int x, int y) {
+    Tile tile = board.accessTile(x, y);
+    auto tileId = tile.getId();
+    if (tile.getType() == tiles::Blank::instance()) {
+        return TILE_SYMBOLS[TileSymbolIndex::blank];
+    } else if (tile.getType() == tiles::Wire::instance()) {
+        if (tileId == TileId::wireStraight) {
+            return TILE_SYMBOLS[TileSymbolIndex::wireStraight + tile.getDirection() * 3 + tile.getState() - 1];
+        } else if (tileId == TileId::wireCorner) {
+            return TILE_SYMBOLS[TileSymbolIndex::wireCorner + tile.getDirection() * 3 + tile.getState() - 1];
+        } else if (tileId == TileId::wireTee) {
+            return TILE_SYMBOLS[TileSymbolIndex::wireTee + tile.getDirection() * 3 + tile.getState() - 1];
+        } else if (tileId == TileId::wireJunction) {
+            return TILE_SYMBOLS[TileSymbolIndex::wireJunction + tile.getState() - 1];
+        } else {
+            auto wire = dynamic_cast<tiles::Wire*>(tile.getType());
+            return TILE_SYMBOLS[TileSymbolIndex::wireCrossover + (wire->getState2(tile.getChunk(), tile.getIndex()) - 1) * 3 + tile.getState() - 1];
+        }
+    } else if (tile.getType() == tiles::Input::instance()) {
+        auto input = dynamic_cast<tiles::Input*>(tile.getType());
+        return {
+            TILE_SYMBOLS[TileSymbolIndex::inSwitch + (tileId - TileId::inSwitch) * 2 + tile.getState() - 1].a,
+            input->getKeycode(tile.getChunk(), tile.getIndex())
+        };
+    } else if (tile.getType() == tiles::Led::instance()) {
+        return TILE_SYMBOLS[TileSymbolIndex::outLed + tile.getState() - 1];
+    } else {
+        return TILE_SYMBOLS[TileSymbolIndex::gateDiode + (tileId - TileId::gateDiode) * 12 + tile.getDirection() * 3 + tile.getState() - 1];
+    }
 }
 
 void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state) {
@@ -84,9 +194,7 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     } else if (state.lastField == "headerBegin" && line.find("version:") == 0) {
         state.lastField = "version:";
         state.fileVersion = std::stof(line.substr(state.lastField.length()));
-        if (!validateFileVersion(state.fileVersion)) {
-            throw std::runtime_error("invalid file version.");
-        }
+        // Skip validating version as this is expected to already have passed.
     } else if (state.lastField == "version:" && line.find("width:") == 0) {
         state.lastField = "width:";
         int width = std::stoi(line.substr(state.lastField.length()));
@@ -134,6 +242,11 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
+LegacyFileFormat::LegacyFileFormat() :
+    path_("boards" + pathSeparator()),
+    name_("NewBoard.txt") {
+}
+
 bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
@@ -144,8 +257,6 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
     }
     inputFile.clear();
     inputFile.seekg(0);
-
-    static std::map<TileSymbol, unsigned int> symbolLookup;
 
     if (symbolLookup.empty()) {
         spdlog::debug("First time init symbolLookup.");
@@ -169,16 +280,14 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
-            parseTiles(board, line, ++lineNumber, state, symbolLookup);
+            parseTiles(board, line, ++lineNumber, state);
         }
         if (state.lastField != "done") {
             throw std::runtime_error("missing data, end of file reached.");
         }
     } catch (std::exception& ex) {
-        inputFile.close();
         throw std::runtime_error("\"" + filename + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
-    inputFile.close();
 
     spdlog::debug("Load completed.");
     spdlog::debug("fileVersion = {}", state.fileVersion);
@@ -189,58 +298,36 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
-    std::ofstream out("binary_test.bin", std::ios::binary);
-    if (!out.is_open()) {
-        // FIXME not good.
-        return;
+    std::string filename = path_ + name_;
+    std::ofstream outputFile(filename);
+    if (!outputFile.is_open()) {
+        throw std::runtime_error("\"" + filename + "\": unable to open file for writing.");
     }
-    const char s[] = "\nhello";
 
-    uint8_t x8 = 0x01;
-    out.write(reinterpret_cast<char*>(&x8), sizeof(x8));
-    x8 = byteswap(x8);
-    out.write(reinterpret_cast<char*>(&x8), sizeof(x8));
-    out.write(s, 1);
+    outputFile << "version: 1.0\n";
+    outputFile << "width: " << board.getMaxSize().x << "\n";
+    outputFile << "height: " << board.getMaxSize().y << "\n";
+    outputFile << "data: {\n";
+    outputFile << "extraLogicStates: " << board.getExtraLogicStates() << "\n";
+    outputFile << "}\n";
+    outputFile << "notes: {\n";
+    outputFile << board.getNotesString().toAnsiString();
+    outputFile << "}\n\n";
+    outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
+    for (unsigned int y = 0; y < board.getMaxSize().y; ++y) {
+        outputFile << "*";
+        for (unsigned int x = 0; x < board.getMaxSize().x; ++x) {
+            outputFile << tileToSymbol(board, x, y);
+        }
+        outputFile << "*\n";
+    }
+    outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
+    outputFile.close();
 
-    uint16_t x16 = 0x0203;
-    out.write(reinterpret_cast<char*>(&x16), sizeof(x16));
-    x16 = byteswap(x16);
-    out.write(reinterpret_cast<char*>(&x16), sizeof(x16));
-    out.write(s, 1);
-
-    uint32_t x32 = 0x04050607;
-    out.write(reinterpret_cast<char*>(&x32), sizeof(x32));
-    x32 = byteswap(x32);
-    out.write(reinterpret_cast<char*>(&x32), sizeof(x32));
-    out.write(s, 1);
-
-    int xInt = 0x01020304;
-    out.write(reinterpret_cast<char*>(&xInt), sizeof(xInt));
-    xInt = byteswap(xInt);
-    out.write(reinterpret_cast<char*>(&xInt), sizeof(xInt));
-    out.write(s, 1);
-
-    uint64_t x64 = 0x0102030405060708;
-    out.write(reinterpret_cast<char*>(&x64), sizeof(x64));
-    x64 = byteswap(x64);
-    out.write(reinterpret_cast<char*>(&x64), sizeof(x64));
-    out.write(s, 1);
-
-    float xFloat = 123.456f;
-    out.write(reinterpret_cast<char*>(&xFloat), sizeof(xFloat));
-    xFloat = byteswap(xFloat);
-    out.write(reinterpret_cast<char*>(&xFloat), sizeof(xFloat));
-    out.write(s, 1);
-
-    // This should not compile.
-    /*int* xPtr = &xInt;
-    out.write(reinterpret_cast<char*>(&xPtr), sizeof(xPtr));
-    xPtr = byteswap(xPtr);
-    out.write(reinterpret_cast<char*>(&xPtr), sizeof(xPtr));*/
-    out.write(s, 6);
+    spdlog::debug("Save completed.");
 }
 
-void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*lineNumber*/, ParseState& state, const std::map<TileSymbol, unsigned int>& symbolLookup) {
+void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*lineNumber*/, ParseState& state) {
     //std::cout << "Parse line [" << line << "]\n";
 
     if (line.length() == 0) {
@@ -255,80 +342,7 @@ void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*l
         state.x = 0;
         while (state.x < static_cast<int>(state.width)) {
             TileSymbol symbol(line[state.x * 2 + 1], line[state.x * 2 + 2]);
-            auto foundSymbol = symbolLookup.find(symbol);
-            if (foundSymbol == symbolLookup.end()) {
-                foundSymbol = symbolLookup.find(TileSymbol(symbol.a, '\0'));
-                if (foundSymbol == symbolLookup.end()) {
-                    std::string s;
-                    s.push_back(symbol.a);
-                    s.push_back(symbol.b);
-                    throw std::runtime_error("invalid symbols \"" + s + "\" at position (" + std::to_string(state.x) + ", " + std::to_string(state.y) + ").");
-                }
-            }
-
-            unsigned int symbolId = foundSymbol->second;
-            //std::cout << symbolId << " ";
-            Tile tile = board.accessTile(state.x, state.y);
-            if (symbolId == TileSymbolIndex::blank) {
-                // Blank tile.
-            } else if (symbolId < TileSymbolIndex::inSwitch) {
-                // Wire tile.
-                if (symbolId < TileSymbolIndex::wireCorner) {
-                    tile.setType(
-                        tiles::Wire::instance(), TileId::wireStraight,
-                        static_cast<Direction::t>((symbolId - TileSymbolIndex::wireStraight) / 3),
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireStraight) % 3 + 1)
-                    );
-                } else if (symbolId < TileSymbolIndex::wireTee) {
-                    tile.setType(
-                        tiles::Wire::instance(), TileId::wireCorner,
-                        static_cast<Direction::t>((symbolId - TileSymbolIndex::wireCorner) / 3),
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireCorner) % 3 + 1)
-                    );
-                } else if (symbolId < TileSymbolIndex::wireJunction) {
-                    tile.setType(
-                        tiles::Wire::instance(), TileId::wireTee,
-                        static_cast<Direction::t>((symbolId - TileSymbolIndex::wireTee) / 3),
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireTee) % 3 + 1)
-                    );
-                } else if (symbolId < TileSymbolIndex::wireCrossover) {
-                    tile.setType(
-                        tiles::Wire::instance(), TileId::wireJunction,
-                        Direction::north,
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireJunction) % 3 + 1)
-                    );
-                } else {
-                    tile.setType(
-                        tiles::Wire::instance(), TileId::wireCrossover,
-                        Direction::north,
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireCrossover) % 3 + 1),
-                        static_cast<State::t>((symbolId - TileSymbolIndex::wireCrossover) / 3 + 1)
-                    );
-                }
-            } else if (symbolId < TileSymbolIndex::outLed) {
-                // Input tile.
-                tile.setType(
-                    tiles::Input::instance(),
-                    static_cast<TileId::t>((symbolId - TileSymbolIndex::inSwitch) / 2 + TileId::inSwitch),
-                    static_cast<State::t>((symbolId - TileSymbolIndex::inSwitch) % 2 + 1),
-                    symbol.b
-                );
-            } else if (symbolId < TileSymbolIndex::gateDiode) {
-                // Output tile.
-                tile.setType(
-                    tiles::Led::instance(),
-                    static_cast<State::t>((symbolId - TileSymbolIndex::outLed) % 2 + 1)
-                );
-            } else {
-                // Gate tile.
-                tile.setType(
-                    tiles::Gate::instance(),
-                    static_cast<TileId::t>((symbolId - TileSymbolIndex::gateDiode) / 12 + TileId::gateDiode),
-                    static_cast<Direction::t>((symbolId - TileSymbolIndex::gateDiode) / 3 % 4),
-                    static_cast<State::t>((symbolId - TileSymbolIndex::gateDiode) % 3 + 1)
-                );
-            }
-
+            setTileFromSymbol(board, state.x, state.y, symbol);
             ++state.x;
         }
         //std::cout << "\n";

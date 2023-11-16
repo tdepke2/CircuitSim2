@@ -3,11 +3,9 @@
 #include <FileStorage.h>
 
 #include <fstream>
-#include <map>
 #include <string>
 
 class Board;
-struct TileSymbol;
 
 class LegacyFileFormat : public FileStorage {
 public:
@@ -21,9 +19,10 @@ public:
         std::string notesString = "";
     };
 
+    static void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
+
     LegacyFileFormat();
 
-    void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) override;
     virtual void saveToFile(Board& board) override;
@@ -34,7 +33,7 @@ private:
         int y = 0;
     };
 
-    void parseTiles(Board& board, const std::string& line, int lineNumber, ParseState& state, const std::map<TileSymbol, unsigned int>& symbolLookup);
+    static void parseTiles(Board& board, const std::string& line, int lineNumber, ParseState& state);
 
     std::string path_, name_;
 };

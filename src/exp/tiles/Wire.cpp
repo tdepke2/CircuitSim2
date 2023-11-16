@@ -12,6 +12,10 @@ Wire* Wire::instance() {
     return wire.get();
 }
 
+State::t Wire::getState2(Chunk& chunk, unsigned int tileIndex) const {
+    return getTileData(chunk, tileIndex).state2;
+}
+
 void Wire::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) {
     auto& tileData = getTileData(chunk, tileIndex);
     if (tileData.id == TileId::wireStraight) {

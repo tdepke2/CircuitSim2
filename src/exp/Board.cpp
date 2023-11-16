@@ -152,6 +152,18 @@ void Board::setNotesString(const sf::String& notes) {
     notesText_.setString(notes);
 }
 
+const sf::Vector2u& Board::getMaxSize() const {
+    return maxSize_;
+}
+
+bool Board::getExtraLogicStates() const {
+    return extraLogicStates_;
+}
+
+const sf::String& Board::getNotesString() const {
+    return notesText_.getString();
+}
+
 constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }

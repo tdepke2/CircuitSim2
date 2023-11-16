@@ -81,10 +81,13 @@ int main() {
 
                 zoomLevel += zoomDelta;
                 zoomLevel = std::min(std::max(zoomLevel, 0.2f), maxZoom);
-                //if (zoomLevel + zoomDelta > 0.2f && zoomLevel + zoomDelta < maxZoom) {
-                    //zoomLevel += zoomDelta;
-                    boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
-                //}
+                boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
+            } else if (event.type == sf::Event::KeyPressed) {
+                if (event.key.control) {
+                    if (event.key.code == sf::Keyboard::S) {
+                        board.saveToFile();
+                    }
+                }
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);

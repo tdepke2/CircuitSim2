@@ -50,6 +50,7 @@ public:
     void setDirection(Direction::t direction);
     void setHighlight(bool highlight);
     void setState(State::t state);
+    TileId::t getId() const;
     Direction::t getDirection() const;
     bool getHighlight() const;
     State::t getState() const;

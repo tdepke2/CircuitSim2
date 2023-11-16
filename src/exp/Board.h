@@ -31,6 +31,9 @@ public:
     void setMaxSize(const sf::Vector2u& size);
     void setExtraLogicStates(bool extraLogicStates);
     void setNotesString(const sf::String& notes);
+    const sf::Vector2u& getMaxSize() const;
+    bool getExtraLogicStates() const;
+    const sf::String& getNotesString() const;
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile();

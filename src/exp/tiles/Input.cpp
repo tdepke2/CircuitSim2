@@ -11,6 +11,14 @@ Input* Input::instance() {
     return input.get();
 }
 
+void Input::setKeycode(Chunk& chunk, unsigned int tileIndex, char keycode) {
+    getTileData(chunk, tileIndex).meta = keycode;
+}
+
+char Input::getKeycode(Chunk& chunk, unsigned int tileIndex) const {
+    return static_cast<char>(getTileData(chunk, tileIndex).meta);
+}
+
 void Input::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
     auto& tileData = getTileData(chunk, tileIndex);
     tileData.state1 = state;
