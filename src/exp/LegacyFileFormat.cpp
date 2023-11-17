@@ -168,14 +168,12 @@ TileSymbol tileToSymbol(Board& board, int x, int y) {
         } else if (tileId == TileId::wireJunction) {
             return TILE_SYMBOLS[TileSymbolIndex::wireJunction + tile.getState() - 1];
         } else {
-            auto wire = dynamic_cast<tiles::Wire*>(tile.getType());
-            return TILE_SYMBOLS[TileSymbolIndex::wireCrossover + (wire->getState2(tile.getChunk(), tile.getIndex()) - 1) * 3 + tile.getState() - 1];
+            return TILE_SYMBOLS[TileSymbolIndex::wireCrossover + (tile.call<tiles::Wire>(&tiles::Wire::getState2) - 1) * 3 + tile.getState() - 1];
         }
     } else if (tile.getType() == tiles::Input::instance()) {
-        auto input = dynamic_cast<tiles::Input*>(tile.getType());
         return {
             TILE_SYMBOLS[TileSymbolIndex::inSwitch + (tileId - TileId::inSwitch) * 2 + tile.getState() - 1].a,
-            input->getKeycode(tile.getChunk(), tile.getIndex())
+            tile.call<tiles::Input>(&tiles::Input::getKeycode)
         };
     } else if (tile.getType() == tiles::Led::instance()) {
         return TILE_SYMBOLS[TileSymbolIndex::outLed + tile.getState() - 1];

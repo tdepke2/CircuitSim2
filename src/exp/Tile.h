@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
 
 class Chunk;
 class TileType;
@@ -61,4 +62,13 @@ private:
     TileType* tileType_;
     Chunk& chunk_;
     unsigned int tileIndex_;
+
+public:
+    // Calls a member function from a derived `TileType` class. This allows
+    // calling member functions that are specific to the derived class and not
+    // exposed in the `Tile` interface.
+    template<typename T, typename Func, typename... Args>
+    inline auto call(Func func, Args&&... args) -> decltype((reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...)) {
+        return (reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
+    }
 };
