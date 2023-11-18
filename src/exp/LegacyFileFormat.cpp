@@ -240,6 +240,22 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
+void LegacyFileFormat::writeHeader(Board& board, const std::string& filename, std::ofstream& outputFile) {
+    if (!outputFile.is_open()) {
+        throw std::runtime_error("\"" + filename + "\": unable to open file for writing.");
+    }
+
+    outputFile << "version: 1.0\n";
+    outputFile << "width: " << board.getMaxSize().x << "\n";
+    outputFile << "height: " << board.getMaxSize().y << "\n";
+    outputFile << "data: {\n";
+    outputFile << "extraLogicStates: " << board.getExtraLogicStates() << "\n";
+    outputFile << "}\n";
+    outputFile << "notes: {\n";
+    outputFile << board.getNotesString().toAnsiString();
+    outputFile << "}\n";
+}
+
 LegacyFileFormat::LegacyFileFormat() :
     path_("boards" + pathSeparator()),
     name_("NewBoard.txt") {
@@ -298,19 +314,9 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
 void LegacyFileFormat::saveToFile(Board& board) {
     std::string filename = path_ + name_;
     std::ofstream outputFile(filename);
-    if (!outputFile.is_open()) {
-        throw std::runtime_error("\"" + filename + "\": unable to open file for writing.");
-    }
+    writeHeader(board, filename, outputFile);
 
-    outputFile << "version: 1.0\n";
-    outputFile << "width: " << board.getMaxSize().x << "\n";
-    outputFile << "height: " << board.getMaxSize().y << "\n";
-    outputFile << "data: {\n";
-    outputFile << "extraLogicStates: " << board.getExtraLogicStates() << "\n";
-    outputFile << "}\n";
-    outputFile << "notes: {\n";
-    outputFile << board.getNotesString().toAnsiString();
-    outputFile << "}\n\n";
+    outputFile << "\n";
     outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
     for (unsigned int y = 0; y < board.getMaxSize().y; ++y) {
         outputFile << "*";

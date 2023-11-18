@@ -5,6 +5,7 @@
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 
+#include <array>
 #include <iomanip>
 
 // Disable a false-positive warning issue with gcc:
@@ -31,27 +32,34 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
+std::array<TileType*, TileId::count> tileIdToType = {};
+
+void Chunk::setupChunks() {
+    TileId::t id = TileId::blank;
+    for (; id <= TileId::blank; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Blank::instance();
+    }
+    for (; id <= TileId::wireCrossover; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Wire::instance();
+    }
+    for (; id <= TileId::inButton; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Input::instance();
+    }
+    for (; id <= TileId::outLed; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Led::instance();
+    }
+    for (; id <= TileId::gateXnor; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Gate::instance();
+    }
+}
+
 Chunk::Chunk() :
     tiles_{} {
 }
 
 Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     TileData tileData = tiles_[y * WIDTH + x];
-    if (tileData.id == TileId::blank) {
-        return {tiles::Blank::instance(), *this, y * WIDTH + x};
-    } else if (tileData.id <= TileId::wireCrossover) {
-        return {tiles::Wire::instance(), *this, y * WIDTH + x};
-    } else if (tileData.id <= TileId::inButton) {
-        return {tiles::Input::instance(), *this, y * WIDTH + x};
-    } else if (tileData.id == TileId::outLed) {
-        return {tiles::Led::instance(), *this, y * WIDTH + x};
-    } else if (tileData.id <= TileId::gateXnor) {
-        return {tiles::Gate::instance(), *this, y * WIDTH + x};
-    } else {
-        spdlog::error("unknown tile id {}", static_cast<int>(tileData.id));
-        assert(false);
-        return {tiles::Blank::instance(), *this, y * WIDTH + x};
-    }
+    return {tileIdToType[tileData.id], *this, y * WIDTH + x};
 }
 
 void Chunk::debugPrintChunk() {

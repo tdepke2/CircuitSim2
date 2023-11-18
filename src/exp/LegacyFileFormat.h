@@ -20,6 +20,7 @@ public:
     };
 
     static void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
+    static void writeHeader(Board& board, const std::string& filename, std::ofstream& outputFile);
 
     LegacyFileFormat();
 

@@ -2,6 +2,7 @@
 #include <DebugScreen.h>
 #include <LegacyFileFormat.h>
 #include <OffsetView.h>
+#include <RegionFileFormat.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 
@@ -78,6 +79,7 @@ void Board::setupTextures(ResourceManager& resource, const std::string& filename
 
     ChunkDrawable::setupTextureData(tilesetGrid_->getSize(), tileWidth);
     ChunkRender::setupTextureData(tileWidth);
+    Chunk::setupChunks();
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
@@ -164,6 +166,10 @@ const sf::String& Board::getNotesString() const {
     return notesText_.getString();
 }
 
+const std::unordered_map<ChunkCoords::repr, Chunk>& Board::getLoadedChunks() const {
+    return chunks_;
+}
+
 constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
@@ -193,7 +199,7 @@ void Board::loadFromFile(const std::string& filename) {
             break;
         }
         spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
-        //fileStorage_.reset(new RegionFileFormat());
+        fileStorage_.reset(new RegionFileFormat());
         if (fileStorage_->validateFileVersion(version)) {
             break;
         }
@@ -204,6 +210,11 @@ void Board::loadFromFile(const std::string& filename) {
 
 void Board::saveToFile() {
     spdlog::info("Saving file.");
+
+
+    fileStorage_.reset(new RegionFileFormat());
+
+
     fileStorage_->saveToFile(*this);
 }
 

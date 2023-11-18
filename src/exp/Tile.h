@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <utility>
 
@@ -69,6 +70,7 @@ public:
     // exposed in the `Tile` interface.
     template<typename T, typename Func, typename... Args>
     inline auto call(Func func, Args&&... args) -> decltype((reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...)) {
+        assert(tileType_ == T::instance());
         return (reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
     }
 };

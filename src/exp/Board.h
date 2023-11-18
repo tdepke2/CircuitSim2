@@ -34,6 +34,7 @@ public:
     const sf::Vector2u& getMaxSize() const;
     bool getExtraLogicStates() const;
     const sf::String& getNotesString() const;
+    const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
     Tile accessTile(int x, int y);
     void loadFromFile(const std::string& filename);
     void saveToFile();

@@ -31,6 +31,7 @@ static_assert(TileId::count <= 32, "TileId::t is expected to fit within a 5 bit 
 class Chunk {
 public:
     static constexpr int WIDTH = 16;
+    static void setupChunks();
 
     Chunk();
     ~Chunk() = default;

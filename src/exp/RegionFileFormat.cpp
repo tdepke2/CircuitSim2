@@ -1,11 +1,14 @@
+#include <Board.h>
 #include <LegacyFileFormat.h>
 #include <RegionFileFormat.h>
 
+#include <spdlog/spdlog.h>
 #include <stdexcept>
 
 RegionFileFormat::RegionFileFormat() :
     path_("boards" + pathSeparator() + "NewBoard" + pathSeparator()),
-    name_("board.txt") {
+    name_("board.txt"),
+    savedRegions_() {
 }
 
 bool RegionFileFormat::validateFileVersion(float version) {
@@ -42,11 +45,28 @@ void RegionFileFormat::loadFromFile(Board& board, const std::string& filename, s
 }
 
 void RegionFileFormat::saveToFile(Board& board) {
+    std::string filename = path_ + name_;
+    std::ofstream outputFile(filename);
+    LegacyFileFormat::writeHeader(board, filename, outputFile);
+    outputFile.close();
 
+    std::map<RegionCoords, Region> dirtyRegions;
 
-// left off here, see if we can get this working first then finish up loadFromFile().
+    for (const auto& chunk : board.getLoadedChunks()) {
+        if (/*FIXME chunk is dirty*/ true) {
+            auto& region = dirtyRegions[{ChunkCoords::x(chunk.first), ChunkCoords::y(chunk.first)}];
+            region.insert(chunk.first);
+        }
+    }
 
-
+    spdlog::debug("dirtyRegions:");
+    for (auto& region : dirtyRegions) {
+        spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
+        for (auto& coords : region.second) {
+            spdlog::debug("    {}, {}", ChunkCoords::x(coords), ChunkCoords::y(coords));
+        }
+    }
+/*
     std::ofstream out("binary_test.bin", std::ios::binary);
     if (!out.is_open()) {
         // FIXME not good.
@@ -91,10 +111,10 @@ void RegionFileFormat::saveToFile(Board& board) {
     out.write(s, 1);
 
     // This should not compile.
-    /*int* xPtr = &xInt;
+    int* xPtr = &xInt;
     out.write(reinterpret_cast<char*>(&xPtr), sizeof(xPtr));
     xPtr = byteswap(xPtr);
-    out.write(reinterpret_cast<char*>(&xPtr), sizeof(xPtr));*/
+    out.write(reinterpret_cast<char*>(&xPtr), sizeof(xPtr));
     out.write(s, 6);
-
+*/
 }
