@@ -2,11 +2,11 @@
 
 #include <ChunkCoords.h>
 #include <FileStorage.h>
+#include <Filesystem.h>
 
 #include <fstream>
 #include <map>
 #include <set>
-#include <string>
 #include <utility>
 
 class Board;
@@ -18,7 +18,7 @@ public:
     RegionFileFormat();
 
     virtual bool validateFileVersion(float version) override;
-    virtual void loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) override;
+    virtual void loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) override;
     virtual void saveToFile(Board& board) override;
 
     void loadChunk();    // will load (and return?) a single chunk, reads in a batch of chunks from region file at a time.
@@ -29,6 +29,6 @@ private:
     using Region = std::set<ChunkCoords::repr>;
     using RegionCoords = std::pair<int, int>;
 
-    std::string path_, name_;
+    fs::path filename_;
     std::map<RegionCoords, Region> savedRegions_;
 };

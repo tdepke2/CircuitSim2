@@ -5,6 +5,7 @@
 #include <ChunkDrawable.h>
 #include <ChunkRender.h>
 #include <FileStorage.h>
+#include <Filesystem.h>
 #include <FlatMap.h>
 
 #include <array>
@@ -20,7 +21,7 @@ struct TileSymbol;
 
 class Board : public sf::Drawable {
 public:
-    static void setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth);
+    static void setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth);
 
     Board();
     ~Board() = default;
@@ -36,7 +37,7 @@ public:
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
     Tile accessTile(int x, int y);
-    void loadFromFile(const std::string& filename);
+    void loadFromFile(const fs::path& filename);
     void saveToFile();
     void debugPrintChunk(ChunkCoords::repr i) {
         chunks_.at(i).debugPrintChunk();

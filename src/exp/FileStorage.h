@@ -1,10 +1,11 @@
 #pragma once
 
+#include <Filesystem.h>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <string>
 #include <type_traits>
 #ifdef _MSC_VER
     #include <intrin.h>
@@ -14,24 +15,15 @@ class Board;
 
 class FileStorage {
 public:
-    static inline std::string pathSeparator();
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
     static inline T byteswap(T n) noexcept;
 
-    static float getFileVersion(const std::string& filename, std::ifstream& inputFile);
+    static float getFileVersion(const fs::path& filename, std::ifstream& inputFile);
 
     virtual bool validateFileVersion(float version) = 0;
-    virtual void loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) = 0;
+    virtual void loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) = 0;
     virtual void saveToFile(Board& board) = 0;
 };
-
-inline std::string FileStorage::pathSeparator() {
-    #if _WIN32
-        return "\\";
-    #else
-        return "/";
-    #endif
-}
 
 // Reverses bytes in the given integral type to convert endianness.
 // Based on code found here (and improved to use intrinsics):

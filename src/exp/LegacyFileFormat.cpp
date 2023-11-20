@@ -240,9 +240,9 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const std::string& filename, std::ofstream& outputFile) {
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& filename, std::ofstream& outputFile) {
     if (!outputFile.is_open()) {
-        throw std::runtime_error("\"" + filename + "\": unable to open file for writing.");
+        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for writing.");
     }
 
     outputFile << "version: 1.0\n";
@@ -257,17 +257,16 @@ void LegacyFileFormat::writeHeader(Board& board, const std::string& filename, st
 }
 
 LegacyFileFormat::LegacyFileFormat() :
-    path_("boards" + pathSeparator()),
-    name_("NewBoard.txt") {
+    filename_("boards/NewBoard.txt") {
 }
 
 bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
 
-void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) {
+void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) {
     if (!inputFile.is_open()) {
-        throw std::runtime_error("\"" + filename + "\": unable to open file for reading.");
+        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
     inputFile.clear();
     inputFile.seekg(0);
@@ -300,7 +299,7 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
             throw std::runtime_error("missing data, end of file reached.");
         }
     } catch (std::exception& ex) {
-        throw std::runtime_error("\"" + filename + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
+        throw std::runtime_error("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
 
     spdlog::debug("Load completed.");
@@ -312,9 +311,8 @@ void LegacyFileFormat::loadFromFile(Board& board, const std::string& filename, s
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
-    std::string filename = path_ + name_;
-    std::ofstream outputFile(filename);
-    writeHeader(board, filename, outputFile);
+    std::ofstream outputFile(filename_);
+    writeHeader(board, filename_, outputFile);
 
     outputFile << "\n";
     outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";

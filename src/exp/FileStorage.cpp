@@ -1,10 +1,11 @@
 #include <FileStorage.h>
 
 #include <stdexcept>
+#include <string>
 
-float FileStorage::getFileVersion(const std::string& filename, std::ifstream& inputFile) {
+float FileStorage::getFileVersion(const fs::path& filename, std::ifstream& inputFile) {
     if (!inputFile.is_open()) {
-        throw std::runtime_error("\"" + filename + "\": unable to open file for reading.");
+        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
     inputFile.clear();
     inputFile.seekg(0);

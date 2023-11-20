@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FileStorage.h>
+#include <Filesystem.h>
 
 #include <fstream>
 #include <string>
@@ -11,7 +12,7 @@ class LegacyFileFormat : public FileStorage {
 public:
     struct HeaderState {
         std::string lastField = "headerBegin";
-        std::string filename = "";
+        fs::path filename = "";
         float fileVersion = 1.0;
         unsigned int width = 0;
         unsigned int height = 0;
@@ -20,12 +21,12 @@ public:
     };
 
     static void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
-    static void writeHeader(Board& board, const std::string& filename, std::ofstream& outputFile);
+    static void writeHeader(Board& board, const fs::path& filename, std::ofstream& outputFile);
 
     LegacyFileFormat();
 
     virtual bool validateFileVersion(float version) override;
-    virtual void loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) override;
+    virtual void loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) override;
     virtual void saveToFile(Board& board) override;
 
 private:
@@ -36,5 +37,5 @@ private:
 
     static void parseTiles(Board& board, const std::string& line, int lineNumber, ParseState& state);
 
-    std::string path_, name_;
+    fs::path filename_;
 };

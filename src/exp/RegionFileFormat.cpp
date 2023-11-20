@@ -6,8 +6,7 @@
 #include <stdexcept>
 
 RegionFileFormat::RegionFileFormat() :
-    path_("boards" + pathSeparator() + "NewBoard" + pathSeparator()),
-    name_("board.txt"),
+    filename_("boards/NewBoard/board.txt"),
     savedRegions_() {
 }
 
@@ -15,9 +14,9 @@ bool RegionFileFormat::validateFileVersion(float version) {
     return version == 2.0;
 }
 
-void RegionFileFormat::loadFromFile(Board& board, const std::string& filename, std::ifstream& inputFile) {
+void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) {
     if (!inputFile.is_open()) {
-        throw std::runtime_error("\"" + filename + "\": unable to open file for reading.");
+        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
     inputFile.clear();
     inputFile.seekg(0);
@@ -37,7 +36,7 @@ void RegionFileFormat::loadFromFile(Board& board, const std::string& filename, s
             throw std::runtime_error("missing data, end of file reached.");
         }
     } catch (std::exception& ex) {
-        throw std::runtime_error("\"" + filename + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
+        throw std::runtime_error("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
 
     // FIXME add a new field called "regions" tracking all of the region files.
@@ -45,9 +44,8 @@ void RegionFileFormat::loadFromFile(Board& board, const std::string& filename, s
 }
 
 void RegionFileFormat::saveToFile(Board& board) {
-    std::string filename = path_ + name_;
-    std::ofstream outputFile(filename);
-    LegacyFileFormat::writeHeader(board, filename, outputFile);
+    std::ofstream outputFile(filename_);
+    LegacyFileFormat::writeHeader(board, filename_, outputFile);
     outputFile.close();
 
     std::map<RegionCoords, Region> dirtyRegions;

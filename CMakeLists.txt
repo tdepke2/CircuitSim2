@@ -52,6 +52,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 endif()
 
 include(FetchContent)
+#set(FETCHCONTENT_QUIET OFF)
 
 # Import the SFML library.
 message(STATUS "Fetching sources for SFML...")
@@ -66,7 +67,7 @@ FetchContent_MakeAvailable(SFML)
 # Some other options were considered too and may be relevant in future:
 # https://sourceforge.net/projects/tinyfiledialogs/
 # https://github.com/btzy/nativefiledialog-extended
-message(STATUS "Fetching sources for portable-file-dialogs...")
+message(STATUS "Fetching sources for portable_file_dialogs...")
 FetchContent_Declare(
     portable_file_dialogs
     GIT_REPOSITORY https://github.com/samhocevar/portable-file-dialogs.git
@@ -82,6 +83,15 @@ FetchContent_Declare(
     GIT_TAG v1.12.0
 )
 FetchContent_MakeAvailable(spdlog)
+
+# Import features from c++17 std::filesystem.
+message(STATUS "Fetching sources for ghc_filesystem...")
+FetchContent_Declare(
+    ghc_filesystem
+    GIT_REPOSITORY https://github.com/gulrak/filesystem.git
+    GIT_TAG v1.5.14
+)
+FetchContent_MakeAvailable(ghc_filesystem)
 
 # Run the next CMakeLists file (builds the executable).
 add_subdirectory(src)

@@ -31,10 +31,10 @@ void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::V
     }
 }
 
-void loadTileset(const std::string& filename, sf::Texture* target, unsigned int tileWidth) {
+void loadTileset(const fs::path& filename, sf::Texture* target, unsigned int tileWidth) {
     sf::Image tileset;
-    if (!tileset.loadFromFile(filename)) {
-        throw std::runtime_error("\"" + filename + "\": unable to load texture file.");
+    if (!tileset.loadFromFile(filename.string())) {
+        throw std::runtime_error("\"" + filename.string() + "\": unable to load texture file.");
     }
     target->create(tileset.getSize().x * 2, tileset.getSize().y * 4);
     sf::Image fullTileset;
@@ -58,7 +58,7 @@ void loadTileset(const std::string& filename, sf::Texture* target, unsigned int 
     spdlog::debug("Built tileset texture with size {} by {}.", target->getSize().x, target->getSize().y);
 }
 
-void Board::setupTextures(ResourceManager& resource, const std::string& filenameGrid, const std::string& filenameNoGrid, unsigned int tileWidth) {
+void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth) {
     tileWidth_ = tileWidth;
 
     tilesetGrid_ = &resource.getTexture(filenameGrid, true);
@@ -185,12 +185,12 @@ Tile Board::accessTile(int x, int y) {
     return chunk.accessTile(x & (Chunk::WIDTH - 1), y & (Chunk::WIDTH - 1));
 }
 
-void Board::loadFromFile(const std::string& filename) {
+void Board::loadFromFile(const fs::path& filename) {
     spdlog::info("Loading file \"{}\".", filename);
     std::ifstream inputFile(filename);
     float version = FileStorage::getFileVersion(filename, inputFile);
     if (version < 0.0) {
-        throw std::runtime_error("\"" + filename + "\": unknown file version.");
+        throw std::runtime_error("\"" + filename.string() + "\": unknown file version.");
     }
     while (!fileStorage_->validateFileVersion(version)) {
         spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
@@ -203,7 +203,7 @@ void Board::loadFromFile(const std::string& filename) {
         if (fileStorage_->validateFileVersion(version)) {
             break;
         }
-        throw std::runtime_error("\"" + filename + "\": invalid file version " + std::to_string(version) + ".");
+        throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
     }
     fileStorage_->loadFromFile(*this, filename, inputFile);
 }
