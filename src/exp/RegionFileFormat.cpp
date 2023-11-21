@@ -5,6 +5,8 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
+constexpr int RegionFileFormat::REGION_WIDTH;
+
 RegionFileFormat::RegionFileFormat() :
     filename_("boards/NewBoard/board.txt"),
     savedRegions_() {
@@ -44,7 +46,12 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, std:
 }
 
 void RegionFileFormat::saveToFile(Board& board) {
+    if (filename_.has_parent_path()) {
+        fs::create_directories(filename_.parent_path());
+    }
+    // FIXME need to change if/ofstream to fs:: versions. also why no check if file opened??
     std::ofstream outputFile(filename_);
+    //outputFile.open(filename_);
     LegacyFileFormat::writeHeader(board, filename_, outputFile);
     outputFile.close();
 
@@ -57,6 +64,7 @@ void RegionFileFormat::saveToFile(Board& board) {
         }
     }
 
+    spdlog::debug("save file: {}", filename_);
     spdlog::debug("dirtyRegions:");
     for (auto& region : dirtyRegions) {
         spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);

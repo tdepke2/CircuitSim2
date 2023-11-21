@@ -17,8 +17,11 @@ target_include_directories(CircuitSim2 PRIVATE .)
 
 # Link to libraries and set C++ compilation version.
 target_link_libraries(CircuitSim2 PRIVATE sfml-graphics portable_file_dialogs)
-target_compile_features(CircuitSim2 PRIVATE cxx_std_11)
-set_target_properties(CircuitSim2 PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(CircuitSim2 PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
 
 # Enable strict warnings. Could also use CMake presets here for better compiler support:
 # https://alexreinking.com/blog/how-to-use-cmake-without-the-agonizing-pain-part-2.html
@@ -39,8 +42,11 @@ add_executable(gui_demo
 )
 
 target_link_libraries(gui_demo PRIVATE gui_lib sfml-graphics)
-target_compile_features(gui_demo PRIVATE cxx_std_11)
-set_target_properties(gui_demo PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(gui_demo PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
 
 target_compile_options(gui_demo PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>

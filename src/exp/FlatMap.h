@@ -42,7 +42,7 @@ public:
         valueToValueComp_(comp) {
 
         std::stable_sort(vec_.begin(), vec_.end(), valueToValueComp_);
-        auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const auto& lhs, const auto& rhs) {
+        auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const value_type& lhs, const value_type& rhs) {
             return !comp_(lhs.first, rhs.first);
         });
         vec_.erase(newLast, vec_.end());
@@ -172,7 +172,7 @@ public:
         auto insertStart = vec_.insert(vec_.end(), first, last);
         std::stable_sort(insertStart, vec_.end(), valueToValueComp_);
         std::inplace_merge(vec_.begin(), insertStart, vec_.end(), valueToValueComp_);
-        auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const auto& lhs, const auto& rhs) {
+        auto newLast = std::unique(vec_.begin(), vec_.end(), [this](const value_type& lhs, const value_type& rhs) {
             return !comp_(lhs.first, rhs.first);
         });
         vec_.erase(newLast, vec_.end());
@@ -254,12 +254,12 @@ public:
         return std::lower_bound(vec_.begin(), vec_.end(), key, valueToKeyComp_);
     }
     iterator upper_bound(const Key& key) {
-        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const auto& lhs, const auto& rhs) {
+        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const key_type& lhs, const value_type& rhs) {
             return comp_(lhs, rhs.first);
         });
     }
     const_iterator upper_bound(const Key& key) const {
-        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const auto& lhs, const auto& rhs) {
+        return std::upper_bound(vec_.begin(), vec_.end(), key, [this](const key_type& lhs, const value_type& rhs) {
             return comp_(lhs, rhs.first);
         });
     }

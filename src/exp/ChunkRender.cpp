@@ -9,6 +9,9 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+constexpr int ChunkRender::LEVELS_OF_DETAIL;
+constexpr ChunkCoords::repr ChunkRender::EMPTY_CHUNK_COORDS;
+constexpr int ChunkRender::CHUNK_PADDING;
 unsigned int ChunkRender::tileWidth_;
 
 void ChunkRender::setupTextureData(unsigned int tileWidth) {

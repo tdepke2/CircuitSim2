@@ -32,8 +32,11 @@ add_library(gui_lib
 target_include_directories(gui_lib PUBLIC ..)
 
 target_link_libraries(gui_lib PRIVATE sfml-graphics)
-target_compile_features(gui_lib PUBLIC cxx_std_11)
-set_target_properties(gui_lib PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(gui_lib PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
 
 target_compile_options(gui_lib PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>

@@ -1,7 +1,16 @@
 #pragma once
 
 #include <ghc/fs_std_fwd.hpp>
-#include <spdlog/fmt/bundled/core.h>
+
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/bundled/core.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 template<>
 struct fmt::formatter<fs::path> {

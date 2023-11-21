@@ -32,6 +32,8 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
+constexpr int Chunk::WIDTH;
+
 std::array<TileType*, TileId::count> tileIdToType = {};
 
 void Chunk::setupChunks() {
