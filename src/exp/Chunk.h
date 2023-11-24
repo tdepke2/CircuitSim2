@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdint>
 #include <ostream>
+#include <vector>
 
 //#pragma pack(push, 1)
 struct TileData {
@@ -39,7 +40,9 @@ public:
     Chunk& operator=(const Chunk& rhs) = delete;
 
     Tile accessTile(unsigned int x, unsigned int y);
-    void debugPrintChunk();
+    std::vector<char> serialize() const;
+    void deserialize(const std::vector<char>& data);
+    void debugPrintChunk() const;
 
 private:
     TileData tiles_[WIDTH * WIDTH];

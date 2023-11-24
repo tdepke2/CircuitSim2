@@ -18,7 +18,7 @@ public:
     RegionFileFormat();
 
     virtual bool validateFileVersion(float version) override;
-    virtual void loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) override;
+    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) override;
     virtual void saveToFile(Board& board) override;
 
     void loadChunk();    // will load (and return?) a single chunk, reads in a batch of chunks from region file at a time.
@@ -28,6 +28,8 @@ public:
 private:
     using Region = std::set<ChunkCoords::repr>;
     using RegionCoords = std::pair<int, int>;
+
+    void saveRegion(Board& board, const RegionCoords& coords, const Region& region);
 
     fs::path filename_;
     std::map<RegionCoords, Region> savedRegions_;

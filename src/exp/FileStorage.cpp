@@ -3,12 +3,12 @@
 #include <stdexcept>
 #include <string>
 
-float FileStorage::getFileVersion(const fs::path& filename, std::ifstream& inputFile) {
+float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& inputFile) {
     if (!inputFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
     inputFile.clear();
-    inputFile.seekg(0);
+    inputFile.seekg(0, std::ios::beg);
 
     std::string line;
     while (std::getline(inputFile, line)) {

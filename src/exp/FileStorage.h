@@ -18,10 +18,10 @@ public:
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
     static inline T byteswap(T n) noexcept;
 
-    static float getFileVersion(const fs::path& filename, std::ifstream& inputFile);
+    static float getFileVersion(const fs::path& filename, fs::ifstream& inputFile);
 
     virtual bool validateFileVersion(float version) = 0;
-    virtual void loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) = 0;
+    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) = 0;
     virtual void saveToFile(Board& board) = 0;
 };
 

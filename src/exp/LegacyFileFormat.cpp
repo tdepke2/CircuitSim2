@@ -240,7 +240,7 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const fs::path& filename, std::ofstream& outputFile) {
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& filename, fs::ofstream& outputFile) {
     if (!outputFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for writing.");
     }
@@ -264,12 +264,12 @@ bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
 
-void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, std::ifstream& inputFile) {
+void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) {
     if (!inputFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
     inputFile.clear();
-    inputFile.seekg(0);
+    inputFile.seekg(0, std::ios::beg);
 
     if (symbolLookup.empty()) {
         spdlog::debug("First time init symbolLookup.");
@@ -311,7 +311,10 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, std:
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
-    std::ofstream outputFile(filename_);
+    if (filename_.has_parent_path()) {
+        fs::create_directories(filename_.parent_path());
+    }
+    fs::ofstream outputFile(filename_);
     writeHeader(board, filename_, outputFile);
 
     outputFile << "\n";

@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <FileStorage.h>
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
@@ -6,6 +7,7 @@
 #include <tiles/Wire.h>
 
 #include <array>
+#include <cstring>
 #include <iomanip>
 
 // Disable a false-positive warning issue with gcc:
@@ -64,7 +66,25 @@ Tile Chunk::accessTile(unsigned int x, unsigned int y) {
     return {tileIdToType[tileData.id], *this, y * WIDTH + x};
 }
 
-void Chunk::debugPrintChunk() {
+std::vector<char> Chunk::serialize() const {
+    std::vector<char> data(sizeof(tiles_));
+    for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
+        uint32_t tileSwapped = FileStorage::byteswap(*reinterpret_cast<const uint32_t*>(tiles_ + i));
+        std::memcpy(data.data() + i * sizeof(TileData), &tileSwapped, sizeof(TileData));
+    }
+    return data;
+}
+
+void Chunk::deserialize(const std::vector<char>& data) {
+    for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
+        uint32_t tileSwapped;
+        std::memcpy(&tileSwapped, data.data() + i * sizeof(TileData), sizeof(TileData));
+        tileSwapped = FileStorage::byteswap(tileSwapped);
+        tiles_[i] = *reinterpret_cast<TileData*>(&tileSwapped);
+    }
+}
+
+void Chunk::debugPrintChunk() const {
     spdlog::debug("chunk:\n{}", *this);
 }
 
