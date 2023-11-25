@@ -112,37 +112,60 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& coords, cons
         uint32_t offset : 24;
         uint8_t sectors : 8;
     };
+    ChunkHeader header[REGION_WIDTH * REGION_WIDTH] = {};
 
-    ChunkHeader header[1024] = {};
-    header[0].offset = 0x010203;
-    header[0].sectors = 99;
-    for (int i = 0; i < 1024; ++i) {
+    std::map<ChunkCoords::repr, std::vector<char>> serializedChunks;
+    for (const auto& chunkCoords : region) {
+        serializedChunks.emplace(chunkCoords, board.getLoadedChunks().at(chunkCoords).serialize());
+    }
+
+    // Write empty header.
+    uint32_t lastOffset = 4 * REGION_WIDTH * REGION_WIDTH / SECTOR_SIZE;
+    for (unsigned int i = 0; i < lastOffset; ++i) {
+        regionFile.write(emptySector, SECTOR_SIZE);
+    }
+
+    // Write chunks.
+    for (const auto& serialized : serializedChunks) {
+        const int headerIndex = (ChunkCoords::x(serialized.first) & (REGION_WIDTH - 1)) + (ChunkCoords::y(serialized.first) & (REGION_WIDTH - 1)) * REGION_WIDTH;
+        const uint32_t serializedSize = serialized.second.size() + 4;
+        header[headerIndex].offset = lastOffset;
+        if (serializedSize > std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
+            // FIXME unable to save this chunk, too much data
+            spdlog::error("Failed to save chunk at {}, {} (serialized to {} bytes)", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first), serialized.second.size());
+        }
+        header[headerIndex].sectors = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+        lastOffset += header[headerIndex].sectors;
+
+        spdlog::debug("Writing chunk {}, {}", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first));
+        board.getLoadedChunks().at(serialized.first).debugPrintChunk();
+
+        auto serializedSizeSwapped = byteswap(serializedSize);
+        regionFile.write(reinterpret_cast<char*>(&serializedSizeSwapped), sizeof(serializedSizeSwapped));
+        regionFile.write(serialized.second.data(), serialized.second.size());
+        const auto paddingBytes = SECTOR_SIZE - (serializedSize - 1) % SECTOR_SIZE - 1;
+        spdlog::debug("Writing {} extra padding bytes", paddingBytes);
+        regionFile.write(emptySector, paddingBytes);
+    }
+
+    // Write (filled) header.
+    regionFile.seekp(0, std::ios::beg);
+    for (int i = 0; i < REGION_WIDTH * REGION_WIDTH; ++i) {
         uint32_t offset = byteswap(header[i].offset << 8);
         regionFile.write(reinterpret_cast<char*>(&offset), 3);
         uint8_t sectors = header[i].sectors;
         regionFile.write(reinterpret_cast<char*>(&sectors), 1);
     }
 
-    const auto& chunk = board.getLoadedChunks().at(ChunkCoords::pack(0, 0));
-    chunk.debugPrintChunk();
-    auto data = chunk.serialize();
-
-    const auto dataSize = data.size() + sizeof(data.size());
-    auto dataSizeSwapped = byteswap(dataSize);
-    regionFile.write(reinterpret_cast<char*>(&dataSizeSwapped), sizeof(dataSizeSwapped));
-    regionFile.write(data.data(), data.size());
-    const auto paddingBytes = SECTOR_SIZE - (dataSize - 1) % SECTOR_SIZE - 1;
-    spdlog::debug("writing {} extra padding", paddingBytes);
-    regionFile.write(emptySector, paddingBytes);
-
     regionFile.close();
 }
 
 /*
 
+read header...
+
 serialize chunks into memory
 
-read header...
 header exists and no existing chunks need more memory?
     write new/update existing chunks and replace header
 else
