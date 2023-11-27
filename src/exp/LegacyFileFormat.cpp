@@ -240,12 +240,8 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const fs::path& filename, fs::ofstream& outputFile) {
-    if (!outputFile.is_open()) {
-        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for writing.");
-    }
-
-    outputFile << "version: 1.0\n";
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, fs::ofstream& outputFile, float version) {
+    outputFile << "version: " << version << "\n";
     outputFile << "width: " << board.getMaxSize().x << "\n";
     outputFile << "height: " << board.getMaxSize().y << "\n";
     outputFile << "data: {\n";
@@ -315,7 +311,10 @@ void LegacyFileFormat::saveToFile(Board& board) {
         fs::create_directories(filename_.parent_path());
     }
     fs::ofstream outputFile(filename_);
-    writeHeader(board, filename_, outputFile);
+    if (!outputFile.is_open()) {
+        throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
+    }
+    writeHeader(board, filename_, outputFile, 1.0f);
 
     outputFile << "\n";
     outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";

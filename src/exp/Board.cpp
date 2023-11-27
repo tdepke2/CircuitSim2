@@ -206,6 +206,7 @@ void Board::loadFromFile(const fs::path& filename) {
         throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
     }
     fileStorage_->loadFromFile(*this, filename, inputFile);
+    inputFile.close();
 }
 
 void Board::saveToFile() {
