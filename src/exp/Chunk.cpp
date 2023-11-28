@@ -76,6 +76,7 @@ std::vector<char> Chunk::serialize() const {
 }
 
 void Chunk::deserialize(const std::vector<char>& data) {
+    assert(data.size() == sizeof(tiles_));
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
         uint32_t tileSwapped;
         std::memcpy(&tileSwapped, data.data() + i * sizeof(TileData), sizeof(TileData));

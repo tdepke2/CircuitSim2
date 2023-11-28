@@ -187,8 +187,8 @@ Tile Board::accessTile(int x, int y) {
 
 void Board::loadFromFile(const fs::path& filename) {
     spdlog::info("Loading file \"{}\".", filename);
-    fs::ifstream inputFile(filename);
-    float version = FileStorage::getFileVersion(filename, inputFile);
+    fs::ifstream boardFile(filename);
+    float version = FileStorage::getFileVersion(filename, boardFile);
     if (version < 0.0) {
         throw std::runtime_error("\"" + filename.string() + "\": unknown file version.");
     }
@@ -205,8 +205,8 @@ void Board::loadFromFile(const fs::path& filename) {
         }
         throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
     }
-    fileStorage_->loadFromFile(*this, filename, inputFile);
-    inputFile.close();
+    fileStorage_->loadFromFile(*this, filename, boardFile);
+    boardFile.close();
 }
 
 void Board::saveToFile() {

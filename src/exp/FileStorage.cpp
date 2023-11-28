@@ -3,15 +3,15 @@
 #include <stdexcept>
 #include <string>
 
-float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& inputFile) {
-    if (!inputFile.is_open()) {
+float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardFile) {
+    if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
-    inputFile.clear();
-    inputFile.seekg(0, std::ios::beg);
+    boardFile.clear();
+    boardFile.seekg(0, std::ios::beg);
 
     std::string line;
-    while (std::getline(inputFile, line)) {
+    while (std::getline(boardFile, line)) {
         if (!line.empty() && line.back() == '\r') {
             line.pop_back();
         }

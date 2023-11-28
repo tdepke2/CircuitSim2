@@ -25,7 +25,7 @@ public:
     RegionFileFormat();
 
     virtual bool validateFileVersion(float version) override;
-    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) override;
+    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
 
     void loadChunk(Board& board, ChunkCoords::repr chunkCoords) const;
@@ -47,11 +47,11 @@ private:
     static void parseRegionList(Board& board, const std::string& line, int lineNumber, ParseState& state);
     static void readRegionHeader(ChunkHeader header[], const fs::path& filename, fs::ifstream& regionFile);
 
-    void loadRegion(Board& board, const RegionCoords& coords);
-    void saveRegion(Board& board, const RegionCoords& coords, const Region& region);
+    void loadRegion(Board& board, const RegionCoords& regionCoords);
+    void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);
 
     fs::path filename_;
     std::map<RegionCoords, Region> savedRegions_;
-    FlatMap<ChunkCoords::repr, std::chrono::time_point<std::chrono::steady_clock>> chunkCacheTimes_;
-    std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;
+    mutable std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;
+    mutable FlatMap<ChunkCoords::repr, std::chrono::time_point<std::chrono::steady_clock>> chunkCacheTimes_;
 };

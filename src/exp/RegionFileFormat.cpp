@@ -4,6 +4,7 @@
 #include <limits>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <tuple>
 
 constexpr int RegionFileFormat::REGION_WIDTH;
 constexpr int RegionFileFormat::SECTOR_SIZE;
@@ -11,33 +12,33 @@ constexpr int RegionFileFormat::SECTOR_SIZE;
 RegionFileFormat::RegionFileFormat() :
     filename_("boards/NewBoard/board.txt"),
     savedRegions_(),
-    chunkCacheTimes_(),
-    chunkCache_() {
+    chunkCache_(),
+    chunkCacheTimes_() {
 }
 
 bool RegionFileFormat::validateFileVersion(float version) {
     return version == 2.0;
 }
 
-void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) {
-    if (!inputFile.is_open()) {
+void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
+    if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
-    inputFile.clear();
-    inputFile.seekg(0, std::ios::beg);
+    boardFile.clear();
+    boardFile.seekg(0, std::ios::beg);
 
     std::string line;
     int lineNumber = 0;
     ParseState state;
     state.filename = filename;
     try {
-        while (std::getline(inputFile, line)) {
+        while (std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
             LegacyFileFormat::parseHeader(board, line, ++lineNumber, state);
         }
-        while (std::getline(inputFile, line)) {
+        while (std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
@@ -53,9 +54,9 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     savedRegions_.clear();
     chunkCacheTimes_.clear();
     chunkCache_.clear();
-    for (const auto& coords : state.regions) {
-        spdlog::debug("loading region {}, {}", coords.first, coords.second);
-        loadRegion(board, coords);
+    for (const auto& regionCoords : state.regions) {
+        spdlog::debug("loading region {}, {}", regionCoords.first, regionCoords.second);
+        loadRegion(board, regionCoords);
     }
 }
 
@@ -63,20 +64,20 @@ void RegionFileFormat::saveToFile(Board& board) {
     if (filename_.has_parent_path()) {
         fs::create_directories(filename_.parent_path());
     }
-    fs::ofstream outputFile(filename_);
-    if (!outputFile.is_open()) {
+    fs::ofstream boardFile(filename_);
+    if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
     }
-    LegacyFileFormat::writeHeader(board, filename_, outputFile, 2.0f);
-    outputFile << "regions: {\n";
+    LegacyFileFormat::writeHeader(board, filename_, boardFile, 2.0f);
+    boardFile << "regions: {\n";
     for (const auto& region : savedRegions_) {
 
         // FIXME is this really the union of saved and dirty regions?
 
-        outputFile << region.first.first << "," << region.first.second << "\n";
+        boardFile << region.first.first << "," << region.first.second << "\n";
     }
-    outputFile << "}\n";
-    outputFile.close();
+    boardFile << "}\n";
+    boardFile.close();
     fs::create_directory(filename_.parent_path() / "region");
 
     std::map<RegionCoords, Region> dirtyRegions;
@@ -92,8 +93,8 @@ void RegionFileFormat::saveToFile(Board& board) {
     spdlog::debug("dirtyRegions:");
     for (auto& region : dirtyRegions) {
         spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
-        for (auto& coords : region.second) {
-            spdlog::debug("    {}, {}", ChunkCoords::x(coords), ChunkCoords::y(coords));
+        for (auto& chunkCoords : region.second) {
+            spdlog::debug("    {}, {}", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
         }
     }
 
@@ -124,19 +125,19 @@ std::pair<int, int> RegionFileFormat::toRegionOffset(ChunkCoords::repr chunkCoor
 }
 
 void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) const {
-    const auto coords = toRegionCoords(chunkCoords);
-    auto region = savedRegions_.find(coords);
+    const auto regionCoords = toRegionCoords(chunkCoords);
+    auto region = savedRegions_.find(regionCoords);
     if (region == savedRegions_.end() || region->second.count(chunkCoords) == 0) {
         return;
     }
 
     auto cachedChunk = chunkCache_.find(chunkCoords);
     if (cachedChunk != chunkCache_.end()) {
-        // FIXME found chunk, set it in board.
+        // FIXME found chunk, set it in board (and remove from cache?).
         return;
     }
 
-    fs::path regionFilename = std::to_string(coords.first) + "." + std::to_string(coords.second) + ".dat";
+    fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
     regionFilename = filename_.parent_path() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
@@ -149,19 +150,52 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
     constexpr int CACHE_SIZE = CACHE_LOAD_WIDTH * CACHE_LOAD_WIDTH * 4;
 
     const auto regionOffset = toRegionOffset(chunkCoords);
-    int xStart = regionOffset.first / CACHE_LOAD_WIDTH;
-    int yStart = regionOffset.second / CACHE_LOAD_WIDTH;
-    for (int x = xStart; x < xStart + CACHE_LOAD_WIDTH; ++x) {
-        for (int y = yStart; y < yStart + CACHE_LOAD_WIDTH; ++y) {
+    int xStart = (regionOffset.first / CACHE_LOAD_WIDTH) * CACHE_LOAD_WIDTH;
+    int yStart = (regionOffset.second / CACHE_LOAD_WIDTH) * CACHE_LOAD_WIDTH;
+    for (int y = yStart; y < yStart + CACHE_LOAD_WIDTH; ++y) {
+        for (int x = xStart; x < xStart + CACHE_LOAD_WIDTH; ++x) {
+            const int headerIndex = x + y * REGION_WIDTH;
+            const ChunkCoords::repr cacheChunkCoords = ChunkCoords::pack(x + regionCoords.first * REGION_WIDTH, y + regionCoords.second * REGION_WIDTH);
+            if (header[headerIndex].sectors > 0 && chunkCacheTimes_.count(cacheChunkCoords) == 0) {
+                // Remove chunk from the cache if full to make more space.
+                if (chunkCache_.size() >= CACHE_SIZE) {
+                    auto minCacheTime = chunkCacheTimes_.begin();
+                    for (auto chunkCacheTime = chunkCacheTimes_.begin(); chunkCacheTime != chunkCacheTimes_.end(); ++chunkCacheTime) {
+                        if (chunkCacheTime->second < minCacheTime->second) {
+                            minCacheTime = chunkCacheTime;
+                        }
+                    }
+                    spdlog::debug(
+                        "Removing cached chunk at {}, {} (caching would exceed {} chunks).",
+                        ChunkCoords::x(minCacheTime->first), ChunkCoords::y(minCacheTime->first), CACHE_SIZE
+                    );
+                    chunkCache_.erase(minCacheTime->first);
+                    chunkCacheTimes_.erase(minCacheTime);
+                }
 
+                spdlog::debug(
+                    "Caching chunk {}, {} while loading chunk at {}, {}.",
+                    ChunkCoords::x(cacheChunkCoords), ChunkCoords::y(cacheChunkCoords),
+                    ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords)
+                );
+                regionFile.seekg(header[headerIndex].offset, std::ios::beg);
+                uint32_t chunkSize;
+                regionFile.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize));
+                chunkSize = byteswap(chunkSize) - sizeof(chunkSize);
+                std::vector<char> chunkData(chunkSize);
+                regionFile.read(chunkData.data(), chunkSize);
 
-            // FIXME need to load the chunk data and set it in board.
-            // also would be nice to refactor inputFile/outputFile to something clearer.
-
-
+                auto chunk = chunkCache_.emplace(std::piecewise_construct, std::forward_as_tuple(cacheChunkCoords), std::tuple<>()).first;
+                chunkCacheTimes_.emplace(cacheChunkCoords, std::chrono::steady_clock::now());
+                chunk->second.deserialize(chunkData);
+            }
         }
     }
     regionFile.close();
+
+    // FIXME return the chunk
+    // was considering if the LegacyFileFormat should change to also fill chunks
+    // in the board, but it's probably best to have it populate each tile one at a time.
 
     // FIXME need to work on cases for cache invalidation!
 }
@@ -198,8 +232,8 @@ void RegionFileFormat::readRegionHeader(ChunkHeader header[], const fs::path& /*
     }
 }
 
-void RegionFileFormat::loadRegion(Board& board, const RegionCoords& coords) {
-    fs::path regionFilename = std::to_string(coords.first) + "." + std::to_string(coords.second) + ".dat";
+void RegionFileFormat::loadRegion(Board& board, const RegionCoords& regionCoords) {
+    fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
     regionFilename = filename_.parent_path() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
@@ -210,14 +244,14 @@ void RegionFileFormat::loadRegion(Board& board, const RegionCoords& coords) {
     readRegionHeader(header, regionFilename, regionFile);
     for (int i = 0; i < REGION_WIDTH * REGION_WIDTH; ++i) {
         if (header[i].sectors > 0) {
-            savedRegions_[coords].insert(ChunkCoords::pack(i % REGION_WIDTH + coords.first * REGION_WIDTH, i / REGION_WIDTH + coords.second * REGION_WIDTH));
+            savedRegions_[regionCoords].insert(ChunkCoords::pack(i % REGION_WIDTH + regionCoords.first * REGION_WIDTH, i / REGION_WIDTH + regionCoords.second * REGION_WIDTH));
         }
     }
     regionFile.close();
 }
 
-void RegionFileFormat::saveRegion(Board& board, const RegionCoords& coords, const Region& region) {
-    fs::path regionFilename = std::to_string(coords.first) + "." + std::to_string(coords.second) + ".dat";
+void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region) {
+    fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
     regionFilename = filename_.parent_path() / "region" / regionFilename;
     fs::ofstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
@@ -255,7 +289,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& coords, cons
     for (const auto& serialized : serializedChunks) {
         const auto regionOffset = toRegionOffset(serialized.first);
         const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
-        const uint32_t serializedSize = serialized.second.size() + 4;
+        const uint32_t serializedSize = serialized.second.size() + sizeof(serializedSize);
         header[headerIndex].offset = lastOffset;
         if (serializedSize > std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
             // FIXME unable to save this chunk, too much data

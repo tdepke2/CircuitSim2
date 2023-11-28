@@ -240,16 +240,16 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, fs::ofstream& outputFile, float version) {
-    outputFile << "version: " << version << "\n";
-    outputFile << "width: " << board.getMaxSize().x << "\n";
-    outputFile << "height: " << board.getMaxSize().y << "\n";
-    outputFile << "data: {\n";
-    outputFile << "extraLogicStates: " << board.getExtraLogicStates() << "\n";
-    outputFile << "}\n";
-    outputFile << "notes: {\n";
-    outputFile << board.getNotesString().toAnsiString();
-    outputFile << "}\n";
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, fs::ofstream& boardFile, float version) {
+    boardFile << "version: " << version << "\n";
+    boardFile << "width: " << board.getMaxSize().x << "\n";
+    boardFile << "height: " << board.getMaxSize().y << "\n";
+    boardFile << "data: {\n";
+    boardFile << "extraLogicStates: " << board.getExtraLogicStates() << "\n";
+    boardFile << "}\n";
+    boardFile << "notes: {\n";
+    boardFile << board.getNotesString().toAnsiString();
+    boardFile << "}\n";
 }
 
 LegacyFileFormat::LegacyFileFormat() :
@@ -260,12 +260,12 @@ bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
 
-void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) {
-    if (!inputFile.is_open()) {
+void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
+    if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
-    inputFile.clear();
-    inputFile.seekg(0, std::ios::beg);
+    boardFile.clear();
+    boardFile.seekg(0, std::ios::beg);
 
     if (symbolLookup.empty()) {
         spdlog::debug("First time init symbolLookup.");
@@ -279,13 +279,13 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     ParseState state;
     state.filename = filename;
     try {
-        while (state.lastField != "headerEnd" && std::getline(inputFile, line)) {
+        while (state.lastField != "headerEnd" && std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
             parseHeader(board, line, ++lineNumber, state);
         }
-        while (std::getline(inputFile, line)) {
+        while (std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
@@ -310,23 +310,23 @@ void LegacyFileFormat::saveToFile(Board& board) {
     if (filename_.has_parent_path()) {
         fs::create_directories(filename_.parent_path());
     }
-    fs::ofstream outputFile(filename_);
-    if (!outputFile.is_open()) {
+    fs::ofstream boardFile(filename_);
+    if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
     }
-    writeHeader(board, filename_, outputFile, 1.0f);
+    writeHeader(board, filename_, boardFile, 1.0f);
 
-    outputFile << "\n";
-    outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
+    boardFile << "\n";
+    boardFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
     for (unsigned int y = 0; y < board.getMaxSize().y; ++y) {
-        outputFile << "*";
+        boardFile << "*";
         for (unsigned int x = 0; x < board.getMaxSize().x; ++x) {
-            outputFile << tileToSymbol(board, x, y);
+            boardFile << tileToSymbol(board, x, y);
         }
-        outputFile << "*\n";
+        boardFile << "*\n";
     }
-    outputFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
-    outputFile.close();
+    boardFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
+    boardFile.close();
 
     spdlog::debug("Save completed.");
 }

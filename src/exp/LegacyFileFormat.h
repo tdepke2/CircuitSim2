@@ -21,12 +21,12 @@ public:
     };
 
     static void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
-    static void writeHeader(Board& board, const fs::path& filename, fs::ofstream& outputFile, float version);
+    static void writeHeader(Board& board, const fs::path& filename, fs::ofstream& boardFile, float version);
 
     LegacyFileFormat();
 
     virtual bool validateFileVersion(float version) override;
-    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& inputFile) override;
+    virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
 
 private:
