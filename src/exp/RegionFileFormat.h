@@ -11,6 +11,7 @@
 #include <fstream>
 #include <map>
 #include <set>
+#include <SFML/Graphics.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -27,6 +28,7 @@ public:
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
+    virtual void updateVisibleChunks(Board& board, const sf::IntRect& visibleChunks) override;
 
     void loadChunk(Board& board, ChunkCoords::repr chunkCoords) const;
 

@@ -36,6 +36,7 @@ public:
     bool getExtraLogicStates() const;
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
+    void loadChunk(ChunkCoords::repr coords, Chunk&& chunk);
     Tile accessTile(int x, int y);
     void loadFromFile(const fs::path& filename);
     void saveToFile();

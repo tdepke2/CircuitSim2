@@ -136,6 +136,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
             visibleArea.left, visibleArea.top, visibleArea.left + visibleArea.width - 1, visibleArea.top + visibleArea.height - 1
         );
         lastVisibleArea_ = visibleArea;
+        fileStorage_->updateVisibleChunks(*this, lastVisibleArea_);
     }
 
     updateRender();
@@ -168,6 +169,10 @@ const sf::String& Board::getNotesString() const {
 
 const std::unordered_map<ChunkCoords::repr, Chunk>& Board::getLoadedChunks() const {
     return chunks_;
+}
+
+void Board::loadChunk(ChunkCoords::repr coords, Chunk&& chunk) {
+    chunks_.emplace(coords, std::move(chunk));
 }
 
 constexpr int constLog2(int x) {

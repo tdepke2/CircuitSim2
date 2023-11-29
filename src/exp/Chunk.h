@@ -37,7 +37,9 @@ public:
     Chunk();
     ~Chunk() = default;
     Chunk(const Chunk& rhs) = delete;
+    Chunk(Chunk&& rhs) noexcept = default;
     Chunk& operator=(const Chunk& rhs) = delete;
+    Chunk& operator=(Chunk&& rhs) noexcept = default;
 
     Tile accessTile(unsigned int x, unsigned int y);
     std::vector<char> serialize() const;

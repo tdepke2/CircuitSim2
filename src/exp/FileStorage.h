@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <SFML/Graphics.hpp>
 #include <type_traits>
 #ifdef _MSC_VER
     #include <intrin.h>
@@ -23,6 +24,7 @@ public:
     virtual bool validateFileVersion(float version) = 0;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) = 0;
     virtual void saveToFile(Board& board) = 0;
+    virtual void updateVisibleChunks(Board& board, const sf::IntRect& visibleChunks);
 };
 
 // Reverses bytes in the given integral type to convert endianness.

@@ -105,6 +105,10 @@ void RegionFileFormat::saveToFile(Board& board) {
     saveRegion(board, region->first, region->second);
 }
 
+void updateVisibleChunks(Board& board, const sf::IntRect& visibleChunks) {
+    
+}
+
 constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
@@ -125,6 +129,7 @@ std::pair<int, int> RegionFileFormat::toRegionOffset(ChunkCoords::repr chunkCoor
 }
 
 void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) const {
+    spdlog::debug("Attempting to load chunk {}, {}.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
     const auto regionCoords = toRegionCoords(chunkCoords);
     auto region = savedRegions_.find(regionCoords);
     if (region == savedRegions_.end() || region->second.count(chunkCoords) == 0) {
@@ -133,7 +138,10 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
 
     auto cachedChunk = chunkCache_.find(chunkCoords);
     if (cachedChunk != chunkCache_.end()) {
-        // FIXME found chunk, set it in board (and remove from cache?).
+        spdlog::debug("Loading cached chunk {}, {}.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+        board.loadChunk(cachedChunk->first, std::move(cachedChunk->second));
+        chunkCache_.erase(cachedChunk);
+        chunkCacheTimes_.erase(chunkCoords);
         return;
     }
 
@@ -193,9 +201,10 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
     }
     regionFile.close();
 
-    // FIXME return the chunk
-    // was considering if the LegacyFileFormat should change to also fill chunks
-    // in the board, but it's probably best to have it populate each tile one at a time.
+    cachedChunk = chunkCache_.find(chunkCoords);
+    board.loadChunk(cachedChunk->first, std::move(cachedChunk->second));
+    chunkCache_.erase(cachedChunk);
+    chunkCacheTimes_.erase(chunkCoords);
 
     // FIXME need to work on cases for cache invalidation!
 }

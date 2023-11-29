@@ -25,3 +25,7 @@ float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardF
     }
     return -1.0;
 }
+
+void FileStorage::updateVisibleChunks(Board& /*board*/, const sf::IntRect& /*visibleChunks*/) {
+
+}
