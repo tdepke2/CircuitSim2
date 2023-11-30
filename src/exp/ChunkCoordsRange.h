@@ -2,6 +2,8 @@
 
 #include <ChunkCoords.h>
 
+#include <algorithm>
+
 class ChunkCoordsRange {
 public:
     ChunkCoordsRange() :
@@ -10,33 +12,49 @@ public:
     ChunkCoordsRange(int left, int top, int width, int height) :
         left(left), top(top), width(width), height(height) {
     }
-    int getLowX() const {
+    ChunkCoordsRange(ChunkCoords::repr first, ChunkCoords::repr second) :
+        left(ChunkCoords::x(first)),
+        top(ChunkCoords::y(first)),
+        width(ChunkCoords::x(second) - ChunkCoords::x(first) + 1),
+        height(ChunkCoords::y(second) - ChunkCoords::y(first) + 1) {
+    }
+    int getFirstX() const {
         return left;
     }
-    int getLowY() const {
+    int getFirstY() const {
         return top;
     }
-    ChunkCoords::repr getLow() const {
+    ChunkCoords::repr getFirst() const {
         return ChunkCoords::pack(left, top);
     }
-    int getHighX() const {
+    int getSecondX() const {
         return left + width - 1;
     }
-    int getHighY() const {
+    int getSecondY() const {
         return top + height - 1;
     }
-    ChunkCoords::repr getHigh() const {
+    ChunkCoords::repr getSecond() const {
         return ChunkCoords::pack(left + width - 1, top + height - 1);
     }
     bool contains(int x, int y) const {
-        // FIXME may need to adjust, see sf::Rect
-        return (x >= left && x < left + width && y >= top && y < top + height);
+        return (
+            x >= std::min(left, left + width) && x < std::max(left, left + width) &&
+            y >= std::min(top, top + height) && y < std::max(top, top + height)
+        );
     }
     bool contains(ChunkCoords::repr coords) const {
         return contains(ChunkCoords::x(coords), ChunkCoords::y(coords));
     }
 
-    // FIXME Which is better? We could match sf::Rect and use left/top, but it may be useful to assume the two range points could be anything (negative width/height is weird).
-    //int x1, y1, x2, y2;
     int left, top, width, height;
+
+    friend bool operator==(const ChunkCoordsRange& lhs, const ChunkCoordsRange& rhs) {
+        return (
+            lhs.left == rhs.left && lhs.top == rhs.top &&
+            lhs.width == rhs.width && lhs.height == rhs.height
+        );
+    }
+    friend bool operator!=(const ChunkCoordsRange& lhs, const ChunkCoordsRange& rhs) {
+        return !(lhs == rhs);
+    }
 };

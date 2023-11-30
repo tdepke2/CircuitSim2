@@ -12,6 +12,7 @@ constexpr int RegionFileFormat::SECTOR_SIZE;
 RegionFileFormat::RegionFileFormat() :
     filename_("boards/NewBoard/board.txt"),
     savedRegions_(),
+    lastVisibleChunks_(0, 0, 0, 0),
     chunkCache_(),
     chunkCacheTimes_() {
 }
@@ -32,7 +33,7 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     ParseState state;
     state.filename = filename;
     try {
-        while (std::getline(boardFile, line)) {
+        while (state.lastField != "headerEnd" && std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
                 line.pop_back();
             }
@@ -52,8 +53,8 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     }
 
     savedRegions_.clear();
-    chunkCacheTimes_.clear();
     chunkCache_.clear();
+    chunkCacheTimes_.clear();
     for (const auto& regionCoords : state.regions) {
         spdlog::debug("loading region {}, {}", regionCoords.first, regionCoords.second);
         loadRegion(board, regionCoords);
@@ -61,6 +62,33 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
 }
 
 void RegionFileFormat::saveToFile(Board& board) {
+    std::map<RegionCoords, Region> unsavedRegions;
+
+    for (const auto& chunk : board.getLoadedChunks()) {
+        const auto savedRegion = savedRegions_.find(toRegionCoords(chunk.first));
+        if (savedRegion == savedRegions_.end() || savedRegion->second.count(chunk.first) == 0 || /*FIXME chunk is dirty*/ true) {
+            unsavedRegions[toRegionCoords(chunk.first)].insert(chunk.first);
+        }
+    }
+
+    spdlog::debug("save file: {}", filename_);
+    spdlog::debug("unsavedRegions:");
+    for (auto& region : unsavedRegions) {
+        spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
+        for (auto& chunkCoords : region.second) {
+            spdlog::debug("    {}, {}", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+        }
+    }
+
+    fs::create_directory(filename_.parent_path() / "region");
+    //for (const auto& region : unsavedRegions) {
+    //    saveRegion(board, region.first, region.second);
+    //}
+    {
+        const auto region = unsavedRegions.find({0, 0});
+        saveRegion(board, region->first, region->second);
+    }
+
     if (filename_.has_parent_path()) {
         fs::create_directories(filename_.parent_path());
     }
@@ -71,69 +99,34 @@ void RegionFileFormat::saveToFile(Board& board) {
     LegacyFileFormat::writeHeader(board, filename_, boardFile, 2.0f);
     boardFile << "regions: {\n";
     for (const auto& region : savedRegions_) {
-
-        // FIXME is this really the union of saved and dirty regions?
-
         boardFile << region.first.first << "," << region.first.second << "\n";
     }
     boardFile << "}\n";
     boardFile.close();
-    fs::create_directory(filename_.parent_path() / "region");
+}
 
-    std::map<RegionCoords, Region> dirtyRegions;
+void RegionFileFormat::updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks) {
+    if (visibleChunks == lastVisibleChunks_) {
+        return;
+    }
 
-    for (const auto& chunk : board.getLoadedChunks()) {
-        if (/*FIXME chunk is dirty*/ true) {
-            auto& region = dirtyRegions[toRegionCoords(chunk.first)];
-            region.insert(chunk.first);
+    for (int y = visibleChunks.top; y < visibleChunks.top + visibleChunks.height; ++y) {
+        for (int x = visibleChunks.left; x < visibleChunks.left + visibleChunks.width; ++x) {
+            if (!lastVisibleChunks_.contains(x, y)) {
+                loadChunk(board, ChunkCoords::pack(x, y));
+            }
         }
     }
 
-    spdlog::debug("save file: {}", filename_);
-    spdlog::debug("dirtyRegions:");
-    for (auto& region : dirtyRegions) {
-        spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
-        for (auto& chunkCoords : region.second) {
-            spdlog::debug("    {}, {}", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
-        }
-    }
-
-    //for (const auto& region : dirtyRegions) {
-    //    saveRegion(board, region.first, region.second);
-    //}
-    const auto region = dirtyRegions.find({0, 0});
-    saveRegion(board, region->first, region->second);
+    lastVisibleChunks_ = visibleChunks;
 }
 
-void updateVisibleChunks(Board& board, const sf::IntRect& visibleChunks) {
-    
-}
-
-constexpr int constLog2(int x) {
-    return x == 1 ? 0 : 1 + constLog2(x / 2);
-}
-
-RegionFileFormat::RegionCoords RegionFileFormat::toRegionCoords(ChunkCoords::repr chunkCoords) {
-    constexpr int widthLog2 = constLog2(REGION_WIDTH);
-    return {
-        ChunkCoords::x(chunkCoords) >> widthLog2,
-        ChunkCoords::y(chunkCoords) >> widthLog2
-    };
-}
-
-std::pair<int, int> RegionFileFormat::toRegionOffset(ChunkCoords::repr chunkCoords) {
-    return {
-        ChunkCoords::x(chunkCoords) & (REGION_WIDTH - 1),
-        ChunkCoords::y(chunkCoords) & (REGION_WIDTH - 1)
-    };
-}
-
-void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) const {
-    spdlog::debug("Attempting to load chunk {}, {}.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
+    spdlog::debug("Checking chunk {}, {} for load.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
     const auto regionCoords = toRegionCoords(chunkCoords);
     auto region = savedRegions_.find(regionCoords);
-    if (region == savedRegions_.end() || region->second.count(chunkCoords) == 0) {
-        return;
+    if (region == savedRegions_.end() || region->second.count(chunkCoords) == 0 || board.isChunkLoaded(chunkCoords)) {
+        return false;
     }
 
     auto cachedChunk = chunkCache_.find(chunkCoords);
@@ -142,7 +135,7 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
         board.loadChunk(cachedChunk->first, std::move(cachedChunk->second));
         chunkCache_.erase(cachedChunk);
         chunkCacheTimes_.erase(chunkCoords);
-        return;
+        return true;
     }
 
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
@@ -186,7 +179,7 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
                     ChunkCoords::x(cacheChunkCoords), ChunkCoords::y(cacheChunkCoords),
                     ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords)
                 );
-                regionFile.seekg(header[headerIndex].offset, std::ios::beg);
+                regionFile.seekg(header[headerIndex].offset * SECTOR_SIZE, std::ios::beg);
                 uint32_t chunkSize;
                 regionFile.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize));
                 chunkSize = byteswap(chunkSize) - sizeof(chunkSize);
@@ -207,6 +200,27 @@ void RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) co
     chunkCacheTimes_.erase(chunkCoords);
 
     // FIXME need to work on cases for cache invalidation!
+
+    return true;
+}
+
+constexpr int constLog2(int x) {
+    return x == 1 ? 0 : 1 + constLog2(x / 2);
+}
+
+RegionFileFormat::RegionCoords RegionFileFormat::toRegionCoords(ChunkCoords::repr chunkCoords) {
+    constexpr int widthLog2 = constLog2(REGION_WIDTH);
+    return {
+        ChunkCoords::x(chunkCoords) >> widthLog2,
+        ChunkCoords::y(chunkCoords) >> widthLog2
+    };
+}
+
+std::pair<int, int> RegionFileFormat::toRegionOffset(ChunkCoords::repr chunkCoords) {
+    return {
+        ChunkCoords::x(chunkCoords) & (REGION_WIDTH - 1),
+        ChunkCoords::y(chunkCoords) & (REGION_WIDTH - 1)
+    };
 }
 
 void RegionFileFormat::parseRegionList(Board& /*board*/, const std::string& line, int /*lineNumber*/, ParseState& state) {
@@ -299,11 +313,14 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         const auto regionOffset = toRegionOffset(serialized.first);
         const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
         const uint32_t serializedSize = serialized.second.size() + sizeof(serializedSize);
-        header[headerIndex].offset = lastOffset;
-        if (serializedSize > std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
+        if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
+            savedRegions_[regionCoords].insert(serialized.first);
+        } else  {
             // FIXME unable to save this chunk, too much data
             spdlog::error("Failed to save chunk at {}, {} (serialized to {} bytes)", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first), serialized.second.size());
+            continue;
         }
+        header[headerIndex].offset = lastOffset;
         header[headerIndex].sectors = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
         lastOffset += header[headerIndex].sectors;
 

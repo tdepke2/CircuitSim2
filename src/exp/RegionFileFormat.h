@@ -2,6 +2,7 @@
 
 #include <Chunk.h>
 #include <ChunkCoords.h>
+#include <ChunkCoordsRange.h>
 #include <FileStorage.h>
 #include <Filesystem.h>
 #include <FlatMap.h>
@@ -11,7 +12,6 @@
 #include <fstream>
 #include <map>
 #include <set>
-#include <SFML/Graphics.hpp>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -28,9 +28,9 @@ public:
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
-    virtual void updateVisibleChunks(Board& board, const sf::IntRect& visibleChunks) override;
 
-    void loadChunk(Board& board, ChunkCoords::repr chunkCoords) const;
+    virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks) override;
+    virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords) override;
 
 private:
     using Region = std::set<ChunkCoords::repr>;
@@ -54,6 +54,7 @@ private:
 
     fs::path filename_;
     std::map<RegionCoords, Region> savedRegions_;
-    mutable std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;
-    mutable FlatMap<ChunkCoords::repr, std::chrono::time_point<std::chrono::steady_clock>> chunkCacheTimes_;
+    ChunkCoordsRange lastVisibleChunks_;
+    std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;
+    FlatMap<ChunkCoords::repr, std::chrono::time_point<std::chrono::steady_clock>> chunkCacheTimes_;
 };

@@ -124,21 +124,21 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
         static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
     topLeft += offsetView.getCenterOffset();
-    sf::Vector2i bottomRight = {
+    sf::Vector2i size = {
         static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
         static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
-    bottomRight += offsetView.getCenterOffset();
-    sf::IntRect visibleArea(topLeft, bottomRight - topLeft + sf::Vector2i(1, 1));
+    size += offsetView.getCenterOffset() - topLeft + sf::Vector2i(1, 1);
+    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, size.x, size.y);
 
     if (lastVisibleArea_ != visibleArea) {
         spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).",
-            visibleArea.left, visibleArea.top, visibleArea.left + visibleArea.width - 1, visibleArea.top + visibleArea.height - 1
+            visibleArea.getFirstX(), visibleArea.getFirstY(), visibleArea.getSecondX(), visibleArea.getSecondY()
         );
         lastVisibleArea_ = visibleArea;
-        fileStorage_->updateVisibleChunks(*this, lastVisibleArea_);
     }
 
+    fileStorage_->updateVisibleChunks(*this, lastVisibleArea_);
     updateRender();
     currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_);
 }
@@ -171,8 +171,14 @@ const std::unordered_map<ChunkCoords::repr, Chunk>& Board::getLoadedChunks() con
     return chunks_;
 }
 
+bool Board::isChunkLoaded(ChunkCoords::repr coords) const {
+    auto chunkDrawable = chunkDrawables_.find(coords);
+    return chunkDrawable != chunkDrawables_.end() && chunkDrawable->second.getChunk() != nullptr;
+}
+
 void Board::loadChunk(ChunkCoords::repr coords, Chunk&& chunk) {
-    chunks_.emplace(coords, std::move(chunk));
+    auto chunkIter = chunks_.emplace(coords, std::move(chunk)).first;
+    chunkDrawables_[coords].setChunk(&chunkIter->second);
 }
 
 constexpr int constLog2(int x) {
@@ -235,8 +241,11 @@ unsigned int Board::debugGetChunksDrawn() const {
 Chunk& Board::getChunk(ChunkCoords::repr coords) {
     auto chunk = chunks_.find(coords);
     if (chunk == chunks_.end()) {
-        spdlog::debug("Allocating new chunk at ({}, {})", ChunkCoords::x(coords), ChunkCoords::y(coords));
+        if (fileStorage_->loadChunk(*this, coords)) {
+            return chunks_.find(coords)->second;
+        }
 
+        spdlog::debug("Allocating new chunk at ({}, {})", ChunkCoords::x(coords), ChunkCoords::y(coords));
         chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::tuple<>()).first;
         chunkDrawables_[coords].setChunk(&chunk->second);
     }
@@ -313,6 +322,8 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == ChunkCoords::pack(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
                     if (chunkDrawable->second.getChunk() != nullptr) {
                         borderColor = sf::Color::Yellow;
+                    } else {
+                        borderColor = sf::Color::Cyan;
                     }
                     ++chunkDrawable;
                 }

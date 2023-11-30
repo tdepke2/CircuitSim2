@@ -2,6 +2,7 @@
 
 #include <Chunk.h>
 #include <ChunkCoords.h>
+#include <ChunkCoordsRange.h>
 #include <ChunkDrawable.h>
 #include <ChunkRender.h>
 #include <FileStorage.h>
@@ -36,6 +37,7 @@ public:
     bool getExtraLogicStates() const;
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
+    bool isChunkLoaded(ChunkCoords::repr coords) const;
     void loadChunk(ChunkCoords::repr coords, Chunk&& chunk);
     Tile accessTile(int x, int y);
     void loadFromFile(const fs::path& filename);
@@ -64,7 +66,7 @@ private:
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
-    sf::IntRect lastVisibleArea_;
+    ChunkCoordsRange lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
 };

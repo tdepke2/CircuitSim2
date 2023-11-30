@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ChunkCoords.h>
+#include <ChunkCoordsRange.h>
 #include <FlatMap.h>
 
 #include <cstdint>
@@ -23,10 +24,10 @@ public:
     void setLod(int levelOfDetail);
     int getLod() const;
     void resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);
-    void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const sf::IntRect& visibleArea);
+    void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea);
     void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
-    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea);
+    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea);
 
 private:
     static constexpr int CHUNK_PADDING = 1;
@@ -51,7 +52,7 @@ private:
 
     int levelOfDetail_;
     sf::Vector2u maxChunkArea_;
-    sf::IntRect lastVisibleArea_;
+    ChunkCoordsRange lastVisibleArea_;
     sf::RenderTexture texture_;
     bool textureDirty_;
     sf::VertexBuffer buffer_;

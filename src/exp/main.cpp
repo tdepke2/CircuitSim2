@@ -30,7 +30,8 @@ int main() {
     board.debugSetDrawChunkBorder(true);
 
     try {
-        board.loadFromFile("boards/Calculator.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
+        board.loadFromFile("boards/NewBoard/board.txt");
+        //board.loadFromFile("boards/Calculator.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
 
     } catch (std::exception& ex) {
         spdlog::error(ex.what());

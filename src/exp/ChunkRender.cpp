@@ -107,7 +107,7 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     renderBlocks_.reserve(renderIndexPool_.size());
 }
 
-void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const sf::IntRect& visibleArea) {
+void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea) {
     if (renderBlocks_.size() < renderIndexPool_.size()) {
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
@@ -119,9 +119,7 @@ void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunk
     }
 
     for (auto renderBlock = renderBlocks_.rbegin(); renderBlock != renderBlocks_.rend(); ++renderBlock) {
-        int x = ChunkCoords::x(renderBlock->coords);
-        int y = ChunkCoords::y(renderBlock->coords);
-        if (x < visibleArea.left || x >= visibleArea.left + visibleArea.width || y < visibleArea.top || y >= visibleArea.top + visibleArea.height) {
+        if (!visibleArea.contains(renderBlock->coords)) {
 
             spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
                 levelOfDetail_, ChunkCoords::x(renderBlock->coords), ChunkCoords::y(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
@@ -161,7 +159,7 @@ void ChunkRender::display() {
     }
 }
 
-void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::IntRect& visibleArea) {
+void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea) {
     if (lastVisibleArea_ == visibleArea) {
         return;
     }
