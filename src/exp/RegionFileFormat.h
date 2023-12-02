@@ -48,6 +48,9 @@ private:
     static std::pair<int, int> toRegionOffset(ChunkCoords::repr chunkCoords);
     static void parseRegionList(Board& board, const std::string& line, int lineNumber, ParseState& state);
     static void readRegionHeader(ChunkHeader header[], const fs::path& filename, std::istream& regionFile);
+    static void writeRegionHeader(ChunkHeader header[], const fs::path& filename, std::ostream& regionFile);
+    static std::vector<char> readChunk(ChunkHeader header[], int headerIndex, const fs::path& filename, std::istream& regionFile);
+    static void writeChunk(ChunkHeader header[], int headerIndex, const char emptySector[], uint32_t& lastOffset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);
