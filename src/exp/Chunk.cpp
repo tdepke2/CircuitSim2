@@ -6,6 +6,7 @@
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <iomanip>
@@ -58,7 +59,21 @@ void Chunk::setupChunks() {
 }
 
 Chunk::Chunk() :
-    tiles_{} {
+    tiles_{},
+    dirtyFlags_(),
+    empty_(true) {
+}
+
+bool Chunk::isUnsaved() const {
+    return dirtyFlags_.test(0);
+}
+
+bool Chunk::isEmpty() const {
+    if (dirtyFlags_.test(1)) {
+        empty_ = std::all_of(tiles_, tiles_ + WIDTH * WIDTH, [](TileData tile) { return tile.id == 0; });
+        dirtyFlags_.reset(1);
+    }
+    return empty_;
 }
 
 Tile Chunk::accessTile(unsigned int x, unsigned int y) {
@@ -67,6 +82,9 @@ Tile Chunk::accessTile(unsigned int x, unsigned int y) {
 }
 
 std::vector<char> Chunk::serialize() const {
+    if (isEmpty()) {
+        return {};
+    }
     std::vector<char> data(sizeof(tiles_));
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
         uint32_t tileSwapped = FileStorage::byteswap(*reinterpret_cast<const uint32_t*>(tiles_ + i));
@@ -87,6 +105,16 @@ void Chunk::deserialize(const std::vector<char>& data) {
 
 void Chunk::debugPrintChunk() const {
     spdlog::debug("chunk:\n{}", *this);
+}
+
+void Chunk::markTileDirty(unsigned int tileIndex) {
+    dirtyFlags_.set();
+
+    // FIXME need to set the tile dirty
+}
+
+void Chunk::markAsSaved() {
+    dirtyFlags_.reset(0);
 }
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};

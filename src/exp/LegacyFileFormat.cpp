@@ -240,7 +240,7 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, fs::ofstream& boardFile, float version) {
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, std::ostream& boardFile, float version) {
     boardFile << "version: " << version << "\n";
     boardFile << "width: " << board.getMaxSize().x << "\n";
     boardFile << "height: " << board.getMaxSize().y << "\n";

@@ -66,7 +66,7 @@ void RegionFileFormat::saveToFile(Board& board) {
 
     for (const auto& chunk : board.getLoadedChunks()) {
         const auto savedRegion = savedRegions_.find(toRegionCoords(chunk.first));
-        if (savedRegion == savedRegions_.end() || savedRegion->second.count(chunk.first) == 0 || /*FIXME chunk is dirty*/ true) {
+        if (savedRegion == savedRegions_.end() || savedRegion->second.count(chunk.first) == 0 || chunk.second.isUnsaved()) {
             unsavedRegions[toRegionCoords(chunk.first)].insert(chunk.first);
         }
     }
@@ -78,6 +78,10 @@ void RegionFileFormat::saveToFile(Board& board) {
         for (auto& chunkCoords : region.second) {
             spdlog::debug("    {}, {}", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
         }
+    }
+    if (unsavedRegions.empty()) {
+        spdlog::debug("No regions to save.");
+        return;
     }
 
     fs::create_directory(filename_.parent_path() / "region");
@@ -244,7 +248,7 @@ void RegionFileFormat::parseRegionList(Board& /*board*/, const std::string& line
     }
 }
 
-void RegionFileFormat::readRegionHeader(ChunkHeader header[], const fs::path& /*filename*/, fs::ifstream& regionFile) {
+void RegionFileFormat::readRegionHeader(ChunkHeader header[], const fs::path& /*filename*/, std::istream& regionFile) {
     for (int i = 0; i < REGION_WIDTH * REGION_WIDTH; ++i) {
         uint32_t offset;
         regionFile.read(reinterpret_cast<char*>(&offset), 3);
@@ -276,36 +280,77 @@ void RegionFileFormat::loadRegion(Board& board, const RegionCoords& regionCoords
 void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region) {
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
     regionFilename = filename_.parent_path() / "region" / regionFilename;
-    fs::ofstream regionFile(regionFilename, std::ios::binary);
-    if (!regionFile.is_open()) {
-        throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for reading/writing.");
-    }
+    fs::fstream regionFile(regionFilename, std::ios::in | std::ios::out | std::ios::binary);
+    spdlog::debug("Saving chunks for region {}, {}.", regionCoords.first, regionCoords.second);
 
-    /*
-    // FIXME this may not work unless we open in read mode first...
-
-    // Determine number of bytes we can read from the file, should match the file size in most cases.
-    // https://stackoverflow.com/questions/22984956/tellg-function-give-wrong-size-of-file/22986486#22986486
-    regionFile.ignore(std::numeric_limits<std::streamsize>::max());
-    std::streamsize readLength = regionFile.gcount();
-    regionFile.clear();
-    regionFile.seekg(0, std::ios::beg);
-
-    spdlog::debug("readLength = {}", readLength);
-    */
-
-    const char emptySector[SECTOR_SIZE] = {};
     ChunkHeader header[REGION_WIDTH * REGION_WIDTH] = {};
+    std::streamsize regionFileLength = 0;
+    if (regionFile.is_open()) {
+        // Determine number of bytes we can read from the file, should match the file size in most cases.
+        // https://stackoverflow.com/questions/22984956/tellg-function-give-wrong-size-of-file/22986486#22986486
+        regionFile.ignore(std::numeric_limits<std::streamsize>::max());
+        regionFileLength = regionFile.gcount();
+        regionFile.clear();
+        regionFile.seekg(0, std::ios::beg);
+        if (regionFileLength < 4 * REGION_WIDTH * REGION_WIDTH) {
+            throw std::runtime_error(
+                "\"" + regionFilename.string() + "\": binary file with " + std::to_string(regionFileLength) +
+                " bytes is less than minimum size of " + std::to_string(4 * REGION_WIDTH * REGION_WIDTH) + " bytes."
+            );
+        }
+        if (regionFileLength % SECTOR_SIZE != 0) {
+            throw std::runtime_error(
+                "\"" + regionFilename.string() + "\": binary file with " + std::to_string(regionFileLength) +
+                " bytes is not evenly divisible by " + std::to_string(SECTOR_SIZE) + " byte sectors."
+            );
+        }
 
+        spdlog::debug("Found existing region file with {} bytes.", regionFileLength);
+        readRegionHeader(header, regionFilename, regionFile);
+    } else {
+        regionFile.open(regionFilename, std::ios::out | std::ios::binary);
+        if (!regionFile.is_open()) {
+            throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for writing.");
+        }
+    }
+    regionFile.seekp(0, std::ios::beg);
+
+    bool reallocationRequired = false;
     std::map<ChunkCoords::repr, std::vector<char>> serializedChunks;
     for (const auto& chunkCoords : region) {
-        serializedChunks.emplace(chunkCoords, board.getLoadedChunks().at(chunkCoords).serialize());
+        const auto serialized = serializedChunks.emplace(chunkCoords, board.getLoadedChunks().at(chunkCoords).serialize()).first;
+        if (regionFileLength > 0) {
+            const auto regionOffset = toRegionOffset(chunkCoords);
+            const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
+            const uint32_t serializedSize = serialized->second.size() + sizeof(serializedSize);
+            const unsigned int sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+            if (header[headerIndex].sectors > 0) {
+                if (serialized->second.empty()) {
+                    spdlog::debug("Chunk {}, {} requires 0 sectors, removing.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+                    reallocationRequired = true;
+                } else if (header[headerIndex].sectors < sectorCount) {
+                    const unsigned int currentSectors = header[headerIndex].sectors;
+                    spdlog::debug("Chunk {}, {} requires {} sectors but only {} are allocated.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords), sectorCount, currentSectors);
+                    reallocationRequired = true;
+                }
+            }
+        }
     }
 
-    // Write empty header.
-    uint32_t lastOffset = 4 * REGION_WIDTH * REGION_WIDTH / SECTOR_SIZE;
-    for (unsigned int i = 0; i < lastOffset; ++i) {
-        regionFile.write(emptySector, SECTOR_SIZE);
+    const char emptySector[SECTOR_SIZE] = {};
+    uint32_t lastOffset = regionFileLength / SECTOR_SIZE;
+    if (reallocationRequired) {
+
+
+        // FIXME need to read all chunks in from file, then wipe header
+
+
+    } else if (lastOffset == 0) {
+        // Write empty header.
+        lastOffset = 4 * REGION_WIDTH * REGION_WIDTH / SECTOR_SIZE;
+        for (unsigned int i = 0; i < lastOffset; ++i) {
+            regionFile.write(emptySector, SECTOR_SIZE);
+        }
     }
 
     // Write chunks.
@@ -313,16 +358,26 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         const auto regionOffset = toRegionOffset(serialized.first);
         const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
         const uint32_t serializedSize = serialized.second.size() + sizeof(serializedSize);
-        if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
+        const unsigned int sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+        if (serialized.second.empty()) {
+            savedRegions_[regionCoords].erase(serialized.first);
+            continue;
+        } else if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
             savedRegions_[regionCoords].insert(serialized.first);
-        } else  {
+        } else {
             // FIXME unable to save this chunk, too much data
             spdlog::error("Failed to save chunk at {}, {} (serialized to {} bytes)", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first), serialized.second.size());
             continue;
         }
-        header[headerIndex].offset = lastOffset;
-        header[headerIndex].sectors = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
-        lastOffset += header[headerIndex].sectors;
+        if (header[headerIndex].sectors > 0) {
+            assert(header[headerIndex].sectors == sectorCount);
+            regionFile.seekp(header[headerIndex].offset * SECTOR_SIZE, std::ios::beg);
+        } else {
+            header[headerIndex].offset = lastOffset;
+            header[headerIndex].sectors = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+            regionFile.seekp(lastOffset * SECTOR_SIZE, std::ios::beg);
+            lastOffset += header[headerIndex].sectors;
+        }
 
         spdlog::debug("Writing chunk {}, {}", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first));
         board.getLoadedChunks().at(serialized.first).debugPrintChunk();
@@ -353,12 +408,19 @@ read header...
 
 serialize chunks into memory
 
-header exists and no existing chunks need more memory?
-    write new/update existing chunks and replace header
-else
-    header exists?
-        read all chunks into memory
-    write header and chunks
+existing chunks need more memory?
+    read all chunks into memory
+    wipe header
 
+write chunks
+write header
 clean up dirty chunks in board that are empty
+
+saving and loading:
+new - creates a new fileFormat
+save - saves the current fileFormat, replacing any existing file with same name
+save as - create a new fileFormat
+rename - renames the fileFormat, prevents using an existing board name
+open - creates a new fileFormat if needed
+autosave - creates a new fileFormat
 */

@@ -47,7 +47,7 @@ private:
     static RegionCoords toRegionCoords(ChunkCoords::repr chunkCoords);
     static std::pair<int, int> toRegionOffset(ChunkCoords::repr chunkCoords);
     static void parseRegionList(Board& board, const std::string& line, int lineNumber, ParseState& state);
-    static void readRegionHeader(ChunkHeader header[], const fs::path& filename, fs::ifstream& regionFile);
+    static void readRegionHeader(ChunkHeader header[], const fs::path& filename, std::istream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);

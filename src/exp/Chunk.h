@@ -2,6 +2,7 @@
 
 #include <Tile.h>
 
+#include <bitset>
 #include <cassert>
 #include <cstdint>
 #include <ostream>
@@ -41,6 +42,8 @@ public:
     Chunk& operator=(const Chunk& rhs) = delete;
     Chunk& operator=(Chunk&& rhs) noexcept = default;
 
+    bool isUnsaved() const;
+    bool isEmpty() const;
     Tile accessTile(unsigned int x, unsigned int y);
     std::vector<char> serialize() const;
     void deserialize(const std::vector<char>& data);
@@ -48,6 +51,11 @@ public:
 
 private:
     TileData tiles_[WIDTH * WIDTH];
+    mutable std::bitset<2> dirtyFlags_;
+    mutable bool empty_;
+
+    void markTileDirty(unsigned int tileIndex);
+    void markAsSaved();
 
     friend class ChunkDrawable;
     friend class TileType;
