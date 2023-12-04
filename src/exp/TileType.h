@@ -30,4 +30,7 @@ protected:
     inline const TileData& getTileData(Chunk& chunk, unsigned int tileIndex) const {
         return chunk.tiles_[tileIndex];
     }
+    inline void markTileDirty(Chunk& chunk, unsigned int tileIndex) {
+        chunk.markTileDirty(tileIndex);
+    }
 };

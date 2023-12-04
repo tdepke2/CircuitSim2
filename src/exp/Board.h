@@ -38,7 +38,8 @@ public:
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
     bool isChunkLoaded(ChunkCoords::repr coords) const;
-    void loadChunk(ChunkCoords::repr coords, Chunk&& chunk);
+    void loadChunk(Chunk&& chunk);
+    void markChunkDrawDirty(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     void loadFromFile(const fs::path& filename);
     void saveToFile();

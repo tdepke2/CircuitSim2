@@ -176,9 +176,15 @@ bool Board::isChunkLoaded(ChunkCoords::repr coords) const {
     return chunkDrawable != chunkDrawables_.end() && chunkDrawable->second.getChunk() != nullptr;
 }
 
-void Board::loadChunk(ChunkCoords::repr coords, Chunk&& chunk) {
+void Board::loadChunk(Chunk&& chunk) {
+    ChunkCoords::repr coords = chunk.getCoords();
     auto chunkIter = chunks_.emplace(coords, std::move(chunk)).first;
+    chunkIter->second.setBoard(this);
     chunkDrawables_[coords].setChunk(&chunkIter->second);
+}
+
+void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
+    chunkDrawables_.at(coords).markDirty();
 }
 
 constexpr int constLog2(int x) {
@@ -246,7 +252,7 @@ Chunk& Board::getChunk(ChunkCoords::repr coords) {
         }
 
         spdlog::debug("Allocating new chunk at ({}, {})", ChunkCoords::x(coords), ChunkCoords::y(coords));
-        chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::tuple<>()).first;
+        chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
         chunkDrawables_[coords].setChunk(&chunk->second);
     }
     return chunk->second;

@@ -1,3 +1,4 @@
+#include <Board.h>
 #include <Chunk.h>
 #include <FileStorage.h>
 #include <tiles/Blank.h>
@@ -58,20 +59,30 @@ void Chunk::setupChunks() {
     }
 }
 
-Chunk::Chunk() :
+Chunk::Chunk(Board* board, ChunkCoords::repr coords) :
     tiles_{},
+    board_(board),
+    coords_(coords),
     dirtyFlags_(),
     empty_(true) {
 }
 
+ChunkCoords::repr Chunk::getCoords() const {
+    return coords_;
+}
+
+void Chunk::setBoard(Board* board) {
+    board_ = board;
+}
+
 bool Chunk::isUnsaved() const {
-    return dirtyFlags_.test(0);
+    return dirtyFlags_.test(ChunkDirtyFlag::unsaved);
 }
 
 bool Chunk::isEmpty() const {
-    if (dirtyFlags_.test(1)) {
+    if (dirtyFlags_.test(ChunkDirtyFlag::emptyIsStale)) {
         empty_ = std::all_of(tiles_, tiles_ + WIDTH * WIDTH, [](TileData tile) { return tile.id == 0; });
-        dirtyFlags_.reset(1);
+        dirtyFlags_.reset(ChunkDirtyFlag::emptyIsStale);
     }
     return empty_;
 }
@@ -108,13 +119,25 @@ void Chunk::debugPrintChunk() const {
 }
 
 void Chunk::markTileDirty(unsigned int tileIndex) {
+    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
+        board_->markChunkDrawDirty(coords_);
+    }
+    tiles_[tileIndex].redraw = true;
     dirtyFlags_.set();
 
-    // FIXME need to set the tile dirty
+
+
+
+    // FIXME need to put the redraw flag to use, and call the below two funcs
+    // also, deserialize will probably need to set redraw bit in each tile
 }
 
 void Chunk::markAsSaved() {
-    dirtyFlags_.reset(0);
+    dirtyFlags_.reset(ChunkDirtyFlag::unsaved);
+}
+
+void Chunk::markAsDrawn() {
+    dirtyFlags_.reset(ChunkDirtyFlag::drawPending);
 }
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};

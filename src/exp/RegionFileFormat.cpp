@@ -136,7 +136,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     auto cachedChunk = chunkCache_.find(chunkCoords);
     if (cachedChunk != chunkCache_.end()) {
         spdlog::debug("Loading cached chunk {}, {}.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
-        board.loadChunk(cachedChunk->first, std::move(cachedChunk->second));
+        board.loadChunk(std::move(cachedChunk->second));
         chunkCache_.erase(cachedChunk);
         chunkCacheTimes_.erase(chunkCoords);
         return true;
@@ -184,7 +184,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
                     ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords)
                 );
 
-                auto chunk = chunkCache_.emplace(std::piecewise_construct, std::forward_as_tuple(cacheChunkCoords), std::tuple<>()).first;
+                auto chunk = chunkCache_.emplace(std::piecewise_construct, std::forward_as_tuple(cacheChunkCoords), std::forward_as_tuple(nullptr, cacheChunkCoords)).first;
                 chunkCacheTimes_.emplace(cacheChunkCoords, std::chrono::steady_clock::now());
                 chunk->second.deserialize(readChunk(header, headerIndex, regionFilename, regionFile));
             }
@@ -193,7 +193,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     regionFile.close();
 
     cachedChunk = chunkCache_.find(chunkCoords);
-    board.loadChunk(cachedChunk->first, std::move(cachedChunk->second));
+    board.loadChunk(std::move(cachedChunk->second));
     chunkCache_.erase(cachedChunk);
     chunkCacheTimes_.erase(chunkCoords);
 
