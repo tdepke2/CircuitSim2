@@ -19,7 +19,7 @@ struct TileData {
     State::t   state2 : 2;
     Direction::t  dir : 2;
     bool    highlight : 1;
-    bool       redraw : 1;
+    uint8_t           : 1;
     uint16_t     meta : 16;
 
     // Default initialization specifies that all values (including padding) will be zero-initialized.
@@ -41,7 +41,7 @@ namespace ChunkDirtyFlag {
 
 class Chunk {
 public:
-    static constexpr int WIDTH = 16;
+    static constexpr int WIDTH = 32;
     static void setupChunks();
 
     Chunk(Board* board, ChunkCoords::repr coords);
@@ -58,6 +58,8 @@ public:
     Tile accessTile(unsigned int x, unsigned int y);
     std::vector<char> serialize() const;
     void deserialize(const std::vector<char>& data);
+    void markAsSaved() const;
+    void markAsDrawn() const;
     void debugPrintChunk() const;
 
 private:
@@ -68,8 +70,6 @@ private:
     mutable bool empty_;
 
     void markTileDirty(unsigned int tileIndex);
-    void markAsSaved();
-    void markAsDrawn();
 
     friend class ChunkDrawable;
     friend class TileType;

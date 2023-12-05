@@ -13,24 +13,24 @@ Gate* Gate::instance() {
 }
 
 void Gate::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.dir = direction;
 }
 
 void Gate::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.state1 = state;
 }
 
 void Gate::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     if ((!acrossHorizontal && tileData.dir % 2 == 1) || (acrossHorizontal && tileData.dir % 2 == 0)) {
         tileData.dir = static_cast<Direction::t>((tileData.dir + 2) % 4);
     }
 }
 
 void Gate::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     if (tileData.id != TileId::gateDiode) {
         if ((tileData.id - TileId::gateBuffer) % 2 == 0) {
             tileData.id = static_cast<TileId::t>(tileData.id + 1);
@@ -45,7 +45,7 @@ Gate::Gate() {
 }
 
 void Gate::init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Direction::t direction, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     assert(gateId >= TileId::gateDiode && gateId <= TileId::gateXnor);
     tileData.id = gateId;
     tileData.state1 = state;

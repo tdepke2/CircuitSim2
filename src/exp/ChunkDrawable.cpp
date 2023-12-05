@@ -100,9 +100,9 @@ bool ChunkDrawable::isRenderDirty(int levelOfDetail) const {
     return renderDirty_.test(levelOfDetail);
 }
 
-void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) const {
-    sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
-    TileData tileData = chunk_->tiles_[y * Chunk::WIDTH + x];
+void ChunkDrawable::redrawTile(unsigned int tileIndex) const {
+    sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
+    TileData tileData = chunk_->tiles_[tileIndex];
 
     unsigned int textureId = textureLookup_[tileData.getTextureHash()] + (tileData.highlight ? textureHighlightStart_ : 0);
 
@@ -126,27 +126,24 @@ void ChunkDrawable::redrawTile(unsigned int x, unsigned int y) const {
 void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (vertices_.getVertexCount() == 0) {
         vertices_.resize(Chunk::WIDTH * Chunk::WIDTH * 6);
-        for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
-            for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
-                sf::Vertex* tileVertices = &vertices_[(y * Chunk::WIDTH + x) * 6];
 
-                float px = static_cast<float>(x * tileWidth_);
-                float py = static_cast<float>(y * tileWidth_);
-                tileVertices[0].position = {px, py};
-                tileVertices[1].position = {px + tileWidth_, py};
-                tileVertices[2].position = {px + tileWidth_, py + tileWidth_};
-                tileVertices[3].position = {px + tileWidth_, py + tileWidth_};
-                tileVertices[4].position = {px, py + tileWidth_};
-                tileVertices[5].position = {px, py};
+        for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {
+            sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
 
-                redrawTile(x, y);
-            }
+            float px = static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * tileWidth_);
+            float py = static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * tileWidth_);
+            tileVertices[0].position = {px, py};
+            tileVertices[1].position = {px + tileWidth_, py};
+            tileVertices[2].position = {px + tileWidth_, py + tileWidth_};
+            tileVertices[3].position = {px + tileWidth_, py + tileWidth_};
+            tileVertices[4].position = {px, py + tileWidth_};
+            tileVertices[5].position = {px, py};
+
+            redrawTile(tileIndex);
         }
     } else {
-        for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
-            for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
-                redrawTile(x, y);
-            }
+        for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {
+            redrawTile(tileIndex);
         }
     }
 

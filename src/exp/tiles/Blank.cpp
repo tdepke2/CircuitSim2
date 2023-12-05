@@ -20,7 +20,7 @@ Blank::Blank() {
 }
 
 void Blank::init(Chunk& chunk, unsigned int tileIndex) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.id = TileId::blank;
     tileData.state1 = State::disconnected;
     tileData.state2 = State::disconnected;

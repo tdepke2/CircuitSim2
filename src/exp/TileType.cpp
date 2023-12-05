@@ -3,23 +3,23 @@
 void TileType::setDirection(Chunk& /*chunk*/, unsigned int /*tileIndex*/, Direction::t /*direction*/) {}
 
 void TileType::setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight) {
-    chunk.tiles_[tileIndex].highlight = highlight;
+    modifyTileData(chunk, tileIndex).highlight = highlight;
 }
 
 void TileType::setState(Chunk& /*chunk*/, unsigned int /*tileIndex*/, State::t /*state*/) {}
 
 TileId::t TileType::getId(Chunk& chunk, unsigned int tileIndex) const {
-    return chunk.tiles_[tileIndex].id;
+    return getTileData(chunk, tileIndex).id;
 }
 
 Direction::t TileType::getDirection(Chunk& chunk, unsigned int tileIndex) const {
-    return chunk.tiles_[tileIndex].dir;
+    return getTileData(chunk, tileIndex).dir;
 }
 
 bool TileType::getHighlight(Chunk& chunk, unsigned int tileIndex) const {
-    return chunk.tiles_[tileIndex].highlight;
+    return getTileData(chunk, tileIndex).highlight;
 }
 
 State::t TileType::getState(Chunk& chunk, unsigned int tileIndex) const {
-    return chunk.tiles_[tileIndex].state1;
+    return getTileData(chunk, tileIndex).state1;
 }

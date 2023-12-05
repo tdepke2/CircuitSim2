@@ -84,6 +84,9 @@ void RegionFileFormat::saveToFile(Board& board) {
         return;
     }
 
+    if (filename_.has_parent_path()) {
+        fs::create_directories(filename_.parent_path());
+    }
     fs::create_directory(filename_.parent_path() / "region");
     //for (const auto& region : unsavedRegions) {
     //    saveRegion(board, region.first, region.second);
@@ -93,9 +96,6 @@ void RegionFileFormat::saveToFile(Board& board) {
         saveRegion(board, region->first, region->second);
     }
 
-    if (filename_.has_parent_path()) {
-        fs::create_directories(filename_.parent_path());
-    }
     fs::ofstream boardFile(filename_);
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
@@ -414,6 +414,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         spdlog::debug("Writing chunk {}, {}", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first));
         board.getLoadedChunks().at(serialized.first).debugPrintChunk();
         writeChunk(header, headerIndex, emptySector, lastOffset, serialized.second, regionFilename, regionFile);
+        board.getLoadedChunks().at(serialized.first).markAsSaved();
     }
 
     // Write (filled) header.

@@ -5,6 +5,7 @@
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
+#include <tiles/Input.h>
 #include <tiles/Wire.h>
 
 #include <cmath>
@@ -97,6 +98,16 @@ int main() {
             }
         }
         DebugScreen::instance()->profilerEvent("main process_events_done");
+
+        static auto state = State::low;
+        //spdlog::debug("Toggling tiles to state {}", static_cast<int>(state));
+        for (int i = 28; i < 36; ++i) {
+            board.accessTile(31, i).setType(tiles::Input::instance(), TileId::inSwitch, state, 's');
+        }
+        for (int i = 28; i < 36; ++i) {
+            board.accessTile(32, i).setType(tiles::Input::instance(), TileId::inSwitch, state, 's');
+        }
+        state = (state == State::low ? State::high : State::low);
 
         DebugScreen::instance()->profilerEvent("main update_debug");
         DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(

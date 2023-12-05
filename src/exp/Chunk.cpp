@@ -114,30 +114,25 @@ void Chunk::deserialize(const std::vector<char>& data) {
     }
 }
 
+void Chunk::markAsSaved() const {
+    dirtyFlags_.reset(ChunkDirtyFlag::unsaved);
+}
+
+void Chunk::markAsDrawn() const {
+    dirtyFlags_.reset(ChunkDirtyFlag::drawPending);
+}
+
 void Chunk::debugPrintChunk() const {
     spdlog::debug("chunk:\n{}", *this);
 }
 
-void Chunk::markTileDirty(unsigned int tileIndex) {
+void Chunk::markTileDirty(unsigned int /*tileIndex*/) {
     if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
+        //spdlog::debug("Calling Board::markChunkDrawDirty() for chunk {}, {}", ChunkCoords::x(coords_), ChunkCoords::y(coords_));
         board_->markChunkDrawDirty(coords_);
     }
-    tiles_[tileIndex].redraw = true;
+    //tiles_[tileIndex].redraw = true;    // Tracking redraw per tile did not show a noticeable boost in rendering.
     dirtyFlags_.set();
-
-
-
-
-    // FIXME need to put the redraw flag to use, and call the below two funcs
-    // also, deserialize will probably need to set redraw bit in each tile
-}
-
-void Chunk::markAsSaved() {
-    dirtyFlags_.reset(ChunkDirtyFlag::unsaved);
-}
-
-void Chunk::markAsDrawn() {
-    dirtyFlags_.reset(ChunkDirtyFlag::drawPending);
 }
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};

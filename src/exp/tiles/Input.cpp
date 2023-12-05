@@ -12,7 +12,7 @@ Input* Input::instance() {
 }
 
 void Input::setKeycode(Chunk& chunk, unsigned int tileIndex, char keycode) {
-    getTileData(chunk, tileIndex).meta = keycode;
+    modifyTileData(chunk, tileIndex).meta = keycode;
 }
 
 char Input::getKeycode(Chunk& chunk, unsigned int tileIndex) const {
@@ -20,7 +20,7 @@ char Input::getKeycode(Chunk& chunk, unsigned int tileIndex) const {
 }
 
 void Input::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.state1 = state;
 }
 
@@ -35,7 +35,7 @@ Input::Input() {
 }
 
 void Input::init(Chunk& chunk, unsigned int tileIndex, TileId::t inputId, State::t state, char keycode) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     assert(inputId == TileId::inSwitch || inputId == TileId::inButton);
     tileData.id = inputId;
     tileData.state1 = state;

@@ -24,13 +24,17 @@ public:
 protected:
     ~TileType() = default;
 
-    inline TileData& getTileData(Chunk& chunk, unsigned int tileIndex) {
-        return chunk.tiles_[tileIndex];
-    }
     inline const TileData& getTileData(Chunk& chunk, unsigned int tileIndex) const {
         return chunk.tiles_[tileIndex];
     }
-    inline void markTileDirty(Chunk& chunk, unsigned int tileIndex) {
+    inline TileData& modifyTileData(Chunk& chunk, unsigned int tileIndex) {
         chunk.markTileDirty(tileIndex);
+        return chunk.tiles_[tileIndex];
     }
+    // Alternative method to modifyTileData() that would allow more flexibility
+    // in marking the tile dirty (such as updating the state of the tile without
+    // forcing redraw).
+    //inline void markTileDirty(Chunk& chunk, unsigned int tileIndex) {
+    //    chunk.markTileDirty(tileIndex);
+    //}
 };

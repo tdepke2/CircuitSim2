@@ -17,7 +17,7 @@ State::t Wire::getState2(Chunk& chunk, unsigned int tileIndex) const {
 }
 
 void Wire::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     if (tileData.id == TileId::wireStraight) {
         tileData.dir = static_cast<Direction::t>(direction % 2);
     } else if (tileData.id == TileId::wireJunction) {
@@ -32,7 +32,7 @@ void Wire::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direc
 }
 
 void Wire::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.state1 = state;
     if (tileData.id == TileId::wireCrossover) {
         tileData.state2 = state;
@@ -40,7 +40,7 @@ void Wire::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
 }
 
 void Wire::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     if (tileData.id == TileId::wireCorner) {
         if (!acrossHorizontal) {
             tileData.dir = static_cast<Direction::t>(3 - tileData.dir);
@@ -55,7 +55,7 @@ void Wire::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
 }
 
 void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     if (tileData.id == TileId::wireJunction) {
         tileData.id = TileId::wireCrossover;
         tileData.state2 = tileData.state1;
@@ -70,7 +70,7 @@ Wire::Wire() {
 }
 
 void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.id = wireId;
     tileData.state1 = state1;
     if (wireId == TileId::wireCrossover) {

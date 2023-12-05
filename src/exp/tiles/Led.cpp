@@ -12,7 +12,7 @@ Led* Led::instance() {
 }
 
 void Led::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.state1 = state;
 }
 
@@ -25,7 +25,7 @@ Led::Led() {
 }
 
 void Led::init(Chunk& chunk, unsigned int tileIndex, State::t state) {
-    auto& tileData = getTileData(chunk, tileIndex);
+    auto& tileData = modifyTileData(chunk, tileIndex);
     tileData.id = TileId::outLed;
     tileData.state1 = state;
     tileData.state2 = State::disconnected;

@@ -10,7 +10,7 @@ Each tile is represented with a 32-bit value:
 
 Bits:   fedcba98 76543210       f           e            dc           ba        98        765         43210
 Count:  16b                     1b          1b           2b           2b        2b        3b          5b
-Data:   Metadata (unique ID)    Redraw      Highlight    Direction    State2    State1    Reserved    Tile type
+Data:   Metadata (unique ID)    Reserved    Highlight    Direction    State2    State1    Reserved    Tile type
 
 ## Highlighting ##
 

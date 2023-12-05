@@ -32,7 +32,7 @@ private:
     static uint8_t textureLookup_[512];
     static unsigned int textureHighlightStart_;
 
-    void redrawTile(unsigned int x, unsigned int y) const;
+    void redrawTile(unsigned int tileIndex) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     const Chunk* chunk_;
