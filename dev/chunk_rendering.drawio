@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-09-27T05:38:31.483Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" etag="ewNijW1pu2FaxnLMIyfE" version="21.8.2" type="device">
+<mxfile host="app.diagrams.net" modified="2023-12-06T06:24:57.370Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" etag="UXY4-bLzBxU2YQjy5Wxh" version="22.1.5" type="device">
   <diagram name="Page-1" id="5COAI83WerfBTpbnbK-L">
-    <mxGraphModel dx="1050" dy="645" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1118" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1149,7 +1149,7 @@
             <mxRectangle width="20" height="20" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-245" value="ChunkDrawable&lt;br&gt;sf::VertexArray and std::array&amp;lt;int, 8&amp;gt; renderBlocks with std::bitset&amp;lt;8&amp;gt; renderDirty.&lt;br&gt;Allocated only when needed for drawing (the gray ones in right grid have empty VertexArray, but object still allocated).&lt;br&gt;The array and bitset match up with the current LOD (they support up to 8 levels)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-245" value="ChunkDrawable&lt;br&gt;sf::VertexArray and std::array&amp;lt;int, 5&amp;gt; renderBlocks with std::bitset&amp;lt;5&amp;gt; renderDirty.&lt;br&gt;VertexArray is allocated only when needed for drawing (the gray ones in right grid have empty VertexArray, but object still allocated).&lt;br&gt;The array and bitset match up with the current LOD (they support up to 5 levels)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="20" y="560" width="270" height="120" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-246" value="" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
@@ -1597,7 +1597,7 @@
             <mxPoint x="10" y="610" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-360" value="Vector of ChunkDrawable in Board&lt;br&gt;This is sorted by ChunkPos. When rendering, we iterate these and look at renderDirty to check who needs to be redrawn. By keeping it sorted, iteration is really just a binary search for the row and iteration of column." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-360" value="Vector of ChunkDrawable in Board&lt;br&gt;This is sorted by ChunkCoords. When rendering, we iterate these and look at renderDirty to check who needs to be redrawn. By keeping it sorted, iteration is really just a binary search for the row and iteration of column." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="20" y="750" width="300" height="90" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-361" value="Chunk loads when it needs update, is edited, or shows on screen first time.&lt;br&gt;Unload occurs based on frequency and last time of usage." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
@@ -1671,7 +1671,7 @@
             <mxRectangle width="36" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-385" value="ChunkRenderBlock&lt;br&gt;&lt;br&gt;&lt;div&gt;ChunkCoords coords;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;unsigned int texAllocatorIndex;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;float adjustedChebyshev;&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-385" value="RenderBlock&lt;br&gt;&lt;br&gt;&lt;div&gt;ChunkCoords coords;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;unsigned int texAllocatorIndex;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;float adjustedChebyshev;&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
           <mxGeometry x="420" y="890" width="190" height="100" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-387" value="" style="endArrow=none;html=1;rounded=0;exitX=0.126;exitY=1.022;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.095;entryY=-0.07;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="SPPW-IRCVoIIrB0qk-Ap-324" target="SPPW-IRCVoIIrB0qk-Ap-374" edge="1">
@@ -1680,7 +1680,7 @@
             <mxPoint x="650" y="620" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-388" value="Render blocks in ChunkRender&lt;br&gt;std::vector&amp;lt;ChunkRenderBlock&amp;gt;&lt;br&gt;Size is the number of grid squares (64) and vector is sorted by increasing Chebyshev distance. Sorting by this puts blocks furthest off-screen at the end, we can choose these when replacing stale blocks with ones that just appeared on screen." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-388" value="Render blocks in ChunkRender&lt;br&gt;std::vector&amp;lt;RenderBlock&amp;gt;&lt;br&gt;Size is the number of grid squares (64) and vector is sorted by increasing Chebyshev distance. Sorting by this puts blocks furthest off-screen at the end, we can choose these when replacing stale blocks with ones that just appeared on screen." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="470" y="730" width="350" height="80" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-389" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;" parent="1" source="SPPW-IRCVoIIrB0qk-Ap-385" edge="1">
@@ -1751,7 +1751,7 @@
             <mxPoint x="760" y="620" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-403" value="Allocated/free texture indices in ChunkRender&lt;br&gt;Size is also 64 and the index of the first free texIndex is tracked.&lt;br&gt;To allocate, grab value at tracked index and increment. We can free (given a ChunkRenderBlock) by swapping the free index value with the one before the tracked index, then decrement the tracked index." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-403" value="Allocated/free texture indices in ChunkRender&lt;br&gt;Size is also 64 and the index of the first free texIndex is tracked.&lt;br&gt;To allocate, grab value at tracked index and increment. We can free (given a RenderBlock) by swapping the free index value with the one before the tracked index, then decrement the tracked index." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="710" y="570" width="380" height="70" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-404" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.65;entryY=1.078;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="SPPW-IRCVoIIrB0qk-Ap-391" edge="1">
@@ -1763,8 +1763,8 @@
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-407" value="Level of detail (LOD) specific data.&lt;br&gt;There are five instances of these, chosen based on the zoom level of the view. For this LOD, we assume it was allocated to 8 by 8 (which coincidentally matches the Chunk WIDTH)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="680" y="270" width="330" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-408" value="A ChunkRenderBlock can correspond to a Chunk that is not loaded (the visual data is still cached in texture)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="630" y="890" width="170" height="70" as="geometry" />
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-408" value="A RenderBlock can correspond to a Chunk that is not loaded (the visual data is still cached in texture)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="640" y="920" width="170" height="70" as="geometry" />
         </mxCell>
         <mxCell id="1lAPozfecljDf7inJCy9-1" value="Pointer" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-90;" parent="1" vertex="1">
           <mxGeometry x="10" y="300" width="110" height="30" as="geometry" />
@@ -1838,7 +1838,7 @@
         <mxCell id="1lAPozfecljDf7inJCy9-22" value="Draws to RenderTexture&lt;br&gt;(at index in renderBlocks)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=15;" parent="1" vertex="1">
           <mxGeometry x="220" y="465" width="150" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="dmZy7aEEsVp5ouMRFLrY-1" value="Steps for Chunk allocation:&lt;br&gt;* Add Chunk to unordered_map.&lt;br&gt;* Add ChunkDrawable to sorted position in vector (or just update the one there if it exists).&lt;br&gt;&lt;br&gt;During rendering:&lt;br&gt;* Iterate ChunkDrawables in view. If new chunk comes into view, we see renderDirty is set. This is also done exactly once for the empty chunk if it is visible.&lt;br&gt;* If renderBlocks has negative value, request a new index from the ChunkRender.&lt;br&gt;* ChunkRender updates the allocation index vector and adds a new ChunkRenderBlock (or erases an existing block and index to make room). Erasing existing block means resetting the index in the corresponding ChunkDrawable or removing the ChunkDrawable if its Chunk unloaded and has no more renderBlocks allocated.&lt;br&gt;* ChunkDrawable now builds VertexArray if needed and draws.&lt;br&gt;* If visible chunk area changed, update Chebyshev distances, sort the ChunkRenderBlocks, and update the VertexBuffer by looking through ChunkDrawable vector.&lt;br&gt;&lt;br&gt;Steps for Chunk deallocation:&lt;br&gt;* Chunk is removed from unordered_map.&lt;br&gt;* ChunkDrawable stays in vector (but pointer to Chunk is nulled and VertexArray cleared) if it has any renderBlocks allocated. Otherwise it is removed as well." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="dmZy7aEEsVp5ouMRFLrY-1" value="Steps for Chunk allocation:&lt;br&gt;* Add Chunk to unordered_map.&lt;br&gt;* Add ChunkDrawable to sorted position in vector (or just update the one there if it exists).&lt;br&gt;&lt;br&gt;During rendering:&lt;br&gt;* Iterate ChunkDrawables in view. If new chunk comes into view, we see renderDirty is set. This is also done exactly once for the empty chunk if it is visible.&lt;br&gt;* If renderBlocks has negative value, request a new index from the ChunkRender.&lt;br&gt;* ChunkRender updates the allocation index vector and adds a new RenderBlock (or erases an existing block and index to make room). Erasing existing block means resetting the index in the corresponding ChunkDrawable or removing the ChunkDrawable if its Chunk unloaded and has no more renderBlocks allocated.&lt;br&gt;* ChunkDrawable now builds VertexArray if needed and draws.&lt;br&gt;* If visible chunk area changed, update Chebyshev distances, sort the RenderBlocks, and update the VertexBuffer by looking through ChunkDrawable vector.&lt;br&gt;&lt;br&gt;Steps for Chunk deallocation:&lt;br&gt;* Chunk is removed from unordered_map.&lt;br&gt;* ChunkDrawable stays in vector (but pointer to Chunk is nulled and VertexArray cleared) if it has any renderBlocks allocated. Otherwise it is removed as well." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="30" y="860" width="330" height="420" as="geometry" />
         </mxCell>
         <mxCell id="XBwZA_QGgMTHTaYSOAYE-1" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.652;entryY=1.1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="SPPW-IRCVoIIrB0qk-Ap-374" edge="1">
@@ -1850,7 +1850,7 @@
         <mxCell id="XBwZA_QGgMTHTaYSOAYE-2" value="Remaining concerns:&lt;br&gt;* Chunk and ChunkDrawable have bidirectional reference, safe to remove the reference from the Chunk to make sorting drawables less painful?&lt;br&gt;&amp;nbsp; &amp;nbsp; - This is probably fine.&lt;br&gt;* Where does the empty chunk come in to play?&lt;br&gt;&amp;nbsp; &amp;nbsp; - It&#39;s stored as a member in the Board and has a ChunkDrawable allocated in the usual spot (which should never get removed since it&#39;s Chunk never unloads).&lt;br&gt;* Leaving ChunkDrawables behind if they have any allocated blocks could be a performance issue. Could we proactively clean up chunks with high Chebyshev or is that a bad idea? Better solutions?&lt;br&gt;&amp;nbsp; &amp;nbsp; - Unlikely to be a concern right now, but will need to test.&lt;br&gt;&lt;br&gt;* Rename renderBlocks to renderIndex?" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="410" y="1110" width="540" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="1w3jqDxLiVQfFBF54AMj-1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.253;entryY=1.17;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;" edge="1" parent="1" source="SPPW-IRCVoIIrB0qk-Ap-172" target="SPPW-IRCVoIIrB0qk-Ap-156">
+        <mxCell id="1w3jqDxLiVQfFBF54AMj-1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.253;entryY=1.17;entryDx=0;entryDy=0;entryPerimeter=0;dashed=1;" parent="1" source="SPPW-IRCVoIIrB0qk-Ap-172" target="SPPW-IRCVoIIrB0qk-Ap-156" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="510" y="360" as="sourcePoint" />
             <mxPoint x="560" y="310" as="targetPoint" />

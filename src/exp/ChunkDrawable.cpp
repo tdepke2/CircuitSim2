@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <ChunkCoords.h>
 #include <ChunkDrawable.h>
 #include <Tile.h>
 
@@ -68,7 +69,11 @@ ChunkDrawable::ChunkDrawable() :
 
 void ChunkDrawable::setChunk(const Chunk* chunk) {
     chunk_ = chunk;
-    if (chunk != nullptr) {
+    if (chunk == nullptr) {
+        vertices_.clear();
+
+        // FIXME what happens if a chunk unloads, then ChunkRender needs to draw it again or it shows up on screen?
+    } else {
         renderDirty_.set();
     }
 }
@@ -125,6 +130,7 @@ void ChunkDrawable::redrawTile(unsigned int tileIndex) const {
 
 void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (vertices_.getVertexCount() == 0) {
+        spdlog::debug("Populating ChunkDrawable vertices for chunk {}, {}", ChunkCoords::x(chunk_->getCoords()), ChunkCoords::y(chunk_->getCoords()));
         vertices_.resize(Chunk::WIDTH * Chunk::WIDTH * 6);
 
         for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {

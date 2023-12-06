@@ -18,6 +18,34 @@
 
 class Board;
 
+/**
+ * Chunk-based file format used for circuits.
+ * 
+ * This format allows chunks to load and save back to disk dynamically. This
+ * makes it ideal for very large circuits. Some caching is used to batch load
+ * chunks in a square area, so it is most efficient to load nearby chunks
+ * instead of jumping around to different spots when loading them.
+ * 
+ * The file structure starts with a directory set to the board name, and that
+ * contains a "board.txt" file with the board properties along with a "region"
+ * directory containing region data files. Each region data file is named
+ * "x.y.dat" corresponding to the region x and y coordinates, and contains data
+ * for all of the saved chunks for that region.
+ * 
+ * The region represents a 32 by 32 area, containing up to 1024 chunks. The file
+ * starts with a 4096 byte header serving as a lookup table for the chunk data.
+ * Each entry in the lookup table has a 3 byte sector offset and 1 byte sector
+ * count (in big-endian format). These represent the offset of the chunk data
+ * (from the start of the file) in 256 byte sectors, and the number of allocated
+ * sectors respectively. The lookup table is also in row-major order, so the
+ * first 4 bytes are for the chunk at (0,0) and the next for (1,0). The chunk
+ * data is just composed of a 4 byte total length (big-endian) and the following
+ * bytes, padded with zeros to an even number of sectors. The length includes
+ * the length bytes itself, so it can be 4 at minimum.
+ * 
+ * The region file format is based on the McRegion format used in Minecraft:
+ * https://minecraft.wiki/w/Region_file_format
+ */
 class RegionFileFormat : public FileStorage {
 public:
     static constexpr int REGION_WIDTH = 32;

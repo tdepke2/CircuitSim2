@@ -8,6 +8,14 @@
 
 class Chunk;
 
+/**
+ * The drawable component of a `Chunk`.
+ * 
+ * This class is fairly lightweight compared to the rest of the chunk and is
+ * more suitable to store in a cache-friendly data structure (such as a
+ * `FlatMap`). The render index functions refer to the index of a `RenderBlock`
+ * within a `ChunkRender` for each level-of-detail.
+ */
 class ChunkDrawable : public sf::Drawable {
 public:
     static void setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth);

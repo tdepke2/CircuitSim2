@@ -15,6 +15,12 @@
 class Board;
 class ChunkCoordsRange;
 
+/**
+ * Abstract interface for circuit file formats.
+ * 
+ * The `boardFile` parameters refer to the top-level text file that defines the
+ * board properties (it begins with the "version" field).
+ */
 class FileStorage {
 public:
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>

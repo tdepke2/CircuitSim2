@@ -327,7 +327,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
                 sf::Color borderColor = sf::Color::Blue;
                 if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == ChunkCoords::pack(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
                     if (chunkDrawable->second.getChunk() != nullptr) {
-                        borderColor = sf::Color::Yellow;
+                        borderColor = (chunkDrawable->second.getChunk()->isUnsaved() ? sf::Color(255, 127, 0) : sf::Color::Yellow);
                     } else {
                         borderColor = sf::Color::Cyan;
                     }

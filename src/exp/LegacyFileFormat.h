@@ -8,6 +8,17 @@
 
 class Board;
 
+/**
+ * Legacy format used for circuit files.
+ * 
+ * This file format puts everything into a single text file, with a big text
+ * block containing all the circuit tiles at the end. In the text block, every
+ * two characters represents a tile. This is convenient since the file is
+ * visually similar to the circuit in a text editor and easy for an external
+ * tool to read/edit tiles in the circuit. Unfortunately this format does not
+ * support chunk loading, is inefficient for larger circuits, and may not
+ * support some special tiles that can't be packed into just two characters.
+ */
 class LegacyFileFormat : public FileStorage {
 public:
     struct HeaderState {

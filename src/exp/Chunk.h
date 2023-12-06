@@ -12,6 +12,12 @@
 class Board;
 
 //#pragma pack(push, 1)
+
+/**
+ * The internal state of a tile, using bitfields to pack the members into just 4
+ * bytes. See the `Tile` class for an interface that makes it easier to interact
+ * with a tile (without touching the ugly bitfields directly).
+ */
 struct TileData {
     TileId::t      id : 5;
     uint8_t           : 3;
@@ -39,6 +45,17 @@ namespace ChunkDirtyFlag {
     };
 }
 
+/**
+ * A square block of tiles. Storing tiles in large blocks instead of
+ * individually helps improve performance of drawing, simulation, and open up
+ * opportunities for multithreading.
+ * 
+ * Chunks can be drawn with a `ChunkDrawable` and serialized to/from a character
+ * array for file i/o. The tiles are stored in a fixed array in row-major order
+ * (with the zero coordinates as the first element in the array). The array is
+ * also part of the class footprint (instead of dynamically allocated), so
+ * copying and moving chunks is an expensive operation.
+ */
 class Chunk {
 public:
     static constexpr int WIDTH = 32;

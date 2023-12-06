@@ -4,6 +4,12 @@
 
 #include <algorithm>
 
+/**
+ * Two `ChunkCoords` points forming a rectangular area.
+ * 
+ * Very similar to `sf::IntRect` but specialized for working with `ChunkCoords`
+ * instead of the top-left and size of an axis aligned rectangle.
+ */
 class ChunkCoordsRange {
 public:
     ChunkCoordsRange() :

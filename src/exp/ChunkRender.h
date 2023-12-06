@@ -10,6 +10,21 @@
 
 class ChunkDrawable;
 
+/**
+ * Cache for rendered chunks at a specific level-of-detail (LOD).
+ * 
+ * The `ChunkRender` allocates a render texture that can accommodate all visible
+ * chunks at the furthest zoom for the LOD. The texture is also divided up into
+ * blocks that can be allocated as needed for new chunks that enter the visible
+ * area (each tracked by a `RenderBlock`). By using blocks, changing the visible
+ * area does not mean redrawing the whole texture, instead we just need to
+ * update the vertex buffer to point to the texture coordinates of each block.
+ * 
+ * The render blocks are also kept sorted by their Chebyshev distance to the
+ * coordinates at the center. When a block needs to be swapped out to make room
+ * for more, the highest Chebyshev distance will be chosen (which should be the
+ * block furthest off screen).
+ */
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;

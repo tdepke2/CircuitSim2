@@ -3,6 +3,20 @@
 #include <cstdint>
 #include <limits>
 
+/**
+ * The x and y coordinates for a `Chunk`.
+ * 
+ * This is a middle ground between `std::pair` and `sf::Vector2i` in that the
+ * coordinates have an explicit x/y component and a defined ordering (sorting y
+ * first, then x in increasing order). This ordering is important because it
+ * allows some assumptions when using a binary search over a sorted range of
+ * coordinates. This may lead to some surprising values for the uint64_t though,
+ * for example the zero coordinates have a value of `0x8000000080000000`.
+ * 
+ * I'm not sure why I decided to make it a type alias instead of a simple class
+ * (although it does make it clear that it doesn't need pass-by-reference), but
+ * it works.
+ */
 class ChunkCoords {
 public:
     using repr = uint64_t;
@@ -18,4 +32,6 @@ public:
     static inline int y(repr coords) {
         return static_cast<int32_t>(coords >> 32) - std::numeric_limits<int>::min();
     }
+
+    // FIXME add a function to format coords as string?
 };

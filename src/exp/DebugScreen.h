@@ -8,6 +8,17 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * Debugging display for development.
+ * 
+ * The debug screen can toggled with F3 and the mode (and the mode state) can be
+ * adjusted with the arrow keys. The default mode displays some preset fields
+ * with their values, followed by any custom fields. The texture mode functions
+ * as a texture viewer (textures must be registered to show up here).
+ * 
+ * Additionally there is a simple event profiler that can be triggered by
+ * pressing P.
+ */
 class DebugScreen : public sf::Drawable {
 public:
     enum class Mode {

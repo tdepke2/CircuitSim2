@@ -18,8 +18,16 @@
 class OffsetView;
 class ResourceManager;
 class Tile;
-struct TileSymbol;
 
+/**
+ * A circuit board with a grid of circuit tiles.
+ * 
+ * The grid may be fixed size, or "unlimited" (the max size of a 32-bit signed
+ * integer in each direction). Boards can be drawn to an `sf::RenderTarget` and
+ * will load/unload chunks as needed depending on what's visible. Drawing also
+ * uses different levels-of-detail based on the zoom level. Boards can also
+ * save/load to a file and work with different file formats.
+ */
 class Board : public sf::Drawable {
 public:
     static void setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth);
