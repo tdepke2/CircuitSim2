@@ -15,7 +15,7 @@ void Input::setKeycode(Chunk& chunk, unsigned int tileIndex, char keycode) {
     modifyTileData(chunk, tileIndex).meta = keycode;
 }
 
-char Input::getKeycode(Chunk& chunk, unsigned int tileIndex) const {
+char Input::getKeycode(const Chunk& chunk, unsigned int tileIndex) const {
     return static_cast<char>(getTileData(chunk, tileIndex).meta);
 }
 

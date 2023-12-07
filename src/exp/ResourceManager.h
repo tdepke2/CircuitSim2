@@ -5,6 +5,11 @@
 #include <map>
 #include <SFML/Graphics.hpp>
 
+/**
+ * Provides a common access point for SFML resources. This helps prevent
+ * expensive resources like textures and fonts from loading multiple times from
+ * a file.
+ */
 class ResourceManager {
 public:
     ResourceManager();

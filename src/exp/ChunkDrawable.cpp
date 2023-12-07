@@ -3,7 +3,16 @@
 #include <ChunkDrawable.h>
 #include <Tile.h>
 
-#include <spdlog/spdlog.h>
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/ranges.h>
+    #include <spdlog/spdlog.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 unsigned int ChunkDrawable::textureWidth_, ChunkDrawable::tileWidth_;
 uint8_t ChunkDrawable::textureLookup_[512];
@@ -130,7 +139,7 @@ void ChunkDrawable::redrawTile(unsigned int tileIndex) const {
 
 void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (vertices_.getVertexCount() == 0) {
-        spdlog::debug("Populating ChunkDrawable vertices for chunk {}, {}", ChunkCoords::x(chunk_->getCoords()), ChunkCoords::y(chunk_->getCoords()));
+        spdlog::debug("Populating ChunkDrawable vertices for chunk {}.", ChunkCoords::toPair(chunk_->getCoords()));
         vertices_.resize(Chunk::WIDTH * Chunk::WIDTH * 6);
 
         for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {

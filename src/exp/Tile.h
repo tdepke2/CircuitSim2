@@ -37,6 +37,15 @@ namespace Direction {
     };
 }
 
+/**
+ * Provides an interface for a `TileData` object in a `Chunk`. The actual type
+ * of the tile and state are stored separately as per the Type Object pattern.
+ * 
+ * The state of a tile belongs only in the `TileData` and the owning chunk, so
+ * tile types are stateless classes. This is backwards from typical
+ * object-oriented design but allows us to avoid some dynamic allocation and
+ * storing duplicate state of a tile within a wrapper class.
+ */
 class Tile {
 public:
     Tile(TileType* type, Chunk& chunk, unsigned int tileIndex);

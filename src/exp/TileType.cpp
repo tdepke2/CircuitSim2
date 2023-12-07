@@ -8,18 +8,18 @@ void TileType::setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight
 
 void TileType::setState(Chunk& /*chunk*/, unsigned int /*tileIndex*/, State::t /*state*/) {}
 
-TileId::t TileType::getId(Chunk& chunk, unsigned int tileIndex) const {
+TileId::t TileType::getId(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).id;
 }
 
-Direction::t TileType::getDirection(Chunk& chunk, unsigned int tileIndex) const {
+Direction::t TileType::getDirection(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).dir;
 }
 
-bool TileType::getHighlight(Chunk& chunk, unsigned int tileIndex) const {
+bool TileType::getHighlight(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).highlight;
 }
 
-State::t TileType::getState(Chunk& chunk, unsigned int tileIndex) const {
+State::t TileType::getState(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).state1;
 }

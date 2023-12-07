@@ -17,7 +17,7 @@ public:
     Input& operator=(Input&& input) = delete;
 
     void setKeycode(Chunk& chunk, unsigned int tileIndex, char keycode);
-    char getKeycode(Chunk& chunk, unsigned int tileIndex) const;
+    char getKeycode(const Chunk& chunk, unsigned int tileIndex) const;
 
     virtual void setState(Chunk& chunk, unsigned int tileIndex, State::t state) override;
     virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;

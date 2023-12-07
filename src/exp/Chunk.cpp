@@ -17,7 +17,7 @@
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdangling-reference"
 #endif
-    #include <spdlog/fmt/bundled/ostream.h>
+    #include <spdlog/fmt/ostr.h>
     #include <spdlog/spdlog.h>
 #if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic pop
@@ -128,7 +128,7 @@ void Chunk::debugPrintChunk() const {
 
 void Chunk::markTileDirty(unsigned int /*tileIndex*/) {
     if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
-        //spdlog::debug("Calling Board::markChunkDrawDirty() for chunk {}, {}", ChunkCoords::x(coords_), ChunkCoords::y(coords_));
+        //spdlog::debug("Calling Board::markChunkDrawDirty() for chunk {}.", ChunkCoords::toPair(coords_));
         board_->markChunkDrawDirty(coords_);
     }
     //tiles_[tileIndex].redraw = true;    // Tracking redraw per tile did not show a noticeable boost in rendering.

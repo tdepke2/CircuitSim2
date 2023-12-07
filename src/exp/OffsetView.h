@@ -2,6 +2,16 @@
 
 #include <SFML/Graphics.hpp>
 
+/**
+ * Combines an `sf::View` with an integer offset. This allows the center of the
+ * view to have a very large magnitude without paying for loss of precision from
+ * float types.
+ * 
+ * The center of the view member will be kept in a range from half of the view
+ * size to half the view size plus the view divisor. Calculating the actual
+ * center (with rounding errors) can be done with the following:
+ * `getCenter() + sf::Vector2f(getCenterOffset()) * getViewDivisor()`
+ */
 class OffsetView {
 public:
     OffsetView(float viewDivisor);

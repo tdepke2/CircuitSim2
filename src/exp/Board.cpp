@@ -10,9 +10,19 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
-#include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <utility>
+
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/ranges.h>
+    #include <spdlog/spdlog.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 sf::Texture* Board::tilesetGrid_;
 sf::Texture* Board::tilesetNoGrid_;
@@ -251,7 +261,7 @@ Chunk& Board::getChunk(ChunkCoords::repr coords) {
             return chunks_.find(coords)->second;
         }
 
-        spdlog::debug("Allocating new chunk at ({}, {})", ChunkCoords::x(coords), ChunkCoords::y(coords));
+        spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
         chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
         chunkDrawables_[coords].setChunk(&chunk->second);
     }
@@ -262,7 +272,7 @@ void Board::pruneChunkDrawables() {
     spdlog::debug("Pruning chunkDrawables, size is {}.", chunkDrawables_.size());
     auto newLast = std::remove_if(chunkDrawables_.begin(), chunkDrawables_.end(), [](const decltype(chunkDrawables_)::value_type& chunkDrawable) {
         if (!chunkDrawable.second.hasAnyRenderIndex() && chunkDrawable.second.getChunk() == nullptr) {
-            spdlog::debug("Pruning ChunkDrawable at ({}, {})", ChunkCoords::x(chunkDrawable.first), ChunkCoords::y(chunkDrawable.first));
+            spdlog::debug("Pruning ChunkDrawable at {}.", ChunkCoords::toPair(chunkDrawable.first));
             return true;
         } else {
             return false;

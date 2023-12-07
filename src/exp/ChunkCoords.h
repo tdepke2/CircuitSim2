@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <utility>
 
 /**
  * The x and y coordinates for a `Chunk`.
@@ -33,5 +34,7 @@ public:
         return static_cast<int32_t>(coords >> 32) - std::numeric_limits<int>::min();
     }
 
-    // FIXME add a function to format coords as string?
+    static inline std::pair<int, int> toPair(repr coords) {
+        return {x(coords), y(coords)};
+    }
 };

@@ -6,8 +6,18 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
-#include <spdlog/spdlog.h>
 #include <string>
+
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/ranges.h>
+    #include <spdlog/spdlog.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 constexpr int ChunkRender::LEVELS_OF_DETAIL;
 constexpr ChunkCoords::repr ChunkRender::EMPTY_CHUNK_COORDS;
@@ -112,8 +122,8 @@ void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunk
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
         chunkDrawables.at(coords).setRenderIndex(levelOfDetail_, renderIndexPool_[poolIndex]);
-        spdlog::debug("Allocated new block (LOD {} at chunk {}, {}) with render index {}.",
-            levelOfDetail_, ChunkCoords::x(coords), ChunkCoords::y(coords), renderIndexPool_[poolIndex]
+        spdlog::debug("Allocated new block (LOD {} at chunk {}) with render index {}.",
+            levelOfDetail_, ChunkCoords::toPair(coords), renderIndexPool_[poolIndex]
         );
         return;
     }
@@ -121,9 +131,8 @@ void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunk
     for (auto renderBlock = renderBlocks_.rbegin(); renderBlock != renderBlocks_.rend(); ++renderBlock) {
         if (!visibleArea.contains(renderBlock->coords)) {
 
-            spdlog::debug("Swapping block (LOD {} at chunk {}, {}) with render index {} for chunk at {}, {}.",
-                levelOfDetail_, ChunkCoords::x(renderBlock->coords), ChunkCoords::y(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex],
-                ChunkCoords::x(coords), ChunkCoords::y(coords)
+            spdlog::debug("Swapping block (LOD {} at chunk {}) with render index {} for chunk at {}.",
+                levelOfDetail_, ChunkCoords::toPair(renderBlock->coords), renderIndexPool_[renderBlock->poolIndex], ChunkCoords::toPair(coords)
             );
             chunkDrawables.at(renderBlock->coords).setRenderIndex(levelOfDetail_, -1);
             renderBlock->coords = coords;
@@ -227,8 +236,8 @@ void ChunkRender::sortRenderBlocks() {
     std::sort(renderBlocks_.begin(), renderBlocks_.end());
     /*spdlog::debug("Sorted chunk render blocks ({}):", renderBlocks_.size());
     for (auto& renderBlock : renderBlocks_) {
-        spdlog::debug("  pos ({}, {}), renderIndex {}, adjChebyshev {}",
-            ChunkCoords::x(renderBlock.coords), ChunkCoords::y(renderBlock.coords), renderIndexPool_[renderBlock.poolIndex], renderBlock.adjustedChebyshev
+        spdlog::debug("  pos {}, renderIndex {}, adjChebyshev {}",
+            ChunkCoords::toPair(renderBlock.coords), renderIndexPool_[renderBlock.poolIndex], renderBlock.adjustedChebyshev
         );
     }*/
 }

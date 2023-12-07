@@ -14,7 +14,7 @@
 
 template<>
 struct fmt::formatter<fs::path> {
-    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator {
+    constexpr auto parse(format_parse_context& ctx) const -> format_parse_context::iterator {
         return ctx.end();
     }
     auto format(const fs::path& path, format_context& ctx) const -> format_context::iterator {

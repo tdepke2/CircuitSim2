@@ -12,7 +12,7 @@ Wire* Wire::instance() {
     return wire.get();
 }
 
-State::t Wire::getState2(Chunk& chunk, unsigned int tileIndex) const {
+State::t Wire::getState2(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).state2;
 }
 

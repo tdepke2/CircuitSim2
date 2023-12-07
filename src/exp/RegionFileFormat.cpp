@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/ranges.h>
 #include <stdexcept>
 #include <tuple>
 
@@ -76,7 +77,7 @@ void RegionFileFormat::saveToFile(Board& board) {
     for (auto& region : unsavedRegions) {
         spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
         for (auto& chunkCoords : region.second) {
-            spdlog::debug("    {}, {}", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+            spdlog::debug("    {}", ChunkCoords::toPair(chunkCoords));
         }
     }
     if (unsavedRegions.empty()) {
@@ -126,7 +127,7 @@ void RegionFileFormat::updateVisibleChunks(Board& board, const ChunkCoordsRange&
 }
 
 bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
-    spdlog::debug("Checking chunk {}, {} for load.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+    spdlog::debug("Checking chunk {} for load.", ChunkCoords::toPair(chunkCoords));
     const auto regionCoords = toRegionCoords(chunkCoords);
     auto region = savedRegions_.find(regionCoords);
     if (region == savedRegions_.end() || region->second.count(chunkCoords) == 0 || board.isChunkLoaded(chunkCoords)) {
@@ -135,7 +136,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
 
     auto cachedChunk = chunkCache_.find(chunkCoords);
     if (cachedChunk != chunkCache_.end()) {
-        spdlog::debug("Loading cached chunk {}, {}.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+        spdlog::debug("Loading cached chunk {}.", ChunkCoords::toPair(chunkCoords));
         board.loadChunk(std::move(cachedChunk->second));
         chunkCache_.erase(cachedChunk);
         chunkCacheTimes_.erase(chunkCoords);
@@ -171,17 +172,16 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
                         }
                     }
                     spdlog::debug(
-                        "Removing cached chunk at {}, {} (caching would exceed {} chunks).",
-                        ChunkCoords::x(minCacheTime->first), ChunkCoords::y(minCacheTime->first), CACHE_SIZE
+                        "Removing cached chunk at {} (caching would exceed {} chunks).",
+                        ChunkCoords::toPair(minCacheTime->first), CACHE_SIZE
                     );
                     chunkCache_.erase(minCacheTime->first);
                     chunkCacheTimes_.erase(minCacheTime);
                 }
 
                 spdlog::debug(
-                    "Caching chunk {}, {} while loading chunk at {}, {}.",
-                    ChunkCoords::x(cacheChunkCoords), ChunkCoords::y(cacheChunkCoords),
-                    ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords)
+                    "Caching chunk {} while loading chunk at {}.",
+                    ChunkCoords::toPair(cacheChunkCoords), ChunkCoords::toPair(chunkCoords)
                 );
 
                 auto chunk = chunkCache_.emplace(std::piecewise_construct, std::forward_as_tuple(cacheChunkCoords), std::forward_as_tuple(nullptr, cacheChunkCoords)).first;
@@ -361,11 +361,11 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
             const unsigned int sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
             if (header[headerIndex].sectors > 0) {
                 if (serialized->second.empty()) {
-                    spdlog::debug("Chunk {}, {} requires 0 sectors, removing.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords));
+                    spdlog::debug("Chunk {} requires 0 sectors, removing.", ChunkCoords::toPair(chunkCoords));
                     reallocationRequired = true;
                 } else if (header[headerIndex].sectors < sectorCount) {
                     const unsigned int currentSectors = header[headerIndex].sectors;
-                    spdlog::debug("Chunk {}, {} requires {} sectors but only {} are allocated.", ChunkCoords::x(chunkCoords), ChunkCoords::y(chunkCoords), sectorCount, currentSectors);
+                    spdlog::debug("Chunk {} requires {} sectors but only {} are allocated.", ChunkCoords::toPair(chunkCoords), sectorCount, currentSectors);
                     reallocationRequired = true;
                 }
             }
@@ -407,11 +407,11 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
             savedRegions_[regionCoords].insert(serialized.first);
         } else {
             // FIXME unable to save this chunk, too much data
-            spdlog::error("Failed to save chunk at {}, {} (serialized to {} bytes)", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first), serialized.second.size());
+            spdlog::error("Failed to save chunk at {} (serialized to {} bytes).", ChunkCoords::toPair(serialized.first), serialized.second.size());
             continue;
         }
 
-        spdlog::debug("Writing chunk {}, {}", ChunkCoords::x(serialized.first), ChunkCoords::y(serialized.first));
+        spdlog::debug("Writing chunk {}.", ChunkCoords::toPair(serialized.first));
         board.getLoadedChunks().at(serialized.first).debugPrintChunk();
         writeChunk(header, headerIndex, emptySector, lastOffset, serialized.second, regionFilename, regionFile);
         board.getLoadedChunks().at(serialized.first).markAsSaved();
