@@ -4,6 +4,7 @@ add_executable(CircuitSim2_experimental
     ChunkDrawable.cpp
     ChunkRender.cpp
     DebugScreen.cpp
+    Editor.cpp
     FileStorage.cpp
     Filesystem.cpp
     LegacyFileFormat.cpp

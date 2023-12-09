@@ -87,9 +87,8 @@ bool Chunk::isEmpty() const {
     return empty_;
 }
 
-Tile Chunk::accessTile(unsigned int x, unsigned int y) {
-    TileData tileData = tiles_[y * WIDTH + x];
-    return {tileIdToType[tileData.id], *this, y * WIDTH + x};
+Tile Chunk::accessTile(unsigned int tileIndex) {
+    return {tileIdToType[tiles_[tileIndex].id], *this, tileIndex};
 }
 
 std::vector<char> Chunk::serialize() const {
@@ -112,6 +111,7 @@ void Chunk::deserialize(const std::vector<char>& data) {
         tileSwapped = FileStorage::byteswap(tileSwapped);
         tiles_[i] = *reinterpret_cast<TileData*>(&tileSwapped);
     }
+    dirtyFlags_.set(ChunkDirtyFlag::emptyIsStale);
 }
 
 void Chunk::markAsSaved() const {

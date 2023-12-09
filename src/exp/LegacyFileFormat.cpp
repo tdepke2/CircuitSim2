@@ -13,6 +13,8 @@
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
+namespace {
+
 struct TileSymbol {
     char a, b;
 
@@ -182,6 +184,8 @@ TileSymbol tileToSymbol(Board& board, int x, int y) {
     }
 }
 
+}
+
 void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state) {
     //std::cout << "Parse line [" << line << "]\n";
 
@@ -261,6 +265,9 @@ bool LegacyFileFormat::validateFileVersion(float version) {
 }
 
 void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
+    // Reset all members to ensure a clean state.
+    filename_ = filename;
+
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }

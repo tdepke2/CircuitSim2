@@ -10,6 +10,14 @@
 constexpr int RegionFileFormat::REGION_WIDTH;
 constexpr int RegionFileFormat::SECTOR_SIZE;
 
+namespace {
+
+constexpr int constLog2(int x) {
+    return x == 1 ? 0 : 1 + constLog2(x / 2);
+}
+
+}
+
 RegionFileFormat::RegionFileFormat() :
     filename_("boards/NewBoard/board.txt"),
     savedRegions_(),
@@ -23,6 +31,13 @@ bool RegionFileFormat::validateFileVersion(float version) {
 }
 
 void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
+    // Reset all members to ensure a clean state.
+    filename_ = filename;
+    savedRegions_.clear();
+    lastVisibleChunks_ = ChunkCoordsRange(0, 0, 0, 0);
+    chunkCache_.clear();
+    chunkCacheTimes_.clear();
+
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
     }
@@ -53,9 +68,6 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
         throw std::runtime_error("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
 
-    savedRegions_.clear();
-    chunkCache_.clear();
-    chunkCacheTimes_.clear();
     for (const auto& regionCoords : state.regions) {
         spdlog::debug("loading region {}, {}", regionCoords.first, regionCoords.second);
         loadRegion(board, regionCoords);
@@ -89,12 +101,8 @@ void RegionFileFormat::saveToFile(Board& board) {
         fs::create_directories(filename_.parent_path());
     }
     fs::create_directory(filename_.parent_path() / "region");
-    //for (const auto& region : unsavedRegions) {
-    //    saveRegion(board, region.first, region.second);
-    //}
-    {
-        const auto region = unsavedRegions.find({0, 0});
-        saveRegion(board, region->first, region->second);
+    for (const auto& region : unsavedRegions) {
+        saveRegion(board, region.first, region.second);
     }
 
     fs::ofstream boardFile(filename_);
@@ -200,10 +208,6 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     // FIXME need to work on cases for cache invalidation!
 
     return true;
-}
-
-constexpr int constLog2(int x) {
-    return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
 
 RegionFileFormat::RegionCoords RegionFileFormat::toRegionCoords(ChunkCoords::repr chunkCoords) {
@@ -373,26 +377,28 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
     }
 
     const char emptySector[SECTOR_SIZE] = {};
-    uint32_t lastOffset = static_cast<uint32_t>(regionFileLength / SECTOR_SIZE);
+    uint32_t lastOffset = 4 * REGION_WIDTH * REGION_WIDTH / SECTOR_SIZE;
     if (reallocationRequired) {
         // Read in all chunks and wipe header.
         spdlog::debug("Preparing all chunks for reallocation.");
         for (int i = 0; i < REGION_WIDTH * REGION_WIDTH; ++i) {
-            if (header[i].sectors > 0) {
+            const auto chunkCoords = ChunkCoords::pack(i % REGION_WIDTH + regionCoords.first * REGION_WIDTH, i / REGION_WIDTH + regionCoords.second * REGION_WIDTH);
+            if (header[i].sectors > 0 && serializedChunks.count(chunkCoords) == 0) {
                 serializedChunks.emplace(
-                    ChunkCoords::pack(i % REGION_WIDTH + regionCoords.first * REGION_WIDTH, i / REGION_WIDTH + regionCoords.second * REGION_WIDTH),
+                    chunkCoords,
                     readChunk(header, i, regionFilename, regionFile)
                 );
             }
             header[i].offset = 0;
             header[i].sectors = 0;
         }
-    } else if (lastOffset == 0) {
+    } else if (regionFileLength == 0) {
         // Write empty header.
-        lastOffset = 4 * REGION_WIDTH * REGION_WIDTH / SECTOR_SIZE;
         for (unsigned int i = 0; i < lastOffset; ++i) {
             regionFile.write(emptySector, SECTOR_SIZE);
         }
+    } else {
+        lastOffset = static_cast<uint32_t>(regionFileLength / SECTOR_SIZE);
     }
 
     // Write chunks.
@@ -419,6 +425,9 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
 
     // Write (filled) header.
     writeRegionHeader(header, regionFilename, regionFile);
+
+    // FIXME make a check if the regionFileLength is greater than length from lastOffset to determine if we need to
+    // truncate the file with fs::resize_file
 
     regionFile.close();
 

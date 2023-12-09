@@ -1,6 +1,7 @@
 #include <Board.h>
 #include <ChunkRender.h>
 #include <DebugScreen.h>
+#include <Editor.h>
 #include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
@@ -38,11 +39,16 @@ int main() {
         spdlog::error(ex.what());
     }
 
+    Editor::setup(TILE_WIDTH);
+    Editor editor(board, resource.getFont("resources/consolas.ttf"));
+    // FIXME using resource manager like this seems wrong? maybe pass the resource manager itself, need to fix elsewhere.
+
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
     //tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     //std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
     board.accessTile(2, 2).setHighlight(true);
+    board.accessTile(-1, -1).setHighlight(true);
     board.accessTile(-20, -6).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
 
     board.debugPrintChunk(0x8000000080000000);
@@ -64,6 +70,7 @@ int main() {
         sf::Event event;
         while (window.pollEvent(event)) {
             DebugScreen::instance()->processEvent(event);
+            editor.processEvent(event);
 
             if (event.type == sf::Event::MouseMoved) {
                 if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -99,7 +106,9 @@ int main() {
         }
         DebugScreen::instance()->profilerEvent("main process_events_done");
 
-        static auto state = State::low;
+        editor.update(boardView, zoomLevel);
+
+        /*static auto state = State::low;
         //spdlog::debug("Toggling tiles to state {}", static_cast<int>(state));
         for (int i = 28; i < 36; ++i) {
             board.accessTile(31, i).setType(tiles::Input::instance(), TileId::inSwitch, state, 's');
@@ -107,7 +116,7 @@ int main() {
         for (int i = 28; i < 36; ++i) {
             board.accessTile(32, i).setType(tiles::Input::instance(), TileId::inSwitch, state, 's');
         }
-        state = (state == State::low ? State::high : State::low);
+        state = (state == State::low ? State::high : State::low);*/
 
         DebugScreen::instance()->profilerEvent("main update_debug");
         DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(
@@ -135,6 +144,7 @@ int main() {
         //bc.setSize(bc.getSize() * 2.0f);
         //window.setView(bc);
         window.draw(board);
+        window.draw(editor);
 
         window.setView(fullWindowView);
         window.draw(*DebugScreen::instance());

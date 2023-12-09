@@ -28,6 +28,8 @@ sf::Texture* Board::tilesetGrid_;
 sf::Texture* Board::tilesetNoGrid_;
 unsigned int Board::tileWidth_;
 
+namespace {
+
 void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::Vector2u& bottomRight, const sf::Vector2u& borderSize) {
     sf::Vector2u borderTopLeft(topLeft - borderSize), borderBottomRight(bottomRight + borderSize);
     for (unsigned int y = borderTopLeft.y; y < borderBottomRight.y; ++y) {
@@ -68,6 +70,12 @@ void loadTileset(const fs::path& filename, sf::Texture* target, unsigned int til
     spdlog::debug("Built tileset texture with size {} by {}.", target->getSize().x, target->getSize().y);
 }
 
+constexpr int constLog2(int x) {
+    return x == 1 ? 0 : 1 + constLog2(x / 2);
+}
+
+}
+
 void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth) {
     tileWidth_ = tileWidth;
 
@@ -98,6 +106,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     extraLogicStates_(false),
     notesText_(),
     chunks_(),
+    emptyChunk_(new Chunk(this, ChunkRender::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
     currentLod_(0),
     chunkRenderCache_(),
@@ -108,9 +117,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
         chunkRenderCache_[i].setLod(i);
     }
-
-    // FIXME this may not be the best way to handle empty chunk, we may want to revert back to keeping an emptyChunk_ member.
-    getChunk(ChunkRender::EMPTY_CHUNK_COORDS);
+    chunkDrawables_[ChunkRender::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
@@ -197,10 +204,6 @@ void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
     chunkDrawables_.at(coords).markDirty();
 }
 
-constexpr int constLog2(int x) {
-    return x == 1 ? 0 : 1 + constLog2(x / 2);
-}
-
 Tile Board::accessTile(int x, int y) {
     // First method using floor division and positive modulus:
     // chunkCoordinate = static_cast<int>(std::floor(static_cast<double>(x) / Chunk::WIDTH))
@@ -209,7 +212,7 @@ Tile Board::accessTile(int x, int y) {
     // Improved method since Chunk::WIDTH is a power of 2:
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
     auto& chunk = getChunk(ChunkCoords::pack(x >> widthLog2, y >> widthLog2));
-    return chunk.accessTile(x & (Chunk::WIDTH - 1), y & (Chunk::WIDTH - 1));
+    return chunk.accessTile((x & (Chunk::WIDTH - 1)) + (y & (Chunk::WIDTH - 1)) * Chunk::WIDTH);
 }
 
 void Board::loadFromFile(const fs::path& filename) {
@@ -311,9 +314,9 @@ void Board::updateRender() {
             }
         }
     }
-    const auto& emptyChunk = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
-    if (emptyChunkVisible && emptyChunk.isRenderDirty(currentLod_)) {
-        drawChunk(emptyChunk, allocatedBlock, ChunkRender::EMPTY_CHUNK_COORDS);
+    const auto& emptyChunkDrawable = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
+    if (emptyChunkVisible && emptyChunkDrawable.isRenderDirty(currentLod_)) {
+        drawChunk(emptyChunkDrawable, allocatedBlock, ChunkRender::EMPTY_CHUNK_COORDS);
     }
     if (allocatedBlock) {
         pruneChunkDrawables();

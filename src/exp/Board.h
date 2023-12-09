@@ -72,6 +72,7 @@ private:
     bool extraLogicStates_;
     sf::Text notesText_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
+    std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;

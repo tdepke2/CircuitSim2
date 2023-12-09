@@ -72,7 +72,7 @@ public:
     void setBoard(Board* board);
     bool isUnsaved() const;
     bool isEmpty() const;
-    Tile accessTile(unsigned int x, unsigned int y);
+    Tile accessTile(unsigned int tileIndex);
     std::vector<char> serialize() const;
     void deserialize(const std::vector<char>& data);
     void markAsSaved() const;

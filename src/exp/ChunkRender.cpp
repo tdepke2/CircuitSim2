@@ -193,7 +193,7 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawab
 
             // Apply a small bias to the texture coords to hide the chunk seams.
             constexpr float texBias = 0.5f;
-            sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize) + sf::Vector2f(texBias, texBias);
+            sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize) + sf::Vector2f(texBias / 2.0f, texBias / 2.0f);
             tileVertices[0].texCoords = {t.x, t.y};
             tileVertices[1].texCoords = {t.x + textureSubdivisionSize - texBias, t.y};
             tileVertices[2].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
