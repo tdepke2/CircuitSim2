@@ -40,8 +40,7 @@ int main() {
     }
 
     Editor::setup(TILE_WIDTH);
-    Editor editor(board, resource.getFont("resources/consolas.ttf"));
-    // FIXME using resource manager like this seems wrong? maybe pass the resource manager itself, need to fix elsewhere.
+    Editor editor(board, resource);
 
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);

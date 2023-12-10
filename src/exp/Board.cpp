@@ -95,7 +95,7 @@ void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGri
     }
     DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid_);
 
-    ChunkDrawable::setupTextureData(tilesetGrid_->getSize(), tileWidth);
+    ChunkDrawable::setupTextureData(resource, tilesetGrid_->getSize(), tileWidth);
     ChunkRender::setupTextureData(tileWidth);
     Chunk::setupChunks();
 }

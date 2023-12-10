@@ -1,5 +1,6 @@
 #include <Chunk.h>
 #include <Editor.h>
+#include <ResourceManager.h>
 
 #include <cmath>
 #include <spdlog/spdlog.h>
@@ -11,14 +12,14 @@ void Editor::setup(unsigned int tileWidth) {
     tileWidth_ = tileWidth;
 }
 
-Editor::Editor(Board& board, const sf::Font& font) :
+Editor::Editor(Board& board, ResourceManager& resource) :
     board_(board),
     offsetView_(0.0f),
     zoomLevel_(0.0f),
     mousePos_(),
     cursor_({static_cast<float>(tileWidth_), static_cast<float>(tileWidth_)}),
     cursorCoords_(0, 0),
-    cursorLabel_("", font) {
+    cursorLabel_("", resource.getFont("resources/consolas.ttf")) {
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);

@@ -5,12 +5,13 @@
 #include <SFML/Graphics.hpp>
 
 class Board;
+class ResourceManager;
 
 class Editor : public sf::Drawable {
 public:
     static void setup(unsigned int tileWidth);
 
-    Editor(Board& board, const sf::Font& font);
+    Editor(Board& board, ResourceManager& resource);
     ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;

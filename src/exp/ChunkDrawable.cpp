@@ -1,6 +1,7 @@
 #include <Chunk.h>
 #include <ChunkCoords.h>
 #include <ChunkDrawable.h>
+#include <ResourceManager.h>
 #include <Tile.h>
 
 // Disable a false-positive warning issue with gcc:
@@ -15,10 +16,11 @@
 #endif
 
 unsigned int ChunkDrawable::textureWidth_, ChunkDrawable::tileWidth_;
-uint8_t ChunkDrawable::textureLookup_[512];
+std::array<uint8_t, 512> ChunkDrawable::textureLookup_;
 unsigned int ChunkDrawable::textureHighlightStart_;
+std::array<sf::Text, 21> ChunkDrawable::labelCache_;
 
-void ChunkDrawable::setupTextureData(const sf::Vector2u& textureSize, unsigned int tileWidth) {
+void ChunkDrawable::setupTextureData(ResourceManager& resource, const sf::Vector2u& textureSize, unsigned int tileWidth) {
     textureWidth_ = textureSize.x;
     tileWidth_ = tileWidth;
     textureHighlightStart_ = (textureSize.x / tileWidth / 2) * (textureSize.y / tileWidth / 4);
@@ -62,7 +64,13 @@ void ChunkDrawable::setupTextureData(const sf::Vector2u& textureSize, unsigned i
             addThreeTextures(id, State::middle);
         }
     }
-    spdlog::debug("Building textureLookup_ finished, final textureId is {}", static_cast<int>(textureId));
+    spdlog::debug("Building textureLookup_ finished, final textureId is {}.", static_cast<int>(textureId));
+
+    for (auto& label : labelCache_) {
+        label.setFont(resource.getFont("resources/consolas.ttf"));
+        label.setCharacterSize(25);
+        label.setString(" ");
+    }
 }
 
 ChunkDrawable::ChunkDrawable() :
@@ -114,7 +122,7 @@ bool ChunkDrawable::isRenderDirty(int levelOfDetail) const {
     return renderDirty_.test(levelOfDetail);
 }
 
-void ChunkDrawable::redrawTile(unsigned int tileIndex) const {
+void ChunkDrawable::updateTileGeometry(unsigned int tileIndex) const {
     sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
     TileData tileData = chunk_->tiles_[tileIndex];
 
@@ -154,13 +162,30 @@ void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) cons
             tileVertices[4].position = {px, py + tileWidth_};
             tileVertices[5].position = {px, py};
 
-            redrawTile(tileIndex);
+            updateTileGeometry(tileIndex);
         }
     } else {
         for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {
-            redrawTile(tileIndex);
+            updateTileGeometry(tileIndex);
         }
     }
 
     target.draw(vertices_, states);
+
+    // Second pass for drawing labels on switches and buttons.
+    for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {
+        TileData tileData = chunk_->tiles_[tileIndex];
+        if (tileData.id == TileId::inSwitch || tileData.id == TileId::inButton) {
+            // Use a simple hash operation to look up entry in label cache;
+            auto& label = labelCache_[tileData.meta % labelCache_.size()];
+            if (label.getString()[0] != tileData.meta) {
+                label.setString(static_cast<char>(tileData.meta));
+            }
+            label.setPosition({
+                static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * tileWidth_ + 9),
+                static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * tileWidth_ - 2)
+            });
+            target.draw(label, states);
+        }
+    }
 }

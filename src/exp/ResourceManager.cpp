@@ -1,5 +1,6 @@
 #include <ResourceManager.h>
 
+#include <spdlog/spdlog.h>
 #include <stdexcept>
 
 ResourceManager::ResourceManager() :
@@ -12,6 +13,7 @@ sf::Texture& ResourceManager::getTexture(const fs::path& filename, bool initEmpt
     if (tex != textures_.end()) {
         return tex->second;
     }
+    spdlog::debug("ResourceManager loading texture {} (initEmpty {}).", filename, initEmpty);
     sf::Texture& newTex = textures_[filename];
     if (!initEmpty && !newTex.loadFromFile(filename.string())) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to load texture file.");
@@ -24,6 +26,7 @@ sf::Font& ResourceManager::getFont(const fs::path& filename) {
     if (font != fonts_.end()) {
         return font->second;
     }
+    spdlog::debug("ResourceManager loading font {}.", filename);
     sf::Font& newFont = fonts_[filename];
     if (!newFont.loadFromFile(filename.string())) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to load font file.");
