@@ -19,17 +19,23 @@ Editor::Editor(Board& board, ResourceManager& resource) :
     mousePos_(),
     cursor_({static_cast<float>(tileWidth_), static_cast<float>(tileWidth_)}),
     cursorCoords_(0, 0),
-    cursorLabel_("", resource.getFont("resources/consolas.ttf")) {
+    cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
+    mouseOnScreen_(false) {
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
-    cursorLabel_.setOutlineThickness(1.0f);
+    cursorLabel_.setOutlineThickness(2.0f);
 }
 
 void Editor::processEvent(const sf::Event& event) {
     if (event.type == sf::Event::MouseMoved) {
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
+        mouseOnScreen_ = true;
+    } else if (event.type == sf::Event::MouseEntered) {
+        mouseOnScreen_ = true;
+    } else if (event.type == sf::Event::MouseLeft) {
+        mouseOnScreen_ = false;
     }
 }
 
@@ -53,11 +59,14 @@ void Editor::updateCursor() {
         cursorLabel_.setString("(" + std::to_string(cursorCoords.x) + ", " + std::to_string(cursorCoords.y) + ")");
     }
     cursorCoords_ = cursorCoords;
-    cursorLabel_.setPosition(offsetView_.getCenter() + offsetView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize());
+    cursorLabel_.setPosition(offsetView_.getCenter() + offsetView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
+    cursorLabel_.setScale(zoomLevel_, zoomLevel_);
 }
 
 void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-
+    if (!mouseOnScreen_) {
+        return;
+    }
     target.draw(cursor_, states);
     target.draw(cursorLabel_, states);
 }

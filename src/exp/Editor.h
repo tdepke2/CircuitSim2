@@ -32,4 +32,5 @@ private:
     sf::RectangleShape cursor_;
     sf::Vector2i cursorCoords_;
     sf::Text cursorLabel_;
+    bool mouseOnScreen_;
 };
