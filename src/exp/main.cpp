@@ -1,5 +1,4 @@
 #include <Board.h>
-#include <ChunkRender.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <OffsetView.h>
@@ -40,7 +39,7 @@ int main() {
     }
 
     Editor::setup(TILE_WIDTH);
-    Editor editor(board, resource);
+    Editor editor(board, resource, window.getDefaultView());
 
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
@@ -53,9 +52,9 @@ int main() {
     board.debugPrintChunk(0x8000000080000000);
 
     sf::View fullWindowView(window.getDefaultView());
-    OffsetView boardView(TILE_WIDTH * Chunk::WIDTH, window.getDefaultView());
-    float zoomLevel = 1.0f;
-    sf::Vector2i lastMousePos;
+    //OffsetView boardView(TILE_WIDTH * Chunk::WIDTH, window.getDefaultView());
+    //float zoomLevel = 1.0f;
+    //sf::Vector2i lastMousePos;
     sf::Clock frameTimer;
 
 
@@ -72,7 +71,7 @@ int main() {
             editor.processEvent(event);
 
             if (event.type == sf::Event::MouseMoved) {
-                if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+                /*if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                     sf::Vector2f newCenter(
                         boardView.getCenter().x + (lastMousePos.x - event.mouseMove.x) * zoomLevel,
                         boardView.getCenter().y + (lastMousePos.y - event.mouseMove.y) * zoomLevel
@@ -80,16 +79,16 @@ int main() {
                     boardView.setCenter(newCenter);
                 }
                 lastMousePos.x = event.mouseMove.x;
-                lastMousePos.y = event.mouseMove.y;
+                lastMousePos.y = event.mouseMove.y;*/
             } else if (event.type == sf::Event::MouseWheelScrolled) {
-                float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
+                /*float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
                 float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel * -0.04f;
                 constexpr float maxZoom = 31.0f;
                 static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
                 zoomLevel += zoomDelta;
                 zoomLevel = std::min(std::max(zoomLevel, 0.2f), maxZoom);
-                boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);
+                boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);*/
             } else if (event.type == sf::Event::KeyPressed) {
                 if (event.key.control) {
                     if (event.key.code == sf::Keyboard::S) {
@@ -98,14 +97,14 @@ int main() {
                 }
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
-                boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
+                //boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
             } else if (event.type == sf::Event::Closed) {
                 window.close();
             }
         }
         DebugScreen::instance()->profilerEvent("main process_events_done");
 
-        editor.update(boardView, zoomLevel);
+        editor.update();
 
         /*static auto state = State::low;
         //spdlog::debug("Toggling tiles to state {}", static_cast<int>(state));
@@ -121,12 +120,12 @@ int main() {
         DebugScreen::instance()->getField(DebugScreen::Field::frameTime).setString(
             fmt::format("Mode: {} (use arrow keys to change), Frame: {}ms", DebugScreen::instance()->getModeString(), frameTimer.restart().asMilliseconds())
         );
-        sf::Vector2f boardViewApproxCenter(boardView.getCenter() + sf::Vector2f(boardView.getCenterOffset()) * boardView.getViewDivisor());
+        sf::Vector2f boardViewApproxCenter(editor.getEditView().getCenter() + sf::Vector2f(editor.getEditView().getCenterOffset()) * editor.getEditView().getViewDivisor());
         DebugScreen::instance()->getField(DebugScreen::Field::view).setString(
-            fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", boardView.getSize().x, boardView.getSize().y, boardViewApproxCenter.x, boardViewApproxCenter.y)
+            fmt::format("View: {:.2f} by {:.2f} at ({:.2f}, {:.2f})", editor.getEditView().getSize().x, editor.getEditView().getSize().y, boardViewApproxCenter.x, boardViewApproxCenter.y)
         );
         DebugScreen::instance()->getField(DebugScreen::Field::zoom).setString(
-            fmt::format("Zoom: {}", zoomLevel)
+            fmt::format("Zoom: {}", editor.getZoom())
         );
         DebugScreen::instance()->getField(DebugScreen::Field::chunk).setString(
             fmt::format("Chunk: {} visible", board.debugGetChunksDrawn())
@@ -137,9 +136,9 @@ int main() {
 
         board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
 
-        window.setView(boardView.getView());
-        board.setRenderArea(boardView, zoomLevel);
-        //sf::View bc = boardView;
+        window.setView(editor.getEditView().getView());
+        board.setRenderArea(editor.getEditView(), editor.getZoom());
+        //sf::View bc = editor.getEditView().getView();
         //bc.setSize(bc.getSize() * 2.0f);
         //window.setView(bc);
         window.draw(board);

@@ -3,6 +3,7 @@
 #include <OffsetView.h>
 
 #include <SFML/Graphics.hpp>
+#include <utility>
 
 class Board;
 class ResourceManager;
@@ -11,26 +12,33 @@ class Editor : public sf::Drawable {
 public:
     static void setup(unsigned int tileWidth);
 
-    Editor(Board& board, ResourceManager& resource);
+    Editor(Board& board, ResourceManager& resource, const sf::View& initialView);
     ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;
 
+    const OffsetView& getEditView() const;
+    float getZoom() const;
     void processEvent(const sf::Event& event);
-    void update(const OffsetView& offsetView, float zoom);
+    void update();
 
 private:
     static unsigned int tileWidth_;
 
+    sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos);
     void updateCursor();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     Board& board_;
-    OffsetView offsetView_;
+    OffsetView editView_;
     float zoomLevel_;
     sf::Vector2i mousePos_;
+    bool mouseOnScreen_;
+    sf::Vector2u windowSize_;
+
     sf::RectangleShape cursor_;
     sf::Vector2i cursorCoords_;
     sf::Text cursorLabel_;
-    bool mouseOnScreen_;
+    std::pair<sf::Vector2i, bool> selectionStart_;
+    sf::IntRect selectionArea_;
 };

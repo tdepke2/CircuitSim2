@@ -49,6 +49,7 @@ public:
     void loadChunk(Chunk&& chunk);
     void markChunkDrawDirty(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
+    Tile accessTile(const sf::Vector2i& pos);
     void loadFromFile(const fs::path& filename);
     void saveToFile();
     void debugPrintChunk(ChunkCoords::repr i) {

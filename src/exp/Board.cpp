@@ -215,6 +215,10 @@ Tile Board::accessTile(int x, int y) {
     return chunk.accessTile((x & (Chunk::WIDTH - 1)) + (y & (Chunk::WIDTH - 1)) * Chunk::WIDTH);
 }
 
+Tile Board::accessTile(const sf::Vector2i& pos) {
+    return accessTile(pos.x, pos.y);
+}
+
 void Board::loadFromFile(const fs::path& filename) {
     spdlog::info("Loading file \"{}\".", filename);
     fs::ifstream boardFile(filename);
