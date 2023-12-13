@@ -25,8 +25,9 @@ public:
 private:
     static unsigned int tileWidth_;
 
-    sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos);
+    sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
+    void updateSelection(const sf::Vector2i& selectionEnd);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     Board& board_;

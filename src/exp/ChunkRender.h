@@ -72,6 +72,7 @@ private:
     bool textureDirty_;
     sf::VertexBuffer buffer_;
     std::vector<sf::Vertex> bufferVertices_;
+    bool bufferDirty_;
     std::vector<int> renderIndexPool_;
     std::vector<RenderBlock> renderBlocks_;
 };

@@ -36,6 +36,7 @@ ChunkRender::ChunkRender() :
     textureDirty_(false),
     buffer_(sf::Triangles),
     bufferVertices_(),
+    bufferDirty_(false),
     renderIndexPool_(),
     renderBlocks_() {
 }
@@ -118,6 +119,10 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
 }
 
 void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea) {
+    if (visibleArea.contains(coords)) {
+        bufferDirty_ = true;
+    }
+
     if (renderBlocks_.size() < renderIndexPool_.size()) {
         unsigned int poolIndex = renderBlocks_.size();
         renderBlocks_.emplace_back(coords, poolIndex);
@@ -155,7 +160,7 @@ void ChunkRender::drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates
         1.0f / (1 << levelOfDetail_),
         1.0f / (1 << levelOfDetail_)
     );
-    //spdlog::debug("Redrawing LOD {} render index {}.", levelOfDetail_, chunkDrawable.getRenderIndex(levelOfDetail_));
+    spdlog::debug("Redrawing LOD {} render index {}.", levelOfDetail_, chunkDrawable.getRenderIndex(levelOfDetail_));
     texture_.draw(chunkDrawable, states);
     textureDirty_ = true;
     chunkDrawable.renderDirty_.reset(levelOfDetail_);
@@ -170,12 +175,13 @@ void ChunkRender::display() {
 }
 
 void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea) {
-    if (lastVisibleArea_ == visibleArea) {
+    if (lastVisibleArea_ == visibleArea && !bufferDirty_) {
         return;
     }
 
     lastVisibleArea_ = visibleArea;
-    spdlog::debug("Chunk area changed, updating buffer.");
+    bufferDirty_ = false;
+    spdlog::debug("Chunk area changed or buffer dirty, updating buffer.");
     const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
     const auto& emptyChunk = chunkDrawables.at(EMPTY_CHUNK_COORDS);
     for (int y = 0; y < visibleArea.height; ++y) {

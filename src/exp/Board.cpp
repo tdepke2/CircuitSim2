@@ -263,15 +263,16 @@ unsigned int Board::debugGetChunksDrawn() const {
 
 Chunk& Board::getChunk(ChunkCoords::repr coords) {
     auto chunk = chunks_.find(coords);
-    if (chunk == chunks_.end()) {
-        if (fileStorage_->loadChunk(*this, coords)) {
-            return chunks_.find(coords)->second;
-        }
-
-        spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
-        chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
-        chunkDrawables_[coords].setChunk(&chunk->second);
+    if (chunk != chunks_.end()) {
+        return chunk->second;
     }
+    if (fileStorage_->loadChunk(*this, coords)) {
+        return chunks_.find(coords)->second;
+    }
+
+    spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
+    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
+    chunkDrawables_[coords].setChunk(&chunk->second);
     return chunk->second;
 }
 
