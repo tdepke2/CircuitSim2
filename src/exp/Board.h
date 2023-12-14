@@ -47,6 +47,7 @@ public:
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
     bool isChunkLoaded(ChunkCoords::repr coords) const;
     void loadChunk(Chunk&& chunk);
+    Chunk& accessChunk(ChunkCoords::repr coords);
     void markChunkDrawDirty(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
@@ -63,7 +64,6 @@ private:
     static sf::Texture* tilesetNoGrid_;
     static unsigned int tileWidth_;
 
-    Chunk& getChunk(ChunkCoords::repr coords);
     void pruneChunkDrawables();
     void updateRender();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

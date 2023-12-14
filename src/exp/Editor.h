@@ -27,7 +27,8 @@ private:
 
     sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
-    void updateSelection(const sf::Vector2i& selectionEnd);
+    void updateSelection(const sf::Vector2i& newSelectionEnd);
+    void highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     Board& board_;
@@ -41,5 +42,6 @@ private:
     sf::Vector2i cursorCoords_;
     sf::Text cursorLabel_;
     std::pair<sf::Vector2i, bool> selectionStart_;
+    sf::Vector2i selectionEnd_;
     sf::IntRect selectionArea_;
 };

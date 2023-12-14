@@ -200,6 +200,21 @@ void Board::loadChunk(Chunk&& chunk) {
     chunkDrawables_[coords].setChunk(&chunkIter->second);
 }
 
+Chunk& Board::accessChunk(ChunkCoords::repr coords) {
+    auto chunk = chunks_.find(coords);
+    if (chunk != chunks_.end()) {
+        return chunk->second;
+    }
+    if (fileStorage_->loadChunk(*this, coords)) {
+        return chunks_.find(coords)->second;
+    }
+
+    spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
+    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
+    chunkDrawables_[coords].setChunk(&chunk->second);
+    return chunk->second;
+}
+
 void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
     chunkDrawables_.at(coords).markDirty();
 }
@@ -211,7 +226,7 @@ Tile Board::accessTile(int x, int y) {
 
     // Improved method since Chunk::WIDTH is a power of 2:
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    auto& chunk = getChunk(ChunkCoords::pack(x >> widthLog2, y >> widthLog2));
+    auto& chunk = accessChunk(ChunkCoords::pack(x >> widthLog2, y >> widthLog2));
     return chunk.accessTile((x & (Chunk::WIDTH - 1)) + (y & (Chunk::WIDTH - 1)) * Chunk::WIDTH);
 }
 
@@ -259,21 +274,6 @@ void Board::debugSetDrawChunkBorder(bool enabled) {
 
 unsigned int Board::debugGetChunksDrawn() const {
     return lastVisibleArea_.width * lastVisibleArea_.height;
-}
-
-Chunk& Board::getChunk(ChunkCoords::repr coords) {
-    auto chunk = chunks_.find(coords);
-    if (chunk != chunks_.end()) {
-        return chunk->second;
-    }
-    if (fileStorage_->loadChunk(*this, coords)) {
-        return chunks_.find(coords)->second;
-    }
-
-    spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
-    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
-    chunkDrawables_[coords].setChunk(&chunk->second);
-    return chunk->second;
 }
 
 void Board::pruneChunkDrawables() {
