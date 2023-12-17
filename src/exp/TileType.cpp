@@ -3,7 +3,9 @@
 void TileType::setDirection(Chunk& /*chunk*/, unsigned int /*tileIndex*/, Direction::t /*direction*/) {}
 
 void TileType::setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight) {
-    modifyTileData(chunk, tileIndex).highlight = highlight;
+    // Special case for highlighting as highlights do not mark the chunk as unsaved.
+    chunk.markHighlightDirty(tileIndex);
+    chunk.tiles_[tileIndex].highlight = highlight;
 }
 
 void TileType::setState(Chunk& /*chunk*/, unsigned int /*tileIndex*/, State::t /*state*/) {}

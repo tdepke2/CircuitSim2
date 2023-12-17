@@ -25,6 +25,8 @@ public:
 private:
     static unsigned int tileWidth_;
 
+    void deselectAll();
+
     sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
@@ -43,5 +45,4 @@ private:
     sf::Text cursorLabel_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
-    sf::IntRect selectionArea_;
 };

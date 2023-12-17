@@ -45,12 +45,14 @@ public:
     bool getExtraLogicStates() const;
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
+
     bool isChunkLoaded(ChunkCoords::repr coords) const;
     void loadChunk(Chunk&& chunk);
     Chunk& accessChunk(ChunkCoords::repr coords);
     void markChunkDrawDirty(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
+    void removeAllHighlights();
     void loadFromFile(const fs::path& filename);
     void saveToFile();
     void debugPrintChunk(ChunkCoords::repr i) {

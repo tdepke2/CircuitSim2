@@ -42,7 +42,7 @@ static_assert(TileId::count <= 32, "TileId::t is expected to fit within a 5 bit 
 
 namespace ChunkDirtyFlag {
     enum t {
-        unsaved = 0, emptyIsStale, drawPending, count
+        unsaved = 0, emptyIsStale, highlightedIsStale, drawPending, count
     };
 }
 
@@ -73,6 +73,7 @@ public:
     void setBoard(Board* board);
     bool isUnsaved() const;
     bool isEmpty() const;
+    bool isHighlighted() const;
     Tile accessTile(unsigned int tileIndex);
     std::vector<char> serialize() const;
     void deserialize(const std::vector<char>& data);
@@ -85,9 +86,10 @@ private:
     Board* board_;
     ChunkCoords::repr coords_;
     mutable std::bitset<ChunkDirtyFlag::count> dirtyFlags_;
-    mutable bool empty_;
+    mutable bool empty_, highlighted_;
 
     void markTileDirty(unsigned int tileIndex);
+    void markHighlightDirty(unsigned int tileIndex);
 
     friend class ChunkDrawable;
     friend class TileType;

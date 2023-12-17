@@ -33,8 +33,7 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursorCoords_(0, 0),
     cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
     selectionStart_({sf::Vector2i(), false}),
-    selectionEnd_(),
-    selectionArea_(0, 0, 0, 0) {
+    selectionEnd_() {
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
@@ -60,9 +59,7 @@ void Editor::processEvent(const sf::Event& event) {
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
         mouseOnScreen_ = true;
-        if (selectionStart_.second) {
-            updateSelection(mapMouseToTile(mousePos_));
-        }
+        updateCursor();
     } else if (event.type == sf::Event::MouseEntered) {
         mouseOnScreen_ = true;
     } else if (event.type == sf::Event::MouseLeft) {
@@ -70,13 +67,10 @@ void Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseButtonPressed) {
         if (event.mouseButton.button == sf::Mouse::Right) {
             if (!selectionStart_.second) {
-                // FIXME need to call deselect here instead of setting selectionArea?
-                selectionArea_ = sf::IntRect(0, 0, 0, 0);
-
+                deselectAll();
                 selectionStart_.first = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
                 selectionStart_.second = true;
                 selectionEnd_ = selectionStart_.first;
-                updateSelection(selectionStart_.first);
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased) {
@@ -95,6 +89,10 @@ void Editor::processEvent(const sf::Event& event) {
         zoomLevel_ += zoomDelta;
         zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);
         editView_.setSize(windowSize_.x * zoomLevel_, windowSize_.y * zoomLevel_);
+    } else if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::Escape) {
+            deselectAll();
+        }
     } else if (event.type == sf::Event::Resized) {
         windowSize_.x = event.size.width;
         windowSize_.y = event.size.height;
@@ -105,14 +103,13 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
 
-    // FIXME need to updateSelection() if the cursor moved, also why not call updateCursor() as soon as a new event is processed instead of here?
-
     /*static sf::Clock c;
     static int stage = 0;
     if (c.getElapsedTime().asSeconds() >= 0.5f) {
         c.restart();
         auto t1 = std::chrono::high_resolution_clock::now();
         if (stage == 0) {
+            deselectAll();
             selectionStart_.first = {1, 1};
             selectionEnd_ = selectionStart_.first;
             updateSelection(selectionStart_.first);
@@ -123,6 +120,10 @@ void Editor::update() {
         spdlog::debug("stage {} took {}ms", stage, std::chrono::duration<double, std::milli>(t2 - t1).count());
         stage = (stage + 1) % 16;
     }*/
+}
+
+void Editor::deselectAll() {
+    board_.removeAllHighlights();
 }
 
 sf::Vector2i Editor::mapMouseToTile(const sf::Vector2i& mousePos) const {
@@ -143,160 +144,97 @@ void Editor::updateCursor() {
     cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));
     cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     cursorLabel_.setScale(zoomLevel_, zoomLevel_);
+
+    if (selectionStart_.second) {
+        updateSelection(cursorCoords_);
+    }
 }
 
 void Editor::updateSelection(const sf::Vector2i& newSelectionEnd) {
-    /*for (int y = selectionArea_.top; y < selectionArea_.top + selectionArea_.height; ++y) {
-        for (int x = selectionArea_.left; x < selectionArea_.left + selectionArea_.width; ++x) {
-            board_.accessTile(x, y).setHighlight(false);
-        }
-    }
-
-    // FIXME will need to improve to reduce number of tiles modified
-
-    selectionArea_ = {
-        std::min(selectionStart_.first.x, selectionEnd.x),
-        std::min(selectionStart_.first.y, selectionEnd.y),
-        std::abs(selectionStart_.first.x - selectionEnd.x) + 1,
-        std::abs(selectionStart_.first.y - selectionEnd.y) + 1
-    };
-
-    for (int y = selectionArea_.top; y < selectionArea_.top + selectionArea_.height; ++y) {
-        for (int x = selectionArea_.left; x < selectionArea_.left + selectionArea_.width; ++x) {
-            board_.accessTile(x, y).setHighlight(true);
-        }
-    }*/
-
-    /*auto a = ChunkCoords::pack(selectionArea_.left >> 5, selectionArea_.top >> 5);
-    auto b = ChunkCoords::pack((selectionArea_.left + selectionArea_.width - 1) >> 5, (selectionArea_.top + selectionArea_.height - 1) >> 5);
-    for (int y = ChunkCoords::y(a); y <= ChunkCoords::y(b); ++y) {
-        for (int x = ChunkCoords::x(a); x <= ChunkCoords::x(b); ++x) {
-            auto& chunk = board_.getChunk(ChunkCoords::pack(x, y));
-            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
-                chunk.accessTile(i).setHighlight(false);
-            }
-        }
-    }
-
-    selectionArea_ = {
-        std::min(selectionStart_.first.x, selectionEnd.x),
-        std::min(selectionStart_.first.y, selectionEnd.y),
-        std::abs(selectionStart_.first.x - selectionEnd.x) + 1,
-        std::abs(selectionStart_.first.y - selectionEnd.y) + 1
-    };
-
-    a = ChunkCoords::pack(selectionArea_.left >> 5, selectionArea_.top >> 5);
-    b = ChunkCoords::pack((selectionArea_.left + selectionArea_.width - 1) >> 5, (selectionArea_.top + selectionArea_.height - 1) >> 5);
-    for (int y = ChunkCoords::y(a); y <= ChunkCoords::y(b); ++y) {
-        for (int x = ChunkCoords::x(a); x <= ChunkCoords::x(b); ++x) {
-            auto& chunk = board_.getChunk(ChunkCoords::pack(x, y));
-            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
-                chunk.accessTile(i).setHighlight(true);
-            }
-        }
-    }*/
-
     if (selectionEnd_ == newSelectionEnd) {
         return;
     }
 
-    bool stayedInQuadrant = false;
-    if ((selectionEnd_.x - selectionStart_.first.x < 0) == (newSelectionEnd.x - selectionStart_.first.x < 0) &&
-        (selectionEnd_.y - selectionStart_.first.y < 0) == (newSelectionEnd.y - selectionStart_.first.y < 0)) {
-        stayedInQuadrant = true;
-    }
-    std::string q = "n/a";
-    if (stayedInQuadrant) {
-        sf::Vector2i a1 = selectionStart_.first, b1 = selectionStart_.first;
-        sf::Vector2i a2 = selectionStart_.first, b2 = selectionStart_.first;
-        bool highlight1 = true, highlight2 = true;
-        if (newSelectionEnd.x >= selectionStart_.first.x) {
-            // right quads
-            if (newSelectionEnd.x > selectionEnd_.x) {
-                a1 = {selectionEnd_.x + 1, selectionStart_.first.y};
-                b1 = newSelectionEnd;
-                highlight1 = true;
-            } else if (newSelectionEnd.x < selectionEnd_.x) {
-                a1 = {selectionEnd_.x, selectionStart_.first.y};
-                b1 = {newSelectionEnd.x + 1, selectionEnd_.y};
-                highlight1 = false;
-            }
-        } else {
-            // left quads
-            if (newSelectionEnd.x < selectionEnd_.x) {
-                a1 = {selectionEnd_.x - 1, selectionStart_.first.y};
-                b1 = newSelectionEnd;
-                highlight1 = true;
-            } else if (newSelectionEnd.x > selectionEnd_.x) {
-                a1 = {selectionEnd_.x, selectionStart_.first.y};
-                b1 = {newSelectionEnd.x - 1, selectionEnd_.y};
-                highlight1 = false;
-            }
-        }
-        if (newSelectionEnd.y >= selectionStart_.first.y) {
-            // bottom quads
-            if (newSelectionEnd.y > selectionEnd_.y) {
-                a2 = {selectionStart_.first.x, selectionEnd_.y + 1};
-                b2 = newSelectionEnd;
-                highlight2 = true;
-            } else if (newSelectionEnd.y < selectionEnd_.y) {
-                a2 = {selectionStart_.first.x, selectionEnd_.y};
-                b2 = {selectionEnd_.x, newSelectionEnd.y + 1};
-                highlight2 = false;
-            }
-        } else {
-            // top quads
-            if (newSelectionEnd.y < selectionEnd_.y) {
-                a2 = {selectionStart_.first.x, selectionEnd_.y - 1};
-                b2 = newSelectionEnd;
-                highlight2 = true;
-            } else if (newSelectionEnd.y > selectionEnd_.y) {
-                a2 = {selectionStart_.first.x, selectionEnd_.y};
-                b2 = {selectionEnd_.x, newSelectionEnd.y - 1};
-                highlight2 = false;
-            }
-        }
+    // The selection area is broken up into quadrants, with the selection start
+    // at the center of the four. When the selection end moves, we need to
+    // highlight two rectangular areas (each area either adds or removes the
+    // highlight) that represent the difference to match the new selection area.
 
-        if (newSelectionEnd.x >= selectionStart_.first.x) {
-            if (newSelectionEnd.y >= selectionStart_.first.y) {
-                // quad bottom right
-                q = "bottom right";
-            } else {
-                // quad top right
-                q = "top right";
-            }
-        } else {
-            if (newSelectionEnd.y >= selectionStart_.first.y) {
-                // quad bottom left
-                q = "bottom left";
-            } else {
-                // quad top left
-                q = "top left";
-            }
-        }
+    // Check for trivial case: the new selection end moved to a different quadrant.
+    if ((selectionEnd_.x - selectionStart_.first.x < 0) != (newSelectionEnd.x - selectionStart_.first.x < 0) ||
+        (selectionEnd_.y - selectionStart_.first.y < 0) != (newSelectionEnd.y - selectionStart_.first.y < 0)) {
 
-        if (!highlight1 || highlight2) {
-            highlightArea(a1, b1, highlight1);
-            highlightArea(a2, b2, highlight2);
-        } else {
-            highlightArea(a2, b2, highlight2);
-            highlightArea(a1, b1, highlight1);
-        }
-
-        selectionEnd_ = newSelectionEnd;
-    } else {
         highlightArea(selectionStart_.first, selectionEnd_, false);
         selectionEnd_ = newSelectionEnd;
         highlightArea(selectionStart_.first, selectionEnd_, true);
+        return;
     }
-    spdlog::debug("Stayed in quad? {}, q = {}", stayedInQuadrant, q);
 
-    selectionArea_ = {
-        std::min(selectionStart_.first.x, selectionEnd_.x),
-        std::min(selectionStart_.first.y, selectionEnd_.y),
-        std::abs(selectionStart_.first.x - selectionEnd_.x) + 1,
-        std::abs(selectionStart_.first.y - selectionEnd_.y) + 1
-    };
+    // Nontrivial case: the new selection end stayed in the same quadrant.
+    sf::Vector2i a1 = selectionStart_.first, b1 = selectionStart_.first;
+    sf::Vector2i a2 = selectionStart_.first, b2 = selectionStart_.first;
+    bool highlight1 = true, highlight2 = true;
+    if (newSelectionEnd.x >= selectionStart_.first.x) {
+        // Right quadrants.
+        if (newSelectionEnd.x > selectionEnd_.x) {
+            a1 = {selectionEnd_.x + 1, selectionStart_.first.y};
+            b1 = newSelectionEnd;
+            highlight1 = true;
+        } else if (newSelectionEnd.x < selectionEnd_.x) {
+            a1 = {selectionEnd_.x, selectionStart_.first.y};
+            b1 = {newSelectionEnd.x + 1, selectionEnd_.y};
+            highlight1 = false;
+        }
+    } else {
+        // Left quadrants.
+        if (newSelectionEnd.x < selectionEnd_.x) {
+            a1 = {selectionEnd_.x - 1, selectionStart_.first.y};
+            b1 = newSelectionEnd;
+            highlight1 = true;
+        } else if (newSelectionEnd.x > selectionEnd_.x) {
+            a1 = {selectionEnd_.x, selectionStart_.first.y};
+            b1 = {newSelectionEnd.x - 1, selectionEnd_.y};
+            highlight1 = false;
+        }
+    }
+    if (newSelectionEnd.y >= selectionStart_.first.y) {
+        // Bottom quadrants.
+        if (newSelectionEnd.y > selectionEnd_.y) {
+            a2 = {selectionStart_.first.x, selectionEnd_.y + 1};
+            b2 = newSelectionEnd;
+            highlight2 = true;
+        } else if (newSelectionEnd.y < selectionEnd_.y) {
+            a2 = {selectionStart_.first.x, selectionEnd_.y};
+            b2 = {selectionEnd_.x, newSelectionEnd.y + 1};
+            highlight2 = false;
+        }
+    } else {
+        // Top quadrants.
+        if (newSelectionEnd.y < selectionEnd_.y) {
+            a2 = {selectionStart_.first.x, selectionEnd_.y - 1};
+            b2 = newSelectionEnd;
+            highlight2 = true;
+        } else if (newSelectionEnd.y > selectionEnd_.y) {
+            a2 = {selectionStart_.first.x, selectionEnd_.y};
+            b2 = {selectionEnd_.x, newSelectionEnd.y - 1};
+            highlight2 = false;
+        }
+    }
+
+    // Ensure that we remove highlights first before adding any.
+    if (!highlight1 || highlight2) {
+        highlightArea(a1, b1, highlight1);
+        highlightArea(a2, b2, highlight2);
+    } else {
+        highlightArea(a2, b2, highlight2);
+        highlightArea(a1, b1, highlight1);
+    }
+    auto tile = board_.accessTile(selectionStart_.first);
+    if (!tile.getHighlight()) {
+        tile.setHighlight(true);
+    }
+
+    selectionEnd_ = newSelectionEnd;
 }
 
 void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {

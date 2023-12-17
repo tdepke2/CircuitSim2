@@ -64,7 +64,8 @@ Chunk::Chunk(Board* board, ChunkCoords::repr coords) :
     board_(board),
     coords_(coords),
     dirtyFlags_(),
-    empty_(true) {
+    empty_(true), 
+    highlighted_(false) {
 }
 
 ChunkCoords::repr Chunk::getCoords() const {
@@ -85,6 +86,14 @@ bool Chunk::isEmpty() const {
         dirtyFlags_.reset(ChunkDirtyFlag::emptyIsStale);
     }
     return empty_;
+}
+
+bool Chunk::isHighlighted() const {
+    if (dirtyFlags_.test(ChunkDirtyFlag::highlightedIsStale)) {
+        highlighted_ = std::any_of(tiles_, tiles_ + WIDTH * WIDTH, [](TileData tile) { return tile.highlight; });
+        dirtyFlags_.reset(ChunkDirtyFlag::highlightedIsStale);
+    }
+    return highlighted_;
 }
 
 Tile Chunk::accessTile(unsigned int tileIndex) {
@@ -112,6 +121,7 @@ void Chunk::deserialize(const std::vector<char>& data) {
         tiles_[i] = *reinterpret_cast<TileData*>(&tileSwapped);
     }
     dirtyFlags_.set(ChunkDirtyFlag::emptyIsStale);
+    dirtyFlags_.set(ChunkDirtyFlag::highlightedIsStale);
 }
 
 void Chunk::markAsSaved() const {
@@ -133,6 +143,14 @@ void Chunk::markTileDirty(unsigned int /*tileIndex*/) {
     }
     //tiles_[tileIndex].redraw = true;    // Tracking redraw per tile did not show a noticeable boost in rendering.
     dirtyFlags_.set();
+}
+
+void Chunk::markHighlightDirty(unsigned int /*tileIndex*/) {
+    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
+        board_->markChunkDrawDirty(coords_);
+    }
+    dirtyFlags_.set(ChunkDirtyFlag::highlightedIsStale);
+    dirtyFlags_.set(ChunkDirtyFlag::drawPending);
 }
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};

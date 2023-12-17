@@ -234,6 +234,16 @@ Tile Board::accessTile(const sf::Vector2i& pos) {
     return accessTile(pos.x, pos.y);
 }
 
+void Board::removeAllHighlights() {
+    for (auto& chunk : chunks_) {
+        if (chunk.second.isHighlighted()) {
+            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+                chunk.second.accessTile(i).setHighlight(false);
+            }
+        }
+    }
+}
+
 void Board::loadFromFile(const fs::path& filename) {
     spdlog::info("Loading file \"{}\".", filename);
     fs::ifstream boardFile(filename);
