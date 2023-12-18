@@ -2,6 +2,7 @@ add_executable(CircuitSim2_experimental
     Board.cpp
     Chunk.cpp
     ChunkDrawable.cpp
+    ChunkGroup.cpp
     ChunkRender.cpp
     DebugScreen.cpp
     Editor.cpp

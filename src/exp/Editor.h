@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ChunkGroup.h>
 #include <OffsetView.h>
 
 #include <SFML/Graphics.hpp>
@@ -10,7 +11,7 @@ class ResourceManager;
 
 class Editor : public sf::Drawable {
 public:
-    static void setup(unsigned int tileWidth);
+    static void setupTextureData(sf::Texture* tilesetGrid, sf::Texture* tilesetNoGrid, unsigned int tileWidth);
 
     Editor(Board& board, ResourceManager& resource, const sf::View& initialView);
     ~Editor() = default;
@@ -23,6 +24,8 @@ public:
     void update();
 
 private:
+    static sf::Texture* tilesetGrid_;
+    static sf::Texture* tilesetNoGrid_;
     static unsigned int tileWidth_;
 
     void deselectAll();
@@ -45,4 +48,5 @@ private:
     sf::Text cursorLabel_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
+    ChunkGroup chunkGroup_;
 };

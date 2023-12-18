@@ -38,7 +38,6 @@ int main() {
         spdlog::error(ex.what());
     }
 
-    Editor::setup(TILE_WIDTH);
     Editor editor(board, resource, window.getDefaultView());
 
     auto tile = board.accessTile(0, 0);

@@ -8,6 +8,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+sf::Texture* Editor::tilesetGrid_;
+sf::Texture* Editor::tilesetNoGrid_;
 unsigned int Editor::tileWidth_;
 
 namespace {
@@ -18,7 +20,9 @@ constexpr int constLog2(int x) {
 
 }
 
-void Editor::setup(unsigned int tileWidth) {
+void Editor::setupTextureData(sf::Texture* tilesetGrid, sf::Texture* tilesetNoGrid, unsigned int tileWidth) {
+    tilesetGrid_ = tilesetGrid;
+    tilesetNoGrid_ = tilesetNoGrid;
     tileWidth_ = tileWidth;
 }
 
@@ -33,7 +37,8 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursorCoords_(0, 0),
     cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
     selectionStart_({sf::Vector2i(), false}),
-    selectionEnd_() {
+    selectionEnd_(),
+    chunkGroup_() {
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
@@ -265,5 +270,8 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         return;
     }
     target.draw(cursor_, states);
+    states.texture = tilesetGrid_;
+    target.draw(chunkGroup_, states);
+    states.texture = nullptr;
     target.draw(cursorLabel_, states);
 }
