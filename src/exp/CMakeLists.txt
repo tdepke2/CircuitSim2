@@ -9,6 +9,7 @@ add_executable(CircuitSim2_experimental
     FileStorage.cpp
     Filesystem.cpp
     LegacyFileFormat.cpp
+    LodRenderer.cpp
     main.cpp
     OffsetView.cpp
     RegionFileFormat.cpp
