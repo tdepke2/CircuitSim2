@@ -11,16 +11,14 @@
 
 class OffsetView;
 
-// FIXME rename to SubBoard?
-
-class ChunkGroup : public sf::Drawable, public sf::Transformable {
+class SubBoard : public sf::Drawable, public sf::Transformable {
 public:
     static void setup(unsigned int tileWidth);
 
-    ChunkGroup();
-    ~ChunkGroup() = default;
-    ChunkGroup(const ChunkGroup& rhs) = delete;
-    ChunkGroup& operator=(const ChunkGroup& rhs) = delete;
+    SubBoard();
+    ~SubBoard() = default;
+    SubBoard(const SubBoard& rhs) = delete;
+    SubBoard& operator=(const SubBoard& rhs) = delete;
 
     void setSize(const sf::Vector2u& size);
     void setRenderArea(const OffsetView& offsetView, float zoom);

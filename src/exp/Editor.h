@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ChunkGroup.h>
 #include <OffsetView.h>
+#include <SubBoard.h>
 
 #include <SFML/Graphics.hpp>
 #include <utility>
@@ -48,5 +48,5 @@ private:
     sf::Text cursorLabel_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
-    ChunkGroup chunkGroup_;
+    SubBoard subBoard_;
 };

@@ -2,7 +2,6 @@ add_executable(CircuitSim2_experimental
     Board.cpp
     Chunk.cpp
     ChunkDrawable.cpp
-    ChunkGroup.cpp
     ChunkRender.cpp
     DebugScreen.cpp
     Editor.cpp
@@ -14,6 +13,7 @@ add_executable(CircuitSim2_experimental
     OffsetView.cpp
     RegionFileFormat.cpp
     ResourceManager.cpp
+    SubBoard.cpp
     Tile.cpp
     tiles/Blank.cpp
     tiles/Gate.cpp

@@ -1,6 +1,6 @@
-#include <ChunkGroup.h>
 #include <DebugScreen.h>
 #include <OffsetView.h>
+#include <SubBoard.h>
 #include <Tile.h>
 #include <tiles/Wire.h>
 
@@ -10,13 +10,13 @@
 #include <string>
 #include <utility>
 
-unsigned int ChunkGroup::tileWidth_;
+unsigned int SubBoard::tileWidth_;
 
-void ChunkGroup::setup(unsigned int tileWidth) {
+void SubBoard::setup(unsigned int tileWidth) {
     tileWidth_ = tileWidth;
 }
 
-ChunkGroup::ChunkGroup() :
+SubBoard::SubBoard() :
     size_(),
     chunks_(),
     chunkDrawables_(),
@@ -32,7 +32,7 @@ ChunkGroup::ChunkGroup() :
     chunk->second.accessTile(0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::high);
 }
 
-void ChunkGroup::setSize(const sf::Vector2u& size) {
+void SubBoard::setSize(const sf::Vector2u& size) {
     if (size_ != size) {
         size_ = size;
         lastVisibleArea_ = {0, 0, 0, 0};
@@ -40,7 +40,7 @@ void ChunkGroup::setSize(const sf::Vector2u& size) {
     }
 }
 
-void ChunkGroup::setRenderArea(const OffsetView& offsetView, float zoom) {
+void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom) {
     // from Board ##############################################################
     int currentLod = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
     const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod + 1));
@@ -66,29 +66,29 @@ void ChunkGroup::setRenderArea(const OffsetView& offsetView, float zoom) {
     }
 
     if (texture_.getSize() != textureSize) {
-        spdlog::warn("Resizing ChunkGroup area to {} by {} chunks.", pow2ChunkArea.x, pow2ChunkArea.y);    // FIXME set to warn for test.
+        spdlog::warn("Resizing SubBoard area to {} by {} chunks.", pow2ChunkArea.x, pow2ChunkArea.y);    // FIXME set to warn for test.
         lastVisibleArea_ = {0, 0, 0, 0};
         visibleAreaChanged_ = true;
 
         if (!texture_.create(textureSize.x, textureSize.y)) {
-            spdlog::error("Failed to create ChunkGroup texture (size {} by {}).", textureSize.x, textureSize.y);
+            spdlog::error("Failed to create SubBoard texture (size {} by {}).", textureSize.x, textureSize.y);
         }
         texture_.clear(sf::Color::Black);
         texture_.setSmooth(true);
 
         std::stringstream address;
         address << static_cast<const void*>(this);
-        DebugScreen::instance()->registerTexture("chunkGroup " + address.str(), &texture_.getTexture());
+        DebugScreen::instance()->registerTexture("subBoard " + address.str(), &texture_.getTexture());
     }
 
     updateVisibleArea(offsetView);
 }
 
-void ChunkGroup::drawChunks(sf::RenderStates states) {
+void SubBoard::drawChunks(sf::RenderStates states) {
     if (!visibleAreaChanged_) {
         return;
     }
-    spdlog::debug("ChunkGroup area changed, redrawing.");
+    spdlog::debug("SubBoard area changed, redrawing.");
     visibleAreaChanged_ = false;
     states.transform.scale(
         1.0f / (1 << levelOfDetail_),
@@ -99,7 +99,7 @@ void ChunkGroup::drawChunks(sf::RenderStates states) {
     texture_.display();
 }
 
-void ChunkGroup::updateVisibleArea(const OffsetView& offsetView) {
+void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
     // from Board ##############################################################
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     sf::Vector2i topLeft = {
@@ -140,7 +140,7 @@ void ChunkGroup::updateVisibleArea(const OffsetView& offsetView) {
     vertices_[5].texCoords = t1;
 }
 
-void ChunkGroup::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+void SubBoard::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
     states.texture = &texture_.getTexture();
     target.draw(vertices_, states);
