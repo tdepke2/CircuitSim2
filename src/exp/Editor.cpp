@@ -24,6 +24,7 @@ void Editor::setupTextureData(sf::Texture* tilesetGrid, sf::Texture* tilesetNoGr
     tilesetGrid_ = tilesetGrid;
     tilesetNoGrid_ = tilesetNoGrid;
     tileWidth_ = tileWidth;
+    ChunkGroup::setup(tileWidth);
 }
 
 Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialView) :
@@ -107,6 +108,13 @@ void Editor::processEvent(const sf::Event& event) {
 
 void Editor::update() {
     updateCursor();
+    chunkGroup_.setSize({2, 3});
+    chunkGroup_.setPosition(cursor_.getPosition());
+    // FIXME below will cause some issues, it's possible to view the chunkGroup at a position outside the normal bounds by panning the view down and to the right.
+    chunkGroup_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View({0.0f, 0.0f}, editView_.getSize())), zoomLevel_);
+    sf::RenderStates states;
+    states.texture = tilesetGrid_;
+    chunkGroup_.drawChunks(states);
 
     /*static sf::Clock c;
     static int stage = 0;
@@ -142,7 +150,7 @@ sf::Vector2i Editor::mapMouseToTile(const sf::Vector2i& mousePos) const {
 void Editor::updateCursor() {
     sf::Vector2i cursorCoords = mapMouseToTile(mousePos_);
     if (cursorCoords_ != cursorCoords) {
-        spdlog::debug("Cursor coords = {}, {}.", cursorCoords.x, cursorCoords.y);
+        //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.x, cursorCoords.y);
         cursorCoords_ = cursorCoords;
         cursorLabel_.setString("(" + std::to_string(cursorCoords.x) + ", " + std::to_string(cursorCoords.y) + ")");
     }
@@ -270,8 +278,6 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         return;
     }
     target.draw(cursor_, states);
-    states.texture = tilesetGrid_;
     target.draw(chunkGroup_, states);
-    states.texture = nullptr;
     target.draw(cursorLabel_, states);
 }

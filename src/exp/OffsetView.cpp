@@ -32,9 +32,9 @@ void OffsetView::setCenter(float x, float y) {
 
     view_.setCenter(modCenter);
 
-    spdlog::debug("OffsetView center=({}, {})\toffset=({}, {})\tsize=({}, {})",
+    /*spdlog::debug("OffsetView center=({}, {})\toffset=({}, {})\tsize=({}, {})",
         getCenter().x, getCenter().y, getCenterOffset().x, getCenterOffset().y, getSize().x, getSize().y
-    );
+    );*/
 }
 
 void OffsetView::setCenter(const sf::Vector2f& center) {
@@ -48,6 +48,15 @@ void OffsetView::setSize(float width, float height) {
 
 void OffsetView::setSize(const sf::Vector2f& size) {
     setSize(size.x, size.y);
+}
+
+void OffsetView::setCenterOffset(int x, int y) {
+    centerOffset_.x = x;
+    centerOffset_.y = y;
+}
+
+void OffsetView::setCenterOffset(const sf::Vector2i& centerOffset) {
+    setCenterOffset(centerOffset.x, centerOffset.y);
 }
 
 const sf::Vector2f& OffsetView::getCenter() const {

@@ -301,7 +301,7 @@ void Board::pruneChunkDrawables() {
     chunkDrawables_.erase(newLast, chunkDrawables_.end());
 }
 
-void Board::updateRender() {
+void Board::updateRender() {    // FIXME move this whole piece into ChunkRender?
     auto drawChunk = [this](const ChunkDrawable& chunkDrawable, bool& allocatedBlock, ChunkCoords::repr coords) {
         if (chunkDrawable.getRenderIndex(currentLod_) == -1) {
             chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, coords, lastVisibleArea_);

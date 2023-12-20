@@ -20,6 +20,8 @@ public:
     void setCenter(const sf::Vector2f& center);
     void setSize(float width, float height);
     void setSize(const sf::Vector2f& size);
+    void setCenterOffset(int x, int y);
+    void setCenterOffset(const sf::Vector2i& centerOffset);
     const sf::Vector2f& getCenter() const;
     const sf::Vector2f& getSize() const;
     float getViewDivisor() const;
