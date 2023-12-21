@@ -2,15 +2,32 @@
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
-#include <tiles/Wire.h>
 
 #include <cmath>
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
 #include <utility>
 
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/ranges.h>
+    #include <spdlog/spdlog.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
+
 unsigned int SubBoard::tileWidth_;
+
+namespace {
+
+constexpr int constLog2(int x) {
+    return x == 1 ? 0 : 1 + constLog2(x / 2);
+}
+
+}
 
 void SubBoard::setup(unsigned int tileWidth) {
     tileWidth_ = tileWidth;
@@ -19,24 +36,21 @@ void SubBoard::setup(unsigned int tileWidth) {
 SubBoard::SubBoard() :
     size_(),
     chunks_(),
+    emptyChunk_(new Chunk(nullptr, ChunkRender::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
     levelOfDetail_(0),
+    visibleArea_(0, 0, 0, 0),
     lastVisibleArea_(0, 0, 0, 0),
-    visibleAreaChanged_(false),
     texture_(),
     vertices_(sf::Triangles, 6) {
 
-    auto coords = ChunkCoords::pack(0, 0);
-    auto chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(nullptr, coords)).first;
-    chunkDrawables_[coords].setChunk(&chunk->second);
-    chunk->second.accessTile(0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::high);
+    chunkDrawables_[ChunkRender::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void SubBoard::setSize(const sf::Vector2u& size) {
     if (size_ != size) {
         size_ = size;
         lastVisibleArea_ = {0, 0, 0, 0};
-        visibleAreaChanged_ = true;
     }
 }
 
@@ -62,13 +76,11 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom) {
     if (levelOfDetail_ != currentLod) {
         levelOfDetail_ = currentLod;
         lastVisibleArea_ = {0, 0, 0, 0};
-        visibleAreaChanged_ = true;
     }
 
     if (texture_.getSize() != textureSize) {
         spdlog::warn("Resizing SubBoard area to {} by {} chunks.", pow2ChunkArea.x, pow2ChunkArea.y);    // FIXME set to warn for test.
         lastVisibleArea_ = {0, 0, 0, 0};
-        visibleAreaChanged_ = true;
 
         if (!texture_.create(textureSize.x, textureSize.y)) {
             spdlog::error("Failed to create SubBoard texture (size {} by {}).", textureSize.x, textureSize.y);
@@ -85,18 +97,74 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom) {
 }
 
 void SubBoard::drawChunks(sf::RenderStates states) {
-    if (!visibleAreaChanged_) {
+    if (lastVisibleArea_ == visibleArea_) {
         return;
     }
     spdlog::debug("SubBoard area changed, redrawing.");
-    visibleAreaChanged_ = false;
-    states.transform.scale(
-        1.0f / (1 << levelOfDetail_),
-        1.0f / (1 << levelOfDetail_)
-    );
-    texture_.draw(chunkDrawables_.at(ChunkCoords::pack(0, 0)), states);
+    if (lastVisibleArea_.getFirst() != visibleArea_.getFirst()) {
+        lastVisibleArea_ = {0, 0, 0, 0};
+    }
+
+
+
+
+
+    // FIXME copied this from Board, we need to check if lastVisibleArea_ contains each chunk or it's render dirty
+
+    auto drawChunk = [this](const ChunkDrawable& chunkDrawable, sf::RenderStates states, int x, int y) {
+        const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
+        states.transform.translate(
+            static_cast<float>(x * textureSubdivisionSize),
+            static_cast<float>(y * textureSubdivisionSize)
+        );
+        states.transform.scale(
+            1.0f / (1 << levelOfDetail_),
+            1.0f / (1 << levelOfDetail_)
+        );
+        spdlog::debug("Redrawing SubBoard chunk at relative coords {}, {}.", x, y);
+        texture_.draw(chunkDrawable, states);
+    };
+
+    const auto& emptyChunkDrawable = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
+    for (int y = visibleArea_.top; y < visibleArea_.top + visibleArea_.height; ++y) {
+        auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(visibleArea_.left - 1, y));
+        for (int x = visibleArea_.left; x < visibleArea_.left + visibleArea_.width; ++x) {
+            if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != ChunkCoords::pack(x, y)) {
+                drawChunk(emptyChunkDrawable, states, x - visibleArea_.left, y - visibleArea_.top);
+            } else {
+                //if (chunkDrawable->second.isRenderDirty(levelOfDetail_)) {    // FIXME how to check for render dirty?
+                    drawChunk(chunkDrawable->second, states, x - visibleArea_.left, y - visibleArea_.top);
+                //}
+                ++chunkDrawable;
+            }
+        }
+    }
 
     texture_.display();
+    lastVisibleArea_ = visibleArea_;
+}
+
+Chunk& SubBoard::accessChunk(ChunkCoords::repr coords) {
+    auto chunk = chunks_.find(coords);
+    if (chunk != chunks_.end()) {
+        return chunk->second;
+    }
+
+    spdlog::debug("SubBoard allocating new chunk at {}.", ChunkCoords::toPair(coords));
+    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(nullptr, coords)).first;
+    chunkDrawables_[coords].setChunk(&chunk->second);
+    return chunk->second;
+}
+
+Tile SubBoard::accessTile(int x, int y) {
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    auto& chunk = accessChunk(ChunkCoords::pack(x >> widthLog2, y >> widthLog2));
+    return chunk.accessTile((x & (Chunk::WIDTH - 1)) + (y & (Chunk::WIDTH - 1)) * Chunk::WIDTH);
+}
+
+Tile SubBoard::accessTile(const sf::Vector2i& pos) {
+    return accessTile(pos.x, pos.y);
 }
 
 void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
@@ -112,14 +180,11 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
         static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
     size += offsetView.getCenterOffset() - topLeft + sf::Vector2i(1, 1);
-    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, size.x, size.y);
+    visibleArea_ = ChunkCoordsRange(topLeft.x, topLeft.y, size.x, size.y);
 
-    if (lastVisibleArea_ == visibleArea) {
+    if (lastVisibleArea_ == visibleArea_) {
         return;
     }
-
-    lastVisibleArea_ = visibleArea;
-    visibleAreaChanged_ = true;
 
     const sf::Vector2f p1(0.0f, 0.0f);
     const sf::Vector2f p2(p1.x + chunkWidthTexels, p1.y + chunkWidthTexels);

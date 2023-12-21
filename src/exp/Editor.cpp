@@ -3,6 +3,8 @@
 #include <ChunkRender.h>
 #include <Editor.h>
 #include <ResourceManager.h>
+#include <Tile.h>
+#include <tiles/Wire.h>
 
 #include <cmath>
 #include <spdlog/spdlog.h>
@@ -44,6 +46,8 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
     cursorLabel_.setOutlineThickness(2.0f);
+    subBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::high);
+    subBoard_.accessTile(63, 63).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
 }
 
 const OffsetView& Editor::getEditView() const {
@@ -114,7 +118,7 @@ void Editor::update() {
     subBoard_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View({0.0f, 0.0f}, editView_.getSize())), zoomLevel_);
     sf::RenderStates states;
     states.texture = tilesetGrid_;
-    subBoard_.drawChunks(states);
+    subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted
 
     /*static sf::Clock c;
     static int stage = 0;

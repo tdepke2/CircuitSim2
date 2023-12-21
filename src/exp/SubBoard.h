@@ -6,10 +6,12 @@
 #include <ChunkDrawable.h>
 #include <FlatMap.h>
 
+#include <memory>
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
 
 class OffsetView;
+class Tile;
 
 class SubBoard : public sf::Drawable, public sf::Transformable {
 public:
@@ -23,6 +25,9 @@ public:
     void setSize(const sf::Vector2u& size);
     void setRenderArea(const OffsetView& offsetView, float zoom);
     void drawChunks(sf::RenderStates states);
+    Chunk& accessChunk(ChunkCoords::repr coords);
+    Tile accessTile(int x, int y);
+    Tile accessTile(const sf::Vector2i& pos);
 
 private:
     static unsigned int tileWidth_;
@@ -32,10 +37,11 @@ private:
 
     sf::Vector2u size_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
+    std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     int levelOfDetail_;
+    ChunkCoordsRange visibleArea_;
     ChunkCoordsRange lastVisibleArea_;
-    bool visibleAreaChanged_;
     sf::RenderTexture texture_;
     sf::VertexArray vertices_;
 };

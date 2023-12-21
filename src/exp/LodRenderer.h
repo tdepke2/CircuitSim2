@@ -13,6 +13,8 @@ public:
     virtual void setRenderArea(const OffsetView& offsetView, float zoom) = 0;
     int getCurrentLod() const;
 
+    // FIXME define EMPTY_CHUNK_COORDS in here?
+
 private:
     int currentLod_;
 };
