@@ -46,6 +46,7 @@ private:
     sf::RectangleShape cursor_;
     sf::Vector2i cursorCoords_;
     sf::Text cursorLabel_;
+    bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
     SubBoard subBoard_;

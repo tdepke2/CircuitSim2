@@ -151,8 +151,8 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, size.x, size.y);
 
     if (lastVisibleArea_ != visibleArea) {
-        spdlog::debug("Visible chunk area changed, now ({}, {}) to ({}, {}).",
-            visibleArea.getFirstX(), visibleArea.getFirstY(), visibleArea.getSecondX(), visibleArea.getSecondY()
+        spdlog::debug("Visible chunk area changed, now {} to {}.",
+            ChunkCoords::toPair(visibleArea.getFirst()), ChunkCoords::toPair(visibleArea.getSecond())
         );
         lastVisibleArea_ = visibleArea;
     }

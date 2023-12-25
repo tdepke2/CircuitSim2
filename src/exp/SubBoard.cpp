@@ -34,6 +34,7 @@ void SubBoard::setup(unsigned int tileWidth) {
 }
 
 SubBoard::SubBoard() :
+    position_(),
     size_(),
     chunks_(),
     emptyChunk_(new Chunk(nullptr, ChunkRender::EMPTY_CHUNK_COORDS)),
@@ -54,7 +55,7 @@ void SubBoard::setSize(const sf::Vector2u& size) {
     }
 }
 
-void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom) {
+void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition) {
     // from Board ##############################################################
     int currentLod = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
     const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod + 1));
@@ -93,7 +94,7 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom) {
         DebugScreen::instance()->registerTexture("subBoard " + address.str(), &texture_.getTexture());
     }
 
-    updateVisibleArea(offsetView);
+    updateVisibleArea(offsetView, tilePosition);
 }
 
 void SubBoard::drawChunks(sf::RenderStates states) {
@@ -167,27 +168,43 @@ Tile SubBoard::accessTile(const sf::Vector2i& pos) {
     return accessTile(pos.x, pos.y);
 }
 
-void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
+void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition) {
     // from Board ##############################################################
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    sf::Vector2i topLeft = {
-        static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
-        static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
-    };
-    topLeft += offsetView.getCenterOffset();
     sf::Vector2i size = {
-        static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
-        static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / chunkWidthTexels))
+        static_cast<int>(std::floor(offsetView.getSize().x / chunkWidthTexels)),
+        static_cast<int>(std::floor(offsetView.getSize().y / chunkWidthTexels))
     };
-    size += offsetView.getCenterOffset() - topLeft + sf::Vector2i(1, 1);
-    visibleArea_ = ChunkCoordsRange(topLeft.x, topLeft.y, size.x, size.y);
+    visibleArea_ = ChunkCoordsRange(0, 0, size.x + 2, size.y + 2);
+
+    // Set the position relative to the top left of the offset view. The
+    // position will be nudged over if the top left chunk would render beyond
+    // the top or left side of the screen. Without this fix, the bottom right
+    // corner of the texture could become visible showing an artifact where the
+    // chunks stop rendering.
+    position_ = static_cast<sf::Vector2f>((tilePosition - offsetView.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_));
+    sf::Vector2i topLeftTile = {
+        offsetView.getCenterOffset().x * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x * 0.5f) / tileWidth_)),
+        offsetView.getCenterOffset().y * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y * 0.5f) / tileWidth_))
+    };
+    if (topLeftTile.x - tilePosition.x >= Chunk::WIDTH) {
+        const int numChunks = (topLeftTile.x - tilePosition.x) / Chunk::WIDTH;
+        position_.x += numChunks * chunkWidthTexels;
+        visibleArea_.left += numChunks;
+    }
+    if (topLeftTile.y - tilePosition.y >= Chunk::WIDTH) {
+        const int numChunks = (topLeftTile.y - tilePosition.y) / Chunk::WIDTH;
+        position_.y += numChunks * chunkWidthTexels;
+        visibleArea_.top += numChunks;
+    }
 
     if (lastVisibleArea_ == visibleArea_) {
         return;
     }
 
+    spdlog::debug("SubBoard visible area changed, now {} to {}.", ChunkCoords::toPair(visibleArea_.getFirst()), ChunkCoords::toPair(visibleArea_.getSecond()));
     const sf::Vector2f p1(0.0f, 0.0f);
-    const sf::Vector2f p2(p1.x + chunkWidthTexels, p1.y + chunkWidthTexels);
+    const sf::Vector2f p2(static_cast<float>(visibleArea_.width * chunkWidthTexels), static_cast<float>(visibleArea_.height * chunkWidthTexels));
     vertices_[0].position = p1;
     vertices_[1].position = {p2.x, p1.y};
     vertices_[2].position = p2;
@@ -195,8 +212,8 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
     vertices_[4].position = {p1.x, p2.y};
     vertices_[5].position = p1;
 
-    const sf::Vector2f t1 = p1;
-    const sf::Vector2f t2(p1.x + static_cast<int>(chunkWidthTexels / (1 << levelOfDetail_)), p1.y + static_cast<int>(chunkWidthTexels / (1 << levelOfDetail_)));
+    const sf::Vector2f t1(0.0f, 0.0f);
+    const sf::Vector2f t2(p2.x / (1 << levelOfDetail_), p2.y / (1 << levelOfDetail_));
     vertices_[0].texCoords = t1;
     vertices_[1].texCoords = {t2.x, t1.y};
     vertices_[2].texCoords = t2;
@@ -206,7 +223,7 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView) {
 }
 
 void SubBoard::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    states.transform *= getTransform();
+    states.transform.translate(position_);
     states.texture = &texture_.getTexture();
     target.draw(vertices_, states);
 }

@@ -13,7 +13,7 @@
 class OffsetView;
 class Tile;
 
-class SubBoard : public sf::Drawable, public sf::Transformable {
+class SubBoard : public sf::Drawable {
 public:
     static void setup(unsigned int tileWidth);
 
@@ -23,7 +23,7 @@ public:
     SubBoard& operator=(const SubBoard& rhs) = delete;
 
     void setSize(const sf::Vector2u& size);
-    void setRenderArea(const OffsetView& offsetView, float zoom);
+    void setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition);
     void drawChunks(sf::RenderStates states);
     Chunk& accessChunk(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
@@ -32,9 +32,10 @@ public:
 private:
     static unsigned int tileWidth_;
 
-    void updateVisibleArea(const OffsetView& offsetView);
+    void updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+    sf::Vector2f position_;
     sf::Vector2u size_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     std::unique_ptr<Chunk> emptyChunk_;

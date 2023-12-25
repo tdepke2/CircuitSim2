@@ -39,6 +39,7 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursor_({static_cast<float>(tileWidth_), static_cast<float>(tileWidth_)}),
     cursorCoords_(0, 0),
     cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
+    cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
     subBoard_() {
@@ -68,12 +69,19 @@ void Editor::processEvent(const sf::Event& event) {
         }
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
-        mouseOnScreen_ = true;
+        if (mousePos_.x >= 0 && mousePos_.x < static_cast<int>(windowSize_.x) && mousePos_.y >= 0 && mousePos_.y < static_cast<int>(windowSize_.y)) {
+            mouseOnScreen_ = true;
+            cursorVisible_ = true;
+        }
         updateCursor();
     } else if (event.type == sf::Event::MouseEntered) {
         mouseOnScreen_ = true;
+        cursorVisible_ = true;
     } else if (event.type == sf::Event::MouseLeft) {
         mouseOnScreen_ = false;
+        if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            cursorVisible_ = false;
+        }
     } else if (event.type == sf::Event::MouseButtonPressed) {
         if (event.mouseButton.button == sf::Mouse::Right) {
             if (!selectionStart_.second) {
@@ -84,7 +92,9 @@ void Editor::processEvent(const sf::Event& event) {
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased) {
-        if (event.mouseButton.button == sf::Mouse::Right) {
+        if (event.mouseButton.button == sf::Mouse::Left) {
+            cursorVisible_ = mouseOnScreen_;
+        } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (selectionStart_.second) {
                 updateSelection(mapMouseToTile({event.mouseButton.x, event.mouseButton.y}));
                 selectionStart_.second = false;
@@ -113,9 +123,12 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
     subBoard_.setSize({2, 3});
-    subBoard_.setPosition(cursor_.getPosition());
-    // FIXME below will cause some issues, it's possible to view the subBoard at a position outside the normal bounds by panning the view down and to the right.
-    subBoard_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View({0.0f, 0.0f}, editView_.getSize())), zoomLevel_);
+    //subBoard_.setPosition(cursor_.getPosition());
+
+    //spdlog::debug("{}", cursor_.getPosition().x - editView_.getCenter().x);    // The below cursor position isn't right as the cursor position is bounded, do we need to subtract the edit view center?
+
+    //subBoard_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View(editView_.getSize() / 2.0f - cursor_.getPosition(), editView_.getSize())), zoomLevel_);
+    subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));//static_cast<sf::Vector2f>(mousePos_) * zoomLevel_);
     sf::RenderStates states;
     states.texture = tilesetGrid_;
     subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted
@@ -278,7 +291,7 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
 }
 
 void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if (!mouseOnScreen_) {
+    if (!cursorVisible_) {
         return;
     }
     target.draw(cursor_, states);
