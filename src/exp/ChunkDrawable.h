@@ -35,6 +35,7 @@ public:
     bool hasAnyRenderIndex() const;
     void markDirty();
     bool isRenderDirty(int levelOfDetail) const;
+    void markAsDrawn(int levelOfDetail) const;
 
 private:
     static unsigned int textureWidth_, tileWidth_;
@@ -50,6 +51,4 @@ private:
     std::array<int, ChunkRender::LEVELS_OF_DETAIL> renderIndices_;
     int renderIndicesSum_;
     mutable std::bitset<ChunkRender::LEVELS_OF_DETAIL> renderDirty_;
-
-    friend class ChunkRender;
 };

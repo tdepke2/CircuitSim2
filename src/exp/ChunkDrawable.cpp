@@ -122,6 +122,11 @@ bool ChunkDrawable::isRenderDirty(int levelOfDetail) const {
     return renderDirty_.test(levelOfDetail);
 }
 
+void ChunkDrawable::markAsDrawn(int levelOfDetail) const {
+    renderDirty_.reset(levelOfDetail);
+    chunk_->markAsDrawn();
+}
+
 void ChunkDrawable::updateTileGeometry(unsigned int tileIndex) const {
     sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
     TileData tileData = chunk_->tiles_[tileIndex];

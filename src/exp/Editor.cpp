@@ -47,8 +47,16 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
     cursorLabel_.setOutlineThickness(2.0f);
-    subBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::high);
+    subBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
+    subBoard_.accessTile(0, 1).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
+    subBoard_.accessTile(1, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
+    subBoard_.accessTile(32, 32).setType(tiles::Wire::instance(), TileId::wireJunction, Direction::north, State::low);
     subBoard_.accessTile(63, 63).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
+    subBoard_.accessTile(63, 62).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
+    subBoard_.accessTile(62, 63).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
+    subBoard_.accessTile(95, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
+    subBoard_.accessTile(95, 62).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
+    subBoard_.accessTile(94, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
 }
 
 const OffsetView& Editor::getEditView() const {
@@ -122,7 +130,28 @@ void Editor::processEvent(const sf::Event& event) {
 
 void Editor::update() {
     updateCursor();
-    subBoard_.setSize({2, 3});
+
+    // Toggle tile states on the SubBoard to test draw updates.
+    static sf::Clock c;
+    static int stage = 0;
+    if (c.getElapsedTime().asSeconds() >= 1.0f) {
+        c.restart();
+        stage = (stage + 1) % 4;
+        if (stage == 0) {
+            subBoard_.accessTile(0, 0).setState(State::low);
+            subBoard_.accessTile(32, 32).setState(State::low);
+        } else if (stage == 1) {
+            subBoard_.accessTile(0, 0).setState(State::high);
+        } else if (stage == 2) {
+            subBoard_.accessTile(0, 0).setState(State::low);
+            subBoard_.accessTile(32, 32).setState(State::high);
+        } else if (stage == 3) {
+            subBoard_.accessTile(0, 0).setState(State::high);
+        }
+        spdlog::debug("stage set to {}", stage);
+    }
+
+    subBoard_.setVisibleSize({96, 64});
     //subBoard_.setPosition(cursor_.getPosition());
 
     //spdlog::debug("{}", cursor_.getPosition().x - editView_.getCenter().x);    // The below cursor position isn't right as the cursor position is bounded, do we need to subtract the edit view center?

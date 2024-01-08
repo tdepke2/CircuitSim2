@@ -22,7 +22,7 @@ public:
     SubBoard(const SubBoard& rhs) = delete;
     SubBoard& operator=(const SubBoard& rhs) = delete;
 
-    void setSize(const sf::Vector2u& size);
+    void setVisibleSize(const sf::Vector2u& size);
     void setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition);
     void drawChunks(sf::RenderStates states);
     Chunk& accessChunk(ChunkCoords::repr coords);

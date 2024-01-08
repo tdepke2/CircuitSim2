@@ -163,8 +163,7 @@ void ChunkRender::drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates
     //spdlog::debug("Redrawing LOD {} render index {}.", levelOfDetail_, chunkDrawable.getRenderIndex(levelOfDetail_));
     texture_.draw(chunkDrawable, states);
     textureDirty_ = true;
-    chunkDrawable.renderDirty_.reset(levelOfDetail_);
-    chunkDrawable.getChunk()->markAsDrawn();
+    chunkDrawable.markAsDrawn(levelOfDetail_);
 }
 
 void ChunkRender::display() {
