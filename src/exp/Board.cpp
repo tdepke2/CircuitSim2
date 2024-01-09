@@ -108,9 +108,8 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     extraLogicStates_(false),
     notesText_(),
     chunks_(),
-    emptyChunk_(new Chunk(this, ChunkRender::EMPTY_CHUNK_COORDS)),
+    emptyChunk_(new Chunk(this, LodRenderer::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
-    currentLod_(0),
     chunkRenderCache_(),
     lastVisibleArea_(0, 0, 0, 0),
     debugChunkBorder_(sf::Lines),
@@ -119,25 +118,20 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
         chunkRenderCache_[i].setLod(i);
     }
-    chunkDrawables_[ChunkRender::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
-    currentLod_ = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
-    DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", currentLod_));
+    setLevelOfDetail(static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f)));
+    DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", getLevelOfDetail()));
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the
     // visible chunks at the max zoom level (for current level-of-detail).
-    const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod_ + 1));
-    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    const sf::Vector2u maxChunkArea = {
-        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.x) / chunkWidthTexels)) + 1,
-        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.y) / chunkWidthTexels)) + 1
-    };
-
-    ChunkRender& currentChunkRender = chunkRenderCache_[currentLod_];
+    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom, tileWidth_);
+    ChunkRender& currentChunkRender = chunkRenderCache_[getLevelOfDetail()];
     currentChunkRender.resize(chunkDrawables_, maxChunkArea);
 
+    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     sf::Vector2i topLeft = {
         static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
         static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
@@ -198,7 +192,7 @@ bool Board::isChunkLoaded(ChunkCoords::repr coords) const {
 void Board::loadChunk(Chunk&& chunk) {
     ChunkCoords::repr coords = chunk.getCoords();
     auto chunkIter = chunks_.emplace(coords, std::move(chunk)).first;
-    chunkIter->second.setBoard(this);
+    chunkIter->second.setLodRenderer(this);
     chunkDrawables_[coords].setChunk(&chunkIter->second);
 }
 
@@ -212,13 +206,9 @@ Chunk& Board::accessChunk(ChunkCoords::repr coords) {
     }
 
     spdlog::debug("Allocating new chunk at {}.", ChunkCoords::toPair(coords));
-    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(this, coords)).first;
+    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(static_cast<LodRenderer*>(this), coords)).first;
     chunkDrawables_[coords].setChunk(&chunk->second);
     return chunk->second;
-}
-
-void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
-    chunkDrawables_.at(coords).markDirty();
 }
 
 Tile Board::accessTile(int x, int y) {
@@ -301,15 +291,15 @@ void Board::pruneChunkDrawables() {
     chunkDrawables_.erase(newLast, chunkDrawables_.end());
 }
 
-void Board::updateRender() {    // FIXME move this whole piece into ChunkRender?
+void Board::updateRender() {    // FIXME move this whole piece into ChunkRender? Not sure, it seems to belong in rendering code but moving it may make it difficult to customize deallocation of stale render blocks.
     auto drawChunk = [this](const ChunkDrawable& chunkDrawable, bool& allocatedBlock, ChunkCoords::repr coords) {
-        if (chunkDrawable.getRenderIndex(currentLod_) == -1) {
-            chunkRenderCache_[currentLod_].allocateBlock(chunkDrawables_, coords, lastVisibleArea_);
+        if (chunkDrawable.getRenderIndex(getLevelOfDetail()) == -1) {
+            chunkRenderCache_[getLevelOfDetail()].allocateBlock(chunkDrawables_, coords, lastVisibleArea_);
             allocatedBlock = true;
         }
         sf::RenderStates states;
         states.texture = tilesetGrid_;
-        chunkRenderCache_[currentLod_].drawChunk(chunkDrawable, states);
+        chunkRenderCache_[getLevelOfDetail()].drawChunk(chunkDrawable, states);
     };
 
     bool emptyChunkVisible = false, allocatedBlock = false;
@@ -324,25 +314,29 @@ void Board::updateRender() {    // FIXME move this whole piece into ChunkRender?
             if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != ChunkCoords::pack(x, y)) {
                 emptyChunkVisible = true;
             } else {
-                if (chunkDrawable->second.isRenderDirty(currentLod_)) {
+                if (chunkDrawable->second.isRenderDirty(getLevelOfDetail())) {
                     drawChunk(chunkDrawable->second, allocatedBlock, ChunkCoords::pack(x, y));
                 }
                 ++chunkDrawable;
             }
         }
     }
-    const auto& emptyChunkDrawable = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
-    if (emptyChunkVisible && emptyChunkDrawable.isRenderDirty(currentLod_)) {
-        drawChunk(emptyChunkDrawable, allocatedBlock, ChunkRender::EMPTY_CHUNK_COORDS);
+    const auto& emptyChunkDrawable = chunkDrawables_.at(LodRenderer::EMPTY_CHUNK_COORDS);
+    if (emptyChunkVisible && emptyChunkDrawable.isRenderDirty(getLevelOfDetail())) {
+        drawChunk(emptyChunkDrawable, allocatedBlock, LodRenderer::EMPTY_CHUNK_COORDS);
     }
     if (allocatedBlock) {
         pruneChunkDrawables();
     }
-    chunkRenderCache_[currentLod_].display();
+    chunkRenderCache_[getLevelOfDetail()].display();
+}
+
+void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
+    chunkDrawables_.at(coords).markDirty();
 }
 
 void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    target.draw(chunkRenderCache_[currentLod_], states);
+    target.draw(chunkRenderCache_[getLevelOfDetail()], states);
 
     DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
     if (debugDrawChunkBorder_) {

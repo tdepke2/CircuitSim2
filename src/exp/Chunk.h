@@ -9,7 +9,7 @@
 #include <ostream>
 #include <vector>
 
-class Board;
+class LodRenderer;
 
 //#pragma pack(push, 1)
 
@@ -62,7 +62,7 @@ public:
     static constexpr int WIDTH = 32;
     static void setupChunks();
 
-    Chunk(Board* board, ChunkCoords::repr coords);
+    Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords);
     ~Chunk() = default;
     Chunk(const Chunk& rhs) = delete;
     Chunk(Chunk&& rhs) noexcept = default;
@@ -70,7 +70,7 @@ public:
     Chunk& operator=(Chunk&& rhs) noexcept = default;
 
     ChunkCoords::repr getCoords() const;
-    void setBoard(Board* board);
+    void setLodRenderer(LodRenderer* lodRenderer);
     bool isUnsaved() const;
     bool isEmpty() const;
     bool isHighlighted() const;
@@ -83,7 +83,7 @@ public:
 
 private:
     TileData tiles_[WIDTH * WIDTH];
-    Board* board_;
+    LodRenderer* lodRenderer_;
     ChunkCoords::repr coords_;
     mutable std::bitset<ChunkDirtyFlag::count> dirtyFlags_;
     mutable bool empty_, highlighted_;

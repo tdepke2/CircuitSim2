@@ -2,6 +2,7 @@
 #include <ChunkDrawable.h>
 #include <ChunkRender.h>
 #include <DebugScreen.h>
+#include <LodRenderer.h>
 
 #include <algorithm>
 #include <limits>
@@ -20,8 +21,7 @@
 #endif
 
 constexpr int ChunkRender::LEVELS_OF_DETAIL;
-constexpr ChunkCoords::repr ChunkRender::EMPTY_CHUNK_COORDS;
-constexpr int ChunkRender::CHUNK_PADDING;
+constexpr int ChunkRender::CHUNK_TEXEL_PADDING;
 unsigned int ChunkRender::tileWidth_;
 
 void ChunkRender::setupTextureData(unsigned int tileWidth) {
@@ -55,8 +55,8 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
 
     // Apply padding so that chunks in the texture have some border space to avoid texture bleed.
     const sf::Vector2f paddedChunkArea = {
-        std::ceil(maxChunkArea.x * static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) / textureSubdivisionSize),
-        std::ceil(maxChunkArea.y * static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) / textureSubdivisionSize)
+        std::ceil(maxChunkArea.x * static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) / textureSubdivisionSize),
+        std::ceil(maxChunkArea.y * static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) / textureSubdivisionSize)
     };
 
     // Round up to power of 2 for padded area to ensure POT texture.
@@ -68,8 +68,8 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
 
     // Strip the padding off to find the usable chunk area in the texture, mathematically this should not be less than the original maxChunkArea.
     const sf::Vector2u adjustedMaxChunkArea = {
-        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.x / static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) * textureSubdivisionSize)),
-        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.y / static_cast<float>(textureSubdivisionSize + CHUNK_PADDING) * textureSubdivisionSize))
+        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.x / static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) * textureSubdivisionSize)),
+        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.y / static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) * textureSubdivisionSize))
     };
 
     DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (adjusted {}, {})", maxChunkArea.x, maxChunkArea.y, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y));
@@ -182,7 +182,7 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawab
     bufferDirty_ = false;
     spdlog::debug("Chunk area changed or buffer dirty, updating buffer.");
     const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
-    const auto& emptyChunk = chunkDrawables.at(EMPTY_CHUNK_COORDS);
+    const auto& emptyChunk = chunkDrawables.at(LodRenderer::EMPTY_CHUNK_COORDS);
     for (int y = 0; y < visibleArea.height; ++y) {
         auto chunkDrawable = chunkDrawables.upper_bound(ChunkCoords::pack(visibleArea.left - 1, visibleArea.top + y));
         for (int x = 0; x < visibleArea.width; ++x) {
@@ -218,8 +218,8 @@ bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlo
 
 sf::Vector2f ChunkRender::getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const {
     return {
-        static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING)),
-        static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_PADDING))
+        static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_TEXEL_PADDING)),
+        static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_TEXEL_PADDING))
     };
 }
 
@@ -229,7 +229,7 @@ void ChunkRender::sortRenderBlocks() {
         lastVisibleArea_.top + (lastVisibleArea_.height - 1) / 2.0f
     };
     for (auto& renderBlock : renderBlocks_) {
-        if (renderBlock.coords != EMPTY_CHUNK_COORDS) {
+        if (renderBlock.coords != LodRenderer::EMPTY_CHUNK_COORDS) {
             renderBlock.adjustedChebyshev = std::max(
                 std::abs(ChunkCoords::x(renderBlock.coords) - centerPosition.x) / lastVisibleArea_.width,
                 std::abs(ChunkCoords::y(renderBlock.coords) - centerPosition.y) / lastVisibleArea_.height

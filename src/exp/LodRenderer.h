@@ -1,20 +1,29 @@
 #pragma once
 
+#include <ChunkCoords.h>
+
+#include <SFML/Graphics.hpp>
+
 class OffsetView;
 
 class LodRenderer {
 public:
+    // Special coordinates for the empty chunk used in derived classes.
+    static constexpr ChunkCoords::repr EMPTY_CHUNK_COORDS = 0;
+
+    LodRenderer();
     virtual ~LodRenderer() noexcept = default;
     // FIXME should be private nonvirtual? probably should add virtual to other derived classes that missed it.
     LodRenderer(const LodRenderer& rhs) = default;
     LodRenderer& operator=(const LodRenderer& rhs) = default;
 
-    // FIXME include some helper functions to abstract functionality from Board and SubBoard, maybe skip the virtual methods.
-    virtual void setRenderArea(const OffsetView& offsetView, float zoom) = 0;
-    int getCurrentLod() const;
+    virtual void markChunkDrawDirty(ChunkCoords::repr coords) = 0;
 
-    // FIXME define EMPTY_CHUNK_COORDS in here?
+protected:
+    int getLevelOfDetail() const;
+    void setLevelOfDetail(int lod);
+    sf::Vector2u getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom, unsigned int tileWidth) const;
 
 private:
-    int currentLod_;
+    int levelOfDetail_;
 };

@@ -160,7 +160,7 @@ void Editor::update() {
     subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));//static_cast<sf::Vector2f>(mousePos_) * zoomLevel_);
     sf::RenderStates states;
     states.texture = tilesetGrid_;
-    subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted
+    subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted. also, should we pass in just the texture here?
 
     /*static sf::Clock c;
     static int stage = 0;

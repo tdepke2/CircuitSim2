@@ -8,6 +8,7 @@
 #include <FileStorage.h>
 #include <Filesystem.h>
 #include <FlatMap.h>
+#include <LodRenderer.h>
 
 #include <array>
 #include <memory>
@@ -28,7 +29,7 @@ class Tile;
  * uses different levels-of-detail based on the zoom level. Boards can also
  * save/load to a file and work with different file formats.
  */
-class Board : public sf::Drawable {
+class Board : public sf::Drawable, LodRenderer {
 public:
     static void setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth);
 
@@ -49,7 +50,6 @@ public:
     bool isChunkLoaded(ChunkCoords::repr coords) const;
     void loadChunk(Chunk&& chunk);
     Chunk& accessChunk(ChunkCoords::repr coords);
-    void markChunkDrawDirty(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
     void removeAllHighlights();
@@ -68,6 +68,7 @@ private:
 
     void pruneChunkDrawables();
     void updateRender();
+    virtual void markChunkDrawDirty(ChunkCoords::repr coords) override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::unique_ptr<FileStorage> fileStorage_;
@@ -77,7 +78,6 @@ private:
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
-    int currentLod_;
     std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
     ChunkCoordsRange lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;

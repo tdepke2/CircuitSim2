@@ -1,6 +1,6 @@
-#include <Board.h>
 #include <Chunk.h>
 #include <FileStorage.h>
+#include <LodRenderer.h>
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
@@ -59,9 +59,9 @@ void Chunk::setupChunks() {
     }
 }
 
-Chunk::Chunk(Board* board, ChunkCoords::repr coords) :
+Chunk::Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords) :
     tiles_{},
-    board_(board),
+    lodRenderer_(lodRenderer),
     coords_(coords),
     dirtyFlags_(),
     empty_(true), 
@@ -72,8 +72,8 @@ ChunkCoords::repr Chunk::getCoords() const {
     return coords_;
 }
 
-void Chunk::setBoard(Board* board) {
-    board_ = board;
+void Chunk::setLodRenderer(LodRenderer* lodRenderer) {
+    lodRenderer_ = lodRenderer;
 }
 
 bool Chunk::isUnsaved() const {
@@ -137,17 +137,17 @@ void Chunk::debugPrintChunk() const {
 }
 
 void Chunk::markTileDirty(unsigned int /*tileIndex*/) {
-    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
+    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && lodRenderer_ != nullptr) {
         //spdlog::debug("Calling Board::markChunkDrawDirty() for chunk {}.", ChunkCoords::toPair(coords_));
-        board_->markChunkDrawDirty(coords_);
+        lodRenderer_->markChunkDrawDirty(coords_);
     }
     //tiles_[tileIndex].redraw = true;    // Tracking redraw per tile did not show a noticeable boost in rendering.
     dirtyFlags_.set();
 }
 
 void Chunk::markHighlightDirty(unsigned int /*tileIndex*/) {
-    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && board_ != nullptr) {
-        board_->markChunkDrawDirty(coords_);
+    if (!dirtyFlags_.test(ChunkDirtyFlag::drawPending) && lodRenderer_ != nullptr) {
+        lodRenderer_->markChunkDrawDirty(coords_);
     }
     dirtyFlags_.set(ChunkDirtyFlag::highlightedIsStale);
     dirtyFlags_.set(ChunkDirtyFlag::drawPending);

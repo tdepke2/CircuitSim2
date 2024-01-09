@@ -28,7 +28,6 @@ class ChunkDrawable;
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
-    static constexpr ChunkCoords::repr EMPTY_CHUNK_COORDS = 0;
     static void setupTextureData(unsigned int tileWidth);
 
     ChunkRender();
@@ -45,7 +44,7 @@ public:
     void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea);
 
 private:
-    static constexpr int CHUNK_PADDING = 1;
+    static constexpr int CHUNK_TEXEL_PADDING = 1;
     static unsigned int tileWidth_;
 
     struct RenderBlock {

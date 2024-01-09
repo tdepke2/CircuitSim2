@@ -5,6 +5,7 @@
 #include <ChunkCoordsRange.h>
 #include <ChunkDrawable.h>
 #include <FlatMap.h>
+#include <LodRenderer.h>
 
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -13,7 +14,7 @@
 class OffsetView;
 class Tile;
 
-class SubBoard : public sf::Drawable {
+class SubBoard : public sf::Drawable, LodRenderer {
 public:
     static void setup(unsigned int tileWidth);
 
@@ -33,6 +34,7 @@ private:
     static unsigned int tileWidth_;
 
     void updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition);
+    virtual void markChunkDrawDirty(ChunkCoords::repr coords) override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2f position_;
@@ -40,7 +42,6 @@ private:
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
-    int levelOfDetail_;
     ChunkCoordsRange visibleArea_;
     ChunkCoordsRange lastVisibleArea_;
     sf::RenderTexture texture_;

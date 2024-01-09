@@ -37,15 +37,14 @@ SubBoard::SubBoard() :
     position_(),
     size_(),
     chunks_(),
-    emptyChunk_(new Chunk(nullptr, ChunkRender::EMPTY_CHUNK_COORDS)),
+    emptyChunk_(new Chunk(nullptr, LodRenderer::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
-    levelOfDetail_(0),
     visibleArea_(0, 0, 0, 0),
     lastVisibleArea_(0, 0, 0, 0),
     texture_(),
     vertices_(sf::Triangles, 6) {
 
-    chunkDrawables_[ChunkRender::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void SubBoard::setVisibleSize(const sf::Vector2u& size) {
@@ -56,18 +55,13 @@ void SubBoard::setVisibleSize(const sf::Vector2u& size) {
 }
 
 void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition) {
-    // from Board ##############################################################
-    int currentLod = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
-    const sf::Vector2f maxViewSize = offsetView.getSize() / zoom * static_cast<float>(1 << (currentLod + 1));
-    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    const sf::Vector2u maxChunkArea = {
-        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.x) / chunkWidthTexels)) + 1,
-        static_cast<unsigned int>(std::ceil(std::round(maxViewSize.y) / chunkWidthTexels)) + 1
-    };
+    int levelOfDetail = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
+    bool levelOfDetailChanged = (getLevelOfDetail() != levelOfDetail);
+    setLevelOfDetail(levelOfDetail);
+    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom, tileWidth_);
 
-    // from ChunkRender ########################################################
-    //const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    const int textureSubdivisionSize = chunkWidthTexels / (1 << currentLod);
+    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail);
     const sf::Vector2u pow2ChunkArea = {
         1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
         1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.y)))
@@ -87,12 +81,9 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf:
         std::stringstream address;
         address << static_cast<const void*>(this);
         DebugScreen::instance()->registerTexture("subBoard " + address.str(), &texture_.getTexture());
-    }
-
-    if (levelOfDetail_ != currentLod) {
-        levelOfDetail_ = currentLod;
-        texture_.clear(sf::Color::Black);
+    } else if (levelOfDetailChanged) {
         lastVisibleArea_ = {0, 0, 0, 0};
+        texture_.clear(sf::Color::Black);
     }
 
     updateVisibleArea(offsetView, tilePosition);
@@ -103,30 +94,29 @@ void SubBoard::drawChunks(sf::RenderStates states) {
         lastVisibleArea_ = {0, 0, 0, 0};
     }
 
-
-    // from Board ##############################################################
-
     // FIXME there is a remaining issue with draw updates here, the chunks don't redraw because their board is null.
+    // fixed now, time to move common stuff into LodRenderer and clean up + review?
+    // FIXME would also like to tackle the problem with frequent texture allocation on zoom.
 
     auto drawChunk = [this](const ChunkDrawable& chunkDrawable, sf::RenderStates states, bool& textureDirty, int x, int y) {
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-        const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
+        const int textureSubdivisionSize = chunkWidthTexels / (1 << getLevelOfDetail());
         states.transform.translate(
             static_cast<float>((x - visibleArea_.left) * textureSubdivisionSize),
             static_cast<float>((y - visibleArea_.top) * textureSubdivisionSize)
         );
         states.transform.scale(
-            1.0f / (1 << levelOfDetail_),
-            1.0f / (1 << levelOfDetail_)
+            1.0f / (1 << getLevelOfDetail()),
+            1.0f / (1 << getLevelOfDetail())
         );
         spdlog::warn("Redrawing SubBoard chunk at {}, {}.", x, y);
         texture_.draw(chunkDrawable, states);
         textureDirty = true;
-        chunkDrawable.markAsDrawn(levelOfDetail_);
+        chunkDrawable.markAsDrawn(getLevelOfDetail());
     };
 
     bool textureDirty = false;
-    const auto& emptyChunkDrawable = chunkDrawables_.at(ChunkRender::EMPTY_CHUNK_COORDS);
+    const auto& emptyChunkDrawable = chunkDrawables_.at(LodRenderer::EMPTY_CHUNK_COORDS);
     for (int y = visibleArea_.top; y < visibleArea_.top + visibleArea_.height && y * Chunk::WIDTH < static_cast<int>(size_.y); ++y) {
         auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(visibleArea_.left - 1, y));
         for (int x = visibleArea_.left; x < visibleArea_.left + visibleArea_.width && x * Chunk::WIDTH < static_cast<int>(size_.x); ++x) {
@@ -135,7 +125,7 @@ void SubBoard::drawChunks(sf::RenderStates states) {
                     drawChunk(emptyChunkDrawable, states, textureDirty, x, y);
                 }
             } else {
-                if (chunkDrawable->second.isRenderDirty(levelOfDetail_) || !lastVisibleArea_.contains(x, y)) {
+                if (chunkDrawable->second.isRenderDirty(getLevelOfDetail()) || !lastVisibleArea_.contains(x, y)) {
                     drawChunk(chunkDrawable->second, states, textureDirty, x, y);
                 }
                 ++chunkDrawable;
@@ -156,7 +146,7 @@ Chunk& SubBoard::accessChunk(ChunkCoords::repr coords) {
     }
 
     spdlog::warn("SubBoard allocating new chunk at {}.", ChunkCoords::toPair(coords));
-    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(nullptr, coords)).first;
+    chunk = chunks_.emplace(std::piecewise_construct, std::forward_as_tuple(coords), std::forward_as_tuple(static_cast<LodRenderer*>(this), coords)).first;
     chunkDrawables_[coords].setChunk(&chunk->second);
     return chunk->second;
 }
@@ -172,7 +162,6 @@ Tile SubBoard::accessTile(const sf::Vector2i& pos) {
 }
 
 void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition) {
-    // from Board ##############################################################
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     sf::Vector2i areaSize = {
         static_cast<int>(std::floor(offsetView.getSize().x / chunkWidthTexels)),
@@ -219,13 +208,17 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
     vertices_[5].position = p1;
 
     const sf::Vector2f t1 = {0.0f, 0.0f};
-    const sf::Vector2f t2 = {p2.x / (1 << levelOfDetail_), p2.y / (1 << levelOfDetail_)};
+    const sf::Vector2f t2 = {p2.x / (1 << getLevelOfDetail()), p2.y / (1 << getLevelOfDetail())};
     vertices_[0].texCoords = t1;
     vertices_[1].texCoords = {t2.x, t1.y};
     vertices_[2].texCoords = t2;
     vertices_[3].texCoords = t2;
     vertices_[4].texCoords = {t1.x, t2.y};
     vertices_[5].texCoords = t1;
+}
+
+void SubBoard::markChunkDrawDirty(ChunkCoords::repr coords) {
+    chunkDrawables_.at(coords).markDirty();
 }
 
 void SubBoard::draw(sf::RenderTarget& target, sf::RenderStates states) const {
