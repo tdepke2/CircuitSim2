@@ -3,6 +3,7 @@
 #include <OffsetView.h>
 #include <SubBoard.h>
 
+#include <memory>
 #include <SFML/Graphics.hpp>
 #include <utility>
 
@@ -11,10 +12,10 @@ class ResourceManager;
 
 class Editor : public sf::Drawable {
 public:
-    static void setupTextureData(sf::Texture* tilesetGrid, sf::Texture* tilesetNoGrid, unsigned int tileWidth);
+    static void setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth);
 
     Editor(Board& board, ResourceManager& resource, const sf::View& initialView);
-    ~Editor() = default;
+    ~Editor();
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;
 
@@ -24,8 +25,8 @@ public:
     void update();
 
 private:
-    static sf::Texture* tilesetGrid_;
-    static sf::Texture* tilesetNoGrid_;
+    static std::unique_ptr<sf::Texture> tilesetBright_;
+    static std::unique_ptr<sf::Texture> tilesetBrightNoBlanks_;
     static unsigned int tileWidth_;
 
     void deselectAll();

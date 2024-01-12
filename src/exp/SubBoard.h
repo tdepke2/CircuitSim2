@@ -38,12 +38,11 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Vector2f position_;
-    sf::Vector2u size_;
+    sf::Vector2u size_, lastSize_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
-    ChunkCoordsRange visibleArea_;
-    ChunkCoordsRange lastVisibleArea_;
+    ChunkCoordsRange visibleArea_, lastVisibleArea_;
     sf::RenderTexture texture_;
     sf::VertexArray vertices_;
 };

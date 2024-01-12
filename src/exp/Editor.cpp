@@ -1,6 +1,7 @@
 #include <Board.h>
 #include <Chunk.h>
 #include <ChunkRender.h>
+#include <DebugScreen.h>
 #include <Editor.h>
 #include <ResourceManager.h>
 #include <Tile.h>
@@ -10,8 +11,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-sf::Texture* Editor::tilesetGrid_;
-sf::Texture* Editor::tilesetNoGrid_;
+std::unique_ptr<sf::Texture> Editor::tilesetBright_;
+std::unique_ptr<sf::Texture> Editor::tilesetBrightNoBlanks_;
 unsigned int Editor::tileWidth_;
 
 namespace {
@@ -22,9 +23,19 @@ constexpr int constLog2(int x) {
 
 }
 
-void Editor::setupTextureData(sf::Texture* tilesetGrid, sf::Texture* tilesetNoGrid, unsigned int tileWidth) {
-    tilesetGrid_ = tilesetGrid;
-    tilesetNoGrid_ = tilesetNoGrid;
+void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) {
+    sf::Image tilesetCopy = tilesetGrid->copyToImage();
+    tilesetBright_.reset(new sf::Texture());
+    if (!tilesetBright_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
+        spdlog::error("Failed to create tilesetBright texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
+    }
+    const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
+    tilesetBright_->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
+    tilesetBright_->setSmooth(true);
+    if (!tilesetBright_->generateMipmap()) {
+        spdlog::warn("\"tilesetBright\": Unable to generate mipmap for texture.");
+    }
+    DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright_.get());
     tileWidth_ = tileWidth;
     SubBoard::setup(tileWidth);
 }
@@ -57,6 +68,11 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     subBoard_.accessTile(95, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
     subBoard_.accessTile(95, 62).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
     subBoard_.accessTile(94, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
+}
+
+Editor::~Editor() {
+    tilesetBright_.reset();
+    tilesetBrightNoBlanks_.reset();
 }
 
 const OffsetView& Editor::getEditView() const {
@@ -134,24 +150,31 @@ void Editor::update() {
     // Toggle tile states on the SubBoard to test draw updates.
     static sf::Clock c;
     static int stage = 0;
-    if (c.getElapsedTime().asSeconds() >= 1.0f) {
+    if (c.getElapsedTime().asSeconds() >= 0.05f) {
         c.restart();
-        stage = (stage + 1) % 4;
         if (stage == 0) {
             subBoard_.accessTile(0, 0).setState(State::low);
             subBoard_.accessTile(32, 32).setState(State::low);
-        } else if (stage == 1) {
+            //subBoard_.setVisibleSize({1, 1});
+        } else if (stage == 16) {
             subBoard_.accessTile(0, 0).setState(State::high);
-        } else if (stage == 2) {
+            //subBoard_.setVisibleSize({64, 64});
+        } else if (stage == 32) {
             subBoard_.accessTile(0, 0).setState(State::low);
             subBoard_.accessTile(32, 32).setState(State::high);
-        } else if (stage == 3) {
+            //subBoard_.setVisibleSize({65, 65});
+        } else if (stage == 48) {
             subBoard_.accessTile(0, 0).setState(State::high);
+            //subBoard_.setVisibleSize({96, 64});
         }
-        spdlog::debug("stage set to {}", stage);
+        subBoard_.setVisibleSize({static_cast<unsigned int>(stage * 1.45), static_cast<unsigned int>(stage * 1.2)});
+        if (stage % 16 == 0) {
+            spdlog::debug("stage set to {}", stage);
+        }
+        stage = (stage + 1) % 64;
     }
 
-    subBoard_.setVisibleSize({96, 64});
+    //subBoard_.setVisibleSize({96, 64});
     //subBoard_.setPosition(cursor_.getPosition());
 
     //spdlog::debug("{}", cursor_.getPosition().x - editView_.getCenter().x);    // The below cursor position isn't right as the cursor position is bounded, do we need to subtract the edit view center?
@@ -159,7 +182,7 @@ void Editor::update() {
     //subBoard_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View(editView_.getSize() / 2.0f - cursor_.getPosition(), editView_.getSize())), zoomLevel_);
     subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));//static_cast<sf::Vector2f>(mousePos_) * zoomLevel_);
     sf::RenderStates states;
-    states.texture = tilesetGrid_;
+    states.texture = tilesetBright_.get();
     subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted. also, should we pass in just the texture here?
 
     /*static sf::Clock c;

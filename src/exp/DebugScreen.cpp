@@ -1,11 +1,13 @@
 #include <DebugScreen.h>
 
 #include <algorithm>
+#include <cassert>
 #include <spdlog/spdlog.h>
 
 std::unique_ptr<DebugScreen> DebugScreen::instance_;
 
 void DebugScreen::init(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) {
+    assert(!instance_);
     instance_.reset(new DebugScreen(font, characterSize, windowSize));
 }
 

@@ -36,6 +36,7 @@ void SubBoard::setup(unsigned int tileWidth) {
 SubBoard::SubBoard() :
     position_(),
     size_(),
+    lastSize_(),
     chunks_(),
     emptyChunk_(new Chunk(nullptr, LodRenderer::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
@@ -48,10 +49,7 @@ SubBoard::SubBoard() :
 }
 
 void SubBoard::setVisibleSize(const sf::Vector2u& size) {
-    if (size_ != size) {
-        size_ = size;
-        lastVisibleArea_ = {0, 0, 0, 0};
-    }
+    size_ = size;
 }
 
 void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition) {
@@ -93,10 +91,6 @@ void SubBoard::drawChunks(sf::RenderStates states) {
     if (lastVisibleArea_.getFirst() != visibleArea_.getFirst()) {
         lastVisibleArea_ = {0, 0, 0, 0};
     }
-
-    // FIXME there is a remaining issue with draw updates here, the chunks don't redraw because their board is null.
-    // fixed now, time to move common stuff into LodRenderer and clean up + review?
-    // FIXME would also like to tackle the problem with frequent texture allocation on zoom.
 
     auto drawChunk = [this](const ChunkDrawable& chunkDrawable, sf::RenderStates states, bool& textureDirty, int x, int y) {
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
@@ -190,11 +184,15 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
         visibleArea_.top += numChunks;
     }
 
-    if (lastVisibleArea_ == visibleArea_) {
+    if (lastVisibleArea_ == visibleArea_ && lastSize_ == size_) {
         return;
     }
 
-    spdlog::warn("SubBoard visible area changed, now {} to {}.", ChunkCoords::toPair(visibleArea_.getFirst()), ChunkCoords::toPair(visibleArea_.getSecond()));
+    spdlog::warn(
+        "SubBoard visible area or size changed, now {} to {} with size {} by {}.",
+        ChunkCoords::toPair(visibleArea_.getFirst()), ChunkCoords::toPair(visibleArea_.getSecond()),
+        size_.x, size_.y
+    );
     const sf::Vector2f p1 = {0.0f, 0.0f};
     const sf::Vector2f p2 = {
         static_cast<float>(std::max(std::min(visibleArea_.width * chunkWidthTexels, static_cast<int>(size_.x * tileWidth_) - visibleArea_.left * chunkWidthTexels), 0)),
@@ -215,6 +213,13 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
     vertices_[3].texCoords = t2;
     vertices_[4].texCoords = {t1.x, t2.y};
     vertices_[5].texCoords = t1;
+
+    const sf::Vector2u chunkSizeSubOne = {Chunk::WIDTH - 1, Chunk::WIDTH - 1};
+    if ((lastSize_ + chunkSizeSubOne) / static_cast<unsigned int>(Chunk::WIDTH) != (size_ + chunkSizeSubOne) / static_cast<unsigned int>(Chunk::WIDTH)) {
+        spdlog::warn("SubBoard size crossed chunk border, forcing redraw.");
+        lastVisibleArea_ = {0, 0, 0, 0};
+    }
+    lastSize_ = size_;
 }
 
 void SubBoard::markChunkDrawDirty(ChunkCoords::repr coords) {
