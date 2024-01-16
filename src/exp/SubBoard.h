@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <unordered_map>
 
+class Board;
 class OffsetView;
 class Tile;
 
@@ -25,14 +26,18 @@ public:
 
     void setVisibleSize(const sf::Vector2u& size);
     void setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition);
-    void drawChunks(sf::RenderStates states);
+    void drawChunks(const sf::Texture* tileset);
     Chunk& accessChunk(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
+    void clear();
+    void copyFromBoard(const Board& board, sf::Vector2i first, sf::Vector2i second);
+    void pasteToBoard(Board& board, const sf::Vector2i& pos);
 
 private:
     static unsigned int tileWidth_;
 
+    void resetChunkDraw();
     void updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition);
     virtual void markChunkDrawDirty(ChunkCoords::repr coords) override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

@@ -65,6 +65,11 @@ void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
     }
 }
 
+void Wire::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
+    const auto& tileData = getTileData(chunk, tileIndex);
+    init(target.getChunk(), target.getIndex(), tileData.id, tileData.dir, tileData.state1, tileData.state2);
+}
+
 Wire::Wire() {
     spdlog::debug("Wire class has been constructed.");
 }

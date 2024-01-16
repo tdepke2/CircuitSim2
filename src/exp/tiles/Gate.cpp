@@ -40,6 +40,11 @@ void Gate::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
     }
 }
 
+void Gate::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
+    const auto& tileData = getTileData(chunk, tileIndex);
+    init(target.getChunk(), target.getIndex(), tileData.id, tileData.dir, tileData.state1);
+}
+
 Gate::Gate() {
     spdlog::debug("Gate class has been constructed.");
 }

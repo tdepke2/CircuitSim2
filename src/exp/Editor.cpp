@@ -25,17 +25,34 @@ constexpr int constLog2(int x) {
 
 void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) {
     sf::Image tilesetCopy = tilesetGrid->copyToImage();
+    const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
+
     tilesetBright_.reset(new sf::Texture());
     if (!tilesetBright_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBright texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
-    const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
     tilesetBright_->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
     tilesetBright_->setSmooth(true);
     if (!tilesetBright_->generateMipmap()) {
         spdlog::warn("\"tilesetBright\": Unable to generate mipmap for texture.");
     }
     DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright_.get());
+
+    sf::Image transparentBlank;
+    transparentBlank.create(tileWidth * 2, tileWidth * 2, {0, 0, 0, 0});
+    tilesetCopy.copy(transparentBlank, 0, tilesetCopy.getSize().y / 2);
+
+    tilesetBrightNoBlanks_.reset(new sf::Texture());
+    if (!tilesetBrightNoBlanks_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
+        spdlog::error("Failed to create tilesetBrightNoBlanks texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
+    }
+    tilesetBrightNoBlanks_->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
+    tilesetBrightNoBlanks_->setSmooth(true);
+    if (!tilesetBrightNoBlanks_->generateMipmap()) {
+        spdlog::warn("\"tilesetBrightNoBlanks\": Unable to generate mipmap for texture.");
+    }
+    DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks_.get());
+
     tileWidth_ = tileWidth;
     SubBoard::setup(tileWidth);
 }
@@ -136,6 +153,8 @@ void Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::KeyPressed) {
         if (event.key.code == sf::Keyboard::Escape) {
             deselectAll();
+        } else if (event.key.code == sf::Keyboard::Enter) {
+            subBoard_.pasteToBoard(board_, mapMouseToTile(mousePos_));
         }
     } else if (event.type == sf::Event::Resized) {
         windowSize_.x = event.size.width;
@@ -146,6 +165,13 @@ void Editor::processEvent(const sf::Event& event) {
 
 void Editor::update() {
     updateCursor();
+
+    /*static bool doSubBoardUpdates = true;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+        doSubBoardUpdates = false;
+        //subBoard_.clear();
+    }
+    if (doSubBoardUpdates) {*/
 
     // Toggle tile states on the SubBoard to test draw updates.
     static sf::Clock c;
@@ -174,16 +200,13 @@ void Editor::update() {
         stage = (stage + 1) % 64;
     }
 
+    //}
+
     //subBoard_.setVisibleSize({96, 64});
     //subBoard_.setPosition(cursor_.getPosition());
 
-    //spdlog::debug("{}", cursor_.getPosition().x - editView_.getCenter().x);    // The below cursor position isn't right as the cursor position is bounded, do we need to subtract the edit view center?
-
-    //subBoard_.setRenderArea(OffsetView(editView_.getViewDivisor(), sf::View(editView_.getSize() / 2.0f - cursor_.getPosition(), editView_.getSize())), zoomLevel_);
-    subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));//static_cast<sf::Vector2f>(mousePos_) * zoomLevel_);
-    sf::RenderStates states;
-    states.texture = tilesetBright_.get();
-    subBoard_.drawChunks(states);    // FIXME for highlighting, we'll want a special texture with all tiles highlighted. also, should we pass in just the texture here?
+    subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));
+    subBoard_.drawChunks(tilesetBright_.get());
 
     /*static sf::Clock c;
     static int stage = 0;

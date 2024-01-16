@@ -20,6 +20,11 @@ void Led::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizo
 
 void Led::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
+void Led::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
+    const auto& tileData = getTileData(chunk, tileIndex);
+    init(target.getChunk(), target.getIndex(), tileData.state1);
+}
+
 Led::Led() {
     spdlog::debug("Led class has been constructed.");
 }

@@ -55,7 +55,9 @@ public:
     void setType(tiles::Led* type, State::t state = State::low);
     void setType(tiles::Wire* type, TileId::t wireId = TileId::wireStraight, Direction::t direction = Direction::north, State::t state1 = State::low, State::t state2 = State::low);
     TileType* getType();
+    const TileType* getType() const;
     Chunk& getChunk();
+    const Chunk& getChunk() const;
     unsigned int getIndex() const;
 
     void setDirection(Direction::t direction);
@@ -67,6 +69,7 @@ public:
     State::t getState() const;
     void flip(bool acrossHorizontal);
     void alternativeTile();
+    void cloneTo(Tile target) const;
 
 private:
     TileType* tileType_;

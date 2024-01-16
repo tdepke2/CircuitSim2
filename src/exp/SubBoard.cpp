@@ -1,3 +1,4 @@
+#include <Board.h>
 #include <DebugScreen.h>
 #include <OffsetView.h>
 #include <SubBoard.h>
@@ -68,33 +69,31 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf:
 
     if (texture_.getSize() != textureSize) {
         spdlog::warn("Resizing SubBoard area to {} by {} chunks.", pow2ChunkArea.x, pow2ChunkArea.y);    // FIXME set to warn for test.
-        lastVisibleArea_ = {0, 0, 0, 0};
-
         if (!texture_.create(textureSize.x, textureSize.y)) {
             spdlog::error("Failed to create SubBoard texture (size {} by {}).", textureSize.x, textureSize.y);
         }
-        texture_.clear(sf::Color::Black);
+        resetChunkDraw();
         texture_.setSmooth(true);
 
         std::stringstream address;
         address << static_cast<const void*>(this);
         DebugScreen::instance()->registerTexture("subBoard " + address.str(), &texture_.getTexture());
     } else if (levelOfDetailChanged) {
-        lastVisibleArea_ = {0, 0, 0, 0};
-        texture_.clear(sf::Color::Black);
+        resetChunkDraw();
     }
 
     updateVisibleArea(offsetView, tilePosition);
 }
 
-void SubBoard::drawChunks(sf::RenderStates states) {
+void SubBoard::drawChunks(const sf::Texture* tileset) {
     if (lastVisibleArea_.getFirst() != visibleArea_.getFirst()) {
-        lastVisibleArea_ = {0, 0, 0, 0};
+        resetChunkDraw();
     }
 
-    auto drawChunk = [this](const ChunkDrawable& chunkDrawable, sf::RenderStates states, bool& textureDirty, int x, int y) {
+    auto drawChunk = [this](const ChunkDrawable& chunkDrawable, const sf::Texture* tileset, bool& textureDirty, int x, int y) {
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
         const int textureSubdivisionSize = chunkWidthTexels / (1 << getLevelOfDetail());
+        sf::RenderStates states(tileset);
         states.transform.translate(
             static_cast<float>((x - visibleArea_.left) * textureSubdivisionSize),
             static_cast<float>((y - visibleArea_.top) * textureSubdivisionSize)
@@ -116,11 +115,11 @@ void SubBoard::drawChunks(sf::RenderStates states) {
         for (int x = visibleArea_.left; x < visibleArea_.left + visibleArea_.width && x * Chunk::WIDTH < static_cast<int>(size_.x); ++x) {
             if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != ChunkCoords::pack(x, y)) {
                 if (!lastVisibleArea_.contains(x, y)) {
-                    drawChunk(emptyChunkDrawable, states, textureDirty, x, y);
+                    drawChunk(emptyChunkDrawable, tileset, textureDirty, x, y);
                 }
             } else {
                 if (chunkDrawable->second.isRenderDirty(getLevelOfDetail()) || !lastVisibleArea_.contains(x, y)) {
-                    drawChunk(chunkDrawable->second, states, textureDirty, x, y);
+                    drawChunk(chunkDrawable->second, tileset, textureDirty, x, y);
                 }
                 ++chunkDrawable;
             }
@@ -153,6 +152,47 @@ Tile SubBoard::accessTile(int x, int y) {
 
 Tile SubBoard::accessTile(const sf::Vector2i& pos) {
     return accessTile(pos.x, pos.y);
+}
+
+void SubBoard::clear() {
+    chunks_.clear();
+    chunkDrawables_.clear();
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    setVisibleSize({0, 0});
+}
+
+void SubBoard::copyFromBoard(const Board& board, sf::Vector2i first, sf::Vector2i second) {
+
+}
+
+void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos) {
+    sf::Vector2i a = pos;
+    sf::Vector2i b = pos + static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1);    // FIXME: apply bounds check to b (and a?) so that we can't write outside the board area.
+
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    for (int yChunk = a.y >> widthLog2; yChunk <= b.y >> widthLog2; ++yChunk) {
+        for (int xChunk = a.x >> widthLog2; xChunk <= b.x >> widthLog2; ++xChunk) {
+            auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
+            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
+                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
+                if (x >= a.x && x <= b.x && y >= a.y && y <= b.y) {
+
+                    accessTile(x - a.x, y - a.y).cloneTo(chunk.accessTile(i));
+
+                    // can we optimize tile lookup in the SubBoard too? is that not even worth it?
+
+                }
+            }
+        }
+    }
+}
+
+void SubBoard::resetChunkDraw() {
+    lastVisibleArea_ = {0, 0, 0, 0};
+    if (texture_.getSize() != sf::Vector2u(0, 0)) {
+        texture_.clear({0, 0, 0, 0});
+    }
 }
 
 void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition) {
@@ -217,7 +257,7 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
     const sf::Vector2u chunkSizeSubOne = {Chunk::WIDTH - 1, Chunk::WIDTH - 1};
     if ((lastSize_ + chunkSizeSubOne) / static_cast<unsigned int>(Chunk::WIDTH) != (size_ + chunkSizeSubOne) / static_cast<unsigned int>(Chunk::WIDTH)) {
         spdlog::warn("SubBoard size crossed chunk border, forcing redraw.");
-        lastVisibleArea_ = {0, 0, 0, 0};
+        resetChunkDraw();
     }
     lastSize_ = size_;
 }

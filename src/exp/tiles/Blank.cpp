@@ -15,6 +15,10 @@ void Blank::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHori
 
 void Blank::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
+void Blank::cloneTo(const Chunk& /*chunk*/, unsigned int /*tileIndex*/, Tile target) {
+    init(target.getChunk(), target.getIndex());
+}
+
 Blank::Blank() {
     spdlog::debug("Blank class has been constructed.");
 }

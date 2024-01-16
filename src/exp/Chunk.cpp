@@ -106,6 +106,7 @@ std::vector<char> Chunk::serialize() const {
     }
     std::vector<char> data(sizeof(tiles_));
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
+        // FIXME: it may be just as efficient to create tileSwapped with bitwise ops instead of relying on a fragile reinterpret cast (which could be platform dependent).
         uint32_t tileSwapped = FileStorage::byteswap(*reinterpret_cast<const uint32_t*>(tiles_ + i));
         std::memcpy(data.data() + i * sizeof(TileData), &tileSwapped, sizeof(TileData));
     }

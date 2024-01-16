@@ -40,7 +40,15 @@ TileType* Tile::getType() {
     return tileType_;
 }
 
+const TileType* Tile::getType() const {
+    return tileType_;
+}
+
 Chunk& Tile::getChunk() {
+    return chunk_;
+}
+
+const Chunk& Tile::getChunk() const {
     return chunk_;
 }
 
@@ -82,4 +90,8 @@ void Tile::flip(bool acrossHorizontal) {
 
 void Tile::alternativeTile() {
     tileType_->alternativeTile(chunk_, tileIndex_);
+}
+
+void Tile::cloneTo(Tile target) const {
+    tileType_->cloneTo(chunk_, tileIndex_, target);
 }

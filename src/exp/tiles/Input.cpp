@@ -30,6 +30,11 @@ void Input::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {
     // FIXME need to open up a dialog prompt to allow configuration.
 }
 
+void Input::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
+    const auto& tileData = getTileData(chunk, tileIndex);
+    init(target.getChunk(), target.getIndex(), tileData.id, tileData.state1, tileData.meta);
+}
+
 Input::Input() {
     spdlog::debug("Input class has been constructed.");
 }

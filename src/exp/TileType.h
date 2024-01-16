@@ -28,6 +28,9 @@ public:
     virtual State::t getState(const Chunk& chunk, unsigned int tileIndex) const;
     virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) = 0;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) = 0;
+    // Note: this method is not marked const to allow implementations to call
+    // their non-const member functions on the target, such as init().
+    virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) = 0;
 
 protected:
     ~TileType() = default;
