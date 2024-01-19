@@ -89,11 +89,11 @@ int main() {
                 zoomLevel = std::min(std::max(zoomLevel, 0.2f), maxZoom);
                 boardView.setSize(window.getSize().x * zoomLevel, window.getSize().y * zoomLevel);*/
             } else if (event.type == sf::Event::KeyPressed) {
-                if (event.key.control) {
+                /*if (event.key.control) {
                     if (event.key.code == sf::Keyboard::S) {
                         board.saveToFile();
                     }
-                }
+                }*/
             } else if (event.type == sf::Event::Resized) {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 //boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);

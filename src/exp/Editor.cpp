@@ -5,6 +5,10 @@
 #include <Editor.h>
 #include <ResourceManager.h>
 #include <Tile.h>
+#include <tiles/Blank.h>
+#include <tiles/Gate.h>
+#include <tiles/Input.h>
+#include <tiles/Led.h>
 #include <tiles/Wire.h>
 
 #include <cmath>
@@ -70,21 +74,13 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
-    subBoard_() {
+    tileSubBoard_(),
+    copySubBoard_(),
+    copySubBoardVisible_(false) {
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
     cursorLabel_.setOutlineThickness(2.0f);
-    subBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
-    subBoard_.accessTile(0, 1).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
-    subBoard_.accessTile(1, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::north, State::low);
-    subBoard_.accessTile(32, 32).setType(tiles::Wire::instance(), TileId::wireJunction, Direction::north, State::low);
-    subBoard_.accessTile(63, 63).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
-    subBoard_.accessTile(63, 62).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
-    subBoard_.accessTile(62, 63).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::low, State::middle);
-    subBoard_.accessTile(95, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
-    subBoard_.accessTile(95, 62).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
-    subBoard_.accessTile(94, 63).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::low);
 }
 
 Editor::~Editor() {
@@ -115,6 +111,14 @@ void Editor::processEvent(const sf::Event& event) {
             cursorVisible_ = true;
         }
         updateCursor();
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+            if (selectionStart_.second) {
+                updateSelection(cursorCoords_);
+            }
+            if (tileSubBoard_.getVisibleSize() != sf::Vector2u(0, 0)) {
+                tileSubBoard_.pasteToBoard(board_, cursorCoords_);
+            }
+        }
     } else if (event.type == sf::Event::MouseEntered) {
         mouseOnScreen_ = true;
         cursorVisible_ = true;
@@ -124,20 +128,30 @@ void Editor::processEvent(const sf::Event& event) {
             cursorVisible_ = false;
         }
     } else if (event.type == sf::Event::MouseButtonPressed) {
+        sf::Vector2i cursorCoords = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Right) {
-            if (!selectionStart_.second) {
-                deselectAll();
-                selectionStart_.first = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
+            if (tileSubBoard_.getVisibleSize() != sf::Vector2u(0, 0)) {
+                tileSubBoard_.pasteToBoard(board_, cursorCoords);
+                board_.removeAllHighlights();
+
+
+                // FIXME: logic in here is getting complicated, use a state machine instead?
+
+
+            } else if (!selectionStart_.second) {
+                board_.removeAllHighlights();
+                selectionStart_.first = cursorCoords;
                 selectionStart_.second = true;
                 selectionEnd_ = selectionStart_.first;
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased) {
+        sf::Vector2i cursorCoords = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
             cursorVisible_ = mouseOnScreen_;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (selectionStart_.second) {
-                updateSelection(mapMouseToTile({event.mouseButton.x, event.mouseButton.y}));
+                updateSelection(cursorCoords);
                 selectionStart_.second = false;
             }
         }
@@ -151,11 +165,7 @@ void Editor::processEvent(const sf::Event& event) {
         zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);
         editView_.setSize(windowSize_.x * zoomLevel_, windowSize_.y * zoomLevel_);
     } else if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::Escape) {
-            deselectAll();
-        } else if (event.key.code == sf::Keyboard::Enter) {
-            subBoard_.pasteToBoard(board_, mapMouseToTile(mousePos_));
-        }
+        handleKeyPress(event.key);
     } else if (event.type == sf::Event::Resized) {
         windowSize_.x = event.size.width;
         windowSize_.y = event.size.height;
@@ -166,69 +176,121 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
 
-    /*static bool doSubBoardUpdates = true;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-        doSubBoardUpdates = false;
-        //subBoard_.clear();
+    if (tileSubBoard_.getVisibleSize() != sf::Vector2u(0, 0)) {
+        tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_);
+        tileSubBoard_.drawChunks(tilesetBright_.get());
     }
-    if (doSubBoardUpdates) {*/
-
-    // Toggle tile states on the SubBoard to test draw updates.
-    static sf::Clock c;
-    static int stage = 0;
-    if (c.getElapsedTime().asSeconds() >= 0.05f) {
-        c.restart();
-        if (stage == 0) {
-            subBoard_.accessTile(0, 0).setState(State::low);
-            subBoard_.accessTile(32, 32).setState(State::low);
-            //subBoard_.setVisibleSize({1, 1});
-        } else if (stage == 16) {
-            subBoard_.accessTile(0, 0).setState(State::high);
-            //subBoard_.setVisibleSize({64, 64});
-        } else if (stage == 32) {
-            subBoard_.accessTile(0, 0).setState(State::low);
-            subBoard_.accessTile(32, 32).setState(State::high);
-            //subBoard_.setVisibleSize({65, 65});
-        } else if (stage == 48) {
-            subBoard_.accessTile(0, 0).setState(State::high);
-            //subBoard_.setVisibleSize({96, 64});
-        }
-        subBoard_.setVisibleSize({static_cast<unsigned int>(stage * 1.45), static_cast<unsigned int>(stage * 1.2)});
-        if (stage % 16 == 0) {
-            spdlog::debug("stage set to {}", stage);
-        }
-        stage = (stage + 1) % 64;
-    }
-
-    //}
-
-    //subBoard_.setVisibleSize({96, 64});
-    //subBoard_.setPosition(cursor_.getPosition());
-
-    subBoard_.setRenderArea(editView_, zoomLevel_, mapMouseToTile(mousePos_));
-    subBoard_.drawChunks(tilesetBright_.get());
-
-    /*static sf::Clock c;
-    static int stage = 0;
-    if (c.getElapsedTime().asSeconds() >= 0.5f) {
-        c.restart();
-        auto t1 = std::chrono::high_resolution_clock::now();
-        if (stage == 0) {
-            deselectAll();
-            selectionStart_.first = {1, 1};
-            selectionEnd_ = selectionStart_.first;
-            updateSelection(selectionStart_.first);
-        } else {
-            updateSelection(selectionStart_.first * stage * 32);
-        }
-        auto t2 = std::chrono::high_resolution_clock::now();
-        spdlog::debug("stage {} took {}ms", stage, std::chrono::duration<double, std::milli>(t2 - t1).count());
-        stage = (stage + 1) % 16;
-    }*/
 }
 
+void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
+    // Most key bindings are listed in the gui dropdown menus.
+    if (key.control) {
+        if (key.code == sf::Keyboard::N) {
+            //fileOption(0);
+        } else if (key.code == sf::Keyboard::O) {
+            //fileOption(1);
+        } else if (key.code == sf::Keyboard::S) {
+            //fileOption(2);
+        } else if (key.code == sf::Keyboard::A) {
+            selectAll();
+        } else if (key.code == sf::Keyboard::X) {
+            copyArea();
+            deleteArea();
+        } else if (key.code == sf::Keyboard::C) {
+            copyArea();
+        } else if (key.code == sf::Keyboard::V) {
+            pasteArea();
+        }
+        return;
+    }
+
+    if (key.code == sf::Keyboard::Enter) {
+        //viewOption(0);
+    } else if (key.code == sf::Keyboard::Tab) {
+        //runOption(!key.shift);
+    } else if (key.code == sf::Keyboard::Escape) {
+        deselectAll();
+    } else if (key.code == sf::Keyboard::R) {
+        rotateArea(!key.shift);
+    } else if (key.code == sf::Keyboard::F) {
+        flipArea(!key.shift);
+    } else if (key.code == sf::Keyboard::E) {
+        editTile(!key.shift);
+    } else if (key.code == sf::Keyboard::Delete) {
+        deleteArea();
+    } else if (key.code == sf::Keyboard::W) {
+        wireTool();
+    } else if (key.code == sf::Keyboard::Q) {
+        queryTool();
+    } else if (key.code == sf::Keyboard::Space) {
+        pickTile(TileId::blank);
+    } else if (key.code == sf::Keyboard::T) {
+        pickTile(!key.shift ? TileId::wireStraight : TileId::wireTee);
+    } else if (key.code == sf::Keyboard::C) {
+        pickTile(!key.shift ? TileId::wireCorner : TileId::wireCrossover);
+    } else if (key.code == sf::Keyboard::J) {
+        pickTile(TileId::wireJunction);
+    } else if (key.code == sf::Keyboard::S) {
+        pickTile(!key.shift ? TileId::inSwitch : TileId::inButton);
+    } else if (key.code == sf::Keyboard::L) {
+        pickTile(TileId::outLed);
+    } else if (key.code == sf::Keyboard::D) {
+        pickTile(TileId::gateDiode);
+    } else if (key.code == sf::Keyboard::B) {
+        pickTile(!key.shift ? TileId::gateBuffer : TileId::gateNot);
+    } else if (key.code == sf::Keyboard::A) {
+        pickTile(!key.shift ? TileId::gateAnd : TileId::gateNand);
+    } else if (key.code == sf::Keyboard::O) {
+        pickTile(!key.shift ? TileId::gateOr : TileId::gateNor);
+    } else if (key.code == sf::Keyboard::X) {
+        pickTile(!key.shift ? TileId::gateXor : TileId::gateXnor);
+    }
+}
+
+void Editor::selectAll() {
+    spdlog::warn("Editor::selectAll() NYI");
+}
 void Editor::deselectAll() {
     board_.removeAllHighlights();
+    tileSubBoard_.clear();
+}
+void Editor::rotateArea(bool clockwise) {
+    spdlog::warn("Editor::rotateArea() NYI");
+}
+void Editor::flipArea(bool vertical) {
+    spdlog::warn("Editor::flipArea() NYI");
+}
+void Editor::editTile(bool toggleState) {
+    spdlog::warn("Editor::editTile() NYI");
+}
+void Editor::copyArea() {
+    spdlog::warn("Editor::copyArea() NYI");
+}
+void Editor::pasteArea() {
+    spdlog::warn("Editor::pasteArea() NYI");
+}
+void Editor::deleteArea() {
+    spdlog::warn("Editor::deleteArea() NYI");
+}
+void Editor::wireTool() {
+    spdlog::warn("Editor::wireTool() NYI");
+}
+void Editor::queryTool() {
+    spdlog::warn("Editor::queryTool() NYI");
+}
+void Editor::pickTile(TileId::t id) {
+    if (id == TileId::blank) {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Blank::instance());
+    } else if (id < TileId::inSwitch) {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), id);
+    } else if (id < TileId::outLed) {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Input::instance(), id);
+    } else if (id < TileId::gateDiode) {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Led::instance());
+    } else {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Gate::instance(), id);
+    }
+    tileSubBoard_.setVisibleSize({1, 1});
 }
 
 sf::Vector2i Editor::mapMouseToTile(const sf::Vector2i& mousePos) const {
@@ -249,10 +311,6 @@ void Editor::updateCursor() {
     cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));
     cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     cursorLabel_.setScale(zoomLevel_, zoomLevel_);
-
-    if (selectionStart_.second) {
-        updateSelection(cursorCoords_);
-    }
 }
 
 void Editor::updateSelection(const sf::Vector2i& newSelectionEnd) {
@@ -369,7 +427,10 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (!cursorVisible_) {
         return;
     }
-    target.draw(cursor_, states);
-    target.draw(subBoard_, states);
+    if (tileSubBoard_.getVisibleSize() != sf::Vector2u(0, 0)) {
+        target.draw(tileSubBoard_, states);
+    } else {
+        target.draw(cursor_, states);
+    }
     target.draw(cursorLabel_, states);
 }

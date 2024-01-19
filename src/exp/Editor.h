@@ -2,6 +2,7 @@
 
 #include <OffsetView.h>
 #include <SubBoard.h>
+#include <Tile.h>
 
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -29,7 +30,20 @@ private:
     static std::unique_ptr<sf::Texture> tilesetBrightNoBlanks_;
     static unsigned int tileWidth_;
 
+    void handleKeyPress(const sf::Event::KeyEvent& key);
+
+    // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
+    void selectAll();
     void deselectAll();
+    void rotateArea(bool clockwise);
+    void flipArea(bool vertical);
+    void editTile(bool toggleState);
+    void copyArea();
+    void pasteArea();
+    void deleteArea();
+    void wireTool();
+    void queryTool();
+    void pickTile(TileId::t id);
 
     sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
@@ -50,5 +64,6 @@ private:
     bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
-    SubBoard subBoard_;
+    SubBoard tileSubBoard_, copySubBoard_;
+    bool copySubBoardVisible_;
 };

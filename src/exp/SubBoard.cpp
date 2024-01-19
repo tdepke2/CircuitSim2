@@ -49,10 +49,6 @@ SubBoard::SubBoard() :
     chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
-void SubBoard::setVisibleSize(const sf::Vector2u& size) {
-    size_ = size;
-}
-
 void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition) {
     int levelOfDetail = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
     bool levelOfDetailChanged = (getLevelOfDetail() != levelOfDetail);
@@ -83,6 +79,14 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf:
     }
 
     updateVisibleArea(offsetView, tilePosition);
+}
+
+void SubBoard::setVisibleSize(const sf::Vector2u& size) {
+    size_ = size;
+}
+
+const sf::Vector2u& SubBoard::getVisibleSize() const {
+    return size_;
 }
 
 void SubBoard::drawChunks(const sf::Texture* tileset) {

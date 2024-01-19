@@ -24,8 +24,9 @@ public:
     SubBoard(const SubBoard& rhs) = delete;
     SubBoard& operator=(const SubBoard& rhs) = delete;
 
-    void setVisibleSize(const sf::Vector2u& size);
     void setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition);
+    void setVisibleSize(const sf::Vector2u& size);
+    const sf::Vector2u& getVisibleSize() const;
     void drawChunks(const sf::Texture* tileset);
     Chunk& accessChunk(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
