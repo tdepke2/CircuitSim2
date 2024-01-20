@@ -11,8 +11,8 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
-#include <utility>
 
 // Disable a false-positive warning issue with gcc:
 #if defined(__GNUC__) && !defined(__clang__)
@@ -234,6 +234,63 @@ void Board::removeAllHighlights() {
             }
         }
     }
+}
+
+std::pair<sf::Vector2i, sf::Vector2i> Board::getHighlightedBounds() {
+    sf::Vector2i firstChunk(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    sf::Vector2i secondChunk(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    sf::Vector2i firstTile = firstChunk, secondTile = secondChunk;
+    for (auto& chunk : chunks_) {
+        if (chunk.second.isHighlighted()) {
+            firstChunk.x = std::min(firstChunk.x, ChunkCoords::x(chunk.first));
+            firstChunk.y = std::min(firstChunk.y, ChunkCoords::y(chunk.first));
+            secondChunk.x = std::max(secondChunk.x, ChunkCoords::x(chunk.first));
+            secondChunk.y = std::max(secondChunk.y, ChunkCoords::y(chunk.first));
+        }
+    }
+    if (firstChunk.x > secondChunk.x) {
+        return {firstTile, secondTile};
+    }
+
+    auto updateFirstBounds = [this,&firstTile](int x, int y) {
+        auto chunk = chunks_.find(ChunkCoords::pack(x, y));
+        if (chunk == chunks_.end() || !chunk->second.isHighlighted()) {
+            return;
+        }
+        for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+            if (chunk->second.accessTile(i).getHighlight()) {
+                firstTile.x = std::min(firstTile.x, i % Chunk::WIDTH + x * Chunk::WIDTH);
+                firstTile.y = std::min(firstTile.y, i / Chunk::WIDTH + y * Chunk::WIDTH);
+            }
+        }
+    };
+    for (int x = firstChunk.x; x <= secondChunk.x; ++x) {
+        updateFirstBounds(x, firstChunk.y);
+    }
+    for (int y = firstChunk.y; y <= secondChunk.y; ++y) {
+        updateFirstBounds(firstChunk.x, y);
+    }
+
+    auto updateSecondBounds = [this,&secondTile](int x, int y) {
+        auto chunk = chunks_.find(ChunkCoords::pack(x, y));
+        if (chunk == chunks_.end() || !chunk->second.isHighlighted()) {
+            return;
+        }
+        for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+            if (chunk->second.accessTile(i).getHighlight()) {
+                secondTile.x = std::max(secondTile.x, i % Chunk::WIDTH + x * Chunk::WIDTH);
+                secondTile.y = std::max(secondTile.y, i / Chunk::WIDTH + y * Chunk::WIDTH);
+            }
+        }
+    };
+    for (int x = firstChunk.x; x <= secondChunk.x; ++x) {
+        updateSecondBounds(x, secondChunk.y);
+    }
+    for (int y = firstChunk.y; y <= secondChunk.y; ++y) {
+        updateSecondBounds(secondChunk.x, y);
+    }
+
+    return {firstTile, secondTile};
 }
 
 void Board::loadFromFile(const fs::path& filename) {

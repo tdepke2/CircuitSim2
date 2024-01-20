@@ -32,7 +32,7 @@ public:
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
     void clear();
-    void copyFromBoard(const Board& board, sf::Vector2i first, sf::Vector2i second);
+    void copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly = false);
     void pasteToBoard(Board& board, const sf::Vector2i& pos);
 
 private:

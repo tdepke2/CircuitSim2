@@ -165,27 +165,46 @@ void SubBoard::clear() {
     setVisibleSize({0, 0});
 }
 
-void SubBoard::copyFromBoard(const Board& board, sf::Vector2i first, sf::Vector2i second) {
+void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly) {
+    sf::Vector2i firstCopy = first;
+    first.x = std::min(firstCopy.x, second.x);
+    first.y = std::min(firstCopy.y, second.y);
+    second.x = std::max(firstCopy.x, second.x);
+    second.y = std::max(firstCopy.y, second.y);
+    sf::Vector2i sizeSubOne = second - first;
 
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    for (int yChunk = 0; yChunk <= (sizeSubOne.y >> widthLog2); ++yChunk) {
+        for (int xChunk = 0; xChunk <= (sizeSubOne.x >> widthLog2); ++xChunk) {
+            auto& chunk = accessChunk(ChunkCoords::pack(xChunk, yChunk));
+            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
+                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
+                if (x <= sizeSubOne.x && y <= sizeSubOne.y) {
+                    const Tile tile = board.accessTile(x + first.x, y + first.y);
+                    if (!highlightsOnly || tile.getHighlight()) {
+                        tile.cloneTo(chunk.accessTile(i));
+                    }
+                }
+            }
+        }
+    }
+    size_ = static_cast<sf::Vector2u>(sizeSubOne + sf::Vector2i(1, 1));
 }
 
 void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos) {
-    sf::Vector2i a = pos;
-    sf::Vector2i b = pos + static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1);    // FIXME: apply bounds check to b (and a?) so that we can't write outside the board area.
+    sf::Vector2i first = pos;
+    sf::Vector2i second = pos + static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1);    // FIXME: apply bounds check to b (and a?) so that we can't write outside the board area.
 
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    for (int yChunk = a.y >> widthLog2; yChunk <= b.y >> widthLog2; ++yChunk) {
-        for (int xChunk = a.x >> widthLog2; xChunk <= b.x >> widthLog2; ++xChunk) {
+    for (int yChunk = (first.y >> widthLog2); yChunk <= (second.y >> widthLog2); ++yChunk) {
+        for (int xChunk = (first.x >> widthLog2); xChunk <= (second.x >> widthLog2); ++xChunk) {
             auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
             for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
                 int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
                 int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
-                if (x >= a.x && x <= b.x && y >= a.y && y <= b.y) {
-
-                    accessTile(x - a.x, y - a.y).cloneTo(chunk.accessTile(i));
-
-                    // can we optimize tile lookup in the SubBoard too? is that not even worth it?
-
+                if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
+                    accessTile(x - first.x, y - first.y).cloneTo(chunk.accessTile(i));
                 }
             }
         }

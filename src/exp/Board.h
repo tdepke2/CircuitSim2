@@ -15,6 +15,7 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 class OffsetView;
 class ResourceManager;
@@ -53,6 +54,7 @@ public:
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
     void removeAllHighlights();
+    std::pair<sf::Vector2i, sf::Vector2i> getHighlightedBounds();
     void loadFromFile(const fs::path& filename);
     void saveToFile();
     void debugPrintChunk(ChunkCoords::repr i) {

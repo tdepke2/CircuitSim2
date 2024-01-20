@@ -30,6 +30,10 @@ private:
     static std::unique_ptr<sf::Texture> tilesetBrightNoBlanks_;
     static unsigned int tileWidth_;
 
+    enum class CursorState {
+        empty, pickTile, pasteArea, wireTool
+    };
+
     void handleKeyPress(const sf::Event::KeyEvent& key);
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
@@ -61,9 +65,9 @@ private:
     sf::RectangleShape cursor_;
     sf::Vector2i cursorCoords_;
     sf::Text cursorLabel_;
+    CursorState cursorState_;
     bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
     SubBoard tileSubBoard_, copySubBoard_;
-    bool copySubBoardVisible_;
 };
