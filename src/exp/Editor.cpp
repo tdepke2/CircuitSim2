@@ -26,6 +26,27 @@ constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
 
+/**
+ * Iterate over an area of tiles on the board, from `first` to `last` inclusive.
+ * This is done per-chunk which is significantly faster than doing it per-tile.
+ */
+template<typename Func>
+void forEachTile(Board& board, const sf::Vector2i& first, const sf::Vector2i& second, Func f) {
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    for (int yChunk = (first.y >> widthLog2); yChunk <= (second.y >> widthLog2); ++yChunk) {
+        for (int xChunk = (first.x >> widthLog2); xChunk <= (second.x >> widthLog2); ++xChunk) {
+            auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
+            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
+                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
+                if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
+                    f(chunk, i);
+                }
+            }
+        }
+    }
+}
+
 }
 
 void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) {
@@ -273,20 +294,27 @@ void Editor::editTile(bool toggleState) {
 }
 void Editor::copyArea() {
     auto bounds = board_.getHighlightedBounds();
-    spdlog::info("copy bounds is ({}, {}) to ({}, {})", bounds.first.x, bounds.first.y, bounds.second.x, bounds.second.y);
+    spdlog::info("Copy bounds is ({}, {}) to ({}, {}).", bounds.first.x, bounds.first.y, bounds.second.x, bounds.second.y);
     if (bounds.first.x > bounds.second.x) {
         return;
     }
-    spdlog::info("doing copy...");
     copySubBoard_.clear();
-    copySubBoard_.copyFromBoard(board_, bounds.first, bounds.second);
+    copySubBoard_.copyFromBoard(board_, bounds.first, bounds.second, true);
     cursorState_ = CursorState::pasteArea;
 }
 void Editor::pasteArea() {
-    cursorState_ = CursorState::pasteArea;
+    if (copySubBoard_.getVisibleSize() != sf::Vector2u(0, 0)) {
+        cursorState_ = CursorState::pasteArea;
+    }
 }
 void Editor::deleteArea() {
-    spdlog::warn("Editor::deleteArea() NYI");
+    auto bounds = board_.getHighlightedBounds();
+    if (bounds.first.x > bounds.second.x) {
+        return;
+    }
+    forEachTile(board_, bounds.first, bounds.second, [](Chunk& chunk, int i) {
+        chunk.accessTile(i).setType(tiles::Blank::instance());
+    });
 }
 void Editor::wireTool() {
     spdlog::warn("Editor::wireTool() NYI");
@@ -424,20 +452,9 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     b.x = std::max(aCopy.x, b.x);
     b.y = std::max(aCopy.y, b.y);
 
-    // Highlighting is done per-chunk as this is significantly faster than doing it per-tile.
-    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    for (int yChunk = (a.y >> widthLog2); yChunk <= (b.y >> widthLog2); ++yChunk) {
-        for (int xChunk = (a.x >> widthLog2); xChunk <= (b.x >> widthLog2); ++xChunk) {
-            auto& chunk = board_.accessChunk(ChunkCoords::pack(xChunk, yChunk));
-            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
-                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
-                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
-                if (x >= a.x && x <= b.x && y >= a.y && y <= b.y) {
-                    chunk.accessTile(i).setHighlight(highlight);
-                }
-            }
-        }
-    }
+    forEachTile(board_, a, b, [highlight](Chunk& chunk, int i) {
+        chunk.accessTile(i).setHighlight(highlight);
+    });
 }
 
 void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
