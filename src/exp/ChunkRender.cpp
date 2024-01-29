@@ -23,7 +23,6 @@
 #endif
 
 constexpr int ChunkRender::LEVELS_OF_DETAIL;
-constexpr int ChunkRender::CHUNK_TEXEL_PADDING;
 unsigned int ChunkRender::tileWidth_;
 sf::Shader* ChunkRender::chunkShader_;
 
@@ -33,7 +32,7 @@ void ChunkRender::setupTextureData(ResourceManager& resource, unsigned int tileW
         chunkShader_ = &resource.getShader("resources/shaders/chunk_vert.glsl", "resources/shaders/chunk_geom.glsl", "resources/shaders/chunk_frag.glsl");
         chunkShader_->setUniform("texture", sf::Shader::CurrentTexture);
     } catch (const std::exception& ex) {
-        spdlog::warn(ex.what());
+        spdlog::error(ex.what());
         spdlog::warn("Switching to old chunk rendering method.");
         chunkShader_ = nullptr;
     }
@@ -71,32 +70,20 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
 
-    // Apply padding so that chunks in the texture have some border space to avoid texture bleed.
-    const sf::Vector2f paddedChunkArea = {
-        std::ceil(maxChunkArea.x * static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) / textureSubdivisionSize),
-        std::ceil(maxChunkArea.y * static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) / textureSubdivisionSize)
+    // Round up to power of 2 to ensure POT texture.
+    const sf::Vector2u pow2ChunkArea = {
+        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
+        1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.y)))
     };
+    const sf::Vector2u textureSize = pow2ChunkArea * static_cast<unsigned int>(textureSubdivisionSize);
 
-    // Round up to power of 2 for padded area to ensure POT texture.
-    const sf::Vector2u pow2PaddedChunkArea = {
-        1u << static_cast<unsigned int>(std::ceil(std::log2(paddedChunkArea.x))),
-        1u << static_cast<unsigned int>(std::ceil(std::log2(paddedChunkArea.y)))
-    };
-    const sf::Vector2u textureSize = pow2PaddedChunkArea * static_cast<unsigned int>(textureSubdivisionSize);
-
-    // Strip the padding off to find the usable chunk area in the texture, mathematically this should not be less than the original maxChunkArea.
-    const sf::Vector2u adjustedMaxChunkArea = {
-        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.x / static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) * textureSubdivisionSize)),
-        static_cast<unsigned int>(std::floor(pow2PaddedChunkArea.y / static_cast<float>(textureSubdivisionSize + CHUNK_TEXEL_PADDING) * textureSubdivisionSize))
-    };
-
-    DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (adjusted {}, {})", maxChunkArea.x, maxChunkArea.y, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y));
+    DebugScreen::instance()->getField("lodRange").setString(fmt::format("Range: {}, {} (pow2 {}, {})", maxChunkArea.x, maxChunkArea.y, pow2ChunkArea.x, pow2ChunkArea.y));
     if (texture_.getSize() == textureSize) {
         return;
     }
 
-    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", levelOfDetail_, adjustedMaxChunkArea.x, adjustedMaxChunkArea.y);
-    maxChunkArea_ = adjustedMaxChunkArea;
+    spdlog::debug("Resizing LOD {} area to {} by {} chunks.", levelOfDetail_, pow2ChunkArea.x, pow2ChunkArea.y);
+    maxChunkArea_ = pow2ChunkArea;
     lastVisibleArea_ = {0, 0, 0, 0};
 
     if (!texture_.create(textureSize.x, textureSize.y)) {
@@ -245,8 +232,8 @@ bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlo
 
 sf::Vector2f ChunkRender::getChunkTexCoords(int renderIndex, int textureSubdivisionSize) const {
     return {
-        static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_TEXEL_PADDING)),
-        static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * (textureSubdivisionSize + CHUNK_TEXEL_PADDING))
+        static_cast<float>(static_cast<int>(renderIndex % static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize),
+        static_cast<float>(static_cast<int>(renderIndex / static_cast<int>(maxChunkArea_.x)) * textureSubdivisionSize)
     };
 }
 

@@ -45,7 +45,6 @@ public:
     void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, const sf::Transform& viewProjection);
 
 private:
-    static constexpr int CHUNK_TEXEL_PADDING = 0;
     static unsigned int tileWidth_;
     static sf::Shader* chunkShader_;
 
