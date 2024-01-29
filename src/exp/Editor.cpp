@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -116,6 +117,20 @@ const OffsetView& Editor::getEditView() const {
 
 float Editor::getZoom() const {
     return zoomLevel_;
+}
+
+void Editor::goToTile(int x, int y) {
+    spdlog::debug("Go to tile ({}, {}).", x, y);
+    editView_.setCenter(0.0f, 0.0f);
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    editView_.setCenterOffset(
+        (x >> widthLog2) - static_cast<int>(editView_.getSize().x / 2.0f / editView_.getViewDivisor()) - 1,
+        (y >> widthLog2) - static_cast<int>(editView_.getSize().y / 2.0f / editView_.getViewDivisor()) - 1
+    );
+    editView_.setCenter(
+        editView_.getCenter().x + ((x & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_,
+        editView_.getCenter().y + ((y & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_
+    );
 }
 
 void Editor::processEvent(const sf::Event& event) {
@@ -265,6 +280,24 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
         pickTile(!key.shift ? TileId::gateOr : TileId::gateNor);
     } else if (key.code == sf::Keyboard::X) {
         pickTile(!key.shift ? TileId::gateXor : TileId::gateXnor);
+    } else if (key.code == sf::Keyboard::Numpad1) {
+        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    } else if (key.code == sf::Keyboard::Numpad2) {
+        goToTile(0, std::numeric_limits<int>::max());
+    } else if (key.code == sf::Keyboard::Numpad3) {
+        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    } else if (key.code == sf::Keyboard::Numpad4) {
+        goToTile(std::numeric_limits<int>::min(), 0);
+    } else if (key.code == sf::Keyboard::Numpad5) {
+        goToTile(0, 0);
+    } else if (key.code == sf::Keyboard::Numpad6) {
+        goToTile(std::numeric_limits<int>::max(), 0);
+    } else if (key.code == sf::Keyboard::Numpad7) {
+        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    } else if (key.code == sf::Keyboard::Numpad8) {
+        goToTile(0, std::numeric_limits<int>::min());
+    } else if (key.code == sf::Keyboard::Numpad9) {
+        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
     }
 }
 
@@ -456,10 +489,19 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     forEachTile(board_, a, b, [highlight](Chunk& chunk, int i) {
         chunk.accessTile(i).setHighlight(highlight);
     });
+    // FIXME: confirm it's not actually faster to use simpler iteration method.
+    // seems like it's about 5 times faster on linux system to iterate by chunks.
+    /*for (int y = a.y; y <= b.y; ++y) {
+        for (int x = a.x; x <= b.x; ++x) {
+            board_.accessTile(x, y).setHighlight(highlight);
+        }
+    }*/
 }
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos) {
     const bool forcePaste = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
+
+    // FIXME: pasting while holding (ctrl?) key does a paste without blank tiles.
 
     if (!board_.accessTile(tilePos).getHighlight()) {
         // Not pasting into a selection.

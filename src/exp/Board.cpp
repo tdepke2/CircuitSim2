@@ -97,14 +97,14 @@ void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGri
     DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid_);
 
     ChunkDrawable::setupTextureData(resource, tilesetGrid_->getSize(), tileWidth);
-    ChunkRender::setupTextureData(tileWidth);
+    ChunkRender::setupTextureData(resource, tileWidth);
     Chunk::setupChunks();
     Editor::setupTextureData(tilesetGrid_, tileWidth);
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
     fileStorage_(new LegacyFileFormat()),
-    maxSize_(),
+    maxSize_(0, 0),
     extraLogicStates_(false),
     notesText_(),
     chunks_(),
@@ -137,12 +137,30 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
         static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
     topLeft += offsetView.getCenterOffset();
-    sf::Vector2i size = {
+    sf::Vector2i bottomRight = {
         static_cast<int>(std::floor((offsetView.getCenter().x + offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
         static_cast<int>(std::floor((offsetView.getCenter().y + offsetView.getSize().y / 2.0f) / chunkWidthTexels))
     };
-    size += offsetView.getCenterOffset() - topLeft + sf::Vector2i(1, 1);
-    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, size.x, size.y);
+    bottomRight += offsetView.getCenterOffset();
+
+    // Clamp the visible area to the maximum board size.
+    /*if (maxSize_ == sf::Vector2u(0, 0)) {
+        constexpr int maxChunkBound = std::numeric_limits<int>::max() / Chunk::WIDTH;
+        constexpr int minChunkBound = std::numeric_limits<int>::min() / Chunk::WIDTH;
+        topLeft.x = std::max(topLeft.x, minChunkBound);
+        topLeft.y = std::max(topLeft.y, minChunkBound);
+        bottomRight.x = std::min(bottomRight.x, maxChunkBound);
+        bottomRight.y = std::min(bottomRight.y, maxChunkBound);
+    } else {
+        topLeft.x = std::max(topLeft.x, 0);
+        topLeft.y = std::max(topLeft.y, 0);
+        bottomRight.x = std::min(bottomRight.x, static_cast<int>(maxSize_.x - 1) / Chunk::WIDTH);
+        bottomRight.y = std::min(bottomRight.y, static_cast<int>(maxSize_.y - 1) / Chunk::WIDTH);
+    }*/
+
+    // FIXME: above not working yet, getting invalid tex and seg faults during drawing
+
+    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, bottomRight.x - topLeft.x + 1, bottomRight.y - topLeft.y + 1);
 
     if (lastVisibleArea_ != visibleArea) {
         spdlog::debug("Visible chunk area changed, now {} to {}.",
@@ -153,11 +171,13 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
 
     fileStorage_->updateVisibleChunks(*this, lastVisibleArea_);
     updateRender();
-    currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_);
+    currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_, offsetView.getView().getTransform());
 }
 
 void Board::setMaxSize(const sf::Vector2u& size) {
     maxSize_ = size;
+
+    // FIXME: trim chunks that are now outside the max area?
 }
 
 void Board::setExtraLogicStates(bool extraLogicStates) {

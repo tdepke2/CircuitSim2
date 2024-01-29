@@ -137,11 +137,14 @@ int main() {
 
         window.setView(editor.getEditView().getView());
         board.setRenderArea(editor.getEditView(), editor.getZoom());
-        //sf::View bc = editor.getEditView().getView();
-        //bc.setSize(bc.getSize() * 2.0f);
-        //window.setView(bc);
-        window.draw(board);
-        window.draw(editor);
+        /*
+        // Debug to show the area outside the view.
+        sf::View halfView = editor.getEditView().getView();
+        halfView.setSize(halfView.getSize() * 2.0f);
+        sf::Transform halfViewTrans = editor.getEditView().getView().getInverseTransform() * halfView.getTransform();
+        */
+        window.draw(board);//, halfViewTrans);
+        window.draw(editor);//, halfViewTrans);
 
         window.setView(fullWindowView);
         window.draw(*DebugScreen::instance());

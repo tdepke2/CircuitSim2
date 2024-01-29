@@ -9,6 +9,7 @@
 #include <vector>
 
 class ChunkDrawable;
+class ResourceManager;
 
 /**
  * Cache for rendered chunks at a specific level-of-detail (LOD).
@@ -28,7 +29,7 @@ class ChunkDrawable;
 class ChunkRender : public sf::Drawable {
 public:
     static constexpr int LEVELS_OF_DETAIL = 5;
-    static void setupTextureData(unsigned int tileWidth);
+    static void setupTextureData(ResourceManager& resource, unsigned int tileWidth);
 
     ChunkRender();
     ~ChunkRender() = default;
@@ -41,11 +42,12 @@ public:
     void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea);
     void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
-    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea);
+    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, const sf::Transform& viewProjection);
 
 private:
-    static constexpr int CHUNK_TEXEL_PADDING = 1;
+    static constexpr int CHUNK_TEXEL_PADDING = 0;
     static unsigned int tileWidth_;
+    static sf::Shader* chunkShader_;
 
     struct RenderBlock {
         RenderBlock(ChunkCoords::repr coords, unsigned int poolIndex) :
@@ -67,6 +69,7 @@ private:
     int levelOfDetail_;
     sf::Vector2u maxChunkArea_;
     ChunkCoordsRange lastVisibleArea_;
+    sf::Transform lastViewProjection_;
     sf::RenderTexture texture_;
     bool textureDirty_;
     sf::VertexBuffer buffer_;

@@ -22,6 +22,7 @@ public:
 
     const OffsetView& getEditView() const;
     float getZoom() const;
+    void goToTile(int x, int y);
     void processEvent(const sf::Event& event);
     void update();
 
