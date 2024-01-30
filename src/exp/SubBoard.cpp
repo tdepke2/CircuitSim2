@@ -50,13 +50,13 @@ SubBoard::SubBoard() :
 }
 
 void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition) {
-    int levelOfDetail = static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f));
-    bool levelOfDetailChanged = (getLevelOfDetail() != levelOfDetail);
-    setLevelOfDetail(levelOfDetail);
+    int lastLevelOfDetail = getLevelOfDetail();
+    setLevelOfDetail(static_cast<int>(std::floor(std::log2(zoom))));
+    bool levelOfDetailChanged = (lastLevelOfDetail != getLevelOfDetail());
     const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom, tileWidth_);
 
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
-    const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail);
+    const int textureSubdivisionSize = chunkWidthTexels / (1 << getLevelOfDetail());
     const sf::Vector2u pow2ChunkArea = {
         1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
         1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.y)))

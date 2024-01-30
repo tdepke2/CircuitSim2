@@ -77,7 +77,7 @@ ChunkDrawable::ChunkDrawable() :
     chunk_(nullptr),
     vertices_(sf::Triangles),
     renderIndices_(),
-    renderIndicesSum_(-ChunkRender::LEVELS_OF_DETAIL),
+    renderIndicesSum_(-LodRenderer::LEVELS_OF_DETAIL),
     renderDirty_() {
 
     renderIndices_.fill(-1);
@@ -111,7 +111,7 @@ int ChunkDrawable::getRenderIndex(int levelOfDetail) const {
 }
 
 bool ChunkDrawable::hasAnyRenderIndex() const {
-    return renderIndicesSum_ != -ChunkRender::LEVELS_OF_DETAIL;
+    return renderIndicesSum_ != -LodRenderer::LEVELS_OF_DETAIL;
 }
 
 void ChunkDrawable::markDirty() {

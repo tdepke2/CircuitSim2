@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ChunkRender.h>
+#include <LodRenderer.h>
 
 #include <array>
 #include <bitset>
@@ -48,7 +48,7 @@ private:
 
     const Chunk* chunk_;
     mutable sf::VertexArray vertices_;
-    std::array<int, ChunkRender::LEVELS_OF_DETAIL> renderIndices_;
+    std::array<int, LodRenderer::LEVELS_OF_DETAIL> renderIndices_;
     int renderIndicesSum_;
-    mutable std::bitset<ChunkRender::LEVELS_OF_DETAIL> renderDirty_;
+    mutable std::bitset<LodRenderer::LEVELS_OF_DETAIL> renderDirty_;
 };

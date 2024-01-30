@@ -122,7 +122,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
 }
 
 void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
-    setLevelOfDetail(static_cast<int>(std::max(std::floor(std::log2(zoom)), 0.0f)));
+    setLevelOfDetail(static_cast<int>(std::floor(std::log2(zoom))));
     DebugScreen::instance()->getField("lod").setString(fmt::format("Lod: {}", getLevelOfDetail()));
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the

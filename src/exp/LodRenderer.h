@@ -8,6 +8,8 @@ class OffsetView;
 
 class LodRenderer {
 public:
+    // Max number of detail levels, the first level is at zero.
+    static constexpr int LEVELS_OF_DETAIL = 5;
     // Special coordinates for the empty chunk used in derived classes.
     static constexpr ChunkCoords::repr EMPTY_CHUNK_COORDS = 0;
 
@@ -21,6 +23,7 @@ public:
 
 protected:
     int getLevelOfDetail() const;
+    // The lod is clamped to the maximum/minimum bounds while setting.
     void setLevelOfDetail(int lod);
     sf::Vector2u getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom, unsigned int tileWidth) const;
 

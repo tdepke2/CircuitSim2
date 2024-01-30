@@ -28,7 +28,6 @@ class ResourceManager;
  */
 class ChunkRender : public sf::Drawable {
 public:
-    static constexpr int LEVELS_OF_DETAIL = 5;
     static void setupTextureData(ResourceManager& resource, unsigned int tileWidth);
 
     ChunkRender();

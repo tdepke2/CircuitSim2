@@ -2,8 +2,10 @@
 #include <LodRenderer.h>
 #include <OffsetView.h>
 
+#include <algorithm>
 #include <cmath>
 
+constexpr int LodRenderer::LEVELS_OF_DETAIL;
 constexpr ChunkCoords::repr LodRenderer::EMPTY_CHUNK_COORDS;
 
 LodRenderer::LodRenderer() :
@@ -15,7 +17,7 @@ int LodRenderer::getLevelOfDetail() const {
 }
 
 void LodRenderer::setLevelOfDetail(int lod) {
-    levelOfDetail_ = lod;
+    levelOfDetail_ = std::min(std::max(lod, 0), LEVELS_OF_DETAIL - 1);
 }
 
 sf::Vector2u LodRenderer::getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom, unsigned int tileWidth) const {

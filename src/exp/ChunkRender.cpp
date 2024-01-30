@@ -22,7 +22,6 @@
     #pragma GCC diagnostic pop
 #endif
 
-constexpr int ChunkRender::LEVELS_OF_DETAIL;
 unsigned int ChunkRender::tileWidth_;
 sf::Shader* ChunkRender::chunkShader_;
 
@@ -157,6 +156,7 @@ void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunk
     }
     // We should never run into a case where the visible chunk area exceeds the number of blocks we have.
     assert(false);
+    // FIXME: this probably shouldn't be an assert, log an error and continue.
 }
 
 void ChunkRender::drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states) {

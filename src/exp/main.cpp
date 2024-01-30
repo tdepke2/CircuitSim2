@@ -83,7 +83,7 @@ int main() {
                 /*float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
                 float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel * -0.04f;
                 constexpr float maxZoom = 31.0f;
-                static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
+                static_assert(maxZoom < (1 << LodRenderer::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
                 zoomLevel += zoomDelta;
                 zoomLevel = std::min(std::max(zoomLevel, 0.2f), maxZoom);

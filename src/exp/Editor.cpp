@@ -1,8 +1,8 @@
 #include <Board.h>
 #include <Chunk.h>
-#include <ChunkRender.h>
 #include <DebugScreen.h>
 #include <Editor.h>
+#include <LodRenderer.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
@@ -191,8 +191,8 @@ void Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseWheelScrolled) {
         float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
         float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel_ * -0.04f;
-        constexpr float minZoom = 0.2f, maxZoom = 31.0f;
-        static_assert(maxZoom < (1 << ChunkRender::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
+        constexpr float minZoom = 0.2f, maxZoom = 32.0f;
+        static_assert(maxZoom <= (1 << LodRenderer::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
 
         zoomLevel_ += zoomDelta;
         zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);

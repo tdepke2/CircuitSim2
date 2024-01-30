@@ -80,7 +80,7 @@ private:
     std::unordered_map<ChunkCoords::repr, Chunk> chunks_;
     std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
-    std::array<ChunkRender, ChunkRender::LEVELS_OF_DETAIL> chunkRenderCache_;
+    std::array<ChunkRender, LodRenderer::LEVELS_OF_DETAIL> chunkRenderCache_;
     ChunkCoordsRange lastVisibleArea_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
