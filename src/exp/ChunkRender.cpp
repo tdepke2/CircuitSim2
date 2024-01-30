@@ -98,23 +98,6 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     if (!buffer_.create(bufferSize)) {
         spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
     }
-    for (unsigned int y = 0; y < maxChunkArea_.y; ++y) {
-        for (unsigned int x = 0; x < maxChunkArea_.x; ++x) {
-            const float px = static_cast<float>(x * chunkWidthTexels);
-            const float py = static_cast<float>(y * chunkWidthTexels);
-            if (chunkShader_ != nullptr) {
-                bufferVertices_[y * maxChunkArea_.x + x].position = {px, py};
-            } else {
-                sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
-                tileVertices[0].position = {px, py};
-                tileVertices[1].position = {px + chunkWidthTexels, py};
-                tileVertices[2].position = {px + chunkWidthTexels, py + chunkWidthTexels};
-                tileVertices[3].position = {px + chunkWidthTexels, py + chunkWidthTexels};
-                tileVertices[4].position = {px, py + chunkWidthTexels};
-                tileVertices[5].position = {px, py};
-            }
-        }
-    }
 
     for (auto& renderBlock : renderBlocks_) {
         chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);
@@ -187,11 +170,17 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawab
         return;
     }
 
+    // FIXME: drawing the void chunk:
+    // only draw the vertices in the buffer that are visible. draw the buffer at an offset position if there are void chunks in top/left.
+    // will need to pass in that offset position from Board (should it be a ChunkCoordsRange instead? maybe not).
+
     lastVisibleArea_ = visibleArea;
     bufferDirty_ = false;
     spdlog::debug("Chunk area changed or buffer dirty, updating buffer.");
-    const int textureSubdivisionSize = Chunk::WIDTH * static_cast<int>(tileWidth_) / (1 << levelOfDetail_);
+    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
     const auto& emptyChunk = chunkDrawables.at(LodRenderer::EMPTY_CHUNK_COORDS);
+
     for (int y = 0; y < visibleArea.height; ++y) {
         auto chunkDrawable = chunkDrawables.upper_bound(ChunkCoords::pack(visibleArea.left - 1, visibleArea.top + y));
         for (int x = 0; x < visibleArea.width; ++x) {
@@ -203,15 +192,25 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawab
                 ++chunkDrawable;
             }
             spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
+            const float px = static_cast<float>(x * chunkWidthTexels);
+            const float py = static_cast<float>(y * chunkWidthTexels);
 
             if (chunkShader_ != nullptr) {
                 const sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize);
+                bufferVertices_[y * maxChunkArea_.x + x].position = {px, py};
                 bufferVertices_[y * maxChunkArea_.x + x].texCoords = {t.x, t.y};
             } else {
+                sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
+                tileVertices[0].position = {px, py};
+                tileVertices[1].position = {px + chunkWidthTexels, py};
+                tileVertices[2].position = {px + chunkWidthTexels, py + chunkWidthTexels};
+                tileVertices[3].position = {px + chunkWidthTexels, py + chunkWidthTexels};
+                tileVertices[4].position = {px, py + chunkWidthTexels};
+                tileVertices[5].position = {px, py};
+
                 // Apply a small bias to the texture coords to hide the chunk seams.
                 const float texBias = 0.5f * (levelOfDetail_ + 1);
                 const sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize) + sf::Vector2f(texBias / 2.0f, texBias / 2.0f);
-                sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
                 tileVertices[0].texCoords = {t.x, t.y};
                 tileVertices[1].texCoords = {t.x + textureSubdivisionSize - texBias, t.y};
                 tileVertices[2].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
