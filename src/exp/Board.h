@@ -82,6 +82,7 @@ private:
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     std::array<ChunkRender, LodRenderer::LEVELS_OF_DETAIL> chunkRenderCache_;
     ChunkCoordsRange lastVisibleArea_;
+    ChunkCoords::repr lastTopLeft_;
     mutable sf::VertexArray debugChunkBorder_;
     bool debugDrawChunkBorder_;
 };

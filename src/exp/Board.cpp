@@ -112,6 +112,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     chunkDrawables_(),
     chunkRenderCache_(),
     lastVisibleArea_(0, 0, 0, 0),
+    lastTopLeft_(0),
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false) {
 
@@ -143,8 +144,10 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     };
     bottomRight += offsetView.getCenterOffset();
 
+    lastTopLeft_ = ChunkCoords::pack(topLeft.x, topLeft.y);
+
     // Clamp the visible area to the maximum board size.
-    /*if (maxSize_ == sf::Vector2u(0, 0)) {
+    if (maxSize_ == sf::Vector2u(0, 0)) {
         constexpr int maxChunkBound = std::numeric_limits<int>::max() / Chunk::WIDTH;
         constexpr int minChunkBound = std::numeric_limits<int>::min() / Chunk::WIDTH;
         topLeft.x = std::max(topLeft.x, minChunkBound);
@@ -156,12 +159,9 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
         topLeft.y = std::max(topLeft.y, 0);
         bottomRight.x = std::min(bottomRight.x, static_cast<int>(maxSize_.x - 1) / Chunk::WIDTH);
         bottomRight.y = std::min(bottomRight.y, static_cast<int>(maxSize_.y - 1) / Chunk::WIDTH);
-    }*/
+    }
 
-    // FIXME: above not working yet, getting invalid tex and seg faults during drawing
-
-    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, bottomRight.x - topLeft.x + 1, bottomRight.y - topLeft.y + 1);
-
+    ChunkCoordsRange visibleArea(topLeft.x, topLeft.y, std::max(bottomRight.x - topLeft.x + 1, 0), std::max(bottomRight.y - topLeft.y + 1, 0));
     if (lastVisibleArea_ != visibleArea) {
         spdlog::debug("Visible chunk area changed, now {} to {}.",
             ChunkCoords::toPair(visibleArea.getFirst()), ChunkCoords::toPair(visibleArea.getSecond())
@@ -171,7 +171,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
 
     fileStorage_->updateVisibleChunks(*this, lastVisibleArea_);
     updateRender();
-    currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_, offsetView.getView().getTransform());
+    currentChunkRender.updateVisibleArea(chunkDrawables_, lastVisibleArea_, lastTopLeft_, offsetView.getView().getTransform());
 }
 
 void Board::setMaxSize(const sf::Vector2u& size) {
@@ -416,15 +416,20 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(chunkRenderCache_[getLevelOfDetail()], states);
 
     DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
-    if (debugDrawChunkBorder_) {
+    if (debugDrawChunkBorder_ && lastVisibleArea_.width > 0 && lastVisibleArea_.height > 0) {
         debugChunkBorder_.resize(lastVisibleArea_.width * lastVisibleArea_.height * 4);
         const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        const sf::Vector2i positionOffset = {
+            lastVisibleArea_.left - ChunkCoords::x(lastTopLeft_),
+            lastVisibleArea_.top - ChunkCoords::y(lastTopLeft_)
+        };
+
         unsigned int i = 0;
         for (int y = 0; y < lastVisibleArea_.height; ++y) {
             auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(lastVisibleArea_.left - 1, lastVisibleArea_.top + y));
-            float yChunkPos = static_cast<float>(y * chunkWidthTexels);
+            float yChunkPos = static_cast<float>((y + positionOffset.y) * chunkWidthTexels);
             for (int x = 0; x < lastVisibleArea_.width; ++x) {
-                float xChunkPos = static_cast<float>(x * chunkWidthTexels);
+                float xChunkPos = static_cast<float>((x + positionOffset.x) * chunkWidthTexels);
                 sf::Color borderColor = sf::Color::Blue;
                 if (chunkDrawable != chunkDrawables_.end() && chunkDrawable->first == ChunkCoords::pack(lastVisibleArea_.left + x, lastVisibleArea_.top + y)) {
                     if (chunkDrawable->second.getChunk() != nullptr) {

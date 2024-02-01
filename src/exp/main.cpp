@@ -131,7 +131,7 @@ int main() {
         );
 
         DebugScreen::instance()->profilerEvent("main draw");
-        window.clear();
+        window.clear({30, 30, 30, 255});
 
         board.debugSetDrawChunkBorder(DebugScreen::instance()->isVisible());
 

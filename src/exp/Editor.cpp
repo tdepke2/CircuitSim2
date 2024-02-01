@@ -92,7 +92,7 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     mouseOnScreen_(false),
     windowSize_(initialView.getSize()),
     cursor_({static_cast<float>(tileWidth_), static_cast<float>(tileWidth_)}),
-    cursorCoords_(0, 0),
+    cursorCoords_({sf::Vector2i(), false}),
     cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
     cursorState_(CursorState::empty),
     cursorVisible_(false),
@@ -143,48 +143,50 @@ void Editor::processEvent(const sf::Event& event) {
         }
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
+        updateCursor();
         if (mousePos_.x >= 0 && mousePos_.x < static_cast<int>(windowSize_.x) && mousePos_.y >= 0 && mousePos_.y < static_cast<int>(windowSize_.y)) {
             mouseOnScreen_ = true;
-            cursorVisible_ = true;
+            cursorVisible_ = cursorCoords_.second;
         }
-        updateCursor();
         if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
             if (selectionStart_.second) {
-                updateSelection(cursorCoords_);
+                updateSelection(cursorCoords_.first);
             }
-            if (cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) {
-                pasteToBoard(cursorCoords_);
+            if ((cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) && cursorCoords_.second) {
+                pasteToBoard(cursorCoords_.first);
             }
         }
     } else if (event.type == sf::Event::MouseEntered) {
         mouseOnScreen_ = true;
-        cursorVisible_ = true;
+        cursorVisible_ = cursorCoords_.second;
     } else if (event.type == sf::Event::MouseLeft) {
         mouseOnScreen_ = false;
         if (!sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             cursorVisible_ = false;
         }
     } else if (event.type == sf::Event::MouseButtonPressed) {
-        sf::Vector2i cursorCoords = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
+        const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Right) {
             if (cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) {
-                pasteToBoard(cursorCoords);
+                if (cursorCoords.second) {
+                    pasteToBoard(cursorCoords.first);
+                }
             } else if (!selectionStart_.second) {
                 if (!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) && !sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
                     board_.removeAllHighlights();
                 }
-                selectionStart_.first = cursorCoords;
+                selectionStart_.first = cursorCoords.first;
                 selectionStart_.second = true;
                 selectionEnd_ = selectionStart_.first;
             }
         }
     } else if (event.type == sf::Event::MouseButtonReleased) {
-        sf::Vector2i cursorCoords = mapMouseToTile({event.mouseButton.x, event.mouseButton.y});
+        const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
-            cursorVisible_ = mouseOnScreen_;
+            cursorVisible_ = mouseOnScreen_ && cursorCoords_.second;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (selectionStart_.second) {
-                updateSelection(cursorCoords);
+                updateSelection(cursorCoords.first);
                 selectionStart_.second = false;
             }
         }
@@ -210,10 +212,10 @@ void Editor::update() {
     updateCursor();
 
     if (cursorState_ == CursorState::pickTile) {
-        tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_);
+        tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
         tileSubBoard_.drawChunks(tilesetBright_.get());
     } else if (cursorState_ == CursorState::pasteArea) {
-        copySubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_);
+        copySubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
         copySubBoard_.drawChunks(tilesetBright_.get());
     }
 }
@@ -372,22 +374,41 @@ void Editor::setCursorState(CursorState state) {
     cursorState_ = state;
 }
 
-sf::Vector2i Editor::mapMouseToTile(const sf::Vector2i& mousePos) const {
+std::pair<sf::Vector2i, bool> Editor::mapMouseToNearestTile(const sf::Vector2i& mousePos) const {
     sf::Vector2f pos = editView_.getCenter() - editView_.getSize() * 0.5f + sf::Vector2f(mousePos) * zoomLevel_;
-    return {
-        editView_.getCenterOffset().x * Chunk::WIDTH + static_cast<int>(std::floor(pos.x / tileWidth_)),
-        editView_.getCenterOffset().y * Chunk::WIDTH + static_cast<int>(std::floor(pos.y / tileWidth_))
+    sf::Vector2<long long> tilePos = {
+        static_cast<long long>(editView_.getCenterOffset().x) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.x / tileWidth_)),
+        static_cast<long long>(editView_.getCenterOffset().y) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.y / tileWidth_))
     };
+    sf::Vector2<long long> tilePosInBounds;
+    if (board_.getMaxSize() == sf::Vector2u(0, 0)) {
+        constexpr long long intMin = std::numeric_limits<int>::min();
+        constexpr long long intMax = std::numeric_limits<int>::max();
+        tilePosInBounds = {
+            std::min(std::max(tilePos.x, intMin), intMax),
+            std::min(std::max(tilePos.y, intMin), intMax)
+        };
+    } else {
+        tilePosInBounds = {
+            std::min(std::max(tilePos.x, 0ll), static_cast<long long>(board_.getMaxSize().x - 1)),
+            std::min(std::max(tilePos.y, 0ll), static_cast<long long>(board_.getMaxSize().y - 1))
+        };
+    }
+    if (tilePosInBounds == tilePos) {
+        return {static_cast<sf::Vector2i>(tilePosInBounds), true};
+    } else {
+        return {static_cast<sf::Vector2i>(tilePosInBounds), false};
+    }
 }
 
 void Editor::updateCursor() {
-    sf::Vector2i cursorCoords = mapMouseToTile(mousePos_);
-    if (cursorCoords_ != cursorCoords) {
-        //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.x, cursorCoords.y);
-        cursorCoords_ = cursorCoords;
-        cursorLabel_.setString("(" + std::to_string(cursorCoords.x) + ", " + std::to_string(cursorCoords.y) + ")");
+    const auto cursorCoords = mapMouseToNearestTile(mousePos_);
+    if (cursorCoords_.first != cursorCoords.first) {
+        //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.first.x, cursorCoords.first.y);
+        cursorLabel_.setString("(" + std::to_string(cursorCoords.first.x) + ", " + std::to_string(cursorCoords.first.y) + ")");
     }
-    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));
+    cursorCoords_ = cursorCoords;
+    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));
     cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     cursorLabel_.setScale(zoomLevel_, zoomLevel_);
 }

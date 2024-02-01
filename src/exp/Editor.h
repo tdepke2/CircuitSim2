@@ -51,7 +51,7 @@ private:
     void pickTile(TileId::t id);
 
     void setCursorState(CursorState state);
-    sf::Vector2i mapMouseToTile(const sf::Vector2i& mousePos) const;
+    std::pair<sf::Vector2i, bool> mapMouseToNearestTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
     void highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight);
@@ -66,7 +66,7 @@ private:
     sf::Vector2u windowSize_;
 
     sf::RectangleShape cursor_;
-    sf::Vector2i cursorCoords_;
+    std::pair<sf::Vector2i, bool> cursorCoords_;
     sf::Text cursorLabel_;
     CursorState cursorState_;
     bool cursorVisible_;

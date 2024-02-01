@@ -41,7 +41,7 @@ public:
     void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea);
     void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
     void display();
-    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, const sf::Transform& viewProjection);
+    void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, ChunkCoords::repr topLeft, const sf::Transform& viewProjection);
 
 private:
     static unsigned int tileWidth_;
@@ -67,6 +67,7 @@ private:
     int levelOfDetail_;
     sf::Vector2u maxChunkArea_;
     ChunkCoordsRange lastVisibleArea_;
+    ChunkCoords::repr lastTopLeft_;
     sf::Transform lastViewProjection_;
     sf::RenderTexture texture_;
     bool textureDirty_;

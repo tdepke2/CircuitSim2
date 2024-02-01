@@ -41,6 +41,7 @@ ChunkRender::ChunkRender() :
     levelOfDetail_(0),
     maxChunkArea_(0, 0),
     lastVisibleArea_(0, 0, 0, 0),
+    lastTopLeft_(0),
     lastViewProjection_(),
     texture_(),
     textureDirty_(false),
@@ -84,6 +85,7 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     spdlog::debug("Resizing LOD {} area to {} by {} chunks.", levelOfDetail_, pow2ChunkArea.x, pow2ChunkArea.y);
     maxChunkArea_ = pow2ChunkArea;
     lastVisibleArea_ = {0, 0, 0, 0};
+    lastTopLeft_ = 0;
 
     if (!texture_.create(textureSize.x, textureSize.y)) {
         spdlog::error("Failed to create texture for LOD {} (size {} by {}).", levelOfDetail_, textureSize.x, textureSize.y);
@@ -94,7 +96,6 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(levelOfDetail_), &texture_.getTexture());
 
     const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * (chunkShader_ != nullptr ? 1 : 6);
-    bufferVertices_.resize(bufferSize);
     if (!buffer_.create(bufferSize)) {
         spdlog::error("Failed to create vertex buffer for LOD {} (size {}).", levelOfDetail_, bufferSize);
     }
@@ -164,23 +165,26 @@ void ChunkRender::display() {
     }
 }
 
-void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, const sf::Transform& viewProjection) {
+void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, ChunkCoords::repr topLeft, const sf::Transform& viewProjection) {
     lastViewProjection_ = viewProjection;
-    if (lastVisibleArea_ == visibleArea && !bufferDirty_) {
+    if (lastVisibleArea_ == visibleArea && lastTopLeft_ == topLeft && !bufferDirty_) {
         return;
     }
 
-    // FIXME: drawing the void chunk:
-    // only draw the vertices in the buffer that are visible. draw the buffer at an offset position if there are void chunks in top/left.
-    // will need to pass in that offset position from Board (should it be a ChunkCoordsRange instead? maybe not).
-
     lastVisibleArea_ = visibleArea;
+    lastTopLeft_ = topLeft;
     bufferDirty_ = false;
     spdlog::debug("Chunk area changed or buffer dirty, updating buffer.");
     const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
     const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
     const auto& emptyChunk = chunkDrawables.at(LodRenderer::EMPTY_CHUNK_COORDS);
+    const sf::Vector2i positionOffset = {
+        visibleArea.left - ChunkCoords::x(topLeft),
+        visibleArea.top - ChunkCoords::y(topLeft)
+    };
+    spdlog::debug("positionOffset = {}, {}", positionOffset.x, positionOffset.y);
 
+    bufferVertices_.clear();
     for (int y = 0; y < visibleArea.height; ++y) {
         auto chunkDrawable = chunkDrawables.upper_bound(ChunkCoords::pack(visibleArea.left - 1, visibleArea.top + y));
         for (int x = 0; x < visibleArea.width; ++x) {
@@ -192,37 +196,31 @@ void ChunkRender::updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawab
                 ++chunkDrawable;
             }
             spdlog::trace("Buffer ({}, {}) set to render index {}.", x, y, renderIndex);
-            const float px = static_cast<float>(x * chunkWidthTexels);
-            const float py = static_cast<float>(y * chunkWidthTexels);
+            const sf::Vector2f p = static_cast<sf::Vector2f>((sf::Vector2i(x, y) + positionOffset) * chunkWidthTexels);
 
             if (chunkShader_ != nullptr) {
                 const sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize);
-                bufferVertices_[y * maxChunkArea_.x + x].position = {px, py};
-                bufferVertices_[y * maxChunkArea_.x + x].texCoords = {t.x, t.y};
+                bufferVertices_.emplace_back(p, t);
             } else {
-                sf::Vertex* tileVertices = &bufferVertices_[(y * maxChunkArea_.x + x) * 6];
-                tileVertices[0].position = {px, py};
-                tileVertices[1].position = {px + chunkWidthTexels, py};
-                tileVertices[2].position = {px + chunkWidthTexels, py + chunkWidthTexels};
-                tileVertices[3].position = {px + chunkWidthTexels, py + chunkWidthTexels};
-                tileVertices[4].position = {px, py + chunkWidthTexels};
-                tileVertices[5].position = {px, py};
-
                 // Apply a small bias to the texture coords to hide the chunk seams.
                 const float texBias = 0.5f * (levelOfDetail_ + 1);
                 const sf::Vector2f t = getChunkTexCoords(renderIndex, textureSubdivisionSize) + sf::Vector2f(texBias / 2.0f, texBias / 2.0f);
-                tileVertices[0].texCoords = {t.x, t.y};
-                tileVertices[1].texCoords = {t.x + textureSubdivisionSize - texBias, t.y};
-                tileVertices[2].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
-                tileVertices[3].texCoords = {t.x + textureSubdivisionSize - texBias, t.y + textureSubdivisionSize - texBias};
-                tileVertices[4].texCoords = {t.x, t.y + textureSubdivisionSize - texBias};
-                tileVertices[5].texCoords = {t.x, t.y};
+                const float texOffset = textureSubdivisionSize - texBias;
+
+                bufferVertices_.emplace_back(p, t);
+                bufferVertices_.emplace_back(sf::Vector2f(p.x + chunkWidthTexels, p.y), sf::Vector2f(t.x + texOffset, t.y));
+                bufferVertices_.emplace_back(sf::Vector2f(p.x + chunkWidthTexels, p.y + chunkWidthTexels), sf::Vector2f(t.x + texOffset, t.y + texOffset));
+                bufferVertices_.emplace_back(sf::Vector2f(p.x + chunkWidthTexels, p.y + chunkWidthTexels), sf::Vector2f(t.x + texOffset, t.y + texOffset));
+                bufferVertices_.emplace_back(sf::Vector2f(p.x, p.y + chunkWidthTexels), sf::Vector2f(t.x, t.y + texOffset));
+                bufferVertices_.emplace_back(p, t);
             }
         }
     }
-    buffer_.update(bufferVertices_.data());
-
-    sortRenderBlocks();
+    spdlog::debug("Buffer now has {} vertices.", bufferVertices_.size());
+    if (bufferVertices_.size() > 0) {
+        buffer_.update(bufferVertices_.data(), bufferVertices_.size(), 0);
+        sortRenderBlocks();
+    }
 }
 
 bool operator<(const ChunkRender::RenderBlock& lhs, const ChunkRender::RenderBlock& rhs) {
@@ -288,5 +286,7 @@ void ChunkRender::draw(sf::RenderTarget& target, sf::RenderStates states) const 
         chunkShader_->setUniform("bufferSize", static_cast<sf::Vector2f>(maxChunkArea_));
         chunkShader_->setUniform("zoomPow2", static_cast<float>(1 << levelOfDetail_));
     }
-    target.draw(buffer_, states);
+    if (bufferVertices_.size() > 0) {
+        target.draw(buffer_, 0, bufferVertices_.size(), states);
+    }
 }
