@@ -43,6 +43,7 @@ SubBoard::SubBoard() :
     chunkDrawables_(),
     visibleArea_(0, 0, 0, 0),
     lastVisibleArea_(0, 0, 0, 0),
+    lastTileset_(nullptr),
     texture_(),
     vertices_(sf::Triangles, 6) {
 
@@ -85,12 +86,16 @@ void SubBoard::setVisibleSize(const sf::Vector2u& size) {
     size_ = size;
 }
 
+const sf::Vector2f& SubBoard::getRenderPosition() const {
+    return position_;
+}
+
 const sf::Vector2u& SubBoard::getVisibleSize() const {
     return size_;
 }
 
 void SubBoard::drawChunks(const sf::Texture* tileset) {
-    if (lastVisibleArea_.getFirst() != visibleArea_.getFirst()) {
+    if (lastVisibleArea_.getFirst() != visibleArea_.getFirst() || lastTileset_ != tileset) {
         resetChunkDraw();
     }
 
@@ -134,6 +139,7 @@ void SubBoard::drawChunks(const sf::Texture* tileset) {
         texture_.display();
     }
     lastVisibleArea_ = visibleArea_;
+    lastTileset_ = tileset;
 }
 
 Chunk& SubBoard::accessChunk(ChunkCoords::repr coords) {
@@ -192,9 +198,14 @@ void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i seco
     size_ = static_cast<sf::Vector2u>(sizeSubOne + sf::Vector2i(1, 1));
 }
 
-void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos) {
-    sf::Vector2i first = pos;
-    sf::Vector2i second = pos + static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1);    // FIXME: apply bounds check to b (and a?) so that we can't write outside the board area.
+void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBlanks) {
+    using Vector2ll = sf::Vector2<long long>;
+    auto first = static_cast<Vector2ll>(pos);
+    auto second = first + static_cast<Vector2ll>(size_) - Vector2ll(1ll, 1ll);
+
+    const auto upperBound = static_cast<Vector2ll>(board.getTileUpperBound());
+    second.x = std::min(second.x, upperBound.x);
+    second.y = std::min(second.y, upperBound.y);
 
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
     for (int yChunk = (first.y >> widthLog2); yChunk <= (second.y >> widthLog2); ++yChunk) {
@@ -204,7 +215,10 @@ void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos) {
                 int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
                 int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
                 if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
-                    accessTile(x - first.x, y - first.y).cloneTo(chunk.accessTile(i));
+                    const Tile tile = accessTile(x - first.x, y - first.y);
+                    if (!ignoreBlanks || tile.getId() != TileId::blank) {
+                        tile.cloneTo(chunk.accessTile(i));
+                    }
                 }
             }
         }

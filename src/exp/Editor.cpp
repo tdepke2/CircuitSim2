@@ -42,7 +42,7 @@ void forEachTile(Board& board, const sf::Vector2i& first, const sf::Vector2i& se
                 int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
                 int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
                 if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
-                    f(chunk, i);
+                    f(chunk, i, x, y);
                 }
             }
         }
@@ -205,12 +205,16 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
 
+    const sf::Texture* tileset = tilesetBright_.get();
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
+        tileset = tilesetBrightNoBlanks_.get();
+    }
     if (cursorState_ == CursorState::pickTile) {
         tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
-        tileSubBoard_.drawChunks(tilesetBright_.get());
+        tileSubBoard_.drawChunks(tileset);
     } else if (cursorState_ == CursorState::pasteArea) {
         copySubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
-        copySubBoard_.drawChunks(tilesetBright_.get());
+        copySubBoard_.drawChunks(tileset);
     }
 }
 
@@ -334,8 +338,11 @@ void Editor::deleteArea() {
     if (bounds.first.x > bounds.second.x) {
         return;
     }
-    forEachTile(board_, bounds.first, bounds.second, [](Chunk& chunk, int i) {
-        chunk.accessTile(i).setType(tiles::Blank::instance());
+    forEachTile(board_, bounds.first, bounds.second, [](Chunk& chunk, int i, int, int) {
+        Tile tile = chunk.accessTile(i);
+        if (tile.getHighlight()) {
+            tile.setType(tiles::Blank::instance());
+        }
     });
     board_.removeAllHighlights();
 }
@@ -389,14 +396,15 @@ OffsetView Editor::findTileView(const sf::Vector2i& pos) const {
 }
 
 std::pair<sf::Vector2i, bool> Editor::mapMouseToNearestTile(const sf::Vector2i& mousePos) const {
+    using Vector2ll = sf::Vector2<long long>;
     sf::Vector2f pos = editView_.getCenter() - editView_.getSize() * 0.5f + sf::Vector2f(mousePos) * zoomLevel_;
-    sf::Vector2<long long> tilePos = {
+    Vector2ll tilePos = {
         static_cast<long long>(editView_.getCenterOffset().x) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.x / tileWidth_)),
         static_cast<long long>(editView_.getCenterOffset().y) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.y / tileWidth_))
     };
-    const auto lowerBound = static_cast<sf::Vector2<long long>>(board_.getTileLowerBound());
-    const auto upperBound = static_cast<sf::Vector2<long long>>(board_.getTileUpperBound());
-    sf::Vector2<long long> tilePosInBounds = {
+    const auto lowerBound = static_cast<Vector2ll>(board_.getTileLowerBound());
+    const auto upperBound = static_cast<Vector2ll>(board_.getTileUpperBound());
+    Vector2ll tilePosInBounds = {
         std::min(std::max(tilePos.x, lowerBound.x), upperBound.x),
         std::min(std::max(tilePos.y, lowerBound.y), upperBound.y)
     };
@@ -516,7 +524,7 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     b.x = std::max(aCopy.x, b.x);
     b.y = std::max(aCopy.y, b.y);
 
-    forEachTile(board_, a, b, [highlight](Chunk& chunk, int i) {
+    forEachTile(board_, a, b, [highlight](Chunk& chunk, int i, int, int) {
         chunk.accessTile(i).setHighlight(highlight);
     });
     // FIXME: confirm it's not actually faster to use simpler iteration method.
@@ -530,33 +538,34 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos) {
     const bool forcePaste = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
-
-    // FIXME: pasting while holding (ctrl?) key does a paste without blank tiles.
+    const bool ignoreBlanks = sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl);
 
     if (!board_.accessTile(tilePos).getHighlight()) {
         // Not pasting into a selection.
         if (cursorState_ == CursorState::pickTile) {
             tileSubBoard_.accessTile(0, 0).cloneTo(board_.accessTile(tilePos));
         } else if (cursorState_ == CursorState::pasteArea) {
-
-
-
-            // FIXME: bounds checking will need to be here, have a separate bounds check in the copySubBoard_.pasteToBoard function in order to clip the area to size.
-
-
-
             if (!forcePaste) {
+                using Vector2ll = sf::Vector2<long long>;
+                const auto secondPos = static_cast<Vector2ll>(tilePos) + static_cast<Vector2ll>(copySubBoard_.getVisibleSize()) - Vector2ll(1ll, 1ll);
+                const auto upperBound = static_cast<Vector2ll>(board_.getTileUpperBound());
+                if (secondPos.x > upperBound.x || secondPos.y > upperBound.y) {
+                    return;
+                }
+
                 bool foundNonBlank = false;
-                forEachTile(board_, tilePos, tilePos + static_cast<sf::Vector2i>(copySubBoard_.getVisibleSize()) - sf::Vector2i(1, 1), [&foundNonBlank](Chunk& chunk, int i) {
+                forEachTile(board_, tilePos, static_cast<sf::Vector2i>(secondPos), [this,tilePos,ignoreBlanks,&foundNonBlank](Chunk& chunk, int i, int x, int y) {
                     if (chunk.accessTile(i).getId() != TileId::blank) {
-                        foundNonBlank = true;
+                        if (!ignoreBlanks || copySubBoard_.accessTile(x - tilePos.x, y - tilePos.y).getId() != TileId::blank) {
+                            foundNonBlank = true;
+                        }
                     }
                 });
                 if (foundNonBlank) {
                     return;
                 }
             }
-            copySubBoard_.pasteToBoard(board_, tilePos);
+            copySubBoard_.pasteToBoard(board_, tilePos, ignoreBlanks);
         }
         board_.removeAllHighlights();
     } else {
@@ -566,26 +575,27 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos) {
             return;
         }
         if (cursorState_ == CursorState::pickTile) {
-            forEachTile(board_, bounds.first, bounds.second, [this](Chunk& chunk, int i) {
-                if (chunk.accessTile(i).getHighlight()) {
-                    tileSubBoard_.accessTile(0, 0).cloneTo(chunk.accessTile(i));
+            forEachTile(board_, bounds.first, bounds.second, [this](Chunk& chunk, int i, int, int) {
+                Tile tile = chunk.accessTile(i);
+                if (tile.getHighlight()) {
+                    tileSubBoard_.accessTile(0, 0).cloneTo(tile);
                 }
             });
         } else if (cursorState_ == CursorState::pasteArea) {
-            for (int y = bounds.first.y; y <= bounds.second.y - static_cast<int>(copySubBoard_.getVisibleSize().y) + 1; y += copySubBoard_.getVisibleSize().y) {    // FIXME: potential int overflow at INT_MAX boundary? ###############################
-                for (int x = bounds.first.x; x <= bounds.second.x - static_cast<int>(copySubBoard_.getVisibleSize().x) + 1; x += copySubBoard_.getVisibleSize().x) {
+            for (long long y = bounds.first.y; y <= bounds.second.y - static_cast<long long>(copySubBoard_.getVisibleSize().y) + 1ll; y += copySubBoard_.getVisibleSize().y) {
+                for (long long x = bounds.first.x; x <= bounds.second.x - static_cast<long long>(copySubBoard_.getVisibleSize().x) + 1ll; x += copySubBoard_.getVisibleSize().x) {
                     const sf::Vector2i endPos = {
-                        x + static_cast<int>(copySubBoard_.getVisibleSize().x) - 1,
-                        y + static_cast<int>(copySubBoard_.getVisibleSize().y) - 1
+                        static_cast<int>(x) + static_cast<int>(copySubBoard_.getVisibleSize().x) - 1,
+                        static_cast<int>(y) + static_cast<int>(copySubBoard_.getVisibleSize().y) - 1
                     };
                     bool foundNonHighlight = false;
-                    forEachTile(board_, {x, y}, endPos, [&foundNonHighlight](Chunk& chunk, int i) {
+                    forEachTile(board_, {static_cast<int>(x), static_cast<int>(y)}, endPos, [&foundNonHighlight](Chunk& chunk, int i, int, int) {
                         if (!chunk.accessTile(i).getHighlight()) {
                             foundNonHighlight = true;
                         }
                     });
                     if (!foundNonHighlight) {
-                        copySubBoard_.pasteToBoard(board_, {x, y});
+                        copySubBoard_.pasteToBoard(board_, {static_cast<int>(x), static_cast<int>(y)}, ignoreBlanks);
                     }
                 }
             }
@@ -603,6 +613,22 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(tileSubBoard_, states);
     } else if (cursorState_ == CursorState::pasteArea) {
         target.draw(copySubBoard_, states);
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
+            const sf::Vector2f outlineSize = static_cast<sf::Vector2f>(copySubBoard_.getVisibleSize()) * static_cast<float>(tileWidth_);
+            sf::VertexArray outline(sf::LineStrip, 5);
+            outline[0].position = {0.0f, 0.0f};
+            outline[1].position = {outlineSize.x, 0.0f};
+            outline[2].position = {outlineSize.x, outlineSize.y};
+            outline[3].position = {0.0f, outlineSize.y};
+            outline[4].position = {0.0f, 0.0f};
+            for (size_t i = 0; i < outline.getVertexCount(); ++i) {
+                outline[i].color = sf::Color::Red;
+            }
+            sf::RenderStates states2 = states;
+            states2.transform.translate(copySubBoard_.getRenderPosition());
+            target.draw(outline, states2);
+        }
     }
     target.draw(cursorLabel_, states);
 }

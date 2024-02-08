@@ -26,6 +26,7 @@ public:
 
     void setRenderArea(const OffsetView& offsetView, float zoom, const sf::Vector2i& tilePosition);
     void setVisibleSize(const sf::Vector2u& size);
+    const sf::Vector2f& getRenderPosition() const;
     const sf::Vector2u& getVisibleSize() const;
     void drawChunks(const sf::Texture* tileset);
     Chunk& accessChunk(ChunkCoords::repr coords);
@@ -33,7 +34,7 @@ public:
     Tile accessTile(const sf::Vector2i& pos);
     void clear();
     void copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly = false);
-    void pasteToBoard(Board& board, const sf::Vector2i& pos);
+    void pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBlanks = false);
 
 private:
     static unsigned int tileWidth_;
@@ -49,6 +50,7 @@ private:
     std::unique_ptr<Chunk> emptyChunk_;
     FlatMap<ChunkCoords::repr, ChunkDrawable> chunkDrawables_;
     ChunkCoordsRange visibleArea_, lastVisibleArea_;
+    const sf::Texture* lastTileset_;
     sf::RenderTexture texture_;
     sf::VertexArray vertices_;
 };
