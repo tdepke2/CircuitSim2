@@ -147,7 +147,7 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
     lastTopLeft_ = ChunkCoords::pack(topLeft.x, topLeft.y);
 
     // Clamp the visible area to the maximum board size.
-    if (maxSize_ == sf::Vector2u(0, 0)) {
+    if (maxSize_.x == 0) {
         constexpr int maxChunkBound = std::numeric_limits<int>::max() / Chunk::WIDTH;
         constexpr int minChunkBound = std::numeric_limits<int>::min() / Chunk::WIDTH;
         topLeft.x = std::max(topLeft.x, minChunkBound);
@@ -190,6 +190,22 @@ void Board::setNotesString(const sf::String& notes) {
 
 const sf::Vector2u& Board::getMaxSize() const {
     return maxSize_;
+}
+
+sf::Vector2i Board::getTileLowerBound() const {
+    if (maxSize_.x == 0) {
+        return {std::numeric_limits<int>::min(), std::numeric_limits<int>::min()};
+    } else {
+        return {0, 0};
+    }
+}
+
+sf::Vector2i Board::getTileUpperBound() const {
+    if (maxSize_.x == 0) {
+        return {std::numeric_limits<int>::max(), std::numeric_limits<int>::max()};
+    } else {
+        return {static_cast<int>(maxSize_.x - 1), static_cast<int>(maxSize_.y - 1)};
+    }
 }
 
 bool Board::getExtraLogicStates() const {

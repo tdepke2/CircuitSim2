@@ -27,9 +27,28 @@ public:
     float getViewDivisor() const;
     const sf::View& getView() const;
     const sf::Vector2i& getCenterOffset() const;
+    template<typename Compare>
+    void clampToView(const OffsetView& other, Compare comp);
 
 private:
     float viewDivisor_;
     sf::View view_;
     sf::Vector2i centerOffset_;
 };
+
+template<typename Compare>
+void OffsetView::clampToView(const OffsetView& other, Compare comp) {
+    if (comp(static_cast<float>(centerOffset_.x), static_cast<float>(other.getCenterOffset().x))) {
+        centerOffset_.x = other.getCenterOffset().x;
+        view_.setCenter(other.getCenter().x, view_.getCenter().y);
+    } else if (centerOffset_.x == other.getCenterOffset().x && comp(view_.getCenter().x, other.getCenter().x)) {
+        view_.setCenter(other.getCenter().x, view_.getCenter().y);
+    }
+
+    if (comp(static_cast<float>(centerOffset_.y), static_cast<float>(other.getCenterOffset().y))) {
+        centerOffset_.y = other.getCenterOffset().y;
+        view_.setCenter(view_.getCenter().x, other.getCenter().y);
+    } else if (centerOffset_.y == other.getCenterOffset().y && comp(view_.getCenter().y, other.getCenter().y)) {
+        view_.setCenter(view_.getCenter().x, other.getCenter().y);
+    }
+}

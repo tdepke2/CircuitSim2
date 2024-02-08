@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -121,16 +122,7 @@ float Editor::getZoom() const {
 
 void Editor::goToTile(int x, int y) {
     spdlog::debug("Go to tile ({}, {}).", x, y);
-    editView_.setCenter(0.0f, 0.0f);
-    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    editView_.setCenterOffset(
-        (x >> widthLog2) - static_cast<int>(editView_.getSize().x / 2.0f / editView_.getViewDivisor()) - 1,
-        (y >> widthLog2) - static_cast<int>(editView_.getSize().y / 2.0f / editView_.getViewDivisor()) - 1
-    );
-    editView_.setCenter(
-        editView_.getCenter().x + ((x & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_,
-        editView_.getCenter().y + ((y & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_
-    );
+    editView_ = findTileView(x, y);
 }
 
 void Editor::processEvent(const sf::Event& event) {
@@ -140,6 +132,8 @@ void Editor::processEvent(const sf::Event& event) {
                 editView_.getCenter().x + (mousePos_.x - event.mouseMove.x) * zoomLevel_,
                 editView_.getCenter().y + (mousePos_.y - event.mouseMove.y) * zoomLevel_
             });
+            editView_.clampToView(findTileView(board_.getTileLowerBound()), std::less<float>());
+            editView_.clampToView(findTileView(board_.getTileUpperBound()), std::greater<float>());
         }
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
@@ -282,23 +276,23 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
         pickTile(!key.shift ? TileId::gateOr : TileId::gateNor);
     } else if (key.code == sf::Keyboard::X) {
         pickTile(!key.shift ? TileId::gateXor : TileId::gateXnor);
-    } else if (key.code == sf::Keyboard::Numpad1) {
+    } else if (key.code == sf::Keyboard::Num1) {
         goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Numpad2) {
+    } else if (key.code == sf::Keyboard::Num2) {
         goToTile(0, std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Numpad3) {
+    } else if (key.code == sf::Keyboard::Num3) {
         goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Numpad4) {
+    } else if (key.code == sf::Keyboard::Num4) {
         goToTile(std::numeric_limits<int>::min(), 0);
-    } else if (key.code == sf::Keyboard::Numpad5) {
+    } else if (key.code == sf::Keyboard::Num5) {
         goToTile(0, 0);
-    } else if (key.code == sf::Keyboard::Numpad6) {
+    } else if (key.code == sf::Keyboard::Num6) {
         goToTile(std::numeric_limits<int>::max(), 0);
-    } else if (key.code == sf::Keyboard::Numpad7) {
+    } else if (key.code == sf::Keyboard::Num7) {
         goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
-    } else if (key.code == sf::Keyboard::Numpad8) {
+    } else if (key.code == sf::Keyboard::Num8) {
         goToTile(0, std::numeric_limits<int>::min());
-    } else if (key.code == sf::Keyboard::Numpad9) {
+    } else if (key.code == sf::Keyboard::Num9) {
         goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
     }
 }
@@ -374,26 +368,38 @@ void Editor::setCursorState(CursorState state) {
     cursorState_ = state;
 }
 
+OffsetView Editor::findTileView(int x, int y) const {
+    OffsetView view(editView_.getViewDivisor());
+    view.setSize(editView_.getSize());
+    view.setCenter(0.0f, 0.0f);
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    view.setCenterOffset(
+        (x >> widthLog2) - static_cast<int>(view.getSize().x / 2.0f / view.getViewDivisor()) - 1,
+        (y >> widthLog2) - static_cast<int>(view.getSize().y / 2.0f / view.getViewDivisor()) - 1
+    );
+    view.setCenter(
+        view.getCenter().x + ((x & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_,
+        view.getCenter().y + ((y & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_
+    );
+    return view;
+}
+
+OffsetView Editor::findTileView(const sf::Vector2i& pos) const {
+    return findTileView(pos.x, pos.y);
+}
+
 std::pair<sf::Vector2i, bool> Editor::mapMouseToNearestTile(const sf::Vector2i& mousePos) const {
     sf::Vector2f pos = editView_.getCenter() - editView_.getSize() * 0.5f + sf::Vector2f(mousePos) * zoomLevel_;
     sf::Vector2<long long> tilePos = {
         static_cast<long long>(editView_.getCenterOffset().x) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.x / tileWidth_)),
         static_cast<long long>(editView_.getCenterOffset().y) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.y / tileWidth_))
     };
-    sf::Vector2<long long> tilePosInBounds;
-    if (board_.getMaxSize() == sf::Vector2u(0, 0)) {
-        constexpr long long intMin = std::numeric_limits<int>::min();
-        constexpr long long intMax = std::numeric_limits<int>::max();
-        tilePosInBounds = {
-            std::min(std::max(tilePos.x, intMin), intMax),
-            std::min(std::max(tilePos.y, intMin), intMax)
-        };
-    } else {
-        tilePosInBounds = {
-            std::min(std::max(tilePos.x, 0ll), static_cast<long long>(board_.getMaxSize().x - 1)),
-            std::min(std::max(tilePos.y, 0ll), static_cast<long long>(board_.getMaxSize().y - 1))
-        };
-    }
+    const auto lowerBound = static_cast<sf::Vector2<long long>>(board_.getTileLowerBound());
+    const auto upperBound = static_cast<sf::Vector2<long long>>(board_.getTileUpperBound());
+    sf::Vector2<long long> tilePosInBounds = {
+        std::min(std::max(tilePos.x, lowerBound.x), upperBound.x),
+        std::min(std::max(tilePos.y, lowerBound.y), upperBound.y)
+    };
     if (tilePosInBounds == tilePos) {
         return {static_cast<sf::Vector2i>(tilePosInBounds), true};
     } else {
@@ -406,6 +412,9 @@ void Editor::updateCursor() {
     if (cursorCoords_.first != cursorCoords.first) {
         //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.first.x, cursorCoords.first.y);
         cursorLabel_.setString("(" + std::to_string(cursorCoords.first.x) + ", " + std::to_string(cursorCoords.first.y) + ")");
+    }
+    if (!cursorCoords.second) {
+        cursorVisible_ = false;
     }
     cursorCoords_ = cursorCoords;
     cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));

@@ -44,6 +44,8 @@ public:
     void setExtraLogicStates(bool extraLogicStates);
     void setNotesString(const sf::String& notes);
     const sf::Vector2u& getMaxSize() const;
+    sf::Vector2i getTileLowerBound() const;
+    sf::Vector2i getTileUpperBound() const;
     bool getExtraLogicStates() const;
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;

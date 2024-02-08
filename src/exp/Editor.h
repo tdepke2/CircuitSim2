@@ -51,6 +51,8 @@ private:
     void pickTile(TileId::t id);
 
     void setCursorState(CursorState state);
+    OffsetView findTileView(int x, int y) const;
+    OffsetView findTileView(const sf::Vector2i& pos) const;
     std::pair<sf::Vector2i, bool> mapMouseToNearestTile(const sf::Vector2i& mousePos) const;
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
