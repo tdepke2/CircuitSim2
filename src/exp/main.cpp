@@ -4,6 +4,7 @@
 #include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
+#include <TilePool.h>
 #include <tiles/Blank.h>
 #include <tiles/Input.h>
 #include <tiles/Wire.h>
@@ -29,6 +30,62 @@ int main() {
     Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", TILE_WIDTH);
     Board board;
     board.debugSetDrawChunkBorder(true);
+
+    TilePool pool;
+    //pool.accessTile(0);
+    auto result = pool.allocateTile();
+    spdlog::info("Allocate 1: tile {}, id {}", static_cast<int>(result.first.getId()), result.second);
+    result.first.setType(tiles::Wire::instance());
+    spdlog::info("Tile 1 (after change): {}", static_cast<int>(pool.accessTile(result.second).getId()));
+
+    auto result2 = pool.allocateTile();
+    spdlog::info("Allocate 2: tile {}, id {}", static_cast<int>(result2.first.getId()), result2.second);
+    result2.first.setType(tiles::Input::instance());
+    spdlog::info("Tile 2 (after change): {}", static_cast<int>(pool.accessTile(result2.second).getId()));
+
+    pool.freeTile(result.second);
+    spdlog::info("Free 1: done");
+    //spdlog::info("Tile 1: {}", static_cast<int>(pool.accessTile(result.second).getId()));
+    spdlog::info("Tile 2: {}", static_cast<int>(pool.accessTile(result2.second).getId()));
+
+    pool.freeTile(result2.second);
+    spdlog::info("Free 2: done");
+
+    auto result3 = pool.allocateTile();
+    spdlog::info("Allocate 3: tile {}, id {}", static_cast<int>(result3.first.getId()), result3.second);
+    result3.first.setType(tiles::Input::instance(), TileId::inButton);
+    spdlog::info("Tile 3 (after change): {}", static_cast<int>(pool.accessTile(result3.second).getId()));
+
+    spdlog::info("Allocating to fill chunk area...");
+    for (int i = 3; i < 1024; ++i) {
+        pool.allocateTile();
+    }
+
+    auto result1024 = pool.allocateTile();
+    spdlog::info("Allocate 1024: tile {}, id {}", static_cast<int>(result1024.first.getId()), result1024.second);
+    result1024.first.setType(tiles::Wire::instance(), TileId::wireCrossover);
+    spdlog::info("Tile 1024 (after change): {}", static_cast<int>(pool.accessTile(result1024.second).getId()));
+
+    pool.debugPrintInfo();
+
+    spdlog::info("Freeing to clear chunk area...");
+    for (int i = 2; i < 1024; ++i) {
+        pool.freeTile(i);
+    }
+
+    auto result1025 = pool.allocateTile();
+    spdlog::info("Allocate 1025: tile {}, id {}", static_cast<int>(result1025.first.getId()), result1025.second);
+    result1025.first.setType(tiles::Wire::instance(), TileId::wireJunction);
+    spdlog::info("Tile 1025 (after change): {}", static_cast<int>(pool.accessTile(result1025.second).getId()));
+
+    pool.debugPrintInfo();
+
+
+    // FIXME: need to test null items in the middle, and removing multiple nulls at once.
+    // what if we are near boundary with little to no tiles allocated, and we allocate/free?
+
+
+    return 0;
 
     try {
         board.loadFromFile("boards/NewBoard/board.txt");

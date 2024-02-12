@@ -18,8 +18,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-std::unique_ptr<sf::Texture> Editor::tilesetBright_;
-std::unique_ptr<sf::Texture> Editor::tilesetBrightNoBlanks_;
+sf::Texture* Editor::tilesetBright_;
+sf::Texture* Editor::tilesetBrightNoBlanks_;
 unsigned int Editor::tileWidth_;
 
 namespace {
@@ -51,11 +51,11 @@ void forEachTile(Board& board, const sf::Vector2i& first, const sf::Vector2i& se
 
 }
 
-void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) {
+void Editor::setupTextureData(ResourceManager& resource, sf::Texture* tilesetGrid, unsigned int tileWidth) {
     sf::Image tilesetCopy = tilesetGrid->copyToImage();
     const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
 
-    tilesetBright_.reset(new sf::Texture());
+    tilesetBright_ = &resource.getTexture("tilesetBright", true);
     if (!tilesetBright_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBright texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
@@ -64,13 +64,13 @@ void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) 
     if (!tilesetBright_->generateMipmap()) {
         spdlog::warn("\"tilesetBright\": Unable to generate mipmap for texture.");
     }
-    DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright_.get());
+    DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright_);
 
     sf::Image transparentBlank;
     transparentBlank.create(tileWidth * 2, tileWidth * 2, {0, 0, 0, 0});
     tilesetCopy.copy(transparentBlank, 0, tilesetCopy.getSize().y / 2);
 
-    tilesetBrightNoBlanks_.reset(new sf::Texture());
+    tilesetBrightNoBlanks_ = &resource.getTexture("tilesetBrightNoBlanks", true);
     if (!tilesetBrightNoBlanks_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBrightNoBlanks texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
@@ -79,7 +79,7 @@ void Editor::setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth) 
     if (!tilesetBrightNoBlanks_->generateMipmap()) {
         spdlog::warn("\"tilesetBrightNoBlanks\": Unable to generate mipmap for texture.");
     }
-    DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks_.get());
+    DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks_);
 
     tileWidth_ = tileWidth;
     SubBoard::setup(tileWidth);
@@ -105,11 +105,6 @@ Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialV
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
     cursorLabel_.setOutlineThickness(2.0f);
-}
-
-Editor::~Editor() {
-    tilesetBright_.reset();
-    tilesetBrightNoBlanks_.reset();
 }
 
 const OffsetView& Editor::getEditView() const {
@@ -205,9 +200,9 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
 
-    const sf::Texture* tileset = tilesetBright_.get();
+    const sf::Texture* tileset = tilesetBright_;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
-        tileset = tilesetBrightNoBlanks_.get();
+        tileset = tilesetBrightNoBlanks_;
     }
     if (cursorState_ == CursorState::pickTile) {
         tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);

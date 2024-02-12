@@ -15,6 +15,7 @@ add_executable(CircuitSim2_experimental
     ResourceManager.cpp
     SubBoard.cpp
     Tile.cpp
+    TilePool.cpp
     tiles/Blank.cpp
     tiles/Gate.cpp
     tiles/Input.cpp

@@ -208,14 +208,14 @@ void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBl
     second.y = std::min(second.y, upperBound.y);
 
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    for (int yChunk = (first.y >> widthLog2); yChunk <= (second.y >> widthLog2); ++yChunk) {
-        for (int xChunk = (first.x >> widthLog2); xChunk <= (second.x >> widthLog2); ++xChunk) {
+    for (int yChunk = static_cast<int>(first.y >> widthLog2); yChunk <= static_cast<int>(second.y >> widthLog2); ++yChunk) {
+        for (int xChunk = static_cast<int>(first.x >> widthLog2); xChunk <= static_cast<int>(second.x >> widthLog2); ++xChunk) {
             auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
             for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
                 int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
                 int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
                 if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
-                    const Tile tile = accessTile(x - first.x, y - first.y);
+                    const Tile tile = accessTile(static_cast<int>(x - first.x), static_cast<int>(y - first.y));
                     if (!ignoreBlanks || tile.getId() != TileId::blank) {
                         tile.cloneTo(chunk.accessTile(i));
                     }

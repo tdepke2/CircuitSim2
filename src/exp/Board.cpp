@@ -99,7 +99,7 @@ void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGri
     ChunkDrawable::setupTextureData(resource, tilesetGrid_->getSize(), tileWidth);
     ChunkRender::setupTextureData(resource, tileWidth);
     Chunk::setupChunks();
-    Editor::setupTextureData(tilesetGrid_, tileWidth);
+    Editor::setupTextureData(resource, tilesetGrid_, tileWidth);
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).

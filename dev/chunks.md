@@ -130,8 +130,8 @@ The following should not be undoable:
 Example: place single tile on the board.
 1. Create a commands::WriteTile, passing the state required to write the tile.
 2. Command is executed and appended to the edit history deque (could use vector instead?).
-3. Execution clones the target tile to a temporary chunk (managed by a class the Editor knows about).
-    1. This class has an array of chunks to store the tiles, the chunks are filled in a linear order until full.
+3. Execution clones the target tile to a temporary chunk (managed by a TilePool the Editor knows about).
+    1. The TilePool has an array of chunks to store the tiles, the chunks are filled in a linear order until full.
     2. We could keep indices to the first and last allocated tiles across the group of chunks. When a command destructs, it should replace any allocated tiles with blanks and potentially update these indices.
     3. Keep in mind that the command may clone a blank into the temp chunk, so we can't rely on checking for blanks to advance the lower index.
 4. Execution swaps the cloned target tile with the to-be-replaced one.

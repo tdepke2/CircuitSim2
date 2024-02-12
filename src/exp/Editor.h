@@ -4,7 +4,6 @@
 #include <SubBoard.h>
 #include <Tile.h>
 
-#include <memory>
 #include <SFML/Graphics.hpp>
 #include <utility>
 
@@ -13,10 +12,10 @@ class ResourceManager;
 
 class Editor : public sf::Drawable {
 public:
-    static void setupTextureData(sf::Texture* tilesetGrid, unsigned int tileWidth);
+    static void setupTextureData(ResourceManager& resource, sf::Texture* tilesetGrid, unsigned int tileWidth);
 
     Editor(Board& board, ResourceManager& resource, const sf::View& initialView);
-    ~Editor();
+    ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;
 
@@ -27,8 +26,8 @@ public:
     void update();
 
 private:
-    static std::unique_ptr<sf::Texture> tilesetBright_;
-    static std::unique_ptr<sf::Texture> tilesetBrightNoBlanks_;
+    static sf::Texture* tilesetBright_;
+    static sf::Texture* tilesetBrightNoBlanks_;
     static unsigned int tileWidth_;
 
     enum class CursorState {
