@@ -1,0 +1,49 @@
+version: 1.0
+width: 44
+height: 39
+data: {
+}
+notes: {
+}
+
+******************************************************************************************
+*                                                                                        *
+*  >d>N..    >m>N..    >n>d..    >a>N..    >b>d..    >o>N..    >p>d..    >x>N..    >y>d..*
+*                                                                                        *
+*                                                                                        *
+*  vd        vd        vd        vd        vd        vd        vd        vd        vd    *
+*  >d>N..    >m>N..    >n>d..    >a>N..    >b>d..    >o>N..    >p>d..    >x>N..    >y>d..*
+*                                                                                        *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*  >d>d..    >m>d..    >n>N..    >a>N..    >b>d..    >o>N..    >p>d..    >x>N..    >y>d..*
+*                                                                                        *
+*                                                                                        *
+*  vd        vd        vd        vd        vd        vd        vd        vd        vd    *
+*>d>d>N..  >d>m>N..  >d>n>d..  >d>a>N..  >d>b>d..  >d>o>N..  >d>p>d..  >d>x>N..  >d>y>d..*
+*                                                                                        *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*>d>d>N..  >d>m>N..  >d>n>d..  >d>a>N..  >d>b>d..  >d>o>d..  >d>p>N..  >d>x>d..  >d>y>N..*
+*                                                                                        *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*>N>d>N..  >N>m>N..  >N>n>d..  >N>a>d..  >N>b>N..  >N>o>d..  >N>p>N..  >N>x>N..  >N>y>d..*
+*                                                                                        *
+*                                                                                        *
+*  vd        vd        vd        vd        vd        vd        vd        vd        vd    *
+*>d>d>N..  >d>m>N..  >d>n>d..  >d>a>N..  >d>b>d..  >d>o>N..  >d>p>d..  >d>x>N..  >d>y>d..*
+*  ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d    *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*>d>d>N..  >d>m>N..  >d>n>d..  >d>a>N..  >d>b>d..  >d>o>d..  >d>p>N..  >d>x>d..  >d>y>N..*
+*  ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d    *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*>N>d>N..  >N>m>N..  >N>n>d..  >N>a>N..  >N>b>d..  >N>o>d..  >N>p>N..  >N>x>N..  >N>y>d..*
+*  ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d        ^d    *
+*                                                                                        *
+*  vN        vN        vN        vN        vN        vN        vN        vN        vN    *
+*>N>d>N..  >N>m>N..  >N>n>d..  >N>a>d..  >N>b>N..  >N>o>d..  >N>p>N..  >N>x>d..  >N>y>N..*
+*  ^N        ^N        ^N        ^N        ^N        ^N        ^N        ^N        ^N    *
+******************************************************************************************

@@ -1,0 +1,20 @@
+version: 1.0
+width: 5
+height: 7
+data: {
+}
+notes: {
+Hello world!
+
+sample text
+}
+
+************
+*    ^a,   *
+*      |   *
+*,---v-+---*
+*    | |   *
+*    |     *
+*    |     *
+*    '-<n  *
+************

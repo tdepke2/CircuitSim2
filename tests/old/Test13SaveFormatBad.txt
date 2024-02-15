@@ -1,0 +1,12 @@
+
+width: 3
+height: 2
+data: {
+}
+notes: {
+This board should error on line 2.
+}
+********
+*  v-+-*
+*  |   *
+********
