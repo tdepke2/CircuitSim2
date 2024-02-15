@@ -13,7 +13,7 @@ set(HEADER_LIST
     widgets/TextBox.h
 )
 
-add_library(gui_lib
+add_library(cs2_gui_lib
     Container.cpp
     ContainerBase.cpp
     Gui.cpp
@@ -29,16 +29,16 @@ add_library(gui_lib
     ${HEADER_LIST}
 )
 
-target_include_directories(gui_lib PUBLIC ..)
+target_include_directories(cs2_gui_lib PUBLIC ..)
 
-target_link_libraries(gui_lib PRIVATE sfml-graphics)
-set_target_properties(gui_lib PROPERTIES
+target_link_libraries(cs2_gui_lib PRIVATE sfml-graphics)
+set_target_properties(cs2_gui_lib PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
 
-target_compile_options(gui_lib PRIVATE
+target_compile_options(cs2_gui_lib PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )

@@ -38,6 +38,13 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Enable support for folders in IDEs.
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+    # Enable testing by default.
+    option(BUILD_TESTING "Build the testing tree." ON)
+    message(STATUS "Building tests is '${BUILD_TESTING}'.")
+    if (BUILD_TESTING)
+        enable_testing()
+    endif()
+
     # SFML settings.
     set(BUILD_SHARED_LIBS OFF)
     set(SFML_BUILD_DOC OFF)
@@ -95,3 +102,8 @@ FetchContent_MakeAvailable(ghc_filesystem)
 
 # Run the next CMakeLists file (builds the executable).
 add_subdirectory(src)
+
+# Add tests if this is the main project and testing is enabled.
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
