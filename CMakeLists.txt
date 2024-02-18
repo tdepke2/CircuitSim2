@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14...3.26)
 
+include(cmake/CompileProperties.cmake)
+
 # Set project name and version.
 project(CircuitSim2
     VERSION 1.1
@@ -11,10 +13,10 @@ project(CircuitSim2
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Set default build type if unspecified.
     # From https://cliutils.gitlab.io/modern-cmake/chapters/features.html
-    set(default_build_type "Release")
+    set(DEFAULT_BUILD_TYPE "Release")
     if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-        message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-        set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+        message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
+        set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE
             STRING "Choose the type of build." FORCE
         )
         # Set the possible values of build type for cmake-gui
@@ -46,11 +48,10 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     endif()
 
     # SFML settings.
-    set(BUILD_SHARED_LIBS OFF)
     set(SFML_BUILD_DOC OFF)
     set(SFML_BUILD_EXAMPLES OFF)
 
-    set(SFML_BUILD_AUDIO OFF)
+    set(SFML_BUILD_AUDIO OFF)    # For audio, see here: https://en.sfml-dev.org/forums/index.php?topic=28580.0
     set(SFML_BUILD_GRAPHICS ON)
     set(SFML_BUILD_NETWORK OFF)
     set(SFML_BUILD_WINDOW ON)

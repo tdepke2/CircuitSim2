@@ -1,4 +1,4 @@
-set(HEADER_LIST
+set(CS2_GUI_HEADERS
     Container.h
     ContainerBase.h
     Gui.h
@@ -12,8 +12,9 @@ set(HEADER_LIST
     widgets/Panel.h
     widgets/TextBox.h
 )
+list(TRANSFORM CS2_GUI_HEADERS PREPEND "${PROJECT_SOURCE_DIR}/include/gui/")
 
-add_library(cs2_gui_lib
+add_library(cs2_gui
     Container.cpp
     ContainerBase.cpp
     Gui.cpp
@@ -26,19 +27,11 @@ add_library(cs2_gui_lib
     widgets/MenuBar.cpp
     widgets/Panel.cpp
     widgets/TextBox.cpp
-    ${HEADER_LIST}
+    ${CS2_GUI_HEADERS}
 )
 
-target_include_directories(cs2_gui_lib PUBLIC ..)
+# FIXME: source_group needed here?
 
-target_link_libraries(cs2_gui_lib PRIVATE sfml-graphics)
-set_target_properties(cs2_gui_lib PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-)
-
-target_compile_options(cs2_gui_lib PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
+target_include_directories(cs2_gui PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(cs2_gui PUBLIC sfml-graphics)
+cs2_add_cxx_properties(cs2_gui)

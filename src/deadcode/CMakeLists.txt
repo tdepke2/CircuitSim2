@@ -1,29 +1,28 @@
 add_executable(CircuitSim2
     Board.cpp
-    Simulator.cpp
-    Tile.cpp
-    TileButton.cpp
-    TileGate.cpp
-    TileLED.cpp
-    TileSwitch.cpp
-    TileWire.cpp
-    UserInterface.cpp
+    Board.h
     main.cpp
+    Simulator.cpp
+    Simulator.h
+    Tile.cpp
+    Tile.h
+    TileButton.cpp
+    TileButton.h
+    TileGate.cpp
+    TileGate.h
+    TileLED.cpp
+    TileLED.h
+    TileSwitch.cpp
+    TileSwitch.h
+    TileWire.cpp
+    TileWire.h
+    UserInterface.cpp
+    UserInterface.h
 )
 
 target_include_directories(CircuitSim2 PRIVATE .)
-
 target_link_libraries(CircuitSim2 PRIVATE
     sfml-graphics
     portable_file_dialogs
 )
-set_target_properties(CircuitSim2 PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
-)
-
-target_compile_options(CircuitSim2 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
+cs2_add_cxx_properties(CircuitSim2)
