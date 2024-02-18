@@ -30,7 +30,11 @@ add_library(cs2_gui
     ${CS2_GUI_HEADERS}
 )
 
-# FIXME: source_group needed here?
+source_group(
+    TREE "${PROJECT_SOURCE_DIR}/include"
+    PREFIX "Header Files"
+    FILES ${CS2_GUI_HEADERS}
+)
 
 target_include_directories(cs2_gui PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(cs2_gui PUBLIC sfml-graphics)

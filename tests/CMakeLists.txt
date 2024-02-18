@@ -6,6 +6,7 @@ FetchContent_Declare(
     GIT_TAG v2.13.10
 )
 FetchContent_MakeAvailable(catch2)
+message("")
 
 add_executable(FlatMap_test
     FlatMap.test.cpp

@@ -60,6 +60,12 @@ add_library(cs2_src
     TileType.h
 )
 
+# Organize source and header files for IDEs.
+source_group("Header Files/commands" REGULAR_EXPRESSION "commands/.*\.h")
+source_group("Source Files/commands" REGULAR_EXPRESSION "commands/.*\.cpp")
+source_group("Header Files/tiles" REGULAR_EXPRESSION "tiles/.*\.h")
+source_group("Source Files/tiles" REGULAR_EXPRESSION "tiles/.*\.cpp")
+
 # Specify where to find the header files to include.
 target_include_directories(cs2_src PUBLIC .)
 

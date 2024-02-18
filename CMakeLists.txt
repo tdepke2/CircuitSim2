@@ -57,6 +57,8 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(SFML_BUILD_WINDOW ON)
 
     set(WARNINGS_AS_ERRORS OFF)
+
+    message("")
 endif()
 
 include(FetchContent)
@@ -70,6 +72,7 @@ FetchContent_Declare(
     GIT_TAG 2.6.x
 )
 FetchContent_MakeAvailable(SFML)
+message("")
 
 # Import portable-file-dialogs for native system file dialogs.
 # Some other options were considered too and may be relevant in future:
@@ -82,6 +85,7 @@ FetchContent_Declare(
     GIT_TAG 7f852d88a480020d7f91957cbcefe514fc95000c    # Latest commit as of writing.
 )
 FetchContent_MakeAvailable(portable_file_dialogs)
+message("")
 
 # Import spdlog for logging utilities.
 message(STATUS "Fetching sources for spdlog...")
@@ -91,6 +95,7 @@ FetchContent_Declare(
     GIT_TAG v1.12.0
 )
 FetchContent_MakeAvailable(spdlog)
+message("")
 
 # Import features from c++17 std::filesystem.
 message(STATUS "Fetching sources for ghc_filesystem...")
@@ -100,6 +105,7 @@ FetchContent_Declare(
     GIT_TAG v1.5.14
 )
 FetchContent_MakeAvailable(ghc_filesystem)
+message("")
 
 # Run the next CMakeLists file (builds the executable).
 add_subdirectory(src)
