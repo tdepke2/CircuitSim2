@@ -8,18 +8,20 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(catch2)
 message("")
 
-add_executable(FlatMap_test
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/contrib)
+include(Catch)
+
+add_executable(cs2_src_test
+    CatchMain.cpp
     FlatMap.test.cpp
+    TilePool.test.cpp
 )
-target_link_libraries(FlatMap_test PRIVATE cs2_src)
-cs2_add_cxx_properties(FlatMap_test)
-
-add_executable(mytest
-    mytest.cpp
+target_link_libraries(cs2_src_test PRIVATE
+    cs2_src
+    Catch2::Catch2
 )
-target_link_libraries(mytest PRIVATE Catch2::Catch2)
-cs2_add_cxx_properties(mytest)
+cs2_add_cxx_properties(cs2_src_test)
 
-add_test(NAME mytest1 COMMAND mytest)
+catch_discover_tests(cs2_src_test)
 
 add_subdirectory(gui)
