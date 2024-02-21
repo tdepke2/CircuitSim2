@@ -20,8 +20,6 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-Editor::StaticInit* Editor::staticInit_ = nullptr;
-
 namespace {
 
 constexpr int constLog2(int x) {
@@ -51,8 +49,10 @@ void forEachTile(Board& board, const sf::Vector2i& first, const sf::Vector2i& se
 
 }
 
+Editor::StaticInit* Editor::staticInit_ = nullptr;
+
 Editor::StaticInit::StaticInit() {
-    spdlog::info("Editor::StaticInit initializing.");
+    spdlog::debug("Editor::StaticInit initializing.");
     ResourceBase* resource = Locator::getResource();
     const sf::Texture* tilesetGrid = &resource->getTexture("resources/texturePackGrid.png");
 

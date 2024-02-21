@@ -20,7 +20,7 @@
 ChunkDrawable::StaticInit* ChunkDrawable::staticInit_ = nullptr;
 
 ChunkDrawable::StaticInit::StaticInit() {
-    spdlog::info("ChunkDrawable::StaticInit initializing.");
+    spdlog::debug("ChunkDrawable::StaticInit initializing.");
     ResourceBase* resource = Locator::getResource();
     const sf::Vector2u& textureSize = resource->getTexture("resources/texturePackGrid.png").getSize();
     textureWidth = textureSize.x;

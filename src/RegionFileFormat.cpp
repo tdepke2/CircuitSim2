@@ -7,9 +7,6 @@
 #include <stdexcept>
 #include <tuple>
 
-constexpr int RegionFileFormat::REGION_WIDTH;
-constexpr int RegionFileFormat::SECTOR_SIZE;
-
 namespace {
 
 constexpr int constLog2(int x) {
@@ -17,6 +14,9 @@ constexpr int constLog2(int x) {
 }
 
 }
+
+constexpr int RegionFileFormat::REGION_WIDTH;
+constexpr int RegionFileFormat::SECTOR_SIZE;
 
 RegionFileFormat::RegionFileFormat() :
     filename_("boards/NewBoard/board.txt"),

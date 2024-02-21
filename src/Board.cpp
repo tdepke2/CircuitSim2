@@ -27,8 +27,6 @@
     #pragma GCC diagnostic pop
 #endif
 
-Board::StaticInit* Board::staticInit_ = nullptr;
-
 namespace {
 
 void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::Vector2u& bottomRight, const sf::Vector2u& borderSize) {
@@ -77,8 +75,10 @@ constexpr int constLog2(int x) {
 
 }
 
+Board::StaticInit* Board::staticInit_ = nullptr;
+
 Board::StaticInit::StaticInit() {
-    spdlog::info("Board::StaticInit initializing.");
+    spdlog::debug("Board::StaticInit initializing.");
     ResourceBase* resource = Locator::getResource();
     const fs::path& filenameGrid = "resources/texturePackGrid.png";
     const fs::path& filenameNoGrid = "resources/texturePackNoGrid.png";

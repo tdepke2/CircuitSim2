@@ -27,7 +27,7 @@
 ChunkRender::StaticInit* ChunkRender::staticInit_ = nullptr;
 
 ChunkRender::StaticInit::StaticInit() {
-    spdlog::info("ChunkRender::StaticInit initializing.");
+    spdlog::debug("ChunkRender::StaticInit initializing.");
     ResourceBase* resource = Locator::getResource();
 
     try {

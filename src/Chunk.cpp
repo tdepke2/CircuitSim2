@@ -39,7 +39,7 @@ constexpr int Chunk::WIDTH;
 Chunk::StaticInit* Chunk::staticInit_ = nullptr;
 
 Chunk::StaticInit::StaticInit() {
-    spdlog::info("Chunk::StaticInit initializing.");
+    spdlog::debug("Chunk::StaticInit initializing.");
     tileIdToType = {};
 
     TileId::t id = TileId::blank;
