@@ -8,7 +8,6 @@
 #include <tiles/Wire.h>
 
 #include <algorithm>
-#include <array>
 #include <cstring>
 #include <iomanip>
 
@@ -37,10 +36,12 @@ uint16_t TileData::getTextureHash() const {
 }
 
 constexpr int Chunk::WIDTH;
+Chunk::StaticInit* Chunk::staticInit_ = nullptr;
 
-std::array<TileType*, TileId::count> tileIdToType = {};
+Chunk::StaticInit::StaticInit() {
+    spdlog::info("Chunk::StaticInit initializing.");
+    tileIdToType = {};
 
-void Chunk::setupChunks() {
     TileId::t id = TileId::blank;
     for (; id <= TileId::blank; id = static_cast<TileId::t>(id + 1)) {
         tileIdToType[id] = tiles::Blank::instance();
@@ -66,6 +67,9 @@ Chunk::Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords) :
     dirtyFlags_(),
     empty_(true), 
     highlighted_(false) {
+
+    static StaticInit staticInit;
+    staticInit_ = &staticInit;
 }
 
 ChunkCoords::repr Chunk::getCoords() const {
@@ -97,7 +101,7 @@ bool Chunk::isHighlighted() const {
 }
 
 Tile Chunk::accessTile(unsigned int tileIndex) {
-    return {tileIdToType[tiles_[tileIndex].id], *this, tileIndex};
+    return {staticInit_->tileIdToType[tiles_[tileIndex].id], *this, tileIndex};
 }
 
 std::vector<char> Chunk::serialize() const {

@@ -7,7 +7,6 @@
 #include <SFML/Graphics.hpp>
 
 class Chunk;
-class ResourceManager;
 
 /**
  * The drawable component of a `Chunk`.
@@ -19,8 +18,6 @@ class ResourceManager;
  */
 class ChunkDrawable : public sf::Drawable {
 public:
-    static void setupTextureData(ResourceManager& resource, const sf::Vector2u& textureSize, unsigned int tileWidth);
-
     ChunkDrawable();
     ~ChunkDrawable() = default;
     ChunkDrawable(const ChunkDrawable& rhs) = delete;
@@ -38,10 +35,14 @@ public:
     void markAsDrawn(int levelOfDetail) const;
 
 private:
-    static unsigned int textureWidth_, tileWidth_;
-    static std::array<uint8_t, 512> textureLookup_;
-    static unsigned int textureHighlightStart_;
-    static std::array<sf::Text, 21> labelCache_;
+    struct StaticInit {
+        StaticInit();
+        unsigned int textureWidth;
+        std::array<uint8_t, 512> textureLookup;
+        unsigned int textureHighlightStart;
+        std::array<sf::Text, 21> labelCache;
+    };
+    static StaticInit* staticInit_;
 
     void updateTileGeometry(unsigned int tileIndex) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

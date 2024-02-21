@@ -2,14 +2,16 @@
 #include <Chunk.h>
 #include <DebugScreen.h>
 #include <Editor.h>
+#include <Locator.h>
 #include <LodRenderer.h>
-#include <ResourceManager.h>
+#include <ResourceBase.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
+#include <TileWidth.h>
 
 #include <algorithm>
 #include <cmath>
@@ -18,9 +20,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-sf::Texture* Editor::tilesetBright_;
-sf::Texture* Editor::tilesetBrightNoBlanks_;
-unsigned int Editor::tileWidth_;
+Editor::StaticInit* Editor::staticInit_ = nullptr;
 
 namespace {
 
@@ -51,56 +51,60 @@ void forEachTile(Board& board, const sf::Vector2i& first, const sf::Vector2i& se
 
 }
 
-void Editor::setupTextureData(ResourceManager& resource, sf::Texture* tilesetGrid, unsigned int tileWidth) {
+Editor::StaticInit::StaticInit() {
+    spdlog::info("Editor::StaticInit initializing.");
+    ResourceBase* resource = Locator::getResource();
+    const sf::Texture* tilesetGrid = &resource->getTexture("resources/texturePackGrid.png");
+
     sf::Image tilesetCopy = tilesetGrid->copyToImage();
     const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
 
-    tilesetBright_ = &resource.getTexture("tilesetBright", true);
-    if (!tilesetBright_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
+    tilesetBright = &resource->getTexture("tilesetBright", true);
+    if (!tilesetBright->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBright texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
-    tilesetBright_->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
-    tilesetBright_->setSmooth(true);
-    if (!tilesetBright_->generateMipmap()) {
+    tilesetBright->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
+    tilesetBright->setSmooth(true);
+    if (!tilesetBright->generateMipmap()) {
         spdlog::warn("\"tilesetBright\": Unable to generate mipmap for texture.");
     }
-    DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright_);
+    DebugScreen::instance()->registerTexture("tilesetBright", tilesetBright);
 
     sf::Image transparentBlank;
-    transparentBlank.create(tileWidth * 2, tileWidth * 2, {0, 0, 0, 0});
+    transparentBlank.create(TileWidth::TEXELS * 2, TileWidth::TEXELS * 2, {0, 0, 0, 0});
     tilesetCopy.copy(transparentBlank, 0, tilesetCopy.getSize().y / 2);
 
-    tilesetBrightNoBlanks_ = &resource.getTexture("tilesetBrightNoBlanks", true);
-    if (!tilesetBrightNoBlanks_->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
+    tilesetBrightNoBlanks = &resource->getTexture("tilesetBrightNoBlanks", true);
+    if (!tilesetBrightNoBlanks->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBrightNoBlanks texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
-    tilesetBrightNoBlanks_->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
-    tilesetBrightNoBlanks_->setSmooth(true);
-    if (!tilesetBrightNoBlanks_->generateMipmap()) {
+    tilesetBrightNoBlanks->update(tilesetCopy.getPixelsPtr() + highlightStartOffset, tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2, 0, 0);
+    tilesetBrightNoBlanks->setSmooth(true);
+    if (!tilesetBrightNoBlanks->generateMipmap()) {
         spdlog::warn("\"tilesetBrightNoBlanks\": Unable to generate mipmap for texture.");
     }
-    DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks_);
-
-    tileWidth_ = tileWidth;
-    SubBoard::setup(tileWidth);
+    DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks);
 }
 
-Editor::Editor(Board& board, ResourceManager& resource, const sf::View& initialView) :
+Editor::Editor(Board& board, const sf::View& initialView) :
     board_(board),
-    editView_(static_cast<float>(tileWidth_ * Chunk::WIDTH), initialView),
+    editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), initialView),
     zoomLevel_(1.0f),
     mousePos_(),
     mouseOnScreen_(false),
     windowSize_(initialView.getSize()),
-    cursor_({static_cast<float>(tileWidth_), static_cast<float>(tileWidth_)}),
+    cursor_({static_cast<float>(TileWidth::TEXELS), static_cast<float>(TileWidth::TEXELS)}),
     cursorCoords_({sf::Vector2i(), false}),
-    cursorLabel_("", resource.getFont("resources/consolas.ttf"), 22),
+    cursorLabel_("", Locator::getResource()->getFont("resources/consolas.ttf"), 22),
     cursorState_(CursorState::empty),
     cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
     tileSubBoard_(),
     copySubBoard_() {
+
+    static StaticInit staticInit;
+    staticInit_ = &staticInit;
 
     cursor_.setFillColor({255, 80, 255, 100});
     cursorLabel_.setOutlineColor(sf::Color::Black);
@@ -200,9 +204,9 @@ void Editor::processEvent(const sf::Event& event) {
 void Editor::update() {
     updateCursor();
 
-    const sf::Texture* tileset = tilesetBright_;
+    const sf::Texture* tileset = staticInit_->tilesetBright;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
-        tileset = tilesetBrightNoBlanks_;
+        tileset = staticInit_->tilesetBrightNoBlanks;
     }
     if (cursorState_ == CursorState::pickTile) {
         tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
@@ -380,8 +384,8 @@ OffsetView Editor::findTileView(int x, int y) const {
         (y >> widthLog2) - static_cast<int>(view.getSize().y / 2.0f / view.getViewDivisor()) - 1
     );
     view.setCenter(
-        view.getCenter().x + ((x & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_,
-        view.getCenter().y + ((y & (Chunk::WIDTH - 1)) + 0.5f) * tileWidth_
+        view.getCenter().x + ((x & (Chunk::WIDTH - 1)) + 0.5f) * TileWidth::TEXELS,
+        view.getCenter().y + ((y & (Chunk::WIDTH - 1)) + 0.5f) * TileWidth::TEXELS
     );
     return view;
 }
@@ -394,8 +398,8 @@ std::pair<sf::Vector2i, bool> Editor::mapMouseToNearestTile(const sf::Vector2i& 
     using Vector2ll = sf::Vector2<long long>;
     sf::Vector2f pos = editView_.getCenter() - editView_.getSize() * 0.5f + sf::Vector2f(mousePos) * zoomLevel_;
     Vector2ll tilePos = {
-        static_cast<long long>(editView_.getCenterOffset().x) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.x / tileWidth_)),
-        static_cast<long long>(editView_.getCenterOffset().y) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.y / tileWidth_))
+        static_cast<long long>(editView_.getCenterOffset().x) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.x / TileWidth::TEXELS)),
+        static_cast<long long>(editView_.getCenterOffset().y) * Chunk::WIDTH + static_cast<long long>(std::floor(pos.y / TileWidth::TEXELS))
     };
     const auto lowerBound = static_cast<Vector2ll>(board_.getTileLowerBound());
     const auto upperBound = static_cast<Vector2ll>(board_.getTileUpperBound());
@@ -420,7 +424,7 @@ void Editor::updateCursor() {
         cursorVisible_ = false;
     }
     cursorCoords_ = cursorCoords;
-    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_)));
+    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(TileWidth::TEXELS)));
     cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     cursorLabel_.setScale(zoomLevel_, zoomLevel_);
 }
@@ -610,7 +614,7 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(copySubBoard_, states);
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) {
-            const sf::Vector2f outlineSize = static_cast<sf::Vector2f>(copySubBoard_.getVisibleSize()) * static_cast<float>(tileWidth_);
+            const sf::Vector2f outlineSize = static_cast<sf::Vector2f>(copySubBoard_.getVisibleSize()) * static_cast<float>(TileWidth::TEXELS);
             sf::VertexArray outline(sf::LineStrip, 5);
             outline[0].position = {0.0f, 0.0f};
             outline[1].position = {outlineSize.x, 0.0f};

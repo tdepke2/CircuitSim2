@@ -3,6 +3,7 @@
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
+#include <TileWidth.h>
 
 #include <cmath>
 #include <sstream>
@@ -20,18 +21,12 @@
     #pragma GCC diagnostic pop
 #endif
 
-unsigned int SubBoard::tileWidth_;
-
 namespace {
 
 constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
 
-}
-
-void SubBoard::setup(unsigned int tileWidth) {
-    tileWidth_ = tileWidth;
 }
 
 SubBoard::SubBoard() :
@@ -54,9 +49,9 @@ void SubBoard::setRenderArea(const OffsetView& offsetView, float zoom, const sf:
     int lastLevelOfDetail = getLevelOfDetail();
     setLevelOfDetail(static_cast<int>(std::floor(std::log2(zoom))));
     bool levelOfDetailChanged = (lastLevelOfDetail != getLevelOfDetail());
-    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom, tileWidth_);
+    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom);
 
-    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
     const int textureSubdivisionSize = chunkWidthTexels / (1 << getLevelOfDetail());
     const sf::Vector2u pow2ChunkArea = {
         1u << static_cast<unsigned int>(std::ceil(std::log2(maxChunkArea.x))),
@@ -100,7 +95,7 @@ void SubBoard::drawChunks(const sf::Texture* tileset) {
     }
 
     auto drawChunk = [this](const ChunkDrawable& chunkDrawable, const sf::Texture* tileset, bool& textureDirty, int x, int y) {
-        const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
         const int textureSubdivisionSize = chunkWidthTexels / (1 << getLevelOfDetail());
         sf::RenderStates states(tileset);
         states.transform.translate(
@@ -233,7 +228,7 @@ void SubBoard::resetChunkDraw() {
 }
 
 void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition) {
-    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
     sf::Vector2i areaSize = {
         static_cast<int>(std::floor(offsetView.getSize().x / chunkWidthTexels)),
         static_cast<int>(std::floor(offsetView.getSize().y / chunkWidthTexels))
@@ -245,10 +240,10 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
     // the top or left side of the screen. Without this fix, the bottom right
     // corner of the texture could become visible showing an artifact where the
     // chunks stop rendering.
-    position_ = static_cast<sf::Vector2f>((tilePosition - offsetView.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(tileWidth_));
+    position_ = static_cast<sf::Vector2f>((tilePosition - offsetView.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(TileWidth::TEXELS));
     sf::Vector2i topLeftTile = {
-        offsetView.getCenterOffset().x * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x * 0.5f) / tileWidth_)),
-        offsetView.getCenterOffset().y * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y * 0.5f) / tileWidth_))
+        offsetView.getCenterOffset().x * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x * 0.5f) / TileWidth::TEXELS)),
+        offsetView.getCenterOffset().y * Chunk::WIDTH + static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y * 0.5f) / TileWidth::TEXELS))
     };
     if (topLeftTile.x - tilePosition.x >= Chunk::WIDTH) {
         const int numChunks = (topLeftTile.x - tilePosition.x) / Chunk::WIDTH;
@@ -272,8 +267,8 @@ void SubBoard::updateVisibleArea(const OffsetView& offsetView, const sf::Vector2
     );
     const sf::Vector2f p1 = {0.0f, 0.0f};
     const sf::Vector2f p2 = {
-        static_cast<float>(std::max(std::min(visibleArea_.width * chunkWidthTexels, static_cast<int>(size_.x * tileWidth_) - visibleArea_.left * chunkWidthTexels), 0)),
-        static_cast<float>(std::max(std::min(visibleArea_.height * chunkWidthTexels, static_cast<int>(size_.y * tileWidth_) - visibleArea_.top * chunkWidthTexels), 0))
+        static_cast<float>(std::max(std::min(visibleArea_.width * chunkWidthTexels, static_cast<int>(size_.x * TileWidth::TEXELS) - visibleArea_.left * chunkWidthTexels), 0)),
+        static_cast<float>(std::max(std::min(visibleArea_.height * chunkWidthTexels, static_cast<int>(size_.y * TileWidth::TEXELS) - visibleArea_.top * chunkWidthTexels), 0))
     };
     vertices_[0].position = p1;
     vertices_[1].position = {p2.x, p1.y};

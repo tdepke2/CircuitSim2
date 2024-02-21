@@ -1,6 +1,7 @@
 #include <Board.h>
 #include <DebugScreen.h>
 #include <Editor.h>
+#include <Locator.h>
 #include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
@@ -21,12 +22,11 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
     //window.setVerticalSyncEnabled(true);
 
-    ResourceManager resource;
-    DebugScreen::init(resource.getFont("resources/consolas.ttf"), 16, window.getSize());
+    Locator::provide(std::unique_ptr<ResourceManager>(new ResourceManager()));
+
+    DebugScreen::init(Locator::getResource()->getFont("resources/consolas.ttf"), 16, window.getSize());
     DebugScreen::instance()->setVisible(true);
 
-    constexpr unsigned int TILE_WIDTH = 32;
-    Board::setupTextures(resource, "resources/texturePackGrid.png", "resources/texturePackNoGrid.png", TILE_WIDTH);
     Board board;
     board.debugSetDrawChunkBorder(true);
 
@@ -38,7 +38,7 @@ int main() {
         spdlog::error(ex.what());
     }
 
-    Editor editor(board, resource, window.getDefaultView());
+    Editor editor(board, window.getDefaultView());
 
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
@@ -153,6 +153,8 @@ int main() {
         window.display();
         DebugScreen::instance()->profilerEvent("main finish_loop");
     }
+
+    Locator::provide(std::unique_ptr<ResourceManager>(nullptr));
 
     return 0;
 }

@@ -17,8 +17,6 @@ class Tile;
 
 class SubBoard : public sf::Drawable, LodRenderer {
 public:
-    static void setup(unsigned int tileWidth);
-
     SubBoard();
     ~SubBoard() = default;
     SubBoard(const SubBoard& rhs) = delete;
@@ -37,8 +35,6 @@ public:
     void pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBlanks = false);
 
 private:
-    static unsigned int tileWidth_;
-
     void resetChunkDraw();
     void updateVisibleArea(const OffsetView& offsetView, const sf::Vector2i& tilePosition);
     virtual void markChunkDrawDirty(ChunkCoords::repr coords) override;

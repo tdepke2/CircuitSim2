@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Filesystem.h>
+#include <ResourceBase.h>
 
 #include <map>
 #include <SFML/Graphics.hpp>
@@ -10,17 +11,17 @@
  * expensive resources like textures and fonts from loading multiple times from
  * a file.
  */
-class ResourceManager {
+class ResourceManager : public ResourceBase {
 public:
     ResourceManager();
-    ~ResourceManager() = default;
+    virtual ~ResourceManager() = default;
     ResourceManager(const ResourceManager& rhs) = delete;
     ResourceManager& operator=(const ResourceManager& rhs) = delete;
 
-    sf::Texture& getTexture(const fs::path& filename, bool initEmpty = false);
-    sf::Font& getFont(const fs::path& filename);
-    sf::Shader& getShader(const fs::path& vertFilename, const fs::path& fragFilename);
-    sf::Shader& getShader(const fs::path& vertFilename, const fs::path& geomFilename, const fs::path& fragFilename);
+    virtual sf::Texture& getTexture(const fs::path& filename, bool initEmpty = false) override;
+    virtual sf::Font& getFont(const fs::path& filename) override;
+    virtual sf::Shader& getShader(const fs::path& vertFilename, const fs::path& fragFilename) override;
+    virtual sf::Shader& getShader(const fs::path& vertFilename, const fs::path& geomFilename, const fs::path& fragFilename) override;
 
 private:
     std::map<fs::path, sf::Texture> textures_;

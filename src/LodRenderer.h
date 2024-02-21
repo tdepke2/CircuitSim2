@@ -25,7 +25,7 @@ protected:
     int getLevelOfDetail() const;
     // The lod is clamped to the maximum/minimum bounds while setting.
     void setLevelOfDetail(int lod);
-    sf::Vector2u getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom, unsigned int tileWidth) const;
+    sf::Vector2u getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom) const;
 
 private:
     int levelOfDetail_;

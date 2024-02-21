@@ -2,10 +2,12 @@
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <LegacyFileFormat.h>
+#include <Locator.h>
 #include <OffsetView.h>
 #include <RegionFileFormat.h>
-#include <ResourceManager.h>
+#include <ResourceBase.h>
 #include <Tile.h>
+#include <TileWidth.h>
 
 #include <algorithm>
 #include <cassert>
@@ -25,9 +27,7 @@
     #pragma GCC diagnostic pop
 #endif
 
-sf::Texture* Board::tilesetGrid_;
-sf::Texture* Board::tilesetNoGrid_;
-unsigned int Board::tileWidth_;
+Board::StaticInit* Board::staticInit_ = nullptr;
 
 namespace {
 
@@ -77,29 +77,27 @@ constexpr int constLog2(int x) {
 
 }
 
-void Board::setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth) {
-    tileWidth_ = tileWidth;
+Board::StaticInit::StaticInit() {
+    spdlog::info("Board::StaticInit initializing.");
+    ResourceBase* resource = Locator::getResource();
+    const fs::path& filenameGrid = "resources/texturePackGrid.png";
+    const fs::path& filenameNoGrid = "resources/texturePackNoGrid.png";
 
-    tilesetGrid_ = &resource.getTexture(filenameGrid, true);
-    loadTileset(filenameGrid, tilesetGrid_, tileWidth);
-    tilesetGrid_->setSmooth(true);
-    if (!tilesetGrid_->generateMipmap()) {
+    tilesetGrid = &resource->getTexture(filenameGrid, true);
+    loadTileset(filenameGrid, tilesetGrid, TileWidth::TEXELS);
+    tilesetGrid->setSmooth(true);
+    if (!tilesetGrid->generateMipmap()) {
         spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameGrid);
     }
-    DebugScreen::instance()->registerTexture("tilesetGrid", tilesetGrid_);
+    DebugScreen::instance()->registerTexture("tilesetGrid", tilesetGrid);
 
-    tilesetNoGrid_ = &resource.getTexture(filenameNoGrid, true);
-    loadTileset(filenameNoGrid, tilesetNoGrid_, tileWidth);
-    tilesetNoGrid_->setSmooth(true);
-    if (!tilesetNoGrid_->generateMipmap()) {
+    tilesetNoGrid = &resource->getTexture(filenameNoGrid, true);
+    loadTileset(filenameNoGrid, tilesetNoGrid, TileWidth::TEXELS);
+    tilesetNoGrid->setSmooth(true);
+    if (!tilesetNoGrid->generateMipmap()) {
         spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameNoGrid);
     }
-    DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid_);
-
-    ChunkDrawable::setupTextureData(resource, tilesetGrid_->getSize(), tileWidth);
-    ChunkRender::setupTextureData(resource, tileWidth);
-    Chunk::setupChunks();
-    Editor::setupTextureData(resource, tilesetGrid_, tileWidth);
+    DebugScreen::instance()->registerTexture("tilesetNoGrid", tilesetNoGrid);
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
@@ -116,6 +114,9 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     debugChunkBorder_(sf::Lines),
     debugDrawChunkBorder_(false) {
 
+    static StaticInit staticInit;
+    staticInit_ = &staticInit;
+
     for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
         chunkRenderCache_[i].setLod(i);
     }
@@ -128,11 +129,11 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
 
     // Determine the dimensions of the VertexBuffer we need to draw all of the
     // visible chunks at the max zoom level (for current level-of-detail).
-    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom, tileWidth_);
+    const sf::Vector2u maxChunkArea = getMaxVisibleChunkArea(offsetView, zoom);
     ChunkRender& currentChunkRender = chunkRenderCache_[getLevelOfDetail()];
     currentChunkRender.resize(chunkDrawables_, maxChunkArea);
 
-    const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+    constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
     sf::Vector2i topLeft = {
         static_cast<int>(std::floor((offsetView.getCenter().x - offsetView.getSize().x / 2.0f) / chunkWidthTexels)),
         static_cast<int>(std::floor((offsetView.getCenter().y - offsetView.getSize().y / 2.0f) / chunkWidthTexels))
@@ -391,7 +392,7 @@ void Board::updateRender() {    // FIXME move this whole piece into ChunkRender?
             allocatedBlock = true;
         }
         sf::RenderStates states;
-        states.texture = tilesetGrid_;
+        states.texture = staticInit_->tilesetGrid;
         chunkRenderCache_[getLevelOfDetail()].drawChunk(chunkDrawable, states);
     };
 
@@ -434,7 +435,7 @@ void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
     if (debugDrawChunkBorder_ && lastVisibleArea_.width > 0 && lastVisibleArea_.height > 0) {
         debugChunkBorder_.resize(lastVisibleArea_.width * lastVisibleArea_.height * 4);
-        const int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(tileWidth_);
+        constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
         const sf::Vector2i positionOffset = {
             lastVisibleArea_.left - ChunkCoords::x(lastTopLeft_),
             lastVisibleArea_.top - ChunkCoords::y(lastTopLeft_)

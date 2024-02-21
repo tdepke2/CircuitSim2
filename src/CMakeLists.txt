@@ -42,12 +42,15 @@ add_library(cs2_src
     FlatMap.h
     LegacyFileFormat.cpp
     LegacyFileFormat.h
+    Locator.cpp
+    Locator.h
     LodRenderer.cpp
     LodRenderer.h
     OffsetView.cpp
     OffsetView.h
     RegionFileFormat.cpp
     RegionFileFormat.h
+    ResourceBase.h
     ResourceManager.cpp
     ResourceManager.h
     SubBoard.cpp
@@ -58,6 +61,7 @@ add_library(cs2_src
     TilePool.h
     TileType.cpp
     TileType.h
+    TileWidth.h
 )
 
 # Organize source and header files for IDEs.

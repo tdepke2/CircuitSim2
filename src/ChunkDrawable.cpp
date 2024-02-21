@@ -1,8 +1,10 @@
 #include <Chunk.h>
 #include <ChunkCoords.h>
 #include <ChunkDrawable.h>
-#include <ResourceManager.h>
+#include <Locator.h>
+#include <ResourceBase.h>
 #include <Tile.h>
+#include <TileWidth.h>
 
 // Disable a false-positive warning issue with gcc:
 #if defined(__GNUC__) && !defined(__clang__)
@@ -15,27 +17,26 @@
     #pragma GCC diagnostic pop
 #endif
 
-unsigned int ChunkDrawable::textureWidth_, ChunkDrawable::tileWidth_;
-std::array<uint8_t, 512> ChunkDrawable::textureLookup_;
-unsigned int ChunkDrawable::textureHighlightStart_;
-std::array<sf::Text, 21> ChunkDrawable::labelCache_;
+ChunkDrawable::StaticInit* ChunkDrawable::staticInit_ = nullptr;
 
-void ChunkDrawable::setupTextureData(ResourceManager& resource, const sf::Vector2u& textureSize, unsigned int tileWidth) {
-    textureWidth_ = textureSize.x;
-    tileWidth_ = tileWidth;
-    textureHighlightStart_ = (textureSize.x / tileWidth / 2) * (textureSize.y / tileWidth / 4);
+ChunkDrawable::StaticInit::StaticInit() {
+    spdlog::info("ChunkDrawable::StaticInit initializing.");
+    ResourceBase* resource = Locator::getResource();
+    const sf::Vector2u& textureSize = resource->getTexture("resources/texturePackGrid.png").getSize();
+    textureWidth = textureSize.x;
+    textureHighlightStart = (textureSize.x / TileWidth::TEXELS / 2) * (textureSize.y / TileWidth::TEXELS / 4);
 
     uint8_t textureId = 0;
     TileId::t id = TileId::blank;
 
-    auto addThreeTextures = [&textureId](TileId::t id, State::t state2) {
-        textureLookup_[TileData(id, State::low, state2).getTextureHash()] = textureId++;
-        textureLookup_[TileData(id, State::high, state2).getTextureHash()] = textureId++;
-        textureLookup_[TileData(id, State::middle, state2).getTextureHash()] = textureId++;
+    auto addThreeTextures = [this,&textureId](TileId::t id, State::t state2) {
+        textureLookup[TileData(id, State::low, state2).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::high, state2).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::middle, state2).getTextureHash()] = textureId++;
     };
 
     // Blank tile.
-    textureLookup_[id] = textureId++;
+    textureLookup[id] = textureId++;
     id = static_cast<TileId::t>(id + 1);
 
     // Wire tiles besides crossover have 3 textures.
@@ -51,8 +52,8 @@ void ChunkDrawable::setupTextureData(ResourceManager& resource, const sf::Vector
 
     // Switch, button, and diode each have 2 textures.
     for (; id < TileId::gateDiode; id = static_cast<TileId::t>(id + 1)) {
-        textureLookup_[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
-        textureLookup_[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
+        textureLookup[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
     }
 
     // Gates each have 9 textures, and gates that support 3 inputs have an additional 3 textures.
@@ -66,8 +67,8 @@ void ChunkDrawable::setupTextureData(ResourceManager& resource, const sf::Vector
     }
     spdlog::debug("Building textureLookup_ finished, final textureId is {}.", static_cast<int>(textureId));
 
-    for (auto& label : labelCache_) {
-        label.setFont(resource.getFont("resources/consolas.ttf"));
+    for (auto& label : labelCache) {
+        label.setFont(resource->getFont("resources/consolas.ttf"));
         label.setCharacterSize(25);
         label.setString(" ");
     }
@@ -79,6 +80,9 @@ ChunkDrawable::ChunkDrawable() :
     renderIndices_(),
     renderIndicesSum_(-LodRenderer::LEVELS_OF_DETAIL),
     renderDirty_() {
+
+    static StaticInit staticInit;
+    staticInit_ = &staticInit;
 
     renderIndices_.fill(-1);
     renderDirty_.set();
@@ -131,16 +135,22 @@ void ChunkDrawable::updateTileGeometry(unsigned int tileIndex) const {
     sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
     TileData tileData = chunk_->tiles_[tileIndex];
 
-    unsigned int textureId = textureLookup_[tileData.getTextureHash()] + (tileData.highlight ? textureHighlightStart_ : 0);
+    unsigned int textureId = staticInit_->textureLookup[tileData.getTextureHash()] + (tileData.highlight ? staticInit_->textureHighlightStart : 0);
 
-    float tx = static_cast<float>(static_cast<unsigned int>(textureId % (textureWidth_ / tileWidth_ / 2)) * tileWidth_ * 2 + static_cast<unsigned int>(tileWidth_ / 2));
-    float ty = static_cast<float>(static_cast<unsigned int>(textureId / (textureWidth_ / tileWidth_ / 2)) * tileWidth_ * 2 + static_cast<unsigned int>(tileWidth_ / 2));
+    float tx = static_cast<float>(
+        static_cast<unsigned int>(textureId % (staticInit_->textureWidth / TileWidth::TEXELS / 2)) *
+        TileWidth::TEXELS * 2 + static_cast<unsigned int>(TileWidth::TEXELS / 2)
+    );
+    float ty = static_cast<float>(
+        static_cast<unsigned int>(textureId / (staticInit_->textureWidth / TileWidth::TEXELS / 2)) *
+        TileWidth::TEXELS * 2 + static_cast<unsigned int>(TileWidth::TEXELS / 2)
+    );
 
     sf::Vector2f texCoordsQuad[4] = {
         {tx, ty},
-        {tx + tileWidth_, ty},
-        {tx + tileWidth_, ty + tileWidth_},
-        {tx, ty + tileWidth_}
+        {tx + TileWidth::TEXELS, ty},
+        {tx + TileWidth::TEXELS, ty + TileWidth::TEXELS},
+        {tx, ty + TileWidth::TEXELS}
     };
     tileVertices[0].texCoords = texCoordsQuad[(4 - tileData.dir) % 4];
     tileVertices[1].texCoords = texCoordsQuad[(5 - tileData.dir) % 4];
@@ -158,13 +168,13 @@ void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) cons
         for (unsigned int tileIndex = 0; tileIndex < Chunk::WIDTH * Chunk::WIDTH; ++tileIndex) {
             sf::Vertex* tileVertices = &vertices_[tileIndex * 6];
 
-            float px = static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * tileWidth_);
-            float py = static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * tileWidth_);
+            float px = static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * TileWidth::TEXELS);
+            float py = static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * TileWidth::TEXELS);
             tileVertices[0].position = {px, py};
-            tileVertices[1].position = {px + tileWidth_, py};
-            tileVertices[2].position = {px + tileWidth_, py + tileWidth_};
-            tileVertices[3].position = {px + tileWidth_, py + tileWidth_};
-            tileVertices[4].position = {px, py + tileWidth_};
+            tileVertices[1].position = {px + TileWidth::TEXELS, py};
+            tileVertices[2].position = {px + TileWidth::TEXELS, py + TileWidth::TEXELS};
+            tileVertices[3].position = {px + TileWidth::TEXELS, py + TileWidth::TEXELS};
+            tileVertices[4].position = {px, py + TileWidth::TEXELS};
             tileVertices[5].position = {px, py};
 
             updateTileGeometry(tileIndex);
@@ -182,13 +192,13 @@ void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) cons
         TileData tileData = chunk_->tiles_[tileIndex];
         if (tileData.id == TileId::inSwitch || tileData.id == TileId::inButton) {
             // Use a simple hash operation to look up entry in label cache;
-            auto& label = labelCache_[tileData.meta % labelCache_.size()];
+            auto& label = staticInit_->labelCache[tileData.meta % staticInit_->labelCache.size()];
             if (label.getString()[0] != tileData.meta) {
                 label.setString(static_cast<char>(tileData.meta));
             }
             label.setPosition({
-                static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * tileWidth_ + 9),
-                static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * tileWidth_ - 2)
+                static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * TileWidth::TEXELS + 9),
+                static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * TileWidth::TEXELS - 2)
             });
             target.draw(label, states);
         }

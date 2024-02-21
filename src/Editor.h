@@ -8,13 +8,10 @@
 #include <utility>
 
 class Board;
-class ResourceManager;
 
 class Editor : public sf::Drawable {
 public:
-    static void setupTextureData(ResourceManager& resource, sf::Texture* tilesetGrid, unsigned int tileWidth);
-
-    Editor(Board& board, ResourceManager& resource, const sf::View& initialView);
+    Editor(Board& board, const sf::View& initialView);
     ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;
@@ -26,9 +23,12 @@ public:
     void update();
 
 private:
-    static sf::Texture* tilesetBright_;
-    static sf::Texture* tilesetBrightNoBlanks_;
-    static unsigned int tileWidth_;
+    struct StaticInit {
+        StaticInit();
+        sf::Texture* tilesetBright;
+        sf::Texture* tilesetBrightNoBlanks;
+    };
+    static StaticInit* staticInit_;
 
     enum class CursorState {
         empty, pickTile, pasteArea, wireTool

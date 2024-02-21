@@ -9,7 +9,6 @@
 #include <vector>
 
 class ChunkDrawable;
-class ResourceManager;
 
 /**
  * Cache for rendered chunks at a specific level-of-detail (LOD).
@@ -28,8 +27,6 @@ class ResourceManager;
  */
 class ChunkRender : public sf::Drawable {
 public:
-    static void setupTextureData(ResourceManager& resource, unsigned int tileWidth);
-
     ChunkRender();
     ~ChunkRender() = default;
     ChunkRender(const ChunkRender& rhs) = delete;
@@ -44,8 +41,11 @@ public:
     void updateVisibleArea(const FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const ChunkCoordsRange& visibleArea, ChunkCoords::repr topLeft, const sf::Transform& viewProjection);
 
 private:
-    static unsigned int tileWidth_;
-    static sf::Shader* chunkShader_;
+    struct StaticInit {
+        StaticInit();
+        sf::Shader* chunkShader;
+    };
+    static StaticInit* staticInit_;
 
     struct RenderBlock {
         RenderBlock(ChunkCoords::repr coords, unsigned int poolIndex) :

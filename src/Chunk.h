@@ -3,6 +3,7 @@
 #include <ChunkCoords.h>
 #include <Tile.h>
 
+#include <array>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
@@ -60,7 +61,6 @@ namespace ChunkDirtyFlag {
 class Chunk {
 public:
     static constexpr int WIDTH = 32;
-    static void setupChunks();
 
     Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords);
     ~Chunk() = default;
@@ -82,6 +82,12 @@ public:
     void debugPrintChunk() const;
 
 private:
+    struct StaticInit {
+        StaticInit();
+        std::array<TileType*, TileId::count> tileIdToType;
+    };
+    static StaticInit* staticInit_;
+
     TileData tiles_[WIDTH * WIDTH];
     LodRenderer* lodRenderer_;
     ChunkCoords::repr coords_;

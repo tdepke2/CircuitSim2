@@ -18,7 +18,6 @@
 #include <utility>
 
 class OffsetView;
-class ResourceManager;
 class Tile;
 
 /**
@@ -32,8 +31,6 @@ class Tile;
  */
 class Board : public sf::Drawable, LodRenderer {
 public:
-    static void setupTextures(ResourceManager& resource, const fs::path& filenameGrid, const fs::path& filenameNoGrid, unsigned int tileWidth);
-
     Board();
     ~Board() = default;
     Board(const Board& rhs) = delete;
@@ -66,9 +63,12 @@ public:
     unsigned int debugGetChunksDrawn() const;
 
 private:
-    static sf::Texture* tilesetGrid_;
-    static sf::Texture* tilesetNoGrid_;
-    static unsigned int tileWidth_;
+    struct StaticInit {
+        StaticInit();
+        sf::Texture* tilesetGrid;
+        sf::Texture* tilesetNoGrid;
+    };
+    static StaticInit* staticInit_;
 
     void pruneChunkDrawables();
     void updateRender();
