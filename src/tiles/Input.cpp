@@ -49,4 +49,4 @@ void Input::init(Chunk& chunk, unsigned int tileIndex, TileId::t inputId, State:
     tileData.meta = keycode;
 }
 
-}
+} // namespace tiles

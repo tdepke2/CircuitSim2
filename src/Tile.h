@@ -11,6 +11,7 @@ namespace tiles {
     class Blank;
     class Gate;
     class Input;
+    class Label;
     class Led;
     class Wire;
 }
@@ -21,6 +22,7 @@ namespace TileId {
         wireStraight, wireCorner, wireTee, wireJunction, wireCrossover,
         inSwitch, inButton, outLed,
         gateDiode, gateBuffer, gateNot, gateAnd, gateNand, gateOr, gateNor, gateXor, gateXnor,
+        label,
         count
     };
 }
@@ -52,6 +54,7 @@ public:
     void setType(tiles::Blank* type);
     void setType(tiles::Gate* type, TileId::t gateId = TileId::gateDiode, Direction::t direction = Direction::north, State::t state = State::low);
     void setType(tiles::Input* type, TileId::t inputId = TileId::inSwitch, State::t state = State::low, char keycode = ' ');
+    void setType(tiles::Label* type);
     void setType(tiles::Led* type, State::t state = State::low);
     void setType(tiles::Wire* type, TileId::t wireId = TileId::wireStraight, Direction::t direction = Direction::north, State::t state1 = State::low, State::t state2 = State::low);
     TileType* getType();

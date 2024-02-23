@@ -4,6 +4,7 @@
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
+#include <tiles/Label.h>
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 
@@ -58,10 +59,16 @@ Chunk::StaticInit::StaticInit() {
     for (; id <= TileId::gateXnor; id = static_cast<TileId::t>(id + 1)) {
         tileIdToType[id] = tiles::Gate::instance();
     }
+    for (; id <= TileId::label; id = static_cast<TileId::t>(id + 1)) {
+        tileIdToType[id] = tiles::Label::instance();
+    }
+    assert(id == TileId::count);
 }
 
 Chunk::Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords) :
     tiles_{},
+    entities_(),
+    entitiesSize_(0),
     lodRenderer_(lodRenderer),
     coords_(coords),
     dirtyFlags_(),

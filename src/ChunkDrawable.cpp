@@ -6,6 +6,8 @@
 #include <Tile.h>
 #include <TileWidth.h>
 
+#include <cassert>
+
 // Disable a false-positive warning issue with gcc:
 #if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic push
@@ -36,11 +38,11 @@ ChunkDrawable::StaticInit::StaticInit() {
     };
 
     // Blank tile.
-    textureLookup[id] = textureId++;
+    textureLookup[TileData(id, State::disconnected, State::disconnected).getTextureHash()] = textureId++;
     id = static_cast<TileId::t>(id + 1);
 
     // Wire tiles besides crossover have 3 textures.
-    for (; id < TileId::wireCrossover; id = static_cast<TileId::t>(id + 1)) {
+    for (; id <= TileId::wireJunction; id = static_cast<TileId::t>(id + 1)) {
         addThreeTextures(id, State::low);
     }
 
@@ -50,14 +52,14 @@ ChunkDrawable::StaticInit::StaticInit() {
     addThreeTextures(id, State::middle);
     id = static_cast<TileId::t>(id + 1);
 
-    // Switch, button, and diode each have 2 textures.
-    for (; id < TileId::gateDiode; id = static_cast<TileId::t>(id + 1)) {
+    // Switch, button, and LED each have 2 textures.
+    for (; id <= TileId::outLed; id = static_cast<TileId::t>(id + 1)) {
         textureLookup[TileData(id, State::low, State::disconnected).getTextureHash()] = textureId++;
         textureLookup[TileData(id, State::high, State::disconnected).getTextureHash()] = textureId++;
     }
 
     // Gates each have 9 textures, and gates that support 3 inputs have an additional 3 textures.
-    for (; id < TileId::count; id = static_cast<TileId::t>(id + 1)) {
+    for (; id <= TileId::gateXnor; id = static_cast<TileId::t>(id + 1)) {
         addThreeTextures(id, State::disconnected);
         addThreeTextures(id, State::low);
         addThreeTextures(id, State::high);
@@ -65,7 +67,13 @@ ChunkDrawable::StaticInit::StaticInit() {
             addThreeTextures(id, State::middle);
         }
     }
+
+    // Label has one texture.
+    textureLookup[TileData(id, State::disconnected, State::disconnected).getTextureHash()] = textureId++;
+    id = static_cast<TileId::t>(id + 1);
+
     spdlog::debug("Building textureLookup_ finished, final textureId is {}.", static_cast<int>(textureId));
+    assert(id == TileId::count);
 
     for (auto& label : labelCache) {
         label.setFont(resource->getFont("resources/consolas.ttf"));

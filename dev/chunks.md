@@ -138,3 +138,15 @@ Example: place single tile on the board.
 5. To undo, we just swap them again. To redo, we swap again.
 
 Edit grouping: it would be efficient to group similar edits together into one command instead of a lot of nearly identical ones. Edits should be grouped based on the time they occurred. Grouping could be done by modifying the current command in the history to include an additional change. This would be ideal for implementing the fill-tiles-in-area and wire tool commands.
+
+## New Tiles and Changes ##
+
+1. Diode changes: diodes can output both ways? Send tri-state to output if input low, or send tri-state to input if output high.
+    1. Was considering making diodes have no tick delay but this may be difficult to implement.
+    2. Can make a pseudo transistor using a tri-state buffer with a pulldown resistor connected to the enable and a diode connected to the input.
+2. Pullup and pulldown resistors (wire category): passively pulls the wire to high or low states respectively. Can be used for diode-matrix ROM.
+3. Label (etc category): create annotations on the circuit.
+4. Random (etc category): chooses a random output (out of 2 or 3 total) to send a signal. Activates on rising edge and holds the output while input is on.
+5. Clock (etc category): outputs an adjustable square wave to 3 sides while input is off.
+6. Scope (output category): plots a signal to a virtual oscilloscope.
+7. Speaker? (output category): outputs to audio device.

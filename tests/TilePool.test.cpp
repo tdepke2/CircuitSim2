@@ -8,8 +8,11 @@
 
 #include <catch2/catch.hpp>
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 TEST_CASE("Quick check", "[TilePool]") {
+    spdlog::set_level(spdlog::level::debug);
+
     TilePool pool;
     //pool.accessTile(0);
     auto result = pool.allocateTile();

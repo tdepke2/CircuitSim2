@@ -1,12 +1,14 @@
 #pragma once
 
 #include <ChunkCoords.h>
+#include <Entity.h>
 #include <Tile.h>
 
 #include <array>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 #include <vector>
 
@@ -89,6 +91,8 @@ private:
     static StaticInit* staticInit_;
 
     TileData tiles_[WIDTH * WIDTH];
+    std::unique_ptr<Entity[]> entities_;
+    size_t entitiesSize_;
     LodRenderer* lodRenderer_;
     ChunkCoords::repr coords_;
     mutable std::bitset<ChunkDirtyFlag::count> dirtyFlags_;

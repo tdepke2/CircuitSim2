@@ -32,4 +32,4 @@ void Blank::init(Chunk& chunk, unsigned int tileIndex) {
     tileData.meta = 0;
 }
 
-}
+} // namespace tiles

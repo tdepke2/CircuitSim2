@@ -9,11 +9,13 @@
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
+#include <tiles/Label.h>
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 #include <TileWidth.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -268,7 +270,7 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
     } else if (key.code == sf::Keyboard::S) {
         pickTile(!key.shift ? TileId::inSwitch : TileId::inButton);
     } else if (key.code == sf::Keyboard::L) {
-        pickTile(TileId::outLed);
+        pickTile(!key.shift ? TileId::outLed : TileId::label);
     } else if (key.code == sf::Keyboard::D) {
         pickTile(TileId::gateDiode);
     } else if (key.code == sf::Keyboard::B) {
@@ -354,14 +356,18 @@ void Editor::queryTool() {
 void Editor::pickTile(TileId::t id) {
     if (id == TileId::blank) {
         tileSubBoard_.accessTile(0, 0).setType(tiles::Blank::instance());
-    } else if (id < TileId::inSwitch) {
+    } else if (id <= TileId::wireCrossover) {
         tileSubBoard_.accessTile(0, 0).setType(tiles::Wire::instance(), id);
-    } else if (id < TileId::outLed) {
+    } else if (id <= TileId::inButton) {
         tileSubBoard_.accessTile(0, 0).setType(tiles::Input::instance(), id);
-    } else if (id < TileId::gateDiode) {
+    } else if (id <= TileId::outLed) {
         tileSubBoard_.accessTile(0, 0).setType(tiles::Led::instance());
-    } else {
+    } else if (id <= TileId::gateXnor) {
         tileSubBoard_.accessTile(0, 0).setType(tiles::Gate::instance(), id);
+    } else if (id <= TileId::label) {
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Label::instance());
+    } else {
+        assert(false);
     }
     tileSubBoard_.setVisibleSize({1, 1});
     setCursorState(CursorState::pickTile);

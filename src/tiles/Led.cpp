@@ -38,4 +38,4 @@ void Led::init(Chunk& chunk, unsigned int tileIndex, State::t state) {
     tileData.meta = 0;
 }
 
-}
+} // namespace tiles

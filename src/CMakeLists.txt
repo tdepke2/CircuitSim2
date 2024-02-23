@@ -3,6 +3,11 @@ set(CS2_COMMANDS_SRCS
     commands/WriteTile.h
 )
 
+set(CS2_ENTITIES_SRCS
+    entities/Label.cpp
+    entities/Label.h
+)
+
 set(CS2_TILES_SRCS
     tiles/Blank.cpp
     tiles/Blank.h
@@ -10,6 +15,8 @@ set(CS2_TILES_SRCS
     tiles/Gate.h
     tiles/Input.cpp
     tiles/Input.h
+    tiles/Label.cpp
+    tiles/Label.h
     tiles/Led.cpp
     tiles/Led.h
     tiles/Wire.cpp
@@ -19,6 +26,7 @@ set(CS2_TILES_SRCS
 # Create the main library from all source files.
 add_library(cs2_src
     ${CS2_COMMANDS_SRCS}
+    ${CS2_ENTITIES_SRCS}
     ${CS2_TILES_SRCS}
     Board.cpp
     Board.h
@@ -35,6 +43,8 @@ add_library(cs2_src
     DebugScreen.h
     Editor.cpp
     Editor.h
+    Entity.cpp
+    Entity.h
     FileStorage.cpp
     FileStorage.h
     Filesystem.cpp
@@ -67,6 +77,8 @@ add_library(cs2_src
 # Organize source and header files for IDEs.
 source_group("Header Files/commands" REGULAR_EXPRESSION "commands/.*\.h")
 source_group("Source Files/commands" REGULAR_EXPRESSION "commands/.*\.cpp")
+source_group("Header Files/entities" REGULAR_EXPRESSION "entities/.*\.h")
+source_group("Source Files/entities" REGULAR_EXPRESSION "entities/.*\.cpp")
 source_group("Header Files/tiles" REGULAR_EXPRESSION "tiles/.*\.h")
 source_group("Source Files/tiles" REGULAR_EXPRESSION "tiles/.*\.cpp")
 

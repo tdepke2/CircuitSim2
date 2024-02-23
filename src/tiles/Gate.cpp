@@ -59,4 +59,4 @@ void Gate::init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Directio
     tileData.meta = 0;
 }
 
-}
+} // namespace tiles

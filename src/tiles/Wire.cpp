@@ -96,4 +96,4 @@ void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Directio
     tileData.meta = 0;
 }
 
-}
+} // namespace tiles

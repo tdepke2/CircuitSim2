@@ -3,6 +3,7 @@
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
+#include <tiles/Label.h>
 #include <tiles/Led.h>
 #include <tiles/Wire.h>
 #include <TileType.h>
@@ -24,6 +25,11 @@ void Tile::setType(tiles::Gate* type, TileId::t gateId, Direction::t direction, 
 void Tile::setType(tiles::Input* type, TileId::t inputId, State::t state, char keycode) {
     tileType_ = type;
     type->init(chunk_, tileIndex_, inputId, state, keycode);
+}
+
+void Tile::setType(tiles::Label* type) {
+    tileType_ = type;
+    type->init(chunk_, tileIndex_);
 }
 
 void Tile::setType(tiles::Led* type, State::t state) {
