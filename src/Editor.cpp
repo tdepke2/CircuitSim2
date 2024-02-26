@@ -307,7 +307,6 @@ void Editor::selectAll() {
 }
 void Editor::deselectAll() {
     board_.removeAllHighlights();
-    tileSubBoard_.clear();
     setCursorState(CursorState::empty);
 }
 void Editor::rotateArea(bool clockwise) {

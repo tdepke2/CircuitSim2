@@ -4,13 +4,23 @@
 #include <TileWidth.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 constexpr int LodRenderer::LEVELS_OF_DETAIL;
 constexpr ChunkCoords::repr LodRenderer::EMPTY_CHUNK_COORDS;
 
 LodRenderer::LodRenderer() :
+    renderableEntities_(),
     levelOfDetail_(0) {
+}
+
+void LodRenderer::addRenderable(const Entity* entity) {
+    assert(renderableEntities_.emplace(entity, true).second);
+}
+
+void LodRenderer::removeRenderable(const Entity* entity) {
+    assert(renderableEntities_.erase(entity) == 1);
 }
 
 int LodRenderer::getLevelOfDetail() const {

@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <entities/Label.h>
 #include <tiles/Label.h>
 
 #include <memory>
@@ -9,6 +10,14 @@ namespace tiles {
 Label* Label::instance() {
     static std::unique_ptr<Label> label(new Label());
     return label.get();
+}
+
+const entities::Label* Label::getEntity(Chunk& chunk, unsigned int tileIndex) const {
+    return reinterpret_cast<const entities::Label*>(TileType::getEntity(chunk, tileIndex));
+}
+
+entities::Label* Label::modifyEntity(Chunk& chunk, unsigned int tileIndex) {
+    return reinterpret_cast<entities::Label*>(TileType::modifyEntity(chunk, tileIndex));
 }
 
 void Label::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
@@ -29,7 +38,11 @@ void Label::init(Chunk& chunk, unsigned int tileIndex) {
     tileData.state1 = State::disconnected;
     tileData.state2 = State::disconnected;
     tileData.dir = Direction::north;
-    tileData.meta = 0;
+    allocateEntity(chunk, tileIndex, std::unique_ptr<Entity>(new entities::Label(chunk, tileIndex)));
+}
+
+void Label::destroy(Chunk& chunk, unsigned int tileIndex) {
+    freeEntity(chunk, tileIndex);
 }
 
 } // namespace tiles

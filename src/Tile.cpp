@@ -13,31 +13,37 @@ Tile::Tile(TileType* type, Chunk& chunk, unsigned int tileIndex) :
 }
 
 void Tile::setType(tiles::Blank* type) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_);
 }
 
 void Tile::setType(tiles::Gate* type, TileId::t gateId, Direction::t direction, State::t state) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_, gateId, direction, state);
 }
 
 void Tile::setType(tiles::Input* type, TileId::t inputId, State::t state, char keycode) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_, inputId, state, keycode);
 }
 
 void Tile::setType(tiles::Label* type) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_);
 }
 
 void Tile::setType(tiles::Led* type, State::t state) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_, state);
 }
 
 void Tile::setType(tiles::Wire* type, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {
+    tileType_->destroy(chunk_, tileIndex_);
     tileType_ = type;
     type->init(chunk_, tileIndex_, wireId, direction, state1, state2);
 }
@@ -99,5 +105,6 @@ void Tile::alternativeTile() {
 }
 
 void Tile::cloneTo(Tile target) const {
+    target.tileType_->destroy(target.chunk_, target.tileIndex_);
     tileType_->cloneTo(chunk_, tileIndex_, target);
 }

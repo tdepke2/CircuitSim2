@@ -1,5 +1,7 @@
 #include <TileType.h>
 
+void TileType::destroy(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
+
 void TileType::setDirection(Chunk& /*chunk*/, unsigned int /*tileIndex*/, Direction::t /*direction*/) {}
 
 void TileType::setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight) {

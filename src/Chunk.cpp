@@ -68,7 +68,7 @@ Chunk::StaticInit::StaticInit() {
 Chunk::Chunk(LodRenderer* lodRenderer, ChunkCoords::repr coords) :
     tiles_{},
     entities_(),
-    entitiesSize_(0),
+    entitiesCapacity_(0),
     lodRenderer_(lodRenderer),
     coords_(coords),
     dirtyFlags_(),
@@ -85,6 +85,14 @@ ChunkCoords::repr Chunk::getCoords() const {
 
 void Chunk::setLodRenderer(LodRenderer* lodRenderer) {
     lodRenderer_ = lodRenderer;
+}
+
+const LodRenderer* Chunk::getLodRenderer() const {
+    return lodRenderer_;
+}
+
+LodRenderer* Chunk::getLodRenderer() {
+    return lodRenderer_;
 }
 
 bool Chunk::isUnsaved() const {
@@ -163,6 +171,34 @@ void Chunk::markHighlightDirty(unsigned int /*tileIndex*/) {
     }
     dirtyFlags_.set(ChunkDirtyFlag::highlightedIsStale);
     dirtyFlags_.set(ChunkDirtyFlag::drawPending);
+}
+
+void Chunk::allocateEntity(unsigned int tileIndex, std::unique_ptr<Entity>&& entity) {
+    for (size_t i = 0; i < entitiesCapacity_; ++i) {
+        if (entities_[i] == nullptr) {
+            tiles_[tileIndex].meta = i;
+            entities_[i] = std::move(entity);
+            return;
+        }
+    }
+
+    size_t newCapacity = std::max(entitiesCapacity_ * 2, entitiesCapacity_ + 1);
+    spdlog::debug("Chunk::allocateEntity() increasing capacity from {} to {}.", entitiesCapacity_, newCapacity);
+    auto newEntities = EntityArray(new std::unique_ptr<Entity>[newCapacity]);
+    for (size_t i = 0; i < entitiesCapacity_; ++i) {
+        newEntities[i] = std::move(entities_[i]);
+    }
+
+    tiles_[tileIndex].meta = entitiesCapacity_;
+    newEntities[entitiesCapacity_] = std::move(entity);
+    entities_ = std::move(newEntities);
+    entitiesCapacity_ = newCapacity;
+}
+
+void Chunk::freeEntity(unsigned int tileIndex) {
+    entities_[tiles_[tileIndex].meta].reset();
+
+    // FIXME: as an improvement, we could track the number of allocated entities and choose to reduce the capacity if needed.
 }
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};

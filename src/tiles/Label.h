@@ -5,6 +5,10 @@
 
 class Chunk;
 
+namespace entities {
+    class Label;
+}
+
 namespace tiles {
 
 class Label : public TileType {
@@ -16,6 +20,9 @@ public:
     Label& operator=(const Label& label) = delete;
     Label& operator=(Label&& label) = delete;
 
+    const entities::Label* getEntity(Chunk& chunk, unsigned int tileIndex) const;
+    entities::Label* modifyEntity(Chunk& chunk, unsigned int tileIndex);
+
     virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
@@ -24,6 +31,7 @@ private:
     Label();
 
     void init(Chunk& chunk, unsigned int tileIndex);
+    virtual void destroy(Chunk& chunk, unsigned int tileIndex) override;
 
     friend class ::Tile;
 };

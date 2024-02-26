@@ -3,6 +3,9 @@
 #include <Chunk.h>
 #include <Tile.h>
 
+#include <memory>
+
+class Entity;
 struct TileData;
 
 /**
@@ -18,6 +21,8 @@ public:
     TileType() = default;
     TileType(const TileType& rhs) = delete;
     TileType& operator=(const TileType& rhs) = delete;
+
+    virtual void destroy(Chunk& chunk, unsigned int tileIndex);
 
     virtual void setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction);
     virtual void setHighlight(Chunk& chunk, unsigned int tileIndex, bool highlight);
@@ -35,11 +40,11 @@ public:
 protected:
     ~TileType() = default;
 
-    inline const TileData& getTileData(const Chunk& chunk, unsigned int tileIndex) const {
-        return chunk.tiles_[tileIndex];
-    }
     inline TileData& modifyTileData(Chunk& chunk, unsigned int tileIndex) {
         chunk.markTileDirty(tileIndex);
+        return chunk.tiles_[tileIndex];
+    }
+    inline const TileData& getTileData(const Chunk& chunk, unsigned int tileIndex) const {
         return chunk.tiles_[tileIndex];
     }
     // Alternative method to modifyTileData() that would allow more flexibility
@@ -48,4 +53,17 @@ protected:
     //inline void markTileDirty(Chunk& chunk, unsigned int tileIndex) {
     //    chunk.markTileDirty(tileIndex);
     //}
+
+    inline void allocateEntity(Chunk& chunk, unsigned int tileIndex, std::unique_ptr<Entity>&& entity) {
+        chunk.allocateEntity(tileIndex, std::move(entity));
+    }
+    inline void freeEntity(Chunk& chunk, unsigned int tileIndex) {
+        chunk.freeEntity(tileIndex);
+    }
+    inline Entity* modifyEntity(Chunk& chunk, unsigned int tileIndex) {
+        return chunk.entities_[chunk.tiles_[tileIndex].meta].get();
+    }
+    inline const Entity* getEntity(const Chunk& chunk, unsigned int tileIndex) const {
+        return chunk.entities_[chunk.tiles_[tileIndex].meta].get();
+    }
 };

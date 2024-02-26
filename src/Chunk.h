@@ -73,6 +73,8 @@ public:
 
     ChunkCoords::repr getCoords() const;
     void setLodRenderer(LodRenderer* lodRenderer);
+    const LodRenderer* getLodRenderer() const;
+    LodRenderer* getLodRenderer();
     bool isUnsaved() const;
     bool isEmpty() const;
     bool isHighlighted() const;
@@ -90,9 +92,11 @@ private:
     };
     static StaticInit* staticInit_;
 
+    using EntityArray = std::unique_ptr<std::unique_ptr<Entity>[]>;
+
     TileData tiles_[WIDTH * WIDTH];
-    std::unique_ptr<Entity[]> entities_;
-    size_t entitiesSize_;
+    EntityArray entities_;
+    size_t entitiesCapacity_;
     LodRenderer* lodRenderer_;
     ChunkCoords::repr coords_;
     mutable std::bitset<ChunkDirtyFlag::count> dirtyFlags_;
@@ -100,6 +104,8 @@ private:
 
     void markTileDirty(unsigned int tileIndex);
     void markHighlightDirty(unsigned int tileIndex);
+    void allocateEntity(unsigned int tileIndex, std::unique_ptr<Entity>&& entity);
+    void freeEntity(unsigned int tileIndex);
 
     friend class ChunkDrawable;
     friend class TileType;

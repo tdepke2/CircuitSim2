@@ -1,9 +1,11 @@
 #pragma once
 
 #include <ChunkCoords.h>
+#include <FlatMap.h>
 
 #include <SFML/Graphics.hpp>
 
+class Entity;
 class OffsetView;
 
 class LodRenderer {
@@ -19,6 +21,9 @@ public:
     LodRenderer(const LodRenderer& rhs) = default;
     LodRenderer& operator=(const LodRenderer& rhs) = default;
 
+    void addRenderable(const Entity* entity);
+    void removeRenderable(const Entity* entity);
+
     virtual void markChunkDrawDirty(ChunkCoords::repr coords) = 0;
 
 protected:
@@ -28,5 +33,6 @@ protected:
     sf::Vector2u getMaxVisibleChunkArea(const OffsetView& offsetView, float zoom) const;
 
 private:
+    FlatMap<const Entity*, bool> renderableEntities_;    // FIXME: make the key a chunkcoords instead?
     int levelOfDetail_;
 };

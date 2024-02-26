@@ -1,12 +1,14 @@
 #include <Board.h>
 #include <DebugScreen.h>
 #include <Editor.h>
+#include <entities/Label.h>
 #include <Locator.h>
 #include <OffsetView.h>
 #include <ResourceManager.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
 #include <tiles/Input.h>
+#include <tiles/Label.h>
 #include <tiles/Wire.h>
 
 #include <cmath>
@@ -47,6 +49,10 @@ int main() {
     board.accessTile(2, 2).setHighlight(true);
     board.accessTile(-1, -1).setHighlight(true);
     board.accessTile(-20, -6).setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
+
+    auto labelTile = board.accessTile(-8, -8);
+    labelTile.setType(tiles::Label::instance());
+    labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setText("hello!");
 
     board.debugPrintChunk(0x8000000080000000);
 
