@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-02-14T23:59:51.666Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0" etag="OElOmGRzt-o-KpG4dM0o" version="23.1.4" type="device" pages="2">
+<mxfile host="app.diagrams.net" modified="2024-02-25T02:58:51.361Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="-b3BaSNzMdBt9gu03cC_" version="22.1.18" type="device" pages="2">
   <diagram name="Rendering" id="5COAI83WerfBTpbnbK-L">
-    <mxGraphModel dx="1434" dy="739" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1106" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1860,7 +1860,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="ixsAjP2n7zQWIUpIPmsU" name="Simulation">
-    <mxGraphModel dx="1434" dy="739" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1106" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -2220,59 +2220,62 @@
         <mxCell id="-BDsSXUI9Aoq1oKpiw6Y-1" value="&lt;div align=&quot;left&quot;&gt;&lt;b&gt;Simulation&lt;/b&gt;:&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;ul&gt;&lt;li&gt;Ideally we can multithread this, so process updates within each chunk.&lt;/li&gt;&lt;li&gt;Wires that cross a chunk border are tricky, specifically when we need to check for state conflicts.&lt;br&gt;&lt;/li&gt;&lt;ul&gt;&lt;li&gt;We could look-ahead, but then we&#39;ll check the state of all endpoints for each chunk the wire is within (and may be reading memory another thread is writing).&lt;/li&gt;&lt;li&gt;We could only do internal wires, and deal with propagating external ones in a separate single-threaded process.&lt;br&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry y="760" width="610" height="260" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="CfR4Fj3-f2nghWicr3W9-1" target="CfR4Fj3-f2nghWicr3W9-3">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="CfR4Fj3-f2nghWicr3W9-1" target="CfR4Fj3-f2nghWicr3W9-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-1" value="User edits board" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-1" value="User edits board" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" parent="1" vertex="1">
           <mxGeometry x="600" y="120" width="100" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-2" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;Process flow&lt;br&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-2" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;Process flow&lt;br&gt;&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="520" width="180" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="CfR4Fj3-f2nghWicr3W9-3" target="CfR4Fj3-f2nghWicr3W9-6">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="CfR4Fj3-f2nghWicr3W9-3" target="CfR4Fj3-f2nghWicr3W9-6" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-3" value="Tile placement marks chunk dirty" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-3" value="Tile placement marks chunk dirty" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="750" y="100" width="100" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="CfR4Fj3-f2nghWicr3W9-5" target="R2aypKjYno7VdjFA2_km-1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="CfR4Fj3-f2nghWicr3W9-5" target="R2aypKjYno7VdjFA2_km-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-5" value="Tick advances" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-5" value="Tick advances" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" parent="1" vertex="1">
           <mxGeometry x="600" y="330" width="100" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="CfR4Fj3-f2nghWicr3W9-6" target="R2aypKjYno7VdjFA2_km-3">
+        <mxCell id="R2aypKjYno7VdjFA2_km-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="CfR4Fj3-f2nghWicr3W9-6" target="R2aypKjYno7VdjFA2_km-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="CfR4Fj3-f2nghWicr3W9-6" value="Chunk is added to list for pending updates" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="CfR4Fj3-f2nghWicr3W9-6" value="Chunk is added to list for pending updates" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="910" y="100" width="100" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="R2aypKjYno7VdjFA2_km-1" target="R2aypKjYno7VdjFA2_km-10">
+        <mxCell id="R2aypKjYno7VdjFA2_km-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="R2aypKjYno7VdjFA2_km-1" target="R2aypKjYno7VdjFA2_km-10" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-1" value="&lt;div&gt;For each chunk (multi-threaded):&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-1" value="&lt;div&gt;For each chunk (multi-threaded):&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="740" y="320" width="530" height="190" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="R2aypKjYno7VdjFA2_km-2" target="R2aypKjYno7VdjFA2_km-6">
+        <mxCell id="R2aypKjYno7VdjFA2_km-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="R2aypKjYno7VdjFA2_km-2" target="R2aypKjYno7VdjFA2_km-6" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-2" value="&lt;div&gt;If the chunk is edit dirty, rebuild wires&lt;/div&gt;&amp;nbsp;(and remove tile updates for wires)" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-2" value="&lt;div&gt;If the chunk is edit dirty, rebuild wires&lt;/div&gt;&amp;nbsp;(and remove tile updates for wires)" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="750" y="370" width="130" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-3" value="Tile index is added to pending updates, and its 4 neighbors (if enabled, also a neighbor could be in another chunk)" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-3" value="Tile index is added to pending updates, and its 4 neighbors (if enabled, also a neighbor could be in another chunk)" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="1060" y="100" width="200" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="R2aypKjYno7VdjFA2_km-6" target="R2aypKjYno7VdjFA2_km-8">
+        <mxCell id="R2aypKjYno7VdjFA2_km-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="R2aypKjYno7VdjFA2_km-6" target="R2aypKjYno7VdjFA2_km-8" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-6" value="In tile updates, check each gate for state change. Save any new state as the transitioning state, if no state change then remove the update." style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-6" value="In tile updates, check each gate for state change. Save any new state as the transitioning state, if no state change then remove the update." style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="900" y="370" width="170" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-8" value="In tile updates, find each switch/button/gate and update wires within the chunk (removing updates). Anything connecting outside the chunk is skipped." style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-8" value="In tile updates, find each switch/button/gate and update wires within the chunk (removing updates). Anything connecting outside the chunk is skipped." style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="1090" y="370" width="170" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="R2aypKjYno7VdjFA2_km-10" value="&lt;div&gt;For each chunk where update skipped (single-threaded):&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Repeat last portion of process, but use DFS to follow wire outside chunk?&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+        <mxCell id="R2aypKjYno7VdjFA2_km-10" value="&lt;div&gt;For each chunk where update skipped (single-threaded):&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Repeat last portion of process, but use DFS to follow wire outside chunk?&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="1300" y="320" width="530" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Jp_Do2v0K2hU2u9yAtj5-1" value="&lt;div align=&quot;left&quot;&gt;Ideas for improvement:&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;&lt;ul&gt;&lt;li&gt;Keep a global data structure for tracking wires that cross chunks. These &quot;parent wires&quot; just track the wires in their chunks and not the individual tiles, they also have a mutex.&lt;/li&gt;&lt;li&gt;When one of these wires needs update, try to grab the lock on the parent wire. If we got it, no other threads will be working with this wire and we can update its children in each chunk.&lt;/li&gt;&lt;li&gt;Note that the parent wires may not exist yet for a wire crossing an unloaded chunk.&lt;/li&gt;&lt;li&gt;Could also use the ping-pong buffer idea and store 2 states for each wire and gate, that way we don&#39;t need to synchronize threads near the end and move the old state into the new one.&lt;/li&gt;&lt;li&gt;We could store the wires and gates outside of the chunk, this would separate the sim data from the chunk itself. Would this be an improvement, or just unnecessary overhead?&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="740" y="570" width="610" height="260" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
