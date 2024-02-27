@@ -15,8 +15,6 @@ public:
     const Chunk& getChunk() const;
     unsigned int getIndex() const;
 
-    virtual void render() const;
-
 private:
     Chunk& chunk_;
     unsigned int tileIndex_;

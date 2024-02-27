@@ -84,8 +84,8 @@ public:
     // calling member functions that are specific to the derived class and not
     // exposed in the `Tile` interface.
     template<typename T, typename Func, typename... Args>
-    inline auto call(Func func, Args&&... args) -> decltype((reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...)) {
+    inline auto call(Func func, Args&&... args) -> decltype((static_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...)) {
         assert(tileType_ == T::instance());
-        return (reinterpret_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
+        return (static_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
     }
 };

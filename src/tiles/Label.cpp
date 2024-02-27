@@ -13,11 +13,11 @@ Label* Label::instance() {
 }
 
 const entities::Label* Label::getEntity(Chunk& chunk, unsigned int tileIndex) const {
-    return reinterpret_cast<const entities::Label*>(TileType::getEntity(chunk, tileIndex));
+    return static_cast<const entities::Label*>(TileType::getEntity(chunk, tileIndex));
 }
 
 entities::Label* Label::modifyEntity(Chunk& chunk, unsigned int tileIndex) {
-    return reinterpret_cast<entities::Label*>(TileType::modifyEntity(chunk, tileIndex));
+    return static_cast<entities::Label*>(TileType::modifyEntity(chunk, tileIndex));
 }
 
 void Label::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}

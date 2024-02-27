@@ -11,16 +11,20 @@ constexpr int LodRenderer::LEVELS_OF_DETAIL;
 constexpr ChunkCoords::repr LodRenderer::EMPTY_CHUNK_COORDS;
 
 LodRenderer::LodRenderer() :
-    renderableEntities_(),
+    decorations_(),
     levelOfDetail_(0) {
 }
 
-void LodRenderer::addRenderable(const Entity* entity) {
-    assert(renderableEntities_.emplace(entity, true).second);
+void LodRenderer::addDecoration(ChunkCoords::repr coords, unsigned int tileIndex, const sf::Drawable* drawable) {
+    assert(decorations_[coords].emplace(tileIndex, drawable).second);
 }
 
-void LodRenderer::removeRenderable(const Entity* entity) {
-    assert(renderableEntities_.erase(entity) == 1);
+void LodRenderer::removeDecoration(ChunkCoords::repr coords, unsigned int tileIndex) {
+    auto chunkDeco = decorations_.find(coords);
+    assert(chunkDeco != decorations_.end() && chunkDeco->second.erase(tileIndex) == 1);
+    if (chunkDeco->second.empty()) {
+        decorations_.erase(chunkDeco);
+    }
 }
 
 int LodRenderer::getLevelOfDetail() const {
@@ -38,4 +42,27 @@ sf::Vector2u LodRenderer::getMaxVisibleChunkArea(const OffsetView& offsetView, f
         static_cast<unsigned int>(std::ceil(std::round(maxViewSize.x) / chunkWidthTexels)) + 1,
         static_cast<unsigned int>(std::ceil(std::round(maxViewSize.y) / chunkWidthTexels)) + 1
     };
+}
+
+void LodRenderer::drawDecorations(sf::RenderTarget& target, sf::RenderStates states, const ChunkCoordsRange& visibleArea) const {
+    constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
+
+    for (int y = 0; y < visibleArea.height; ++y) {
+        auto chunkDeco = decorations_.upper_bound(ChunkCoords::pack(visibleArea.left - 1, visibleArea.top + y));
+        float yChunkPos = static_cast<float>(y * chunkWidthTexels);
+        for (int x = 0; x < visibleArea.width; ++x) {
+            float xChunkPos = static_cast<float>(x * chunkWidthTexels);
+            if (chunkDeco != decorations_.end() && chunkDeco->first == ChunkCoords::pack(visibleArea.left + x, visibleArea.top + y)) {
+                for (const auto& deco : chunkDeco->second) {
+                    sf::RenderStates states2 = states;
+                    states2.transform.translate(
+                        xChunkPos + static_cast<unsigned int>(deco.first % Chunk::WIDTH) * TileWidth::TEXELS,
+                        yChunkPos + static_cast<unsigned int>(deco.first / Chunk::WIDTH) * TileWidth::TEXELS
+                    );
+                    target.draw(*deco.second, states2);
+                }
+                ++chunkDeco;
+            }
+        }
+    }
 }
