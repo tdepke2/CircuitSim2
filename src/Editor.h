@@ -56,7 +56,7 @@ private:
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
     void highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight);
-    void pasteToBoard(const sf::Vector2i& tilePos);
+    void pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     Board& board_;

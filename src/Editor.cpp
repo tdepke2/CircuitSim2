@@ -148,7 +148,7 @@ void Editor::processEvent(const sf::Event& event) {
                 updateSelection(cursorCoords_.first);
             }
             if ((cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) && cursorCoords_.second) {
-                pasteToBoard(cursorCoords_.first);
+                pasteToBoard(cursorCoords_.first, true);
             }
         }
     } else if (event.type == sf::Event::MouseEntered) {
@@ -164,7 +164,7 @@ void Editor::processEvent(const sf::Event& event) {
         if (event.mouseButton.button == sf::Mouse::Right) {
             if (cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) {
                 if (cursorCoords.second) {
-                    pasteToBoard(cursorCoords.first);
+                    pasteToBoard(cursorCoords.first, false);
                 }
             } else if (!selectionStart_.second) {
                 if (!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) && !sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
@@ -540,7 +540,13 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     }*/
 }
 
-void Editor::pasteToBoard(const sf::Vector2i& tilePos) {
+void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
+    static sf::Vector2i lastTilePos = {0, 0};
+    if (lastTilePos == tilePos && deltaCheck) {
+        return;
+    }
+    lastTilePos = tilePos;
+
     const bool forcePaste = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
     const bool ignoreBlanks = sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl);
 

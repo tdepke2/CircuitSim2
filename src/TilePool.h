@@ -44,3 +44,9 @@ private:
     std::vector<std::unique_ptr<PoolItem>> items_;
     uint64_t baseId_, upperId_;
 };
+
+// FIXME: left off here
+// lets allocate in sectors instead of individual tiles
+// a command could track its tiles with a vector<sector_id> and vector<tile_pos>, that second vector tells the total number of tiles.
+// sector size = Chunk::WIDTH / 64 ?
+// swapping tiles from the pool to a chunk may have a problem, make entity store a chunk pointer instead of reference?
