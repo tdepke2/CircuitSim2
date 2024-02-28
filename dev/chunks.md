@@ -118,6 +118,7 @@ The following should be undoable operations:
 * Flip/rotate/toggle/edit tile (or area).
 * Delete (and therefore cut too).
 * Placing wire with wire tool.
+* Resizing the board.
 * Running the simulation.
     * This could be undone by caching recently modified chunks when the sim pauses. If we track modification times for each chunk it should be easy, using the save state of a chunk may be an alternative option but probably has drawbacks.
     * What if an edit is made while the sim is running? How can the edit be undone without reverting back to when it was paused?

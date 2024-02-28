@@ -20,7 +20,7 @@ public:
     Label& operator=(const Label& label) = delete;
     Label& operator=(Label&& label) = delete;
 
-    const entities::Label* getEntity(Chunk& chunk, unsigned int tileIndex) const;
+    const entities::Label* getEntity(const Chunk& chunk, unsigned int tileIndex) const;
     entities::Label* modifyEntity(Chunk& chunk, unsigned int tileIndex);
 
     virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
@@ -30,7 +30,7 @@ public:
 private:
     Label();
 
-    void init(Chunk& chunk, unsigned int tileIndex);
+    void init(Chunk& chunk, unsigned int tileIndex, const entities::Label* labelToCopy = nullptr);
     virtual void destroy(Chunk& chunk, unsigned int tileIndex) override;
 
     friend class ::Tile;

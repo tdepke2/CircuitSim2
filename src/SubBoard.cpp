@@ -302,4 +302,7 @@ void SubBoard::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform.translate(position_);
     states.texture = &texture_.getTexture();
     target.draw(vertices_, states);
+
+    states.texture = nullptr;
+    drawDecorations(target, states, visibleArea_);
 }

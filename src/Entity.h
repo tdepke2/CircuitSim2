@@ -9,7 +9,7 @@ public:
     Entity(const Entity& rhs) = delete;
     Entity(Entity&& rhs) noexcept = default;
     Entity& operator=(const Entity& rhs) = delete;
-    Entity& operator=(Entity&& rhs) noexcept = delete;    // FIXME: determine why this needs to be deleted now.
+    Entity& operator=(Entity&& rhs) noexcept = delete;
 
     Chunk& getChunk();
     const Chunk& getChunk() const;

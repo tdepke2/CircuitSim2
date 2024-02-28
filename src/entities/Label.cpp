@@ -10,9 +10,17 @@ namespace entities {
 
 Label::Label(Chunk& chunk, unsigned int tileIndex) :
     Entity(chunk, tileIndex),
-    str_() {
+    text_("", Locator::getResource()->getFont("resources/consolas.ttf"), 30) {
 
     spdlog::debug("Label entity has been created.");
+    chunk.getLodRenderer()->addDecoration(chunk.getCoords(), tileIndex, this);
+}
+
+Label::Label(Chunk& chunk, unsigned int tileIndex, const Label& rhs) :
+    Entity(chunk, tileIndex),
+    text_(rhs.text_) {
+
+    spdlog::debug("Label entity (copy) has been created.");
     chunk.getLodRenderer()->addDecoration(chunk.getCoords(), tileIndex, this);
 }
 
@@ -21,24 +29,20 @@ Label::~Label() {
     getChunk().getLodRenderer()->removeDecoration(getChunk().getCoords(), getIndex());
 }
 
-void Label::setText(const sf::String& str) {
-    str_ = str;
+void Label::setString(const sf::String& str) {
+    text_.setString(str);
 }
 
-const sf::String& Label::getText() const {
-    return str_;
+const sf::String& Label::getString() const {
+    return text_.getString();
 }
 
 std::unique_ptr<Label> Label::clone(Chunk& chunk, unsigned int tileIndex) const {
-    // FIXME unfinished, need to actually make a copy.
-    return std::unique_ptr<Label>(new Label(chunk, tileIndex));
+    return std::unique_ptr<Label>(new Label(chunk, tileIndex, *this));
 }
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    sf::Text text;    // FIXME: make text a member.
-    text.setFont(Locator::getResource()->getFont("resources/consolas.ttf"));
-    text.setString(str_);
-    target.draw(text, states);
+    target.draw(text_, states);
 }
 
 } // namespace entities

@@ -432,8 +432,14 @@ void Board::markChunkDrawDirty(ChunkCoords::repr coords) {
 void Board::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(chunkRenderCache_[getLevelOfDetail()], states);
 
-    // FIXME: factor in transform for lastTopLeft_
-    drawDecorations(target, states, lastVisibleArea_);
+    sf::RenderStates states2 = states;
+    states2.transform.translate(static_cast<sf::Vector2f>(
+        sf::Vector2i(
+            lastVisibleArea_.left - ChunkCoords::x(lastTopLeft_),
+            lastVisibleArea_.top - ChunkCoords::y(lastTopLeft_)
+        ) * Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS)
+    ));
+    drawDecorations(target, states2, lastVisibleArea_);
 
     DebugScreen::instance()->profilerEvent("Board::draw draw_debug");
     if (debugDrawChunkBorder_ && lastVisibleArea_.width > 0 && lastVisibleArea_.height > 0) {

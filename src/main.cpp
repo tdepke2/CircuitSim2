@@ -52,7 +52,7 @@ int main() {
 
     auto labelTile = board.accessTile(-8, -8);
     labelTile.setType(tiles::Label::instance());
-    labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setText("hello!");
+    labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("hello!");
 
     board.debugPrintChunk(0x8000000080000000);
 
