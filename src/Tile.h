@@ -5,6 +5,7 @@
 #include <utility>
 
 class Chunk;
+struct TileData;
 class TileType;
 
 namespace tiles {
@@ -70,6 +71,7 @@ public:
     Direction::t getDirection() const;
     bool getHighlight() const;
     State::t getState() const;
+    TileData getRawData() const;
     void flip(bool acrossHorizontal);
     void alternativeTile();
     void cloneTo(Tile target) const;

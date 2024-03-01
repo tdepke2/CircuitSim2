@@ -96,6 +96,10 @@ State::t Tile::getState() const {
     return tileType_->getState(chunk_, tileIndex_);
 }
 
+TileData Tile::getRawData() const {
+    return tileType_->getRawData(chunk_, tileIndex_);
+}
+
 void Tile::flip(bool acrossHorizontal) {
     tileType_->flip(chunk_, tileIndex_, acrossHorizontal);
 }

@@ -31,12 +31,15 @@ struct TileData {
     uint8_t           : 1;
     uint16_t     meta : 16;
 
-    // Default initialization specifies that all values (including padding) will be zero-initialized.
+    // Default initialization specifies that all values (including padding) will be zero-initialized when using braced-initialization.
     TileData() = default;
     // Note that this ctor does not initialize the padding bits.
     TileData(TileId::t id, State::t state1, State::t state2, Direction::t dir = Direction::north, bool highlight = false, uint16_t meta = 0);
     // Converts texture-specific data (id, state1, and state2) into a unique unsigned integer. Result is guaranteed to fit in 9 bits, or 512 total values.
     uint16_t getTextureHash() const;
+
+    friend bool operator==(const TileData& lhs, const TileData& rhs);
+    friend bool operator!=(const TileData& lhs, const TileData& rhs);
 };
 //#pragma pack(pop)
 

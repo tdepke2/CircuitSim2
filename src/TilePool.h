@@ -17,35 +17,38 @@ class Tile;
 // vector for reuse. This creates holes in the vector, but the holes get removed
 // when there are no allocated tiles in a previous element.
 
+// FIXME: above is no longer true after redesign.
+
 class TilePool {
 public:
+    static constexpr int SECTOR_SIZE = Chunk::WIDTH * Chunk::WIDTH / 64;
+
     TilePool();
     TilePool(const TilePool& rhs) = delete;
     TilePool& operator=(const TilePool& rhs) = delete;
 
-    std::pair<Tile, uint64_t> allocateTile();
-    void freeTile(uint64_t id);
-    Tile accessTile(uint64_t id);
+    unsigned int getTotalAllocated() const;
+    size_t allocateSector();
+    void freeSector(size_t sectorId);
+    Tile accessTile(size_t sectorId, unsigned int offset);
     void debugPrintInfo();
 
 private:
     struct PoolItem {
         PoolItem() :
             chunk(nullptr, 0),
-            allocated(),
-            allocatedCount(0) {
+            allocated() {
         }
 
         Chunk chunk;
-        std::bitset<Chunk::WIDTH * Chunk::WIDTH> allocated;
-        unsigned int allocatedCount;
+        std::bitset<Chunk::WIDTH * Chunk::WIDTH / SECTOR_SIZE> allocated;
     };
 
     std::vector<std::unique_ptr<PoolItem>> items_;
-    uint64_t baseId_, upperId_;
+    std::vector<unsigned int> itemsAllocatedCount_;
 };
 
-// FIXME: left off here
+// FIXME:
 // lets allocate in sectors instead of individual tiles
 // a command could track its tiles with a vector<sector_id> and vector<tile_pos>, that second vector tells the total number of tiles.
 // sector size = Chunk::WIDTH / 64 ?

@@ -27,3 +27,7 @@ bool TileType::getHighlight(const Chunk& chunk, unsigned int tileIndex) const {
 State::t TileType::getState(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).state1;
 }
+
+TileData TileType::getRawData(const Chunk& chunk, unsigned int tileIndex) const {
+    return chunk.tiles_[tileIndex];
+}

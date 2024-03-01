@@ -36,6 +36,21 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
+bool operator==(const TileData& lhs, const TileData& rhs) {
+    return (
+        lhs.id == rhs.id &&
+        lhs.state1 == rhs.state1 &&
+        lhs.state2 == rhs.state2 &&
+        lhs.dir == rhs.dir &&
+        lhs.highlight == rhs.highlight &&
+        lhs.meta == rhs.meta
+    );
+}
+
+bool operator!=(const TileData& lhs, const TileData& rhs) {
+    return !(lhs == rhs);
+}
+
 constexpr int Chunk::WIDTH;
 Chunk::StaticInit* Chunk::staticInit_ = nullptr;
 
