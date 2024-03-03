@@ -20,6 +20,10 @@ entities::Label* Label::modifyEntity(Chunk& chunk, unsigned int tileIndex) {
     return static_cast<entities::Label*>(TileType::modifyEntity(chunk, tileIndex));
 }
 
+bool Label::isTileEntity() const {
+    return true;
+}
+
 void Label::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
 
 void Label::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
@@ -39,7 +43,7 @@ void Label::init(Chunk& chunk, unsigned int tileIndex, const entities::Label* la
     tileData.state2 = State::disconnected;
     tileData.dir = Direction::north;
     if (labelToCopy == nullptr) {
-        allocateEntity(chunk, tileIndex, std::unique_ptr<entities::Label>(new entities::Label(chunk, tileIndex)));
+        allocateEntity(chunk, tileIndex, std::unique_ptr<Entity>(new entities::Label(chunk, tileIndex)));
     } else {
         allocateEntity(chunk, tileIndex, labelToCopy->clone(chunk, tileIndex));
     }

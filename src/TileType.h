@@ -32,11 +32,14 @@ public:
     virtual bool getHighlight(const Chunk& chunk, unsigned int tileIndex) const;
     virtual State::t getState(const Chunk& chunk, unsigned int tileIndex) const;
     TileData getRawData(const Chunk& chunk, unsigned int tileIndex) const;
+    virtual bool isTileEntity() const;
+
     virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) = 0;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) = 0;
     // Note: this method is not marked const to allow implementations to call
     // their non-const member functions on the target, such as init().
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) = 0;
+    void swapWith(Chunk& chunk, unsigned int tileIndex, Tile target);
 
 protected:
     ~TileType() = default;

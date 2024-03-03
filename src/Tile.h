@@ -75,6 +75,7 @@ public:
     void flip(bool acrossHorizontal);
     void alternativeTile();
     void cloneTo(Tile target) const;
+    void swapWith(Tile target);
 
 private:
     TileType* tileType_;

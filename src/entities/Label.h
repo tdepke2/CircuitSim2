@@ -13,10 +13,11 @@ public:
     Label(Chunk& chunk, unsigned int tileIndex, const Label& rhs);
     virtual ~Label();
 
+    virtual void setChunkAndIndex(Chunk& chunk, unsigned int tileIndex) override;
     void setString(const sf::String& str);
     const sf::String& getString() const;
 
-    std::unique_ptr<Label> clone(Chunk& chunk, unsigned int tileIndex) const;
+    virtual std::unique_ptr<Entity> clone(Chunk& chunk, unsigned int tileIndex) const override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
 private:

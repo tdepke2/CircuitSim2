@@ -151,3 +151,14 @@ Edit grouping: it would be efficient to group similar edits together into one co
 5. Clock (etc category): outputs an adjustable square wave to 3 sides while input is off.
 6. Scope (output category): plots a signal to a virtual oscilloscope.
 7. Speaker? (output category): outputs to audio device.
+
+## Configuration ##
+
+Stick with the .ini format, and have the following fields:
+
+1. Default TPS limit.
+2. Use tri-state logic rules for new boards.
+3. Pause the simulation when a state conflict is detected.
+4. Edit history size.
+
+Could implement config with subject-observer, we may or may not want a dedicated Subject class.

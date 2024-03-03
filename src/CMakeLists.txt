@@ -1,6 +1,6 @@
 set(CS2_COMMANDS_SRCS
-    commands/WriteTile.cpp
-    commands/WriteTile.h
+    commands/WriteTiles.cpp
+    commands/WriteTiles.h
 )
 
 set(CS2_ENTITIES_SRCS

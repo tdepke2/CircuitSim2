@@ -36,6 +36,14 @@ uint16_t TileData::getTextureHash() const {
     return (static_cast<uint16_t>(state2) << 7) | (static_cast<uint16_t>(state1) << 5) | id;
 }
 
+void swap(TileData& lhs, TileData& rhs) {
+    TileData temp = lhs;
+    temp.highlight = rhs.highlight;
+    rhs.highlight = lhs.highlight;
+    lhs = std::move(rhs);
+    rhs = std::move(temp);
+}
+
 bool operator==(const TileData& lhs, const TileData& rhs) {
     return (
         lhs.id == rhs.id &&

@@ -16,6 +16,18 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+
+
+
+
+#include <TilePool.h>
+#include <commands/WriteTiles.h>
+
+
+
+
+
+
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
@@ -53,6 +65,35 @@ int main() {
     auto labelTile = board.accessTile(-8, -8);
     labelTile.setType(tiles::Label::instance());
     labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("hello!");
+
+    /*board.accessTile(-2, -2).setType(tiles::Input::instance(), TileId::inButton, State::high, 'G');
+
+    TilePool testPool;
+    commands::WriteTiles writeTest(board, testPool);
+    auto tile2 = writeTest.pushBackTile({-8, -8});
+    //tile2.setType(tiles::Wire::instance(), TileId::wireJunction, Direction::north, State::high);
+    tile2.setType(tiles::Label::instance());
+    tile2.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("this is my label");
+    spdlog::debug("writeTest created, executing...");
+    writeTest.execute();
+    //writeTest.execute();*/
+
+    //spdlog::debug("tile is {}", static_cast<int>(board.accessTile(-2, -2).getId()));
+    //board.accessTile(-2, -2).call<tiles::Label>(&tiles::Label::modifyEntity)->setString("this is my label 2");
+
+    /*
+    //board.accessTile(1, 1).setType(tiles::Wire::instance(), TileId::wireCorner, Direction::west, State::middle);
+    auto tile3 = board.accessTile(1, 1);
+    tile3.setType(tiles::Label::instance());
+    tile3.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("this is my label");
+    //board.accessTile(2, 2).setType(tiles::Input::instance(), TileId::inButton, State::high, 'G');
+    auto tile4 = board.accessTile(2, 2);
+    tile4.setType(tiles::Label::instance());
+    tile4.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("hey it's another one");
+    spdlog::debug("swapping tiles...");
+    board.accessTile(1, 1).swapWith(board.accessTile(2, 2));
+    //board.accessTile(1, 1).swapWith(board.accessTile(2, 2));
+    */
 
     board.debugPrintChunk(0x8000000080000000);
 

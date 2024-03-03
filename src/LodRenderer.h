@@ -24,7 +24,7 @@ public:
     LodRenderer& operator=(const LodRenderer& rhs) = default;
 
     void addDecoration(ChunkCoords::repr coords, unsigned int tileIndex, const sf::Drawable* drawable);
-    void removeDecoration(ChunkCoords::repr coords, unsigned int tileIndex);
+    void removeDecoration(ChunkCoords::repr coords, unsigned int tileIndex, const sf::Drawable* drawable);
 
     virtual void markChunkDrawDirty(ChunkCoords::repr coords) = 0;
 

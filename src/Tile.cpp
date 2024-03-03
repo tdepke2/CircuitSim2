@@ -112,3 +112,7 @@ void Tile::cloneTo(Tile target) const {
     target.tileType_->destroy(target.chunk_, target.tileIndex_);
     tileType_->cloneTo(chunk_, tileIndex_, target);
 }
+
+void Tile::swapWith(Tile target) {
+    tileType_->swapWith(chunk_, tileIndex_, target);
+}

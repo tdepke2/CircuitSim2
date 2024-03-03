@@ -4,7 +4,6 @@
 #include <TileWidth.h>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 
 constexpr int LodRenderer::LEVELS_OF_DETAIL;
@@ -16,12 +15,17 @@ LodRenderer::LodRenderer() :
 }
 
 void LodRenderer::addDecoration(ChunkCoords::repr coords, unsigned int tileIndex, const sf::Drawable* drawable) {
-    assert(decorations_[coords].emplace(tileIndex, drawable).second);
+    decorations_[coords][tileIndex] = drawable;
 }
 
-void LodRenderer::removeDecoration(ChunkCoords::repr coords, unsigned int tileIndex) {
+void LodRenderer::removeDecoration(ChunkCoords::repr coords, unsigned int tileIndex, const sf::Drawable* drawable) {
     auto chunkDeco = decorations_.find(coords);
-    assert(chunkDeco != decorations_.end() && chunkDeco->second.erase(tileIndex) == 1);
+    auto deco = chunkDeco->second.find(tileIndex);
+    if (deco->second != drawable) {
+        // Do nothing if there is a different drawable at the selected coordinates.
+        return;
+    }
+    chunkDeco->second.erase(deco);
     if (chunkDeco->second.empty()) {
         decorations_.erase(chunkDeco);
     }

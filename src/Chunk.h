@@ -38,6 +38,8 @@ struct TileData {
     // Converts texture-specific data (id, state1, and state2) into a unique unsigned integer. Result is guaranteed to fit in 9 bits, or 512 total values.
     uint16_t getTextureHash() const;
 
+    // Swapping ignores the highlight bit.
+    friend void swap(TileData& lhs, TileData& rhs);
     friend bool operator==(const TileData& lhs, const TileData& rhs);
     friend bool operator!=(const TileData& lhs, const TileData& rhs);
 };
