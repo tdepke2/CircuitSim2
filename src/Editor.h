@@ -3,11 +3,15 @@
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
+#include <TilePool.h>
 
+#include <deque>
+#include <memory>
 #include <SFML/Graphics.hpp>
 #include <utility>
 
 class Board;
+class Command;
 
 class Editor : public sf::Drawable {
 public:
@@ -37,6 +41,8 @@ private:
     void handleKeyPress(const sf::Event::KeyEvent& key);
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
+    void undoEdit();
+    void redoEdit();
     void selectAll();
     void deselectAll();
     void rotateArea(bool clockwise);
@@ -56,6 +62,9 @@ private:
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
     void highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight);
+    template<typename T, typename... Args>
+    std::unique_ptr<T> makeCommand(Args&&... args);
+    void executeCommand(std::unique_ptr<Command>&& command);
     void pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
@@ -74,4 +83,8 @@ private:
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
     SubBoard tileSubBoard_, copySubBoard_;
+
+    TilePool tilePool_;
+    std::deque<std::unique_ptr<Command>> editHistory_;
+    long long lastEditIndex_;
 };

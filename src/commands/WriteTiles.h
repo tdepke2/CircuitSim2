@@ -28,6 +28,7 @@ private:
     TilePool& pool_;
     std::vector<size_t> poolSectors_;
     std::vector<sf::Vector2i> tilePositions_;
+    size_t lastExecuteSize_;
 };
 
 } // namespace commands

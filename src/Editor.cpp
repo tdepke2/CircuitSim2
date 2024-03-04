@@ -1,5 +1,7 @@
 #include <Board.h>
 #include <Chunk.h>
+#include <Command.h>
+#include <commands/WriteTiles.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <Locator.h>
@@ -103,7 +105,10 @@ Editor::Editor(Board& board, const sf::View& initialView) :
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
     tileSubBoard_(),
-    copySubBoard_() {
+    copySubBoard_(),
+    tilePool_(),
+    editHistory_(),
+    lastEditIndex_(-1) {
 
     static StaticInit staticInit;
     staticInit_ = &staticInit;
@@ -230,6 +235,10 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
             //fileOption(2);
         } else if (key.code == sf::Keyboard::A) {
             selectAll();
+        } else if (key.code == sf::Keyboard::Z) {
+            undoEdit();
+        } else if (key.code == sf::Keyboard::Y) {
+            redoEdit();
         } else if (key.code == sf::Keyboard::X) {
             copyArea();
             deleteArea();
@@ -302,6 +311,20 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
     }
 }
 
+void Editor::undoEdit() {
+    spdlog::warn("Editor::undoEdit(), edit history has {} commands.", editHistory_.size());
+    if (lastEditIndex_ < 0) {
+        return;
+    }
+    editHistory_[static_cast<size_t>(lastEditIndex_--)]->undo();
+}
+void Editor::redoEdit() {
+    spdlog::warn("Editor::redoEdit(), edit history has {} commands.", editHistory_.size());
+    if (lastEditIndex_ + 1 >= static_cast<long long>(editHistory_.size())) {
+        return;
+    }
+    editHistory_[static_cast<size_t>(++lastEditIndex_)]->execute();
+}
 void Editor::selectAll() {
     spdlog::warn("Editor::selectAll() NYI");
 }
@@ -540,6 +563,38 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     }*/
 }
 
+template<typename T, typename... Args>
+std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
+    if (editHistory_.size() > 0 && lastEditIndex_ + 1 == static_cast<long long>(editHistory_.size())) {
+        // If the command has the same type as the previous one and happened
+        // recently, we can just add on to it instead of building a new command.
+        Command& lastCommandRef = *editHistory_.back();
+        if (typeid(lastCommandRef) == typeid(T)) {
+            spdlog::debug("Last command has same type, returning it.");
+            auto lastCommand = static_cast<T*>(editHistory_.back().release());
+            editHistory_.pop_back();
+            --lastEditIndex_;
+            return std::unique_ptr<T>(lastCommand);
+        }
+    }
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+void Editor::executeCommand(std::unique_ptr<Command>&& command) {
+    command->execute();
+    if (lastEditIndex_ + 1 < static_cast<long long>(editHistory_.size())) {
+        editHistory_.resize(static_cast<size_t>(lastEditIndex_ + 1));
+    }
+    lastEditIndex_ = editHistory_.size();
+    editHistory_.emplace_back(std::move(command));
+}
+
+
+// FIXME: change lastEditIndex to lastEditSize? then it can be consistent with the similar var in WriteTiles ###############################################
+// need to add a timestamp to Command class for last execution, this gets checked/updated in makeCommand.
+// not all commands may allow grouping, add a virtual method in Command to check this.
+
+
 void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
     static sf::Vector2i lastTilePos = {0, 0};
     if (lastTilePos == tilePos && deltaCheck) {
@@ -553,7 +608,9 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
     if (!board_.accessTile(tilePos).getHighlight()) {
         // Not pasting into a selection.
         if (cursorState_ == CursorState::pickTile) {
-            tileSubBoard_.accessTile(0, 0).cloneTo(board_.accessTile(tilePos));
+            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            tileSubBoard_.accessTile(0, 0).cloneTo(command->pushBackTile(tilePos));
+            executeCommand(std::move(command));
         } else if (cursorState_ == CursorState::pasteArea) {
             if (!forcePaste) {
                 using Vector2ll = sf::Vector2<long long>;

@@ -6,7 +6,10 @@ namespace commands {
 
 WriteTiles::WriteTiles(Board& board, TilePool& pool) :
     board_(board),
-    pool_(pool) {
+    pool_(pool),
+    poolSectors_(),
+    tilePositions_(),
+    lastExecuteSize_(0) {
 }
 
 WriteTiles::~WriteTiles() {
@@ -33,13 +36,17 @@ Tile WriteTiles::pushBackTile(const sf::Vector2i& pos) {
 }
 
 void WriteTiles::execute() {
-    for (size_t i = 0; i < tilePositions_.size(); ++i) {
+    for (size_t i = lastExecuteSize_; i < tilePositions_.size(); ++i) {
         accessTile(i).swapWith(board_.accessTile(tilePositions_[i]));
     }
+    lastExecuteSize_ = tilePositions_.size();
 }
 
 void WriteTiles::undo() {
-
+    for (size_t i = lastExecuteSize_; i > 0; --i) {
+        accessTile(i - 1).swapWith(board_.accessTile(tilePositions_[i - 1]));
+    }
+    lastExecuteSize_ = 0;
 }
 
 } // namespace commands
