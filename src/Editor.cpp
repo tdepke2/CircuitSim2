@@ -108,7 +108,7 @@ Editor::Editor(Board& board, const sf::View& initialView) :
     copySubBoard_(),
     tilePool_(),
     editHistory_(),
-    lastEditIndex_(-1) {
+    lastEditSize_(0) {
 
     static StaticInit staticInit;
     staticInit_ = &staticInit;
@@ -312,18 +312,22 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
 }
 
 void Editor::undoEdit() {
-    spdlog::warn("Editor::undoEdit(), edit history has {} commands.", editHistory_.size());
-    if (lastEditIndex_ < 0) {
+    spdlog::warn("Editor::undoEdit(), edit history has {} commands, lastEditSize is {}.", editHistory_.size(), lastEditSize_);
+    if (lastEditSize_ == 0) {
         return;
     }
-    editHistory_[static_cast<size_t>(lastEditIndex_--)]->undo();
+    --lastEditSize_;
+    spdlog::info("Undo {}.", editHistory_[lastEditSize_]->getMessage());
+    editHistory_[lastEditSize_]->undo();
 }
 void Editor::redoEdit() {
-    spdlog::warn("Editor::redoEdit(), edit history has {} commands.", editHistory_.size());
-    if (lastEditIndex_ + 1 >= static_cast<long long>(editHistory_.size())) {
+    spdlog::warn("Editor::redoEdit(), edit history has {} commands, lastEditSize is {}.", editHistory_.size(), lastEditSize_);
+    if (lastEditSize_ >= editHistory_.size()) {
         return;
     }
-    editHistory_[static_cast<size_t>(++lastEditIndex_)]->execute();
+    spdlog::info("Redo {}.", editHistory_[lastEditSize_]->getMessage());
+    editHistory_[lastEditSize_]->execute();
+    ++lastEditSize_;
 }
 void Editor::selectAll() {
     spdlog::warn("Editor::selectAll() NYI");
@@ -565,16 +569,17 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
 
 template<typename T, typename... Args>
 std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
-    if (editHistory_.size() > 0 && lastEditIndex_ + 1 == static_cast<long long>(editHistory_.size())) {
+    if (editHistory_.size() > 0 && lastEditSize_ == editHistory_.size()) {
         // If the command has the same type as the previous one and happened
         // recently, we can just add on to it instead of building a new command.
-        Command& lastCommandRef = *editHistory_.back();
-        if (typeid(lastCommandRef) == typeid(T)) {
+
+        Command& lastCommand = *editHistory_.back();
+        if (lastCommand.isGroupingAllowed() && lastCommand.getTimeSinceLastExecute().count() < 1000 && typeid(lastCommand) == typeid(T)) {
             spdlog::debug("Last command has same type, returning it.");
-            auto lastCommand = static_cast<T*>(editHistory_.back().release());
+            auto lastCommandPtr = static_cast<T*>(editHistory_.back().release());
             editHistory_.pop_back();
-            --lastEditIndex_;
-            return std::unique_ptr<T>(lastCommand);
+            --lastEditSize_;
+            return std::unique_ptr<T>(lastCommandPtr);
         }
     }
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
@@ -582,18 +587,15 @@ std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
 
 void Editor::executeCommand(std::unique_ptr<Command>&& command) {
     command->execute();
-    if (lastEditIndex_ + 1 < static_cast<long long>(editHistory_.size())) {
-        editHistory_.resize(static_cast<size_t>(lastEditIndex_ + 1));
+    if (lastEditSize_ < editHistory_.size()) {
+        editHistory_.resize(lastEditSize_);
     }
-    lastEditIndex_ = editHistory_.size();
     editHistory_.emplace_back(std::move(command));
+    lastEditSize_ = editHistory_.size();
 }
 
-
-// FIXME: change lastEditIndex to lastEditSize? then it can be consistent with the similar var in WriteTiles ###############################################
-// need to add a timestamp to Command class for last execution, this gets checked/updated in makeCommand.
-// not all commands may allow grouping, add a virtual method in Command to check this.
-
+// FIXME: WriteTiles should be used for both placing and filling tiles, but these are different operations and shouldn't group together.
+// get rid of the typeid stuff and use a command-type id passed as first argument to ctor?
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
     static sf::Vector2i lastTilePos = {0, 0};
@@ -632,7 +634,9 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
                     return;
                 }
             }
-            copySubBoard_.pasteToBoard(board_, tilePos, ignoreBlanks);
+            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            copySubBoard_.pasteToBoard(*command, tilePos, ignoreBlanks);
+            executeCommand(std::move(command));
         }
         board_.removeAllHighlights();
     } else {
@@ -642,12 +646,18 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
             return;
         }
         if (cursorState_ == CursorState::pickTile) {
-            forEachTile(board_, bounds.first, bounds.second, [this](Chunk& chunk, int i, int, int) {
+            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            forEachTile(board_, bounds.first, bounds.second, [this,&command](Chunk& chunk, int i, int x, int y) {
                 Tile tile = chunk.accessTile(i);
                 if (tile.getHighlight()) {
-                    tileSubBoard_.accessTile(0, 0).cloneTo(tile);
+                    //tileSubBoard_.accessTile(0, 0).cloneTo(tile);
+                    tileSubBoard_.accessTile(0, 0).cloneTo(command->pushBackTile({x, y}));
+
+                    // FIXME: reselect the area after undo?
+                    // btw, if we paste in area below, what happens if ignoreBlanks?
                 }
             });
+            executeCommand(std::move(command));
         } else if (cursorState_ == CursorState::pasteArea) {
             for (long long y = bounds.first.y; y <= bounds.second.y - static_cast<long long>(copySubBoard_.getVisibleSize().y) + 1ll; y += copySubBoard_.getVisibleSize().y) {
                 for (long long x = bounds.first.x; x <= bounds.second.x - static_cast<long long>(copySubBoard_.getVisibleSize().x) + 1ll; x += copySubBoard_.getVisibleSize().x) {
@@ -662,7 +672,7 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
                         }
                     });
                     if (!foundNonHighlight) {
-                        copySubBoard_.pasteToBoard(board_, {static_cast<int>(x), static_cast<int>(y)}, ignoreBlanks);
+                        //copySubBoard_.pasteToBoard(board_, {static_cast<int>(x), static_cast<int>(y)}, ignoreBlanks);
                     }
                 }
             }

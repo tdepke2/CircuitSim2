@@ -193,26 +193,29 @@ void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i seco
     size_ = static_cast<sf::Vector2u>(sizeSubOne + sf::Vector2i(1, 1));
 }
 
-void SubBoard::pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBlanks) {
+void SubBoard::pasteToBoard(commands::WriteTiles& command, const sf::Vector2i& pos, bool ignoreBlanks) {
     using Vector2ll = sf::Vector2<long long>;
     auto first = static_cast<Vector2ll>(pos);
     auto second = first + static_cast<Vector2ll>(size_) - Vector2ll(1ll, 1ll);
 
-    const auto upperBound = static_cast<Vector2ll>(board.getTileUpperBound());
+    const auto upperBound = static_cast<Vector2ll>(command.getBoard().getTileUpperBound());
     second.x = std::min(second.x, upperBound.x);
     second.y = std::min(second.y, upperBound.y);
 
     constexpr int widthLog2 = constLog2(Chunk::WIDTH);
     for (int yChunk = static_cast<int>(first.y >> widthLog2); yChunk <= static_cast<int>(second.y >> widthLog2); ++yChunk) {
         for (int xChunk = static_cast<int>(first.x >> widthLog2); xChunk <= static_cast<int>(second.x >> widthLog2); ++xChunk) {
-            auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
+            //auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
             for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
                 int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
                 int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
                 if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
                     const Tile tile = accessTile(static_cast<int>(x - first.x), static_cast<int>(y - first.y));
                     if (!ignoreBlanks || tile.getId() != TileId::blank) {
-                        tile.cloneTo(chunk.accessTile(i));
+                        //tile.cloneTo(chunk.accessTile(i));
+                        tile.cloneTo(command.pushBackTile({x, y}));
+
+                        // FIXME: potential optimization here
                     }
                 }
             }

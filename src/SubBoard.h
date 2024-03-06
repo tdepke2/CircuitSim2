@@ -4,6 +4,7 @@
 #include <ChunkCoords.h>
 #include <ChunkCoordsRange.h>
 #include <ChunkDrawable.h>
+#include <commands/WriteTiles.h>
 #include <FlatMap.h>
 #include <LodRenderer.h>
 
@@ -32,7 +33,7 @@ public:
     Tile accessTile(const sf::Vector2i& pos);
     void clear();
     void copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly = false);
-    void pasteToBoard(Board& board, const sf::Vector2i& pos, bool ignoreBlanks = false);
+    void pasteToBoard(commands::WriteTiles& command, const sf::Vector2i& pos, bool ignoreBlanks = false);
 
 private:
     void resetChunkDraw();

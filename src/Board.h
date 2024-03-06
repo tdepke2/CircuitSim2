@@ -54,6 +54,11 @@ public:
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);
     void removeAllHighlights();
+    /**
+     * Returns the lower and upper bound (inclusive) of the minimum rectangular
+     * area that contains all highlighted tiles. If nothing is highlighted, the
+     * returned lower bound will be greater than the upper bound.
+     */
     std::pair<sf::Vector2i, sf::Vector2i> getHighlightedBounds();
     void loadFromFile(const fs::path& filename);
     void saveToFile();

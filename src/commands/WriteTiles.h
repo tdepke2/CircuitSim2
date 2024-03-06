@@ -16,10 +16,13 @@ public:
     WriteTiles(Board& board, TilePool& pool);
     virtual ~WriteTiles();
 
+    const Board& getBoard() const;
     size_t getTileCount() const;
     Tile accessTile(size_t index);
     Tile pushBackTile(const sf::Vector2i& pos);
 
+    virtual std::string getMessage() const override;
+    virtual bool isGroupingAllowed() const override;
     virtual void execute() override;
     virtual void undo() override;
 

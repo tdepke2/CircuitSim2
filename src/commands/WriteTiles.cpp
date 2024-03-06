@@ -18,6 +18,10 @@ WriteTiles::~WriteTiles() {
     }
 }
 
+const Board& WriteTiles::getBoard() const {
+    return board_;
+}
+
 size_t WriteTiles::getTileCount() const {
     return tilePositions_.size();
 }
@@ -35,7 +39,17 @@ Tile WriteTiles::pushBackTile(const sf::Vector2i& pos) {
     return pool_.accessTile(poolSectors_.back(), offset);
 }
 
+std::string WriteTiles::getMessage() const {
+    return "place " + std::to_string(tilePositions_.size()) + " tiles";
+}
+
+bool WriteTiles::isGroupingAllowed() const {
+    // Arbitrary limit to prevent group from growing too large.
+    return tilePositions_.size() < 4096;
+}
+
 void WriteTiles::execute() {
+    Command::execute();
     for (size_t i = lastExecuteSize_; i < tilePositions_.size(); ++i) {
         accessTile(i).swapWith(board_.accessTile(tilePositions_[i]));
     }

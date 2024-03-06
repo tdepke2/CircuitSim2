@@ -1,4 +1,6 @@
 set(CS2_COMMANDS_SRCS
+    commands/FillArea.cpp
+    commands/FillArea.h
     commands/WriteTiles.cpp
     commands/WriteTiles.h
 )
@@ -38,6 +40,7 @@ add_library(cs2_src
     ChunkDrawable.h
     ChunkRender.cpp
     ChunkRender.h
+    Command.cpp
     Command.h
     DebugScreen.cpp
     DebugScreen.h

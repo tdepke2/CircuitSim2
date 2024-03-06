@@ -86,5 +86,5 @@ private:
 
     TilePool tilePool_;
     std::deque<std::unique_ptr<Command>> editHistory_;
-    long long lastEditIndex_;
+    size_t lastEditSize_;
 };

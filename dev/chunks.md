@@ -162,3 +162,9 @@ Stick with the .ini format, and have the following fields:
 4. Edit history size.
 
 Could implement config with subject-observer, we may or may not want a dedicated Subject class.
+
+## Decoration Layer ##
+
+Make use of vertex color attributes to set colors for tiles. This can be toggled on/off (probably done within a shader, and would only work if shaders are available). Textures may need to be updated to use a white/dark theme.
+
+Storing colors could be done by just using the VertexArray for a chunk. We could store this on disk by including a block of data after each chunk for each tile color (could use run-length encoding to compress the data a bit). To prevent loaded but invisible chunks from creating a VertexArray, we could separate the chunk loading of tile data and decorations.
