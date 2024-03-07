@@ -22,6 +22,10 @@ const Board& WriteTiles::getBoard() const {
     return board_;
 }
 
+Board& WriteTiles::getBoard() {
+    return board_;
+}
+
 size_t WriteTiles::getTileCount() const {
     return tilePositions_.size();
 }
@@ -61,6 +65,18 @@ void WriteTiles::undo() {
         accessTile(i - 1).swapWith(board_.accessTile(tilePositions_[i - 1]));
     }
     lastExecuteSize_ = 0;
+}
+
+void WriteTiles::setLastExecuteSize(size_t lastExecuteSize) {
+    lastExecuteSize_ = lastExecuteSize;
+}
+
+const std::vector<sf::Vector2i>& WriteTiles::getTilePositions() const {
+    return tilePositions_;
+}
+
+size_t WriteTiles::getLastExecuteSize() const {
+    return lastExecuteSize_;
 }
 
 } // namespace commands

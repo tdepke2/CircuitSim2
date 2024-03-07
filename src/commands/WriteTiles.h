@@ -17,6 +17,7 @@ public:
     virtual ~WriteTiles();
 
     const Board& getBoard() const;
+    Board& getBoard();
     size_t getTileCount() const;
     Tile accessTile(size_t index);
     Tile pushBackTile(const sf::Vector2i& pos);
@@ -25,6 +26,11 @@ public:
     virtual bool isGroupingAllowed() const override;
     virtual void execute() override;
     virtual void undo() override;
+
+protected:
+    void setLastExecuteSize(size_t lastExecuteSize);
+    const std::vector<sf::Vector2i>& getTilePositions() const;
+    size_t getLastExecuteSize() const;
 
 private:
     Board& board_;

@@ -1,6 +1,7 @@
 #include <Board.h>
 #include <Chunk.h>
 #include <Command.h>
+#include <commands/FillArea.h>
 #include <commands/WriteTiles.h>
 #include <DebugScreen.h>
 #include <Editor.h>
@@ -316,6 +317,7 @@ void Editor::undoEdit() {
     if (lastEditSize_ == 0) {
         return;
     }
+    board_.removeAllHighlights();
     --lastEditSize_;
     spdlog::info("Undo {}.", editHistory_[lastEditSize_]->getMessage());
     editHistory_[lastEditSize_]->undo();
@@ -325,6 +327,7 @@ void Editor::redoEdit() {
     if (lastEditSize_ >= editHistory_.size()) {
         return;
     }
+    board_.removeAllHighlights();
     spdlog::info("Redo {}.", editHistory_[lastEditSize_]->getMessage());
     editHistory_[lastEditSize_]->execute();
     ++lastEditSize_;
@@ -365,12 +368,14 @@ void Editor::deleteArea() {
     if (bounds.first.x > bounds.second.x) {
         return;
     }
-    forEachTile(board_, bounds.first, bounds.second, [](Chunk& chunk, int i, int, int) {
+    auto command = makeCommand<commands::FillArea>(board_, tilePool_);
+    forEachTile(board_, bounds.first, bounds.second, [&command](Chunk& chunk, int i, int x, int y) {
         Tile tile = chunk.accessTile(i);
         if (tile.getHighlight()) {
-            tile.setType(tiles::Blank::instance());
+            command->pushBackTile({x, y}).setType(tiles::Blank::instance());
         }
     });
+    executeCommand(std::move(command));
     board_.removeAllHighlights();
 }
 void Editor::wireTool() {
@@ -646,19 +651,16 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
             return;
         }
         if (cursorState_ == CursorState::pickTile) {
-            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            auto command = makeCommand<commands::FillArea>(board_, tilePool_);
             forEachTile(board_, bounds.first, bounds.second, [this,&command](Chunk& chunk, int i, int x, int y) {
                 Tile tile = chunk.accessTile(i);
                 if (tile.getHighlight()) {
-                    //tileSubBoard_.accessTile(0, 0).cloneTo(tile);
                     tileSubBoard_.accessTile(0, 0).cloneTo(command->pushBackTile({x, y}));
-
-                    // FIXME: reselect the area after undo?
-                    // btw, if we paste in area below, what happens if ignoreBlanks?
                 }
             });
             executeCommand(std::move(command));
         } else if (cursorState_ == CursorState::pasteArea) {
+            auto command = makeCommand<commands::FillArea>(board_, tilePool_);
             for (long long y = bounds.first.y; y <= bounds.second.y - static_cast<long long>(copySubBoard_.getVisibleSize().y) + 1ll; y += copySubBoard_.getVisibleSize().y) {
                 for (long long x = bounds.first.x; x <= bounds.second.x - static_cast<long long>(copySubBoard_.getVisibleSize().x) + 1ll; x += copySubBoard_.getVisibleSize().x) {
                     const sf::Vector2i endPos = {
@@ -672,10 +674,11 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
                         }
                     });
                     if (!foundNonHighlight) {
-                        //copySubBoard_.pasteToBoard(board_, {static_cast<int>(x), static_cast<int>(y)}, ignoreBlanks);
+                        copySubBoard_.pasteToBoard(*command, {static_cast<int>(x), static_cast<int>(y)}, ignoreBlanks);
                     }
                 }
             }
+            executeCommand(std::move(command));
         }
     }
 }

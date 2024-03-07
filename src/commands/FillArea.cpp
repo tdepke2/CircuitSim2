@@ -1,4 +1,6 @@
+#include <Board.h>
 #include <commands/FillArea.h>
+#include <Tile.h>
 
 namespace commands {
 
@@ -11,11 +13,22 @@ std::string FillArea::getMessage() const {
 }
 
 void FillArea::execute() {
-    WriteTiles::execute();
+    Command::execute();
+    for (size_t i = getLastExecuteSize(); i < getTilePositions().size(); ++i) {
+        auto tile = getBoard().accessTile(getTilePositions()[i]);
+        accessTile(i).swapWith(tile);
+        tile.setHighlight(true);
+    }
+    setLastExecuteSize(getTilePositions().size());
 }
 
 void FillArea::undo() {
-    WriteTiles::undo();
+    for (size_t i = getLastExecuteSize(); i > 0; --i) {
+        auto tile = getBoard().accessTile(getTilePositions()[i - 1]);
+        accessTile(i - 1).swapWith(tile);
+        tile.setHighlight(true);
+    }
+    setLastExecuteSize(0);
 }
 
 } // namespace commands
