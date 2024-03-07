@@ -193,7 +193,7 @@ void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i seco
     size_ = static_cast<sf::Vector2u>(sizeSubOne + sf::Vector2i(1, 1));
 }
 
-void SubBoard::pasteToBoard(commands::WriteTiles& command, const sf::Vector2i& pos, bool ignoreBlanks) {
+void SubBoard::pasteToBoard(commands::PlaceTiles& command, const sf::Vector2i& pos, bool ignoreBlanks) {
     using Vector2ll = sf::Vector2<long long>;
     auto first = static_cast<Vector2ll>(pos);
     auto second = first + static_cast<Vector2ll>(size_) - Vector2ll(1ll, 1ll);

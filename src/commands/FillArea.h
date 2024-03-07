@@ -1,13 +1,13 @@
 #pragma once
 
-#include <commands/WriteTiles.h>
+#include <commands/PlaceTiles.h>
 
 class Board;
 class TilePool;
 
 namespace commands {
 
-class FillArea : public WriteTiles {
+class FillArea : public PlaceTiles {
 public:
     FillArea(Board& board, TilePool& pool);
     virtual ~FillArea() = default;

@@ -2,7 +2,7 @@
 #include <Chunk.h>
 #include <Command.h>
 #include <commands/FillArea.h>
-#include <commands/WriteTiles.h>
+#include <commands/PlaceTiles.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <Locator.h>
@@ -599,7 +599,7 @@ void Editor::executeCommand(std::unique_ptr<Command>&& command) {
     lastEditSize_ = editHistory_.size();
 }
 
-// FIXME: WriteTiles should be used for both placing and filling tiles, but these are different operations and shouldn't group together.
+// FIXME: PlaceTiles should be used for both placing and filling tiles, but these are different operations and shouldn't group together.
 // get rid of the typeid stuff and use a command-type id passed as first argument to ctor?
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
@@ -615,7 +615,7 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
     if (!board_.accessTile(tilePos).getHighlight()) {
         // Not pasting into a selection.
         if (cursorState_ == CursorState::pickTile) {
-            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            auto command = makeCommand<commands::PlaceTiles>(board_, tilePool_);
             tileSubBoard_.accessTile(0, 0).cloneTo(command->pushBackTile(tilePos));
             executeCommand(std::move(command));
         } else if (cursorState_ == CursorState::pasteArea) {
@@ -639,7 +639,7 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
                     return;
                 }
             }
-            auto command = makeCommand<commands::WriteTiles>(board_, tilePool_);
+            auto command = makeCommand<commands::PlaceTiles>(board_, tilePool_);
             copySubBoard_.pasteToBoard(*command, tilePos, ignoreBlanks);
             executeCommand(std::move(command));
         }

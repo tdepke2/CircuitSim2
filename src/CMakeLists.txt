@@ -1,8 +1,8 @@
 set(CS2_COMMANDS_SRCS
     commands/FillArea.cpp
     commands/FillArea.h
-    commands/WriteTiles.cpp
-    commands/WriteTiles.h
+    commands/PlaceTiles.cpp
+    commands/PlaceTiles.h
 )
 
 set(CS2_ENTITIES_SRCS

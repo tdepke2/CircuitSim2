@@ -11,10 +11,10 @@ class TilePool;
 
 namespace commands {
 
-class WriteTiles : public Command {
+class PlaceTiles : public Command {
 public:
-    WriteTiles(Board& board, TilePool& pool);
-    virtual ~WriteTiles();
+    PlaceTiles(Board& board, TilePool& pool);
+    virtual ~PlaceTiles();
 
     const Board& getBoard() const;
     Board& getBoard();

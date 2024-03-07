@@ -16,18 +16,6 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-
-
-
-
-#include <TilePool.h>
-#include <commands/WriteTiles.h>
-
-
-
-
-
-
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
@@ -69,7 +57,7 @@ int main() {
     /*board.accessTile(-2, -2).setType(tiles::Input::instance(), TileId::inButton, State::high, 'G');
 
     TilePool testPool;
-    commands::WriteTiles writeTest(board, testPool);
+    commands::PlaceTiles writeTest(board, testPool);
     auto tile2 = writeTest.pushBackTile({-8, -8});
     //tile2.setType(tiles::Wire::instance(), TileId::wireJunction, Direction::north, State::high);
     tile2.setType(tiles::Label::instance());

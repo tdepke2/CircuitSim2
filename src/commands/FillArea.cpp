@@ -5,7 +5,7 @@
 namespace commands {
 
 FillArea::FillArea(Board& board, TilePool& pool) :
-    WriteTiles(board, pool) {
+    PlaceTiles(board, pool) {
 }
 
 std::string FillArea::getMessage() const {
