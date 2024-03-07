@@ -563,13 +563,6 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
     forEachTile(board_, a, b, [highlight](Chunk& chunk, int i, int, int) {
         chunk.accessTile(i).setHighlight(highlight);
     });
-    // FIXME: confirm it's not actually faster to use simpler iteration method.
-    // seems like it's about 5 times faster on linux system to iterate by chunks.
-    /*for (int y = a.y; y <= b.y; ++y) {
-        for (int x = a.x; x <= b.x; ++x) {
-            board_.accessTile(x, y).setHighlight(highlight);
-        }
-    }*/
 }
 
 template<typename T, typename... Args>
@@ -586,6 +579,10 @@ std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
             --lastEditSize_;
             return std::unique_ptr<T>(lastCommandPtr);
         }
+
+        // FIXME: eventually we may want to replace the above typeid checking with a function that gets a command-type from an enum.
+        // could use a string instead, then we don't need an enum that is aware of all the commands.
+        // the command-type id could be passed as first argument to command ctor?
     }
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
@@ -598,9 +595,6 @@ void Editor::executeCommand(std::unique_ptr<Command>&& command) {
     editHistory_.emplace_back(std::move(command));
     lastEditSize_ = editHistory_.size();
 }
-
-// FIXME: PlaceTiles should be used for both placing and filling tiles, but these are different operations and shouldn't group together.
-// get rid of the typeid stuff and use a command-type id passed as first argument to ctor?
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
     static sf::Vector2i lastTilePos = {0, 0};
