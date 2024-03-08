@@ -3,6 +3,8 @@ set(CS2_COMMANDS_SRCS
     commands/FillArea.h
     commands/PlaceTiles.cpp
     commands/PlaceTiles.h
+    commands/RotateTiles.cpp
+    commands/RotateTiles.h
 )
 
 set(CS2_ENTITIES_SRCS

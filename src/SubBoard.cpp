@@ -159,6 +159,16 @@ Tile SubBoard::accessTile(const sf::Vector2i& pos) {
     return accessTile(pos.x, pos.y);
 }
 
+void SubBoard::rotate(bool clockwise) {
+    decltype(chunks_) newChunks_;
+
+    // FIXME: need to swap tiles into the new chunks, then clear drawables?
+}
+
+void SubBoard::flip(bool vertical) {
+
+}
+
 void SubBoard::clear() {
     chunks_.clear();
     chunkDrawables_.clear();

@@ -3,6 +3,7 @@
 #include <Command.h>
 #include <commands/FillArea.h>
 #include <commands/PlaceTiles.h>
+#include <commands/RotateTiles.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <Locator.h>
@@ -258,9 +259,9 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
     } else if (key.code == sf::Keyboard::Escape) {
         deselectAll();
     } else if (key.code == sf::Keyboard::R) {
-        rotateArea(!key.shift);
+        rotateTile(!key.shift);
     } else if (key.code == sf::Keyboard::F) {
-        flipArea(!key.shift);
+        flipTile(!key.shift);
     } else if (key.code == sf::Keyboard::E) {
         editTile(!key.shift);
     } else if (key.code == sf::Keyboard::Delete) {
@@ -339,11 +340,38 @@ void Editor::deselectAll() {
     board_.removeAllHighlights();
     setCursorState(CursorState::empty);
 }
-void Editor::rotateArea(bool clockwise) {
-    spdlog::warn("Editor::rotateArea() NYI");
+void Editor::rotateTile(bool clockwise) {
+    if (cursorState_ == CursorState::empty) {
+        if (!cursorCoords_.second) {
+            return;
+        }
+        auto bounds = board_.getHighlightedBounds();
+        if (bounds.first.x > bounds.second.x) {
+            // Not rotating a selection.
+            auto command = makeCommand<commands::RotateTiles>(board_, clockwise, false);
+            command->pushBackTile(cursorCoords_.first);
+            executeCommand(std::move(command));
+        } else {
+            // Rotating a selection.
+            auto command = makeCommand<commands::RotateTiles>(board_, clockwise, true);
+            forEachTile(board_, bounds.first, bounds.second, [&command](Chunk& chunk, int i, int x, int y) {
+                Tile tile = chunk.accessTile(i);
+                if (tile.getHighlight()) {
+                    command->pushBackTile({x, y});
+                }
+            });
+            executeCommand(std::move(command));
+        }
+    } else if (cursorState_ == CursorState::pickTile) {
+        tileSubBoard_.rotate(clockwise);
+    } else if (cursorState_ == CursorState::pasteArea) {
+        copySubBoard_.rotate(clockwise);
+    } else if (cursorState_ == CursorState::wireTool) {
+        // FIXME: wiretool NYI
+    }
 }
-void Editor::flipArea(bool vertical) {
-    spdlog::warn("Editor::flipArea() NYI");
+void Editor::flipTile(bool vertical) {
+    spdlog::warn("Editor::flipTile() NYI");
 }
 void Editor::editTile(bool toggleState) {
     spdlog::warn("Editor::editTile() NYI");
@@ -592,6 +620,9 @@ void Editor::executeCommand(std::unique_ptr<Command>&& command) {
     if (lastEditSize_ < editHistory_.size()) {
         editHistory_.resize(lastEditSize_);
     }
+
+    // FIXME: need to check if we reached the max history amount (will need to be specified in config).
+
     editHistory_.emplace_back(std::move(command));
     lastEditSize_ = editHistory_.size();
 }

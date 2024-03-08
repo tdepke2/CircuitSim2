@@ -3,6 +3,7 @@
 #include <Command.h>
 
 #include <SFML/Graphics.hpp>
+#include <string>
 #include <vector>
 
 class Board;
