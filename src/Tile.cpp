@@ -108,11 +108,23 @@ void Tile::alternativeTile() {
     tileType_->alternativeTile(chunk_, tileIndex_);
 }
 
-void Tile::cloneTo(Tile target) const {
+void Tile::cloneTo(Tile& target) const {
+    target.tileType_->destroy(target.chunk_, target.tileIndex_);
+    tileType_->cloneTo(chunk_, tileIndex_, target);
+    target.tileType_ = tileType_;
+}
+
+void Tile::cloneTo(Tile&& target) const {
     target.tileType_->destroy(target.chunk_, target.tileIndex_);
     tileType_->cloneTo(chunk_, tileIndex_, target);
 }
 
-void Tile::swapWith(Tile target) {
+void Tile::swapWith(Tile& target) {
     tileType_->swapWith(chunk_, tileIndex_, target);
+    std::swap(tileType_, target.tileType_);
+}
+
+void Tile::swapWith(Tile&& target) {
+    tileType_->swapWith(chunk_, tileIndex_, target);
+    tileType_ = target.tileType_;
 }

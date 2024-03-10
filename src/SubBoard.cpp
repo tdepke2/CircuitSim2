@@ -27,6 +27,27 @@ constexpr int constLog2(int x) {
     return x == 1 ? 0 : 1 + constLog2(x / 2);
 }
 
+/**
+ * Iterate over an area of tiles in SubBoard, from `first` to `last` inclusive.
+ * This is done per-chunk which is significantly faster than doing it per-tile.
+ */
+template<typename Func>
+void forEachTile(SubBoard& subBoard, const sf::Vector2i& first, const sf::Vector2i& second, Func f) {
+    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+    for (int yChunk = (first.y >> widthLog2); yChunk <= (second.y >> widthLog2); ++yChunk) {
+        for (int xChunk = (first.x >> widthLog2); xChunk <= (second.x >> widthLog2); ++xChunk) {
+            auto& chunk = subBoard.accessChunk(ChunkCoords::pack(xChunk, yChunk));
+            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
+                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
+                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
+                if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
+                    f(chunk, i, x, y);
+                }
+            }
+        }
+    }
+}
+
 }
 
 SubBoard::SubBoard() :
@@ -160,9 +181,37 @@ Tile SubBoard::accessTile(const sf::Vector2i& pos) {
 }
 
 void SubBoard::rotate(bool clockwise) {
-    decltype(chunks_) newChunks_;
+    decltype(chunks_) newChunks;
+    decltype(chunkDrawables_) newDrawables;
+    newDrawables[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 
-    // FIXME: need to swap tiles into the new chunks, then clear drawables?
+    forEachTile(*this, {0, 0}, static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1), [this,&newChunks,&newDrawables,clockwise](Chunk& chunk, int i, int x, int y) {
+        sf::Vector2i pos;
+        int dirDelta;
+        if (clockwise) {
+            pos = {static_cast<int>(size_.y) - 1 - y, x};
+            dirDelta = 1;
+        } else {
+            pos = {y, static_cast<int>(size_.x) - 1 - x};
+            dirDelta = 3;
+        }
+
+        constexpr int widthLog2 = constLog2(Chunk::WIDTH);
+        ChunkCoords::repr newChunkCoords = ChunkCoords::pack(pos.x >> widthLog2, pos.y >> widthLog2);
+        auto newChunk = newChunks.find(newChunkCoords);
+        if (newChunk == newChunks.end()) {
+            newChunk = newChunks.emplace(std::piecewise_construct, std::forward_as_tuple(newChunkCoords), std::forward_as_tuple(static_cast<LodRenderer*>(this), newChunkCoords)).first;
+            newDrawables[newChunkCoords].setChunk(&newChunk->second);
+        }
+        Tile tile = newChunk->second.accessTile((pos.x & (Chunk::WIDTH - 1)) + (pos.y & (Chunk::WIDTH - 1)) * Chunk::WIDTH);
+
+        chunk.accessTile(i).cloneTo(tile);
+        tile.setDirection(static_cast<Direction::t>((tile.getDirection() + dirDelta) % 4));
+    });
+
+    chunks_ = std::move(newChunks);
+    chunkDrawables_ = std::move(newDrawables);
+    setVisibleSize({size_.y, size_.x});
 }
 
 void SubBoard::flip(bool vertical) {
@@ -182,25 +231,14 @@ void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i seco
     first.y = std::min(firstCopy.y, second.y);
     second.x = std::max(firstCopy.x, second.x);
     second.y = std::max(firstCopy.y, second.y);
-    sf::Vector2i sizeSubOne = second - first;
 
-    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    for (int yChunk = 0; yChunk <= (sizeSubOne.y >> widthLog2); ++yChunk) {
-        for (int xChunk = 0; xChunk <= (sizeSubOne.x >> widthLog2); ++xChunk) {
-            auto& chunk = accessChunk(ChunkCoords::pack(xChunk, yChunk));
-            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
-                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
-                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
-                if (x <= sizeSubOne.x && y <= sizeSubOne.y) {
-                    const Tile tile = board.accessTile(x + first.x, y + first.y);
-                    if (!highlightsOnly || tile.getHighlight()) {
-                        tile.cloneTo(chunk.accessTile(i));
-                    }
-                }
-            }
+    forEachTile(*this, {0, 0}, second - first, [&board,first,highlightsOnly](Chunk& chunk, int i, int x, int y) {
+        const Tile tile = board.accessTile(x + first.x, y + first.y);
+        if (!highlightsOnly || tile.getHighlight()) {
+            tile.cloneTo(chunk.accessTile(i));
         }
-    }
-    size_ = static_cast<sf::Vector2u>(sizeSubOne + sf::Vector2i(1, 1));
+    });
+    size_ = static_cast<sf::Vector2u>(second - first + sf::Vector2i(1, 1));
 }
 
 void SubBoard::pasteToBoard(commands::PlaceTiles& command, const sf::Vector2i& pos, bool ignoreBlanks) {
@@ -212,25 +250,12 @@ void SubBoard::pasteToBoard(commands::PlaceTiles& command, const sf::Vector2i& p
     second.x = std::min(second.x, upperBound.x);
     second.y = std::min(second.y, upperBound.y);
 
-    constexpr int widthLog2 = constLog2(Chunk::WIDTH);
-    for (int yChunk = static_cast<int>(first.y >> widthLog2); yChunk <= static_cast<int>(second.y >> widthLog2); ++yChunk) {
-        for (int xChunk = static_cast<int>(first.x >> widthLog2); xChunk <= static_cast<int>(second.x >> widthLog2); ++xChunk) {
-            //auto& chunk = board.accessChunk(ChunkCoords::pack(xChunk, yChunk));
-            for (int i = 0; i < Chunk::WIDTH * Chunk::WIDTH; ++i) {
-                int x = i % Chunk::WIDTH + xChunk * Chunk::WIDTH;
-                int y = i / Chunk::WIDTH + yChunk * Chunk::WIDTH;
-                if (x >= first.x && x <= second.x && y >= first.y && y <= second.y) {
-                    const Tile tile = accessTile(static_cast<int>(x - first.x), static_cast<int>(y - first.y));
-                    if (!ignoreBlanks || tile.getId() != TileId::blank) {
-                        //tile.cloneTo(chunk.accessTile(i));
-                        tile.cloneTo(command.pushBackTile({x, y}));
-
-                        // FIXME: potential optimization here
-                    }
-                }
-            }
+    forEachTile(*this, {0, 0}, static_cast<sf::Vector2i>(second - first), [&command,first,ignoreBlanks](Chunk& chunk, int i, int x, int y) {
+        const Tile tile = chunk.accessTile(i);
+        if (!ignoreBlanks || tile.getId() != TileId::blank) {
+            tile.cloneTo(command.pushBackTile({static_cast<int>(x + first.x), static_cast<int>(y + first.y)}));
         }
-    }
+    });
 }
 
 void SubBoard::resetChunkDraw() {

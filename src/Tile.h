@@ -74,8 +74,12 @@ public:
     TileData getRawData() const;
     void flip(bool acrossHorizontal);
     void alternativeTile();
-    void cloneTo(Tile target) const;
-    void swapWith(Tile target);
+    // Overloads on r-value references are provided for cases where the target
+    // does not need to be left in a valid state (its tileType_ is not updated).
+    void cloneTo(Tile& target) const;
+    void cloneTo(Tile&& target) const;
+    void swapWith(Tile& target);
+    void swapWith(Tile&& target);
 
 private:
     TileType* tileType_;
