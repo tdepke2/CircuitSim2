@@ -46,7 +46,7 @@ private:
     void selectAll();
     void deselectAll();
     void rotateTile(bool clockwise);
-    void flipTile(bool vertical);
+    void flipTile(bool acrossVertical);
     void editTile(bool toggleState);
     void copyArea();
     void pasteArea();

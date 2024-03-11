@@ -11,8 +11,6 @@ Blank* Blank::instance() {
     return blank.get();
 }
 
-void Blank::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
-
 void Blank::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
 void Blank::cloneTo(const Chunk& /*chunk*/, unsigned int /*tileIndex*/, Tile target) {

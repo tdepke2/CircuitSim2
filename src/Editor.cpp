@@ -2,6 +2,7 @@
 #include <Chunk.h>
 #include <Command.h>
 #include <commands/FillArea.h>
+#include <commands/FlipTiles.h>
 #include <commands/PlaceTiles.h>
 #include <commands/RotateTiles.h>
 #include <DebugScreen.h>
@@ -370,8 +371,36 @@ void Editor::rotateTile(bool clockwise) {
         // FIXME: wiretool NYI
     }
 }
-void Editor::flipTile(bool vertical) {
-    spdlog::warn("Editor::flipTile() NYI");
+void Editor::flipTile(bool acrossVertical) {
+    if (cursorState_ == CursorState::empty) {
+        if (!cursorCoords_.second) {
+            return;
+        }
+        auto bounds = board_.getHighlightedBounds();
+        if (bounds.first.x > bounds.second.x) {
+            // Not flipping a selection.
+            auto command = makeCommand<commands::FlipTiles>(board_, acrossVertical, false);
+            command->pushBackTile(cursorCoords_.first);
+            executeCommand(std::move(command));
+        } else {
+            // Flipping a selection.
+            auto command = makeCommand<commands::FlipTiles>(board_, acrossVertical, true);
+            forEachTile(board_, bounds.first, bounds.second, [&command](Chunk& chunk, int i, int x, int y) {
+                Tile tile = chunk.accessTile(i);
+                if (tile.getHighlight()) {
+                    command->pushBackTile({x, y});
+                }
+            });
+            executeCommand(std::move(command));
+        }
+    } else if (cursorState_ == CursorState::pickTile) {
+        tileSubBoard_.flip(acrossVertical);
+    } else if (cursorState_ == CursorState::pasteArea) {
+        copySubBoard_.flip(acrossVertical);
+    } else if (cursorState_ == CursorState::wireTool) {
+        // FIXME: wiretool NYI
+        // either remove this case, or do the same as rotateTile()?
+    }
 }
 void Editor::editTile(bool toggleState) {
     spdlog::warn("Editor::editTile() NYI");

@@ -22,9 +22,9 @@ void Gate::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
     tileData.state1 = state;
 }
 
-void Gate::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
+void Gate::flip(Chunk& chunk, unsigned int tileIndex, bool acrossVertical) {
     auto& tileData = modifyTileData(chunk, tileIndex);
-    if ((!acrossHorizontal && tileData.dir % 2 == 1) || (acrossHorizontal && tileData.dir % 2 == 0)) {
+    if ((acrossVertical && tileData.dir % 2 == 1) || (!acrossVertical && tileData.dir % 2 == 0)) {
         tileData.dir = static_cast<Direction::t>((tileData.dir + 2) % 4);
     }
 }

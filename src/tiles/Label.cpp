@@ -24,8 +24,6 @@ bool Label::isTileEntity() const {
     return true;
 }
 
-void Label::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
-
 void Label::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
 void Label::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {

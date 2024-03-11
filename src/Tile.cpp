@@ -100,8 +100,8 @@ TileData Tile::getRawData() const {
     return tileType_->getRawData(chunk_, tileIndex_);
 }
 
-void Tile::flip(bool acrossHorizontal) {
-    tileType_->flip(chunk_, tileIndex_, acrossHorizontal);
+void Tile::flip(bool acrossVertical) {
+    tileType_->flip(chunk_, tileIndex_, acrossVertical);
 }
 
 void Tile::alternativeTile() {

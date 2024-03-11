@@ -39,17 +39,17 @@ void Wire::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
     }
 }
 
-void Wire::flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) {
+void Wire::flip(Chunk& chunk, unsigned int tileIndex, bool acrossVertical) {
     auto& tileData = modifyTileData(chunk, tileIndex);
     if (tileData.id == TileId::wireCorner) {
-        if (!acrossHorizontal) {
+        if (acrossVertical) {
             tileData.dir = static_cast<Direction::t>(3 - tileData.dir);
         } else if (tileData.dir % 2 == 0) {
             tileData.dir = static_cast<Direction::t>(tileData.dir + 1);
         } else {
             tileData.dir = static_cast<Direction::t>(tileData.dir - 1);
         }
-    } else if (tileData.id == TileId::wireTee && ((!acrossHorizontal && tileData.dir % 2 == 0) || (acrossHorizontal && tileData.dir % 2 == 1))) {
+    } else if (tileData.id == TileId::wireTee && ((acrossVertical && tileData.dir % 2 == 0) || (!acrossVertical && tileData.dir % 2 == 1))) {
         tileData.dir = static_cast<Direction::t>((tileData.dir + 2) % 4);
     }
 }

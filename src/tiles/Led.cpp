@@ -16,8 +16,6 @@ void Led::setState(Chunk& chunk, unsigned int tileIndex, State::t state) {
     tileData.state1 = state;
 }
 
-void Led::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossHorizontal*/) {}
-
 void Led::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
 void Led::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {

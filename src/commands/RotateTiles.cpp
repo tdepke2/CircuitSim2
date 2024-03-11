@@ -5,6 +5,7 @@ namespace commands {
 
 RotateTiles::RotateTiles(Board& board, bool clockwise, bool highlightTiles) :
     board_(board),
+    tilePositions_(),
     clockwise_(clockwise),
     highlightTiles_(highlightTiles) {
 }

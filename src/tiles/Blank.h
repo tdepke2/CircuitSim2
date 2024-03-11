@@ -16,7 +16,6 @@ public:
     Blank& operator=(const Blank& blank) = delete;
     Blank& operator=(Blank&& blank) = delete;
 
-    virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 

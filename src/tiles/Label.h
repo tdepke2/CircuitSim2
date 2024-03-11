@@ -24,7 +24,6 @@ public:
     entities::Label* modifyEntity(Chunk& chunk, unsigned int tileIndex);
 
     virtual bool isTileEntity() const override;
-    virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 

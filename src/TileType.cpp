@@ -39,6 +39,8 @@ bool TileType::isTileEntity() const {
     return false;
 }
 
+void TileType::flip(Chunk& /*chunk*/, unsigned int /*tileIndex*/, bool /*acrossVertical*/) {}
+
 void TileType::swapWith(Chunk& chunk, unsigned int tileIndex, Tile target) {
     spdlog::debug("TileType::swapWith called on chunk {} tile {} with target chunk {} tile {}.", static_cast<void*>(&chunk), tileIndex, static_cast<void*>(&target.getChunk()), target.getIndex());
 

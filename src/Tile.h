@@ -72,7 +72,7 @@ public:
     bool getHighlight() const;
     State::t getState() const;
     TileData getRawData() const;
-    void flip(bool acrossHorizontal);
+    void flip(bool acrossVertical);
     void alternativeTile();
     // Overloads on r-value references are provided for cases where the target
     // does not need to be left in a valid state (its tileType_ is not updated).

@@ -1,6 +1,8 @@
 set(CS2_COMMANDS_SRCS
     commands/FillArea.cpp
     commands/FillArea.h
+    commands/FlipTiles.cpp
+    commands/FlipTiles.h
     commands/PlaceTiles.cpp
     commands/PlaceTiles.h
     commands/RotateTiles.cpp

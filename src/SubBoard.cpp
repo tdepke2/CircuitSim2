@@ -214,8 +214,38 @@ void SubBoard::rotate(bool clockwise) {
     setVisibleSize({size_.y, size_.x});
 }
 
-void SubBoard::flip(bool vertical) {
-
+void SubBoard::flip(bool acrossVertical) {
+    if (acrossVertical) {
+        for (int y = 0; y < static_cast<int>(size_.y); ++y) {
+            for (int x = 0; x < static_cast<int>(size_.x) / 2; ++x) {
+                Tile t1 = accessTile(x, y);
+                Tile t2 = accessTile(size_.x - 1 - x, y);
+                t1.swapWith(t2);
+                t1.flip(true);
+                t2.flip(true);
+            }
+        }
+        if (size_.x % 2 == 1) {
+            for (int y = 0; y < static_cast<int>(size_.y); ++y) {
+                accessTile(size_.x / 2, y).flip(true);
+            }
+        }
+    } else {
+        for (int y = 0; y < static_cast<int>(size_.y) / 2; ++y) {
+            for (int x = 0; x < static_cast<int>(size_.x); ++x) {
+                Tile t1 = accessTile(x, y);
+                Tile t2 = accessTile(x, size_.y - 1 - y);
+                t1.swapWith(t2);
+                t1.flip(false);
+                t2.flip(false);
+            }
+        }
+        if (size_.y % 2 == 1) {
+            for (int x = 0; x < static_cast<int>(size_.x); ++x) {
+                accessTile(x, size_.y / 2).flip(false);
+            }
+        }
+    }
 }
 
 void SubBoard::clear() {

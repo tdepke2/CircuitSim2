@@ -17,7 +17,6 @@ public:
     Led& operator=(Led&& led) = delete;
 
     virtual void setState(Chunk& chunk, unsigned int tileIndex, State::t state) override;
-    virtual void flip(Chunk& chunk, unsigned int tileIndex, bool acrossHorizontal) override;
     virtual void alternativeTile(Chunk& chunk, unsigned int tileIndex) override;
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
