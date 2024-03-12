@@ -1,10 +1,12 @@
 #include <Board.h>
 #include <Chunk.h>
 #include <Command.h>
+#include <commands/EditTiles.h>
 #include <commands/FillArea.h>
 #include <commands/FlipTiles.h>
 #include <commands/PlaceTiles.h>
 #include <commands/RotateTiles.h>
+#include <commands/ToggleTiles.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <Locator.h>
@@ -335,7 +337,14 @@ void Editor::redoEdit() {
     ++lastEditSize_;
 }
 void Editor::selectAll() {
-    spdlog::warn("Editor::selectAll() NYI");
+    if (board_.getMaxSize() != sf::Vector2u(0, 0)) {
+        highlightArea({0, 0}, static_cast<sf::Vector2i>(board_.getMaxSize()) - sf::Vector2i(1, 1), true);
+    } else {
+        auto bounds = board_.getHighlightedBounds();
+        if (bounds.first.x <= bounds.second.x) {
+            highlightArea(bounds.first, bounds.second, true);
+        }
+    }
 }
 void Editor::deselectAll() {
     board_.removeAllHighlights();
@@ -403,7 +412,53 @@ void Editor::flipTile(bool acrossVertical) {
     }
 }
 void Editor::editTile(bool toggleState) {
-    spdlog::warn("Editor::editTile() NYI");
+    if (toggleState) {
+        if (cursorState_ == CursorState::empty) {
+            if (!cursorCoords_.second) {
+                return;
+            }
+            auto bounds = board_.getHighlightedBounds();
+            if (bounds.first.x > bounds.second.x) {
+                // Not toggling a selection.
+                auto command = makeCommand<commands::ToggleTiles>(board_, false);
+                command->pushBackTile(cursorCoords_.first);
+                executeCommand(std::move(command));
+            } else {
+                // Toggling a selection.
+                auto command = makeCommand<commands::ToggleTiles>(board_, true);
+                forEachTile(board_, bounds.first, bounds.second, [&command](Chunk& chunk, int i, int x, int y) {
+                    Tile tile = chunk.accessTile(i);
+                    if (tile.getHighlight()) {
+                        command->pushBackTile({x, y});
+                    }
+                });
+                executeCommand(std::move(command));
+            }
+        } else if (cursorState_ == CursorState::pickTile) {
+            tileSubBoard_.toggleTileStates();
+        } else if (cursorState_ == CursorState::pasteArea) {
+            copySubBoard_.toggleTileStates();
+        } else if (cursorState_ == CursorState::wireTool) {
+            // FIXME: wiretool NYI
+        }
+    } else {
+        if (cursorState_ == CursorState::empty) {
+            if (!cursorCoords_.second) {
+                return;
+            }
+            auto bounds = board_.getHighlightedBounds();
+            if (bounds.first.x > bounds.second.x) {
+                // Not editing a selection.
+                auto command = makeCommand<commands::EditTiles>(board_, tilePool_);
+                Tile tile = command->pushBackTile(cursorCoords_.first);
+                board_.accessTile(cursorCoords_.first).cloneTo(tile);
+                tile.alternativeTile();
+                executeCommand(std::move(command));
+            }
+        } else if (cursorState_ == CursorState::pickTile) {
+            tileSubBoard_.accessTile(0, 0).alternativeTile();
+        }
+    }
 }
 void Editor::copyArea() {
     auto bounds = board_.getHighlightedBounds();

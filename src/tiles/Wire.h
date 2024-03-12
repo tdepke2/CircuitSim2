@@ -16,6 +16,7 @@ public:
     Wire& operator=(const Wire& wire) = delete;
     Wire& operator=(Wire&& wire) = delete;
 
+    void setState2(Chunk& chunk, unsigned int tileIndex, State::t state);
     State::t getState2(const Chunk& chunk, unsigned int tileIndex) const;
 
     virtual void setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) override;

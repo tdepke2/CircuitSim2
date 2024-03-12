@@ -1,4 +1,6 @@
 set(CS2_COMMANDS_SRCS
+    commands/EditTiles.cpp
+    commands/EditTiles.h
     commands/FillArea.cpp
     commands/FillArea.h
     commands/FlipTiles.cpp
@@ -7,6 +9,8 @@ set(CS2_COMMANDS_SRCS
     commands/PlaceTiles.h
     commands/RotateTiles.cpp
     commands/RotateTiles.h
+    commands/ToggleTiles.cpp
+    commands/ToggleTiles.h
 )
 
 set(CS2_ENTITIES_SRCS

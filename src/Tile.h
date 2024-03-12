@@ -95,4 +95,9 @@ public:
         assert(tileType_ == T::instance());
         return (static_cast<T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
     }
+    template<typename T, typename Func, typename... Args>
+    inline auto call(Func func, Args&&... args) const -> decltype((static_cast<const T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...)) {
+        assert(tileType_ == T::instance());
+        return (static_cast<const T*>(tileType_)->*func)(chunk_, tileIndex_, std::forward<Args>(args)...);
+    }
 };

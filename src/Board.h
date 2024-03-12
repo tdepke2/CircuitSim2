@@ -41,6 +41,7 @@ public:
     void setMaxSize(const sf::Vector2u& size);
     void setExtraLogicStates(bool extraLogicStates);
     void setNotesString(const sf::String& notes);
+    // A max size of zero indicates no size limit.
     const sf::Vector2u& getMaxSize() const;
     sf::Vector2i getTileLowerBound() const;
     sf::Vector2i getTileUpperBound() const;

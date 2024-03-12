@@ -33,6 +33,7 @@ public:
     Tile accessTile(const sf::Vector2i& pos);
     void rotate(bool clockwise);
     void flip(bool acrossVertical);
+    void toggleTileStates();
     void clear();
     void copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly = false);
     void pasteToBoard(commands::PlaceTiles& command, const sf::Vector2i& pos, bool ignoreBlanks = false);

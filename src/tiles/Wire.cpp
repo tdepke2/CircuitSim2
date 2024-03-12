@@ -12,6 +12,13 @@ Wire* Wire::instance() {
     return wire.get();
 }
 
+void Wire::setState2(Chunk& chunk, unsigned int tileIndex, State::t state) {
+    auto& tileData = modifyTileData(chunk, tileIndex);
+    if (tileData.id == TileId::wireCrossover) {
+        tileData.state2 = state;
+    }
+}
+
 State::t Wire::getState2(const Chunk& chunk, unsigned int tileIndex) const {
     return getTileData(chunk, tileIndex).state2;
 }

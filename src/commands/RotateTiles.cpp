@@ -1,5 +1,6 @@
 #include <Board.h>
 #include <commands/RotateTiles.h>
+#include <Tile.h>
 
 namespace commands {
 

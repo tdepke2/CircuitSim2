@@ -248,6 +248,13 @@ void SubBoard::flip(bool acrossVertical) {
     }
 }
 
+void SubBoard::toggleTileStates() {
+    forEachTile(*this, {0, 0}, static_cast<sf::Vector2i>(size_) - sf::Vector2i(1, 1), [](Chunk& chunk, int i, int, int) {
+        Tile tile = chunk.accessTile(i);
+        tile.setState(tile.getState() == State::high ? State::low : State::high);
+    });
+}
+
 void SubBoard::clear() {
     chunks_.clear();
     chunkDrawables_.clear();

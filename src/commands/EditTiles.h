@@ -9,14 +9,12 @@ class TilePool;
 
 namespace commands {
 
-class FillArea : public PlaceTiles {
+class EditTiles : public PlaceTiles {
 public:
-    FillArea(Board& board, TilePool& pool);
-    virtual ~FillArea() = default;
+    EditTiles(Board& board, TilePool& pool);
+    virtual ~EditTiles() = default;
 
     virtual std::string getMessage() const override;
-    virtual void execute() override;
-    virtual void undo() override;
 };
 
 } // namespace commands
