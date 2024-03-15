@@ -237,29 +237,10 @@ void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
 }
 void TextBox::handleTextEntered(uint32_t unicode) {
     Widget::handleTextEntered(unicode);
-    if (readOnly_) {
-        return;
-    }
-    if (unicode == '\u0008') {    // Backspace.
-        if (caretPosition_ > 0) {
-            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
-                --horizontalScroll_;
-            }
-            boxString_.erase(caretPosition_ - 1, 1);
-            updateCaretPosition(caretPosition_ - 1);
-        }
-    } else if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
+    if (!readOnly_ && unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
         if (maxCharacters_ == 0 || boxString_.getSize() < maxCharacters_) {
             boxString_.insert(caretPosition_, sf::String(unicode));
             updateCaretPosition(caretPosition_ + 1);
-        }
-    } else if (unicode == '\u007f') {    // Delete.
-        if (caretPosition_ < boxString_.getSize() && boxString_.getSize() > 0) {
-            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
-                --horizontalScroll_;
-            }
-            boxString_.erase(caretPosition_, 1);
-            updateCaretPosition(caretPosition_);
         }
     }
 }
@@ -267,6 +248,22 @@ void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
     Widget::handleKeyPressed(key);
     if (key == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
+    } else if (key == sf::Keyboard::Backspace) {
+        if (!readOnly_ && caretPosition_ > 0) {
+            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
+                --horizontalScroll_;
+            }
+            boxString_.erase(caretPosition_ - 1, 1);
+            updateCaretPosition(caretPosition_ - 1);
+        }
+    } else if (key == sf::Keyboard::Delete) {
+        if (!readOnly_ && caretPosition_ < boxString_.getSize() && boxString_.getSize() > 0) {
+            if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
+                --horizontalScroll_;
+            }
+            boxString_.erase(caretPosition_, 1);
+            updateCaretPosition(caretPosition_);
+        }
     } else if (key == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {
         updateCaretPosition(boxString_.getSize());
     } else if (key == sf::Keyboard::Home && caretPosition_ != 0) {

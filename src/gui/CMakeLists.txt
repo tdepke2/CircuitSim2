@@ -9,6 +9,7 @@ set(CS2_GUI_HEADERS
     widgets/Button.h
     widgets/Label.h
     widgets/MenuBar.h
+    widgets/MultilineTextBox.h
     widgets/Panel.h
     widgets/TextBox.h
 )
@@ -25,6 +26,7 @@ add_library(cs2_gui
     widgets/Button.cpp
     widgets/Label.cpp
     widgets/MenuBar.cpp
+    widgets/MultilineTextBox.cpp
     widgets/Panel.cpp
     widgets/TextBox.cpp
     ${CS2_GUI_HEADERS}

@@ -3,6 +3,7 @@
 #include <gui/widgets/Button.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
+#include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/TextBox.h>
 
@@ -75,6 +76,12 @@ void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
     textBox->onMouseRelease.connect(mouseRelease);
     textBox->onClick.connect(click);
     textBox->onEnterPressed.connect(enterPressed);
+}
+void connectDebugSignals(gui::MultilineTextBox* multilineTextBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(multilineTextBox), name);
+    multilineTextBox->onMousePress.connect(mousePress);
+    multilineTextBox->onMouseRelease.connect(mouseRelease);
+    multilineTextBox->onClick.connect(click);
 }
 void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(menuBar), name);
@@ -222,6 +229,12 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     maxCharBox->setRotation(-33.0f);
     myGui.addChild(maxCharBox);
     maxCharBox->sendToBack();
+
+    auto multilineBox = gui::MultilineTextBox::create(theme);
+    connectDebugSignals(multilineBox.get(), "multilineBox");
+    multilineBox->setSizeCharacters({16, 3});
+    multilineBox->setPosition(10.0f, 130.0f);
+    myGui.addChild(multilineBox);
 }
 
 void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {

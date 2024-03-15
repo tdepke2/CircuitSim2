@@ -38,6 +38,7 @@ class Gui : public ContainerBase, public sf::Drawable {
 public:
     Gui(sf::RenderWindow& window);
     virtual ~Gui() noexcept = default;
+    // FIXME make non-copyable?
 
     void setSmooth(bool smooth);
     bool isSmooth() const;

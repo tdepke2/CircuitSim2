@@ -67,6 +67,7 @@ private:
     sf::Color textColor_, defaultTextColor_;
     sf::Vector3f textPadding_;
 
+    friend class MultilineTextBox;
     friend class TextBox;
 };
 
