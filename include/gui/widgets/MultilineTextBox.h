@@ -54,9 +54,10 @@ protected:
 
 private:
     // Internal. Should always be used to set the caret position as this updates the draw position as well.
-    void updateCaretPosition(size_t caretPosition);
-    std::pair<size_t, size_t> findCaretRowColumn() const;
-    size_t findCaretPosition(size_t row, size_t column) const;
+    void updateCaretPosition(const sf::Vector2<size_t>& caretPosition);
+    void updateCaretPosition(size_t caretOffset);
+    sf::Vector2<size_t> findCaretPosition(size_t caretOffset) const;
+    size_t findCaretOffset(const sf::Vector2<size_t>& caretPosition) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<TextBoxStyle> style_;
@@ -69,7 +70,7 @@ private:
     std::vector<sf::String> boxStrings_, defaultStrings_;
     sf::String visibleString_;
     sf::Vector2<size_t> scroll_;
-    size_t caretPosition_;
+    sf::Vector2<size_t> caretPosition_;
     sf::Vector2f caretDrawPosition_;
 };
 

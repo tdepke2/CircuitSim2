@@ -39,12 +39,20 @@ sf::String combineStrings(const std::vector<sf::String>& stringArray) {
     return str;
 }
 
-size_t getStringsLength(const std::vector<sf::String>& stringArray) {
+size_t findStringsLength(const std::vector<sf::String>& stringArray) {
     size_t length = 0;
     for (const auto& x : stringArray) {
         length += x.getSize() + 1;
     }
     return (length > 0 ? length - 1 : length);
+}
+
+size_t findLongestLength(const std::vector<sf::String>& stringArray) {
+    size_t longest = 0;
+    for (const auto& x : stringArray) {
+        longest = std::max(longest, x.getSize());
+    }
+    return longest;
 }
 
 }
@@ -153,64 +161,63 @@ void MultilineTextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Ve
 }
 void MultilineTextBox::handleTextEntered(uint32_t unicode) {
     Widget::handleTextEntered(unicode);
-    const auto rowCol = findCaretRowColumn();
     if (!readOnly_ && unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
-        if (maxCharacters_ == 0 || getStringsLength(boxStrings_) < maxCharacters_) {
-            boxStrings_[rowCol.first].insert(rowCol.second, sf::String(unicode));
-            updateCaretPosition(caretPosition_ + 1);
+        if (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) {
+            boxStrings_[caretPosition_.y].insert(caretPosition_.x, sf::String(unicode));
+            updateCaretPosition(findCaretOffset(caretPosition_) + 1);
         }
     }
 }
 void MultilineTextBox::handleKeyPressed(sf::Keyboard::Key key) {
     Widget::handleKeyPressed(key);
-    const auto rowCol = findCaretRowColumn();
+    size_t caretOffset = findCaretOffset(caretPosition_);
     if (key == sf::Keyboard::Enter) {
-        if (!readOnly_ && (maxCharacters_ == 0 || getStringsLength(boxStrings_) < maxCharacters_)) {
-            boxStrings_.emplace(boxStrings_.begin() + rowCol.first + 1, boxStrings_[rowCol.first].substring(rowCol.second));
-            boxStrings_[rowCol.first] = boxStrings_[rowCol.first].substring(0, rowCol.second);
-            updateCaretPosition(caretPosition_ + 1);
+        if (!readOnly_ && (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_)) {
+            boxStrings_.emplace(boxStrings_.begin() + caretPosition_.y + 1, boxStrings_[caretPosition_.y].substring(caretPosition_.x));
+            boxStrings_[caretPosition_.y] = boxStrings_[caretPosition_.y].substring(0, caretPosition_.x);
+            updateCaretPosition(caretOffset + 1);
         }
     } else if (key == sf::Keyboard::Backspace) {
-        if (!readOnly_ && caretPosition_ > 0) {
-            //if (scroll_.x > 0 && scroll_.x + sizeCharacters_.x >= boxStrings_[rowCol.first].getSize()) {
-            //    --scroll_.x;
-            //}
-            if (rowCol.second == 0) {
-                boxStrings_[rowCol.first - 1] += boxStrings_[rowCol.first];
-                boxStrings_.erase(boxStrings_.begin() + rowCol.first);
+        if (!readOnly_ && caretOffset > 0) {
+            if (caretPosition_.x == 0) {
+                boxStrings_[caretPosition_.y - 1] += boxStrings_[caretPosition_.y];
+                boxStrings_.erase(boxStrings_.begin() + caretPosition_.y);
             } else {
-                boxStrings_[rowCol.first].erase(rowCol.second - 1, 1);
+                boxStrings_[caretPosition_.y].erase(caretPosition_.x - 1, 1);
             }
-            updateCaretPosition(caretPosition_ - 1);
+            if (scroll_.x > 0 && scroll_.x + sizeCharacters_.x > findLongestLength(boxStrings_)) {
+                --scroll_.x;
+            }
+            updateCaretPosition(caretOffset - 1);
         }
     } else if (key == sf::Keyboard::Delete) {
-        if (!readOnly_ && caretPosition_ < getStringsLength(boxStrings_)) {
-            //if (scroll_.x > 0 && scroll_.x + sizeCharacters_.x >= boxString_.getSize()) {
-            //    --scroll_.x;
-            //}
-            if (rowCol.second == boxStrings_[rowCol.first].getSize()) {
-                boxStrings_[rowCol.first] += boxStrings_[rowCol.first + 1];
-                boxStrings_.erase(boxStrings_.begin() + rowCol.first + 1);
+        if (!readOnly_ && caretOffset < findStringsLength(boxStrings_)) {
+            if (caretPosition_.x == boxStrings_[caretPosition_.y].getSize()) {
+                boxStrings_[caretPosition_.y] += boxStrings_[caretPosition_.y + 1];
+                boxStrings_.erase(boxStrings_.begin() + caretPosition_.y + 1);
             } else {
-                boxStrings_[rowCol.first].erase(rowCol.second, 1);
+                boxStrings_[caretPosition_.y].erase(caretPosition_.x, 1);
+            }
+            if (scroll_.x > 0 && scroll_.x + sizeCharacters_.x > findLongestLength(boxStrings_)) {
+                --scroll_.x;
             }
             updateCaretPosition(caretPosition_);
         }
-    } else if (key == sf::Keyboard::End && caretPosition_ != getStringsLength(boxStrings_)) {
-        updateCaretPosition(getStringsLength(boxStrings_));
-    } else if (key == sf::Keyboard::Home && caretPosition_ != 0) {
+    } else if (key == sf::Keyboard::End && caretOffset != findStringsLength(boxStrings_)) {
+        updateCaretPosition(findStringsLength(boxStrings_));
+    } else if (key == sf::Keyboard::Home && caretOffset != 0) {
         updateCaretPosition(0);
     } else if (key == sf::Keyboard::Up) {
-        if (rowCol.first > 0) {
-            updateCaretPosition(findCaretPosition(rowCol.first - 1, rowCol.second));
-        } else if (rowCol.second > 0) {
+        if (caretPosition_.y > 0) {
+            updateCaretPosition(findCaretOffset({caretPosition_.x, caretPosition_.y - 1}));
+        } else if (caretPosition_.x > 0) {
             updateCaretPosition(0);
         }
     } else if (key == sf::Keyboard::Down) {
-        if (rowCol.first < boxStrings_.size() - 1) {
-            updateCaretPosition(findCaretPosition(rowCol.first + 1, rowCol.second));
-        } else if (rowCol.second < boxStrings_[rowCol.first].getSize()) {
-            updateCaretPosition(getStringsLength(boxStrings_));
+        if (caretPosition_.y < boxStrings_.size() - 1) {
+            updateCaretPosition(findCaretOffset({caretPosition_.x, caretPosition_.y + 1}));
+        } else if (caretPosition_.x < boxStrings_[caretPosition_.y].getSize()) {
+            updateCaretPosition(findStringsLength(boxStrings_));
         }
     } else if (key == sf::Keyboard::Left) {
         //if (readOnly_ && scroll_.x > 0) {
@@ -218,8 +225,8 @@ void MultilineTextBox::handleKeyPressed(sf::Keyboard::Key key) {
         //} else if (!readOnly_ && caretPosition_ > 0) {
         //    updateCaretPosition(caretPosition_ - 1);
         //}
-        if (caretPosition_ > 0) {
-            updateCaretPosition(caretPosition_ - 1);
+        if (caretOffset > 0) {
+            updateCaretPosition(caretOffset - 1);
         }
     } else if (key == sf::Keyboard::Right) {
         //if (readOnly_ && scroll_.x + sizeCharacters_.x < boxString_.getSize()) {
@@ -227,8 +234,8 @@ void MultilineTextBox::handleKeyPressed(sf::Keyboard::Key key) {
         //} else if (!readOnly_ && caretPosition_ < boxString_.getSize()) {
         //    updateCaretPosition(caretPosition_ + 1);
         //}
-        if (caretPosition_ < getStringsLength(boxStrings_)) {
-            updateCaretPosition(caretPosition_ + 1);
+        if (caretOffset < findStringsLength(boxStrings_)) {
+            updateCaretPosition(caretOffset + 1);
         }
     }
 }
@@ -246,36 +253,35 @@ MultilineTextBox::MultilineTextBox(std::shared_ptr<TextBoxStyle> style) :
     updateCaretPosition(0);
 }
 
-void MultilineTextBox::updateCaretPosition(size_t caretPosition) {
+void MultilineTextBox::updateCaretPosition(const sf::Vector2<size_t>& caretPosition) {
     caretPosition_ = caretPosition;
-    auto rowCol = findCaretRowColumn();
-    if (rowCol.second < scroll_.x) {
-        scroll_.x = rowCol.second;
-    } else if (rowCol.second > scroll_.x + sizeCharacters_.x) {
-        scroll_.x = rowCol.second - sizeCharacters_.x;
+    if (caretPosition_.x < scroll_.x) {
+        scroll_.x = caretPosition_.x;
+    } else if (caretPosition_.x > scroll_.x + sizeCharacters_.x) {
+        scroll_.x = caretPosition_.x - sizeCharacters_.x;
     }
-    if (rowCol.first < scroll_.y) {
-        scroll_.y = rowCol.first;
-    } else if (rowCol.first > scroll_.y + sizeCharacters_.y) {
-        scroll_.y = rowCol.first - sizeCharacters_.y;
+    if (caretPosition_.y < scroll_.y) {
+        scroll_.y = caretPosition_.y;
+    } else if (caretPosition_.y >= scroll_.y + sizeCharacters_.y) {
+        scroll_.y = caretPosition_.y - sizeCharacters_.y + 1;
     }
     visibleString_ = "";
-    size_t visibleCaretPos = 0;
-    for (size_t i = scroll_.y; i < std::min(boxStrings_.size(), sizeCharacters_.y); ++i) {
+    size_t visibleCaretOffset = 0;
+    for (size_t i = scroll_.y; i < std::min(boxStrings_.size(), sizeCharacters_.y + scroll_.y); ++i) {
         if (i > scroll_.y) {
             visibleString_ += "\n";
         }
-        if (i == rowCol.first) {
-            visibleCaretPos = visibleString_.getSize() + rowCol.second - scroll_.x;
+        if (i == caretPosition_.y) {
+            visibleCaretOffset = visibleString_.getSize() + caretPosition_.x - scroll_.x;
         }
         visibleString_ += boxStrings_[i].substring(std::min(boxStrings_[i].getSize(), scroll_.x), sizeCharacters_.x);
     }
 
     style_->text_.setString(visibleString_);
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
-    caretDrawPosition_ = style_->text_.findCharacterPos(visibleCaretPos);
+    caretDrawPosition_ = style_->text_.findCharacterPos(visibleCaretOffset);
 
-    std::cout << "MultilineTextBox::updateCaretPosition(), caretPosition_ = " << caretPosition_ << ", visibleCaretPos = " << visibleCaretPos << ", scroll_ = (" << scroll_.x << ", " << scroll_.y << ")\n";
+    std::cout << "MultilineTextBox::updateCaretPosition(), caretPosition_ = (" << caretPosition_.x << ", " << caretPosition_.y << "), visibleCaretOffset = " << visibleCaretOffset << ", scroll_ = (" << scroll_.x << ", " << scroll_.y << ")\n";
     std::cout << "boxStrings_ =\n";
     for (size_t i = 0; i < boxStrings_.size(); ++i) {
         std::cout << i << ": [" << boxStrings_[i].toAnsiString() << "]\n";
@@ -283,23 +289,27 @@ void MultilineTextBox::updateCaretPosition(size_t caretPosition) {
     requestRedraw();
 }
 
-std::pair<size_t, size_t> MultilineTextBox::findCaretRowColumn() const {
-    size_t row = 0;
-    size_t caretRemaining = caretPosition_;
-    while (caretRemaining > boxStrings_[row].getSize()) {
-        caretRemaining -= boxStrings_[row].getSize() + 1;
-        ++row;
-    }
-    return {row, caretRemaining};
+void MultilineTextBox::updateCaretPosition(size_t caretOffset) {
+    updateCaretPosition(findCaretPosition(caretOffset));
 }
 
-size_t MultilineTextBox::findCaretPosition(size_t row, size_t column) const {
+sf::Vector2<size_t> MultilineTextBox::findCaretPosition(size_t caretOffset) const {
+    size_t y = 0;
+    size_t caretRemaining = caretOffset;
+    while (caretRemaining > boxStrings_[y].getSize()) {
+        caretRemaining -= boxStrings_[y].getSize() + 1;
+        ++y;
+    }
+    return {caretRemaining, y};
+}
+
+size_t MultilineTextBox::findCaretOffset(const sf::Vector2<size_t>& caretPosition) const {
     size_t pos = 0;
-    row = std::min(row, boxStrings_.size() - 1);
-    for (size_t i = 0; i < row; ++i) {
+    size_t y = std::min(caretPosition.y, boxStrings_.size() - 1);
+    for (size_t i = 0; i < y; ++i) {
         pos += boxStrings_[i].getSize() + 1;
     }
-    return pos + std::min(column, boxStrings_[row].getSize());
+    return pos + std::min(caretPosition.x, boxStrings_[y].getSize());
 }
 
 void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -310,14 +320,13 @@ void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) c
 
     style_->box_.setSize(size_);
     target.draw(style_->box_, states);
-    // FIXME
-    //if (boxString_.isEmpty() && !defaultString_.isEmpty() && (!isFocused() || readOnly_)) {
-    //    style_->text_.setString(defaultString_.substring(0, sizeCharacters_.x));
-    //    style_->text_.setFillColor(style_->defaultTextColor_);
-    //} else {
+    if (boxStrings_.size() == 1 && boxStrings_[0].isEmpty() && (!isFocused() || readOnly_)) {
+        style_->text_.setString(defaultString_.substring(0, sizeCharacters_.x));
+        style_->text_.setFillColor(style_->defaultTextColor_);
+    } else {
         style_->text_.setString(visibleString_);
         style_->text_.setFillColor(style_->textColor_);
-    //}
+    }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
     if (isFocused() && !readOnly_) {
