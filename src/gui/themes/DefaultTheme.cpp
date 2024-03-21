@@ -72,7 +72,7 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
         textBoxStyle_->setTextFillColor(sf::Color::Black);
 
         textBoxStyle_->setDefaultTextFillColor({100, 100, 100});
-        textBoxStyle_->setCaretSize({2.0f, 16.0f});
+        textBoxStyle_->setCaretSize({2.0f, consolasMaxHeightRatio_ * textBoxStyle_->getCharacterSize()});
         textBoxStyle_->setCaretFillColor({0, 255, 255});
         textBoxStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }

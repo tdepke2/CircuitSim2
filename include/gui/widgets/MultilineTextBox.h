@@ -40,6 +40,7 @@ public:
     std::shared_ptr<TextBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
+    virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleTextEntered(uint32_t unicode) override;
@@ -53,9 +54,10 @@ protected:
     MultilineTextBox(std::shared_ptr<TextBoxStyle> style);
 
 private:
+    void insertCharacter(uint32_t unicode);
     // Internal. Should always be used to set the caret position as this updates the draw position as well.
-    void updateCaretPosition(const sf::Vector2<size_t>& caretPosition);
-    void updateCaretPosition(size_t caretOffset);
+    void updateCaretPosition(const sf::Vector2<size_t>& caretPosition, bool continueSelection);
+    void updateCaretPosition(size_t caretOffset, bool continueSelection);
     sf::Vector2<size_t> findCaretPosition(size_t caretOffset) const;
     size_t findCaretOffset(const sf::Vector2<size_t>& caretPosition) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -72,6 +74,9 @@ private:
     sf::Vector2<size_t> scroll_;
     sf::Vector2<size_t> caretPosition_;
     sf::Vector2f caretDrawPosition_;
+    mutable std::vector<sf::RectangleShape> selectionLines_;
+    std::pair<sf::Vector2<size_t>, bool> selectionStart_;
+    sf::Vector2<size_t> selectionEnd_;
 };
 
 } // namespace gui
