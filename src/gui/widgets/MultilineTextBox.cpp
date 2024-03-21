@@ -57,12 +57,11 @@ size_t findLongestLength(const std::vector<sf::String>& stringArray) {
 
 template<typename T>
 std::pair<sf::Vector2<T>, sf::Vector2<T>> sortByYFirst(const sf::Vector2<T>& a, const sf::Vector2<T>& b) {
-    if (a.y < b.y || (a.y == b.y && a.x <= b.x)) {
+    if (a.y < b.y || (a.y == b.y && a.x < b.x)) {
         return {a, b};
     } else {
         return {b, a};
     }
-    // FIXME put this to use, should be in 3 (soon 4) places.
 }
 
 }
@@ -221,21 +220,13 @@ void MultilineTextBox::handleKeyPressed(sf::Keyboard::Key key) {
         }
     } else if (key == sf::Keyboard::Left) {
         if (selectionStart_.second && !shiftPressed) {
-            if (selectionStart_.first.y < selectionEnd_.y || (selectionStart_.first.y == selectionEnd_.y && selectionStart_.first.x < selectionEnd_.x)) {
-                updateCaretPosition(selectionStart_.first, false);
-            } else {
-                updateCaretPosition(selectionEnd_, false);
-            }
+            updateCaretPosition(sortByYFirst(selectionStart_.first, selectionEnd_).first, false);
         } else if (caretOffset > 0) {
             updateCaretPosition(caretOffset - 1, shiftPressed);
         }
     } else if (key == sf::Keyboard::Right) {
         if (selectionStart_.second && !shiftPressed) {
-            if (selectionStart_.first.y < selectionEnd_.y || (selectionStart_.first.y == selectionEnd_.y && selectionStart_.first.x < selectionEnd_.x)) {
-                updateCaretPosition(selectionEnd_, false);
-            } else {
-                updateCaretPosition(selectionStart_.first, false);
-            }
+            updateCaretPosition(sortByYFirst(selectionStart_.first, selectionEnd_).second, false);
         } else if (caretOffset < findStringsLength(boxStrings_)) {
             updateCaretPosition(caretOffset + 1, shiftPressed);
         }
@@ -262,12 +253,25 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
     size_t caretOffset = findCaretOffset(caretPosition_);
     bool clearedSelection = false;
     if (selectionStart_.second) {
-
+        auto selection = sortByYFirst(selectionStart_.first, selectionEnd_);
+        for (size_t y = selection.first.y; y <= selection.second.y; ++y) {
+            if (y == selection.first.y) {
+                if (y == selection.second.y) {
+                    boxStrings_[selection.first.y] = boxStrings_[selection.first.y].substring(0, selection.first.x) + boxStrings_[selection.first.y].substring(selection.second.x);
+                } else {
+                    boxStrings_[selection.first.y] = boxStrings_[selection.first.y].substring(0, selection.first.x);
+                }
+            } else if (y > selection.first.y && y < selection.second.y) {
+                boxStrings_.erase(boxStrings_.begin() + selection.first.y + 1);
+            } else if (y == selection.second.y) {
+                boxStrings_[selection.first.y] += boxStrings_[selection.first.y].substring(selection.second.x);
+                boxStrings_.erase(boxStrings_.begin() + selection.first.y + 1);    // FIXME: need to check this, indexing issue?
+            }
+        }
         if (selectionStart_.first != selectionEnd_) {
             clearedSelection = true;
         }
-        selectionStart_.second = false;
-        selectionLines_.clear();
+        updateCaretPosition(selection.first, false);
     }
 
     if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
@@ -276,13 +280,13 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
             updateCaretPosition(findCaretOffset(caretPosition_) + 1, false);
         }
     } else if (unicode == '\u000a') {    // Enter key.
-        if (!readOnly_ && (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_)) {
+        if (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) {
             boxStrings_.emplace(boxStrings_.begin() + caretPosition_.y + 1, boxStrings_[caretPosition_.y].substring(caretPosition_.x));
             boxStrings_[caretPosition_.y] = boxStrings_[caretPosition_.y].substring(0, caretPosition_.x);
             updateCaretPosition(caretOffset + 1, false);
         }
     } else if (unicode == '\u0008') {    // Backspace key.
-        if (!readOnly_ && caretOffset > 0) {
+        if (!clearedSelection && caretOffset > 0) {
             if (caretPosition_.x == 0) {
                 boxStrings_[caretPosition_.y - 1] += boxStrings_[caretPosition_.y];
                 boxStrings_.erase(boxStrings_.begin() + caretPosition_.y);
@@ -295,7 +299,7 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
             updateCaretPosition(caretOffset - 1, false);
         }
     } else if (unicode == '\u007f') {    // Delete key.
-        if (!readOnly_ && caretOffset < findStringsLength(boxStrings_)) {
+        if (!clearedSelection && caretOffset < findStringsLength(boxStrings_)) {
             if (caretPosition_.x == boxStrings_[caretPosition_.y].getSize()) {
                 boxStrings_[caretPosition_.y] += boxStrings_[caretPosition_.y + 1];
                 boxStrings_.erase(boxStrings_.begin() + caretPosition_.y + 1);
@@ -354,19 +358,16 @@ void MultilineTextBox::updateCaretPosition(const sf::Vector2<size_t>& caretPosit
                 selectionLines_.emplace_back(sf::Vector2f(pos2.x - pos1.x, style_->textPadding_.z * style_->getCharacterSize()));
                 selectionLines_.back().setPosition(pos1);
             };
-            sf::Vector2<size_t> start = selectionStart_.first, end = selectionEnd_;
-            if (start.y > end.y || (start.y == end.y && start.x > end.x)) {
-                std::swap(start, end);
-            }
-            if (start.y < scroll_.y) {
-                start = scroll_;
+            auto selection = sortByYFirst(selectionStart_.first, selectionEnd_);
+            if (selection.first.y < scroll_.y) {
+                selection.first = scroll_;
             } else {
-                start.x = std::min(std::max(start.x, scroll_.x), sizeCharacters_.x + scroll_.x);
+                selection.first.x = std::min(std::max(selection.first.x, scroll_.x), sizeCharacters_.x + scroll_.x);
             }
-            if (end.y > sizeCharacters_.y + scroll_.y) {
-                end = sizeCharacters_ + scroll_;
+            if (selection.second.y > sizeCharacters_.y + scroll_.y) {
+                selection.second = sizeCharacters_ + scroll_;
             } else {
-                end.x = std::min(std::max(end.x, scroll_.x), sizeCharacters_.x + scroll_.x);
+                selection.second.x = std::min(std::max(selection.second.x, scroll_.x), sizeCharacters_.x + scroll_.x);
             }
 
             size_t stringLength = 0;
@@ -375,16 +376,16 @@ void MultilineTextBox::updateCaretPosition(const sf::Vector2<size_t>& caretPosit
                     stringLength += 1;
                 }
                 size_t deltaLength = boxStrings_[y].substring(std::min(boxStrings_[y].getSize(), scroll_.x), sizeCharacters_.x).getSize();
-                if (y == start.y) {
-                    if (y == end.y) {
-                        addSelectionLine(stringLength + start.x - scroll_.x, stringLength + end.x - scroll_.x);
+                if (y == selection.first.y) {
+                    if (y == selection.second.y) {
+                        addSelectionLine(stringLength + selection.first.x - scroll_.x, stringLength + selection.second.x - scroll_.x);
                     } else {
-                        addSelectionLine(stringLength + start.x - scroll_.x, stringLength + deltaLength);
+                        addSelectionLine(stringLength + selection.first.x - scroll_.x, stringLength + deltaLength);
                     }
-                } else if (y > start.y && y < end.y) {
+                } else if (y > selection.first.y && y < selection.second.y) {
                     addSelectionLine(stringLength, stringLength + deltaLength);
-                } else if (y == end.y) {
-                    addSelectionLine(stringLength, stringLength + end.x - scroll_.x);
+                } else if (y == selection.second.y) {
+                    addSelectionLine(stringLength, stringLength + selection.second.x - scroll_.x);
                 }
                 stringLength += deltaLength;
             }
