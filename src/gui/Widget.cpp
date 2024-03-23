@@ -164,7 +164,7 @@ void Widget::handleMouseRelease(sf::Mouse::Button /*button*/, const sf::Vector2f
 void Widget::handleTextEntered(uint32_t /*unicode*/) {
 
 }
-void Widget::handleKeyPressed(sf::Keyboard::Key /*key*/) {
+void Widget::handleKeyPressed(const sf::Event::KeyEvent& /*key*/) {
 
 }
 

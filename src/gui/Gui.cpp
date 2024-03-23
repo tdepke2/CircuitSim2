@@ -82,7 +82,7 @@ void Gui::processEvent(const sf::Event& event) {
         if (event.key.code == sf::Keyboard::Escape) {
             requestWidgetFocus(nullptr);
         } else if (focusedWidget_ && focusedWidget_->isEnabled()) {
-            focusedWidget_->handleKeyPressed(event.key.code);
+            focusedWidget_->handleKeyPressed(event.key);
         }
     }
 }

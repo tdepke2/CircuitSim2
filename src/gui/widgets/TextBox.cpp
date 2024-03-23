@@ -244,11 +244,11 @@ void TextBox::handleTextEntered(uint32_t unicode) {
         }
     }
 }
-void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
+void TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     Widget::handleKeyPressed(key);
-    if (key == sf::Keyboard::Enter) {
+    if (key.code == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
-    } else if (key == sf::Keyboard::Backspace) {
+    } else if (key.code == sf::Keyboard::Backspace) {
         if (!readOnly_ && caretPosition_ > 0) {
             if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
                 --horizontalScroll_;
@@ -256,7 +256,7 @@ void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
             boxString_.erase(caretPosition_ - 1, 1);
             updateCaretPosition(caretPosition_ - 1);
         }
-    } else if (key == sf::Keyboard::Delete) {
+    } else if (key.code == sf::Keyboard::Delete) {
         if (!readOnly_ && caretPosition_ < boxString_.getSize() && boxString_.getSize() > 0) {
             if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {
                 --horizontalScroll_;
@@ -264,17 +264,17 @@ void TextBox::handleKeyPressed(sf::Keyboard::Key key) {
             boxString_.erase(caretPosition_, 1);
             updateCaretPosition(caretPosition_);
         }
-    } else if (key == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {
+    } else if (key.code == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {
         updateCaretPosition(boxString_.getSize());
-    } else if (key == sf::Keyboard::Home && caretPosition_ != 0) {
+    } else if (key.code == sf::Keyboard::Home && caretPosition_ != 0) {
         updateCaretPosition(0);
-    } else if (key == sf::Keyboard::Left) {
+    } else if (key.code == sf::Keyboard::Left) {
         if (readOnly_ && horizontalScroll_ > 0) {
             updateCaretPosition(horizontalScroll_ - 1);
         } else if (!readOnly_ && caretPosition_ > 0) {
             updateCaretPosition(caretPosition_ - 1);
         }
-    } else if (key == sf::Keyboard::Right) {
+    } else if (key.code == sf::Keyboard::Right) {
         if (readOnly_ && horizontalScroll_ + widthCharacters_ < boxString_.getSize()) {
             updateCaretPosition(horizontalScroll_ + widthCharacters_ + 1);
         } else if (!readOnly_ && caretPosition_ < boxString_.getSize()) {

@@ -87,7 +87,7 @@ public:
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleTextEntered(uint32_t unicode);
-    virtual void handleKeyPressed(sf::Keyboard::Key key);
+    virtual void handleKeyPressed(const sf::Event::KeyEvent& key);
 
     virtual void handleMouseEntered();
     virtual void handleMouseLeft();
