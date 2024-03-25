@@ -177,16 +177,43 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     Widget::handleKeyPressed(key);
     size_t caretOffset = findCaretOffset(caretPosition_);
 
+    auto getSelectedText = [this]() -> sf::String {
+        sf::String selectedText = "";
+        auto selection = sortByYFirst(selectionStart_.first, selectionEnd_);
+        for (size_t y = selection.first.y; y <= selection.second.y; ++y) {
+            if (y == selection.first.y) {
+                if (y == selection.second.y) {
+                    selectedText += boxStrings_[y].substring(selection.first.x, selection.second.x - selection.first.x);
+                } else {
+                    selectedText += boxStrings_[y].substring(selection.first.x);
+                }
+            } else if (y > selection.first.y && y < selection.second.y) {
+                selectedText += "\n" + boxStrings_[y];
+            } else if (y == selection.second.y) {
+                selectedText += "\n" + boxStrings_[y].substring(0, selection.second.x);
+            }
+        }
+        std::cout << "selectedText = [" << selectedText.toAnsiString() << "]\n";
+        return selectedText;
+    };
+
     if (key.control) {
         if (key.code == sf::Keyboard::A) {
             updateCaretPosition(0, false);
             updateCaretPosition(findStringsLength(boxStrings_), true);
         } else if (key.code == sf::Keyboard::X) {
-            // FIXME time to implement this
+            if (selectionStart_.second) {
+                sf::Clipboard::setString(getSelectedText());
+                insertCharacter('\u0008');
+            }
         } else if (key.code == sf::Keyboard::C) {
-
+            if (selectionStart_.second) {
+                sf::Clipboard::setString(getSelectedText());
+            }
         } else if (key.code == sf::Keyboard::V) {
-
+            for (auto c : sf::Clipboard::getString()) {
+                insertCharacter(c);
+            }
         }
         return;
     }
@@ -205,7 +232,7 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
         updateCaretPosition({0, caretPosition_.y}, key.shift);
     } else if (key.code == sf::Keyboard::End) {
         updateCaretPosition({boxStrings_[caretPosition_.y].getSize(), caretPosition_.y}, key.shift);
-    } else if (key.code == sf::Keyboard::Up) {
+    } else if (key.code == sf::Keyboard::Up) {    // FIXME: holding ctrl scrolls up/down, and ctrl+left/right skips until whitespace? ###############################################################
         if (caretPosition_.y > 0) {
             updateCaretPosition(findCaretOffset({caretPosition_.x, caretPosition_.y - 1}), key.shift);
         } else {
@@ -432,7 +459,7 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
     sf::Vector2<size_t> closestPos = {0, 0};
     sf::Vector2f closestDistance = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
     for (size_t i = 0; i <= visibleString_.getSize(); ++i) {
-        sf::Vector2f charPos = style_->text_.findCharacterPos(i);
+        sf::Vector2f charPos = style_->text_.findCharacterPos(i);    // FIXME: performance issue here, iterate by row and column separately, and only within the visible area?
         sf::Vector2f distance = {
             static_cast<float>(fabs(mouseLocal.x + getOrigin().x - charPos.x)),
             static_cast<float>(fabs(mouseLocal.y + getOrigin().y - charPos.y - style_->textPadding_.z * style_->getCharacterSize() * 0.5f))
@@ -450,7 +477,65 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
     }
 
     std::cout << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << "), closest = (" << closestPos.x << ", " << closestPos.y << "), dist = (" << closestDistance.x << ", " << closestDistance.y << ")\n";
+
+    findClosestOffsetToMouse2(mouseLocal);
+
     return findCaretOffset(closestPos + scroll_);
+}
+
+size_t MultilineTextBox::findClosestOffsetToMouse2(const sf::Vector2f& mouseLocal) const {
+    style_->text_.setString(visibleString_);
+    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
+
+    std::vector<size_t> firstIndexInLine = {0};
+    for (size_t i = 0; i < visibleString_.getSize(); ++i) {
+        if (visibleString_[i] == '\n') {
+            firstIndexInLine.push_back(i + 1);
+        }
+    }
+    std::cout << "firstIndexInLine: ";
+    for (auto x : firstIndexInLine) {
+        std::cout << x << " ";
+    }
+    std::cout << "\n";
+
+    sf::Vector2<size_t> closestPos = {0, 0};
+    size_t left, count;
+
+    // Binary search for the closest y position.
+    left = 0;
+    count = firstIndexInLine.size();
+    while (count > 0) {
+        sf::Vector2f charPos = style_->text_.findCharacterPos(firstIndexInLine[left + count / 2]);
+        float localY = charPos.y - getOrigin().y + style_->textPadding_.z * style_->getCharacterSize();
+        if (localY < mouseLocal.y) {
+            left = left + count / 2 + 1;
+            count -= count / 2 + 1;
+        } else {
+            count = count / 2;
+        }
+    }
+    closestPos.y = left;
+
+    // Binary search for the closest x position.
+    left = firstIndexInLine[closestPos.y];
+    size_t nextNewline = visibleString_.find("\n", firstIndexInLine[closestPos.y]);
+    std::cout << "nextNewline at " << nextNewline << "\n";
+    count = (nextNewline == sf::String::InvalidPos ? visibleString_.getSize() : nextNewline + 1) - firstIndexInLine[closestPos.y];
+    while (count > 0) {
+        sf::Vector2f charPos = style_->text_.findCharacterPos(visibleString_[left + count / 2]);
+        float localX = charPos.x - getOrigin().x;
+        if (localX < mouseLocal.x) {
+            left = left + count / 2 + 1;
+            count -= count / 2 + 1;
+        } else {
+            count = count / 2;
+        }
+    }
+    closestPos.x = left - firstIndexInLine[closestPos.y];
+
+    std::cout << "using binary search, closest = (" << closestPos.x << ", " << closestPos.y << ")\n";
+    return findCaretOffset(closestPos + scroll_);;
 }
 
 void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {

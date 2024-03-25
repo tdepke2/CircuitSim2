@@ -232,10 +232,12 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto multilineBox = gui::MultilineTextBox::create(theme);
     connectDebugSignals(multilineBox.get(), "multilineBox");
-    multilineBox->setSizeCharacters({16, 3});
+    multilineBox->setSizeCharacters({80, 20});
     multilineBox->setText("This is my really long batch\nof text for testing selections within a\ntext box,\nhopefully it works?\nwe'll see...");
     multilineBox->setDefaultText("Enter text:");
     multilineBox->setPosition(10.0f, 130.0f);
+    multilineBox->setOrigin(-40.0f, -90.0f);
+    multilineBox->setRotation(15.0f);
     myGui.addChild(multilineBox);
 }
 

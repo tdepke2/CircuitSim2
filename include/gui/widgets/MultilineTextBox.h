@@ -61,6 +61,7 @@ private:
     sf::Vector2<size_t> findCaretPosition(size_t caretOffset) const;
     size_t findCaretOffset(const sf::Vector2<size_t>& caretPosition) const;
     size_t findClosestOffsetToMouse(const sf::Vector2f& mouseLocal) const;
+    size_t findClosestOffsetToMouse2(const sf::Vector2f& mouseLocal) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<TextBoxStyle> style_;
