@@ -120,8 +120,10 @@ public:
 
     std::shared_ptr<MenuBarStyle> clone() const;
 
-private:
+protected:
     const Gui& gui_;
+
+private:
     sf::RectangleShape bar_, menu_, highlight_;
     sf::Text text_;
     sf::Color textColor_, disabledTextColor_, highlightColor_, disabledHighlightColor_;

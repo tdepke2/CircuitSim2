@@ -36,8 +36,10 @@ public:
 
     std::shared_ptr<PanelStyle> clone() const;
 
-private:
+protected:
     const Gui& gui_;
+
+private:
     sf::RectangleShape rect_;
 
     friend class Panel;

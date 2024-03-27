@@ -49,10 +49,12 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setDisabledFillColor(const sf::Color& color);
     void setDefaultTextFillColor(const sf::Color& color);
     void setCaretSize(const sf::Vector2f& size);
     void setCaretFillColor(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getDisabledFillColor() const;
     const sf::Color& getDefaultTextFillColor() const;
     const sf::Vector2f& getCaretSize() const;
     const sf::Color& getCaretFillColor() const;
@@ -60,10 +62,13 @@ public:
 
     std::shared_ptr<TextBoxStyle> clone() const;
 
-private:
+protected:
     const Gui& gui_;
+
+private:
     sf::RectangleShape box_, caret_;
     sf::Text text_;
+    sf::Color boxColor_, disabledBoxColor_;
     sf::Color textColor_, defaultTextColor_;
     sf::Vector3f textPadding_;
 

@@ -68,10 +68,28 @@ std::pair<sf::Vector2<T>, sf::Vector2<T>> sortByYFirst(const sf::Vector2<T>& a, 
 
 namespace gui {
 
-std::shared_ptr<MultilineTextBox> MultilineTextBox::create(const Theme& theme) {
-    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getTextBoxStyle()));
+MultilineTextBoxStyle::MultilineTextBoxStyle(const Gui& gui) :
+    TextBoxStyle(gui) {
 }
-std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<TextBoxStyle> style) {
+
+void MultilineTextBoxStyle::setHighlightFillColor(const sf::Color& color) {
+    highlightColor_ = color;
+    gui_.requestRedraw();
+}
+const sf::Color& MultilineTextBoxStyle::getHighlightFillColor() const {
+    return highlightColor_;
+}
+
+std::shared_ptr<MultilineTextBoxStyle> MultilineTextBoxStyle::clone() const {
+    return std::make_shared<MultilineTextBoxStyle>(*this);
+}
+
+
+
+std::shared_ptr<MultilineTextBox> MultilineTextBox::create(const Theme& theme) {
+    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getMultilineTextBoxStyle()));
+}
+std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<MultilineTextBoxStyle> style) {
     return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(style));
 }
 
@@ -123,12 +141,12 @@ sf::String MultilineTextBox::getDefaultText() const {
     return combineStrings(defaultStrings_);
 }
 
-void MultilineTextBox::setStyle(std::shared_ptr<TextBoxStyle> style) {
+void MultilineTextBox::setStyle(std::shared_ptr<MultilineTextBoxStyle> style) {
     style_ = style;
     styleCopied_ = false;
     requestRedraw();
 }
-std::shared_ptr<TextBoxStyle> MultilineTextBox::getStyle() {
+std::shared_ptr<MultilineTextBoxStyle> MultilineTextBox::getStyle() {
     if (!styleCopied_) {
         style_ = style_->clone();
         styleCopied_ = true;
@@ -303,7 +321,7 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
 }
 
-MultilineTextBox::MultilineTextBox(std::shared_ptr<TextBoxStyle> style) :
+MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style) :
     style_(style),
     styleCopied_(false),
     sizeCharacters_(0, 0),
@@ -617,6 +635,7 @@ void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) c
     states.transform *= getTransform();
 
     style_->box_.setSize(size_);
+    style_->box_.setFillColor(isEnabled() ? style_->boxColor_ : style_->disabledBoxColor_);
     target.draw(style_->box_, states);
     if (boxStrings_.size() == 1 && boxStrings_[0].isEmpty() && (!isFocused() || readOnly_)) {
         sf::String defaultString = "";
@@ -629,12 +648,15 @@ void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) c
         style_->text_.setString(visibleString_);
         style_->text_.setFillColor(style_->textColor_);
     }
+    if (!isEnabled()) {
+        style_->text_.setFillColor(style_->defaultTextColor_);
+    }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);
 
     if (isFocused()) {
         for (auto& line : selectionLines_) {
-            line.setFillColor({90, 90, 150, 100});    // FIXME: need new style field, also have a different bg and text color for read-only?
+            line.setFillColor(style_->highlightColor_);
             target.draw(line, states);
         }
         if (!readOnly_) {

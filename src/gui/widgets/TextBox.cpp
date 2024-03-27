@@ -32,7 +32,7 @@ void TextBoxStyle::setTextureRect(const sf::IntRect& rect) {
     gui_.requestRedraw();
 }
 void TextBoxStyle::setFillColor(const sf::Color& color) {
-    box_.setFillColor(color);
+    boxColor_ = color;
     gui_.requestRedraw();
 }
 void TextBoxStyle::setOutlineColor(const sf::Color& color) {
@@ -50,7 +50,7 @@ const sf::IntRect& TextBoxStyle::getTextureRect() const {
     return box_.getTextureRect();
 }
 const sf::Color& TextBoxStyle::getFillColor() const {
-    return box_.getFillColor();
+    return boxColor_;
 }
 const sf::Color& TextBoxStyle::getOutlineColor() const {
     return box_.getOutlineColor();
@@ -103,6 +103,10 @@ const sf::Color& TextBoxStyle::getTextFillColor() const {
     return textColor_;
 }
 
+void TextBoxStyle::setDisabledFillColor(const sf::Color& color) {
+    disabledBoxColor_ = color;
+    gui_.requestRedraw();
+}
 void TextBoxStyle::setDefaultTextFillColor(const sf::Color& color) {
     defaultTextColor_ = color;
     gui_.requestRedraw();
@@ -118,6 +122,9 @@ void TextBoxStyle::setCaretFillColor(const sf::Color& color) {
 void TextBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
+}
+const sf::Color& TextBoxStyle::getDisabledFillColor() const {
+    return disabledBoxColor_;
 }
 const sf::Color& TextBoxStyle::getDefaultTextFillColor() const {
     return defaultTextColor_;
@@ -318,6 +325,7 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
 
     style_->box_.setSize(size_);
+    style_->box_.setFillColor(isEnabled() ? style_->boxColor_ : style_->disabledBoxColor_);
     target.draw(style_->box_, states);
     if (boxString_.isEmpty() && !defaultString_.isEmpty() && (!isFocused() || readOnly_)) {
         style_->text_.setString(defaultString_.substring(0, widthCharacters_));
@@ -325,6 +333,9 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     } else {
         style_->text_.setString(visibleString_);
         style_->text_.setFillColor(style_->textColor_);
+    }
+    if (!isEnabled()) {
+        style_->text_.setFillColor(style_->defaultTextColor_);
     }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     target.draw(style_->text_, states);

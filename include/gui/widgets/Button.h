@@ -58,8 +58,10 @@ public:
 
     std::shared_ptr<ButtonStyle> clone() const;
 
-private:
+protected:
     const Gui& gui_;
+
+private:
     sf::RectangleShape rect_;
     sf::Text text_;
     sf::Color colorUp_, colorHover_, colorDown_;

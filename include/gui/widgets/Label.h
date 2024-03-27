@@ -42,8 +42,10 @@ public:
 
     std::shared_ptr<LabelStyle> clone() const;
 
-private:
+protected:
     const Gui& gui_;
+
+private:
     sf::Text text_;
     sf::Vector3f textPadding_;
 

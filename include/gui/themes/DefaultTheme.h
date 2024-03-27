@@ -14,9 +14,10 @@ public:
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() const override;
     virtual std::shared_ptr<LabelStyle> getLabelStyle() const override;
+    virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const override;
+    virtual std::shared_ptr<MultilineTextBoxStyle> getMultilineTextBoxStyle() const override;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() const override;
     virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const override;
-    virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const override;
 
 private:
     sf::Font consolasFont_;

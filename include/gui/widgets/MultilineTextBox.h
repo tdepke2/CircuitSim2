@@ -2,6 +2,7 @@
 
 #include <gui/Signal.h>
 #include <gui/Widget.h>
+#include <gui/widgets/TextBox.h>
 
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -10,16 +11,37 @@
 
 namespace gui {
     class Gui;
-    class TextBoxStyle;
     class Theme;
 }
 
 namespace gui {
 
+/**
+ * Visual styling for `MultilineTextBox`.
+ * 
+ * One instance is shared between objects that use the same style, private
+ * members in this class operate as flyweights.
+ */
+class MultilineTextBoxStyle : public TextBoxStyle {
+public:
+    MultilineTextBoxStyle(const Gui& gui);
+
+    void setHighlightFillColor(const sf::Color& color);
+    const sf::Color& getHighlightFillColor() const;
+
+    std::shared_ptr<MultilineTextBoxStyle> clone() const;
+
+private:
+    sf::Color highlightColor_;
+
+    friend class MultilineTextBox;
+};
+
+
 class MultilineTextBox : public Widget {
 public:
     static std::shared_ptr<MultilineTextBox> create(const Theme& theme);
-    static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<TextBoxStyle> style);
+    static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<MultilineTextBoxStyle> style);
     virtual ~MultilineTextBox() noexcept = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
@@ -34,10 +56,10 @@ public:
     sf::String getText() const;
     sf::String getDefaultText() const;
 
-    void setStyle(std::shared_ptr<TextBoxStyle> style);
+    void setStyle(std::shared_ptr<MultilineTextBoxStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
     // To get the global style, get it from the theme.
-    std::shared_ptr<TextBoxStyle> getStyle();
+    std::shared_ptr<MultilineTextBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
     virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
@@ -52,7 +74,7 @@ public:
     Signal<Widget*, const sf::Vector2f&> onClick;
 
 protected:
-    MultilineTextBox(std::shared_ptr<TextBoxStyle> style);
+    MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style);
 
 private:
     void insertCharacter(uint32_t unicode);
@@ -65,7 +87,7 @@ private:
     size_t findClosestOffsetToMouse(const sf::Vector2f& mouseLocal) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
-    std::shared_ptr<TextBoxStyle> style_;
+    std::shared_ptr<MultilineTextBoxStyle> style_;
     bool styleCopied_;
 
     sf::Vector2<size_t> sizeCharacters_;

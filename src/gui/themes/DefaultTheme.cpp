@@ -2,6 +2,7 @@
 #include <gui/widgets/Button.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
+#include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/TextBox.h>
 
@@ -22,84 +23,113 @@ DefaultTheme::DefaultTheme(const Gui& gui) :
 }
 
 std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() const {
-    if (!buttonStyle_) {
-        buttonStyle_ = std::make_shared<ButtonStyle>(gui_);
-        buttonStyle_->setFillColor({240, 240, 240});
+    auto& style = buttonStyle_;
+    if (!style) {
+        style = std::make_shared<ButtonStyle>(gui_);
+        style->setFillColor({240, 240, 240});
 
-        buttonStyle_->setFont(consolasFont_);
-        buttonStyle_->setCharacterSize(15);
-        buttonStyle_->setTextFillColor(sf::Color::Black);
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
 
-        buttonStyle_->setFillColorHover({219, 233, 255});
-        buttonStyle_->setFillColorDown({188, 214, 255});
-        buttonStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+        style->setFillColorHover({219, 233, 255});
+        style->setFillColorDown({188, 214, 255});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
-    return buttonStyle_;
+    return style;
 }
 
 std::shared_ptr<LabelStyle> DefaultTheme::getLabelStyle() const {
-    if (!labelStyle_) {
-        labelStyle_ = std::make_shared<LabelStyle>(gui_);
+    auto& style = labelStyle_;
+    if (!style) {
+        style = std::make_shared<LabelStyle>(gui_);
 
-        labelStyle_->setFont(consolasFont_);
-        labelStyle_->setCharacterSize(15);
-        labelStyle_->setTextFillColor(sf::Color::Black);
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
 
-        labelStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
-    return labelStyle_;
-}
-
-std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() const {
-    if (!panelStyle_) {
-        panelStyle_ = std::make_shared<PanelStyle>(gui_);
-        panelStyle_->setFillColor(sf::Color::White);
-        panelStyle_->setOutlineColor({140, 140, 140});
-        panelStyle_->setOutlineThickness(-2.0f);
-    }
-    return panelStyle_;
-}
-
-std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
-    if (!textBoxStyle_) {
-        textBoxStyle_ = std::make_shared<TextBoxStyle>(gui_);
-        textBoxStyle_->setFillColor({240, 240, 240});
-        textBoxStyle_->setOutlineColor({190, 190, 190});
-        textBoxStyle_->setOutlineThickness(-1.0f);
-
-        textBoxStyle_->setFont(consolasFont_);
-        textBoxStyle_->setCharacterSize(15);
-        textBoxStyle_->setTextFillColor(sf::Color::Black);
-
-        textBoxStyle_->setDefaultTextFillColor({100, 100, 100});
-        textBoxStyle_->setCaretSize({2.0f, consolasMaxHeightRatio_ * textBoxStyle_->getCharacterSize()});
-        textBoxStyle_->setCaretFillColor({0, 255, 255});
-        textBoxStyle_->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
-    }
-    return textBoxStyle_;
+    return style;
 }
 
 std::shared_ptr<MenuBarStyle> DefaultTheme::getMenuBarStyle() const {
-    if (!menuBarStyle_) {
-        menuBarStyle_ = std::make_shared<MenuBarStyle>(gui_);
-        menuBarStyle_->setBarFillColor({240, 240, 240});
+    auto& style = menuBarStyle_;
+    if (!style) {
+        style = std::make_shared<MenuBarStyle>(gui_);
+        style->setBarFillColor({240, 240, 240});
 
-        menuBarStyle_->setMenuFillColor({240, 240, 240});
-        menuBarStyle_->setMenuOutlineColor({140, 140, 140});
-        menuBarStyle_->setMenuOutlineThickness(-1.0f);
+        style->setMenuFillColor({240, 240, 240});
+        style->setMenuOutlineColor({140, 140, 140});
+        style->setMenuOutlineThickness(-1.0f);
 
-        menuBarStyle_->setFont(consolasFont_);
-        menuBarStyle_->setCharacterSize(15);
-        menuBarStyle_->setTextFillColor(sf::Color::Black);
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
 
-        menuBarStyle_->setBarTextPadding({10.0f, 3.0f, consolasMaxHeightRatio_});
-        menuBarStyle_->setMenuTextPadding({18.0f, 3.0f, consolasMaxHeightRatio_});
-        menuBarStyle_->setMinLeftRightTextWidth(40.0f);
-        menuBarStyle_->setDisabledTextFillColor({127, 127, 127});
-        menuBarStyle_->setHighlightFillColor({188, 214, 255});
-        menuBarStyle_->setDisabledHighlightFillColor({180, 180, 180});
+        style->setBarTextPadding({10.0f, 3.0f, consolasMaxHeightRatio_});
+        style->setMenuTextPadding({18.0f, 3.0f, consolasMaxHeightRatio_});
+        style->setMinLeftRightTextWidth(40.0f);
+        style->setDisabledTextFillColor({127, 127, 127});
+        style->setHighlightFillColor({188, 214, 255});
+        style->setDisabledHighlightFillColor({180, 180, 180});
     }
-    return menuBarStyle_;
+    return style;
+}
+
+std::shared_ptr<MultilineTextBoxStyle> DefaultTheme::getMultilineTextBoxStyle() const {
+    auto& style = multilineTextBoxStyle_;
+    if (!style) {
+        style = std::make_shared<MultilineTextBoxStyle>(gui_);
+        style->setFillColor({240, 240, 240});
+        style->setOutlineColor({190, 190, 190});
+        style->setOutlineThickness(-1.0f);
+
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
+
+        style->setDisabledFillColor({180, 180, 180});
+        style->setDefaultTextFillColor({100, 100, 100});
+        style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
+        style->setCaretFillColor({0, 255, 255});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+
+        style->setHighlightFillColor({90, 90, 150, 100});
+    }
+    return style;
+}
+
+std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() const {
+    auto& style = panelStyle_;
+    if (!style) {
+        style = std::make_shared<PanelStyle>(gui_);
+        style->setFillColor(sf::Color::White);
+        style->setOutlineColor({140, 140, 140});
+        style->setOutlineThickness(-2.0f);
+    }
+    return style;
+}
+
+std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
+    auto& style = textBoxStyle_;
+    if (!style) {
+        style = std::make_shared<TextBoxStyle>(gui_);
+        style->setFillColor({240, 240, 240});
+        style->setOutlineColor({190, 190, 190});
+        style->setOutlineThickness(-1.0f);
+
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
+
+        style->setDisabledFillColor({180, 180, 180});
+        style->setDefaultTextFillColor({100, 100, 100});
+        style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
+        style->setCaretFillColor({0, 255, 255});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    }
+    return style;
 }
 
 }
