@@ -84,6 +84,7 @@ public:
     virtual bool isMouseHovering(const sf::Vector2f& mouseParent) const;
 
     virtual void handleMouseMove(const sf::Vector2f& mouseParent);
+    virtual void handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent);
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleTextEntered(uint32_t unicode);

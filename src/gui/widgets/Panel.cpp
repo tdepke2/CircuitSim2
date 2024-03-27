@@ -90,6 +90,14 @@ void Panel::handleMouseMove(const sf::Vector2f& mouseParent) {
         widget->handleMouseMove(mouseLocal);
     }
 }
+void Panel::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
+    Container::handleMouseWheelScroll(wheel, delta, mouseParent);
+    auto mouseLocal = toLocalSpace(mouseParent);
+    auto widget = getWidgetUnderMouse(mouseLocal);
+    if (widget != nullptr) {
+        widget->handleMouseWheelScroll(wheel, delta, mouseLocal);
+    }
+}
 void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     auto mouseLocal = toLocalSpace(mouseParent);
     auto widget = getWidgetUnderMouse(mouseLocal);

@@ -153,6 +153,9 @@ bool Widget::isMouseHovering(const sf::Vector2f& mouseParent) const {
 void Widget::handleMouseMove(const sf::Vector2f& /*mouseParent*/) {
 
 }
+void Widget::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float /*delta*/, const sf::Vector2f& /*mouseParent*/) {
+
+}
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mouseParent*/) {
     if (button <= sf::Mouse::Button::Middle) {
         setFocused(true);

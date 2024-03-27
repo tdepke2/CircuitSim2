@@ -63,6 +63,14 @@ void Gui::processEvent(const sf::Event& event) {
                 w->handleMouseLeft();
             }
         }
+    } else if (event.type == sf::Event::MouseWheelScrolled) {
+        const auto mouseGlobal = window_.mapPixelToCoords({event.mouseWheelScroll.x, event.mouseWheelScroll.y});
+        auto widget = getWidgetUnderMouse(mouseGlobal);
+        if (widget != nullptr) {
+            if (widget->isEnabled()) {
+                widget->handleMouseWheelScroll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, mouseGlobal);
+            }
+        }
     } else if (event.type == sf::Event::MouseLeft) {
         for (const auto& w : widgetsUnderMouse_) {
             if (w->isEnabled()) {
@@ -71,8 +79,6 @@ void Gui::processEvent(const sf::Event& event) {
         }
         widgetsUnderMouse_.clear();
         lastWidgetsUnderMouse_.clear();
-    } else if (event.type == sf::Event::MouseWheelScrolled) {
-
     } else if (event.type == sf::Event::TextEntered) {
         std::cout << "char code " << event.text.unicode << "\n";
         if (focusedWidget_ && focusedWidget_->isEnabled()) {
