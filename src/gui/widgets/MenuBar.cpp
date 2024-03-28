@@ -197,11 +197,11 @@ std::shared_ptr<MenuBarStyle> MenuBarStyle::clone() const {
 
 
 
-std::shared_ptr<MenuBar> MenuBar::create(const Theme& theme) {
-    return std::shared_ptr<MenuBar>(new MenuBar(theme.getMenuBarStyle()));
+std::shared_ptr<MenuBar> MenuBar::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<MenuBar>(new MenuBar(theme.getMenuBarStyle(), name));
 }
-std::shared_ptr<MenuBar> MenuBar::create(std::shared_ptr<MenuBarStyle> style) {
-    return std::shared_ptr<MenuBar>(new MenuBar(style));
+std::shared_ptr<MenuBar> MenuBar::create(std::shared_ptr<MenuBarStyle> style, const sf::String& name) {
+    return std::shared_ptr<MenuBar>(new MenuBar(style, name));
 }
 
 void MenuBar::setWidth(float width) {
@@ -321,7 +321,8 @@ void MenuBar::handleFocusChange(bool focused) {
     }
 }
 
-MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style) :
+MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style, const sf::String& name) :
+    Widget(name),
     style_(style),
     styleCopied_(false),
     selectedMenu_(-1),

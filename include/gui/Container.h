@@ -18,12 +18,14 @@ class Container : public ContainerBase, public Widget {
 public:
     virtual ~Container() noexcept = default;
 
-    virtual void addChild(std::shared_ptr<Widget> child) override;
+    virtual void addChild(const std::shared_ptr<Widget>& child) override;
 
     virtual void setVisible(bool visible) override;
     virtual void setEnabled(bool enabled) override;
 
 protected:
+    Container(const sf::String& name);
+
     virtual void setParentAndGui(Container* parent, Gui* gui) override;
     virtual void addWidgetUnderMouse(const sf::Vector2f& mouseParent) override;
 };

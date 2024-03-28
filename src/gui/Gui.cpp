@@ -26,7 +26,7 @@ bool Gui::isSmooth() const {
     return renderTexture_.isSmooth();
 }
 
-void Gui::addChild(std::shared_ptr<Widget> child) {
+void Gui::addChild(const std::shared_ptr<Widget>& child) {
     children_.push_back(child);
     child->setParentAndGui(nullptr, this);
 }

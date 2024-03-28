@@ -51,11 +51,11 @@ std::shared_ptr<PanelStyle> PanelStyle::clone() const {
 
 
 
-std::shared_ptr<Panel> Panel::create(const Theme& theme) {
-    return std::shared_ptr<Panel>(new Panel(theme.getPanelStyle()));
+std::shared_ptr<Panel> Panel::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<Panel>(new Panel(theme.getPanelStyle(), name));
 }
-std::shared_ptr<Panel> Panel::create(std::shared_ptr<PanelStyle> style) {
-    return std::shared_ptr<Panel>(new Panel(style));
+std::shared_ptr<Panel> Panel::create(std::shared_ptr<PanelStyle> style, const sf::String& name) {
+    return std::shared_ptr<Panel>(new Panel(style, name));
 }
 
 void Panel::setSize(const sf::Vector2f& size) {
@@ -117,7 +117,8 @@ void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mou
     }
 }
 
-Panel::Panel(std::shared_ptr<PanelStyle> style) :
+Panel::Panel(std::shared_ptr<PanelStyle> style, const sf::String& name) :
+    Container(name),
     style_(style),
     styleCopied_(false) {
 }

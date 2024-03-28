@@ -86,11 +86,11 @@ std::shared_ptr<MultilineTextBoxStyle> MultilineTextBoxStyle::clone() const {
 
 
 
-std::shared_ptr<MultilineTextBox> MultilineTextBox::create(const Theme& theme) {
-    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getMultilineTextBoxStyle()));
+std::shared_ptr<MultilineTextBox> MultilineTextBox::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getMultilineTextBoxStyle(), name));
 }
-std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<MultilineTextBoxStyle> style) {
-    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(style));
+std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name) {
+    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(style, name));
 }
 
 void MultilineTextBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters) {
@@ -321,7 +321,8 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
 }
 
-MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style) :
+MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name) :
+    Widget(name),
     style_(style),
     styleCopied_(false),
     sizeCharacters_(0, 0),

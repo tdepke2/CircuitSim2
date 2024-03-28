@@ -76,8 +76,8 @@ private:
  */
 class Button : public Widget {
 public:
-    static std::shared_ptr<Button> create(const Theme& theme);
-    static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style);
+    static std::shared_ptr<Button> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style, const sf::String& name = "");
     virtual ~Button() noexcept = default;
 
     // Setting the size turns off auto-resize.
@@ -107,7 +107,7 @@ public:
     Signal<Widget*, const sf::Vector2f&> onClick;
 
 protected:
-    Button(std::shared_ptr<ButtonStyle> style);
+    Button(std::shared_ptr<ButtonStyle> style, const sf::String& name);
 
 private:
     void computeResize() const;

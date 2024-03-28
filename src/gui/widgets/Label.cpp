@@ -66,11 +66,11 @@ std::shared_ptr<LabelStyle> LabelStyle::clone() const {
 
 
 
-std::shared_ptr<Label> Label::create(const Theme& theme) {
-    return std::shared_ptr<Label>(new Label(theme.getLabelStyle()));
+std::shared_ptr<Label> Label::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<Label>(new Label(theme.getLabelStyle(), name));
 }
-std::shared_ptr<Label> Label::create(std::shared_ptr<LabelStyle> style) {
-    return std::shared_ptr<Label>(new Label(style));
+std::shared_ptr<Label> Label::create(std::shared_ptr<LabelStyle> style, const sf::String& name) {
+    return std::shared_ptr<Label>(new Label(style, name));
 }
 
 void Label::setLabel(const sf::String& label) {
@@ -102,7 +102,8 @@ sf::FloatRect Label::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
 
-Label::Label(std::shared_ptr<LabelStyle> style) :
+Label::Label(std::shared_ptr<LabelStyle> style, const sf::String& name) :
+    Widget(name),
     style_(style),
     styleCopied_(false) {
 }

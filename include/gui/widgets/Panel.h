@@ -51,8 +51,8 @@ private:
  */
 class Panel : public Container {
 public:
-    static std::shared_ptr<Panel> create(const Theme& theme);
-    static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style);
+    static std::shared_ptr<Panel> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style, const sf::String& name = "");
     virtual ~Panel() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
@@ -70,7 +70,7 @@ public:
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 
 protected:
-    Panel(std::shared_ptr<PanelStyle> style);
+    Panel(std::shared_ptr<PanelStyle> style, const sf::String& name);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

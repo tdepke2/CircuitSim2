@@ -16,18 +16,25 @@ class ContainerBase {
 public:
     virtual ~ContainerBase() noexcept;
 
-    virtual void addChild(std::shared_ptr<Widget> child) = 0;
-    bool removeChild(std::shared_ptr<Widget> child);
+    virtual void addChild(const std::shared_ptr<Widget>& child) = 0;
+    bool removeChild(const std::shared_ptr<Widget>& child);
     bool removeChild(size_t index);
     void removeAllChildren();
-    // Adjusts the ordering of widgets to ensure the specified child draws on top of others.
-    // Moving to the front means drawing last, so the child actually goes to the back of the container.
-    bool sendChildToFront(std::shared_ptr<Widget> child);
-    bool sendChildToBack(std::shared_ptr<Widget> child);
+    std::shared_ptr<Widget> getChild(const sf::String& name, bool recursive = true) const;
+    std::shared_ptr<Widget> getChild(size_t index) const;
     const std::vector<std::shared_ptr<Widget>>& getChildren() const;
+    /**
+     * Adjusts the ordering of widgets to ensure the specified child draws on
+     * top of others. Moving to the front means drawing last, so the child
+     * actually goes to the back of the container.
+     */
+    bool sendChildToFront(const std::shared_ptr<Widget>& child);
+    bool sendChildToBack(const std::shared_ptr<Widget>& child);
 
-    // The returned Widget will be visible, but may not be enabled. Note that
-    // the given mouse coordinates are in local space (if that applies).
+    /**
+     * The returned Widget will be visible, but may not be enabled. Note that
+     * the given mouse coordinates are in local space (if that applies).
+     */
     Widget* getWidgetUnderMouse(const sf::Vector2f& mouseLocal) const;
 
 protected:

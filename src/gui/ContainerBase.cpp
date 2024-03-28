@@ -12,13 +12,11 @@ ContainerBase::~ContainerBase() noexcept {
 
 }
 
-bool ContainerBase::removeChild(std::shared_ptr<Widget> child) {
-    size_t i = 0;
-    for (const auto& c : children_) {
-        if (c == child) {
+bool ContainerBase::removeChild(const std::shared_ptr<Widget>& child) {
+    for (size_t i = 0; i < children_.size(); ++i) {
+        if (children_[i] == child) {
             return removeChild(i);
         }
-        ++i;
     }
     return false;
 }
@@ -39,7 +37,30 @@ void ContainerBase::removeAllChildren() {
     children_.clear();
 }
 
-bool ContainerBase::sendChildToFront(std::shared_ptr<Widget> child) {
+std::shared_ptr<Widget> ContainerBase::getChild(const sf::String& name, bool recursive) const {
+    for (const auto& c : children_) {
+        if (c->getName() == name) {
+            return c;
+        }
+    }
+
+    // FIXME how to do recursive?
+
+    return nullptr;
+}
+
+std::shared_ptr<Widget> ContainerBase::getChild(size_t index) const {
+    if (index >= children_.size()) {
+        return nullptr;
+    }
+    return children_[index];
+}
+
+const std::vector<std::shared_ptr<Widget>>& ContainerBase::getChildren() const {
+    return children_;
+}
+
+bool ContainerBase::sendChildToFront(const std::shared_ptr<Widget>& child) {
     for (size_t i = 0; i < children_.size(); ++i) {
         if (children_[i] == child) {
             for (size_t j = i + 1; j < children_.size(); ++j) {
@@ -52,7 +73,7 @@ bool ContainerBase::sendChildToFront(std::shared_ptr<Widget> child) {
     return false;
 }
 
-bool ContainerBase::sendChildToBack(std::shared_ptr<Widget> child) {
+bool ContainerBase::sendChildToBack(const std::shared_ptr<Widget>& child) {
     for (size_t i = 0; i < children_.size(); ++i) {
         if (children_[i] == child) {
             for (size_t j = i; j > 0; --j) {
@@ -63,10 +84,6 @@ bool ContainerBase::sendChildToBack(std::shared_ptr<Widget> child) {
         }
     }
     return false;
-}
-
-const std::vector<std::shared_ptr<Widget>>& ContainerBase::getChildren() const {
-    return children_;
 }
 
 Widget* ContainerBase::getWidgetUnderMouse(const sf::Vector2f& mouseLocal) const {

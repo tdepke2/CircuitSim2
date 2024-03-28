@@ -40,8 +40,8 @@ private:
 
 class MultilineTextBox : public Widget {
 public:
-    static std::shared_ptr<MultilineTextBox> create(const Theme& theme);
-    static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<MultilineTextBoxStyle> style);
+    static std::shared_ptr<MultilineTextBox> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name = "");
     virtual ~MultilineTextBox() noexcept = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
@@ -74,7 +74,7 @@ public:
     Signal<Widget*, const sf::Vector2f&> onClick;
 
 protected:
-    MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style);
+    MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name);
 
 private:
     void insertCharacter(uint32_t unicode);

@@ -145,11 +145,11 @@ std::shared_ptr<TextBoxStyle> TextBoxStyle::clone() const {
 
 
 
-std::shared_ptr<TextBox> TextBox::create(const Theme& theme) {
-    return std::shared_ptr<TextBox>(new TextBox(theme.getTextBoxStyle()));
+std::shared_ptr<TextBox> TextBox::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<TextBox>(new TextBox(theme.getTextBoxStyle(), name));
 }
-std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<TextBoxStyle> style) {
-    return std::shared_ptr<TextBox>(new TextBox(style));
+std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<TextBoxStyle> style, const sf::String& name) {
+    return std::shared_ptr<TextBox>(new TextBox(style, name));
 }
 
 void TextBox::setWidthCharacters(size_t widthCharacters) {
@@ -290,7 +290,8 @@ void TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
 }
 
-TextBox::TextBox(std::shared_ptr<TextBoxStyle> style) :
+TextBox::TextBox(std::shared_ptr<TextBoxStyle> style, const sf::String& name) :
+    Widget(name),
     style_(style),
     styleCopied_(false),
     widthCharacters_(0),

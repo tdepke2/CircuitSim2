@@ -84,8 +84,8 @@ private:
  */
 class TextBox : public Widget {
 public:
-    static std::shared_ptr<TextBox> create(const Theme& theme);
-    static std::shared_ptr<TextBox> create(std::shared_ptr<TextBoxStyle> style);
+    static std::shared_ptr<TextBox> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<TextBox> create(std::shared_ptr<TextBoxStyle> style, const sf::String& name = "");
     virtual ~TextBox() noexcept = default;
 
     void setWidthCharacters(size_t widthCharacters);
@@ -117,7 +117,7 @@ public:
     Signal<Widget*, const sf::String&> onEnterPressed;
 
 protected:
-    TextBox(std::shared_ptr<TextBoxStyle> style);
+    TextBox(std::shared_ptr<TextBoxStyle> style, const sf::String& name);
 
 private:
     // Internal. Should always be used to set the caret position as this updates the draw position as well.

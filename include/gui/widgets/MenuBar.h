@@ -140,8 +140,8 @@ private:
  */
 class MenuBar : public Widget {
 public:
-    static std::shared_ptr<MenuBar> create(const Theme& theme);
-    static std::shared_ptr<MenuBar> create(std::shared_ptr<MenuBarStyle> style);
+    static std::shared_ptr<MenuBar> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<MenuBar> create(std::shared_ptr<MenuBarStyle> style, const sf::String& name = "");
     virtual ~MenuBar() noexcept = default;
 
     void setWidth(float width);
@@ -178,7 +178,7 @@ public:
     Signal<Widget*, const MenuList&, size_t> onMenuItemClick;
 
 protected:
-    MenuBar(std::shared_ptr<MenuBarStyle> style);
+    MenuBar(std::shared_ptr<MenuBarStyle> style, const sf::String& name);
 
 private:
     void updateMenuBar();

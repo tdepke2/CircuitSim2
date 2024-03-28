@@ -58,8 +58,8 @@ private:
  */
 class Label : public Widget {
 public:
-    static std::shared_ptr<Label> create(const Theme& theme);
-    static std::shared_ptr<Label> create(std::shared_ptr<LabelStyle> style);
+    static std::shared_ptr<Label> create(const Theme& theme, const sf::String& name = "");
+    static std::shared_ptr<Label> create(std::shared_ptr<LabelStyle> style, const sf::String& name = "");
     virtual ~Label() noexcept = default;
 
     void setLabel(const sf::String& label);
@@ -74,7 +74,7 @@ public:
     virtual sf::FloatRect getLocalBounds() const override;
 
 protected:
-    Label(std::shared_ptr<LabelStyle> style);
+    Label(std::shared_ptr<LabelStyle> style, const sf::String& name);
 
 private:
     void computeResize() const;

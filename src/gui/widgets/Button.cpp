@@ -117,11 +117,11 @@ std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
 
 
 
-std::shared_ptr<Button> Button::create(const Theme& theme) {
-    return std::shared_ptr<Button>(new Button(theme.getButtonStyle()));
+std::shared_ptr<Button> Button::create(const Theme& theme, const sf::String& name) {
+    return std::shared_ptr<Button>(new Button(theme.getButtonStyle(), name));
 }
-std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style) {
-    return std::shared_ptr<Button>(new Button(style));
+std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style, const sf::String& name) {
+    return std::shared_ptr<Button>(new Button(style, name));
 }
 
 void Button::setSize(const sf::Vector2f& size) {
@@ -204,7 +204,8 @@ void Button::handleMouseLeft() {
     Widget::handleMouseLeft();
 }
 
-Button::Button(std::shared_ptr<ButtonStyle> style) :
+Button::Button(std::shared_ptr<ButtonStyle> style, const sf::String& name) :
+    Widget(name),
     style_(style),
     styleCopied_(false),
     autoResize_(true),

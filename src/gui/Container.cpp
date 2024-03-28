@@ -2,7 +2,7 @@
 
 namespace gui {
 
-void Container::addChild(std::shared_ptr<Widget> child) {
+void Container::addChild(const std::shared_ptr<Widget>& child) {
     children_.push_back(child);
     child->setParentAndGui(this, getGui());
 }
@@ -23,6 +23,10 @@ void Container::setEnabled(bool enabled) {
         }
     }
     Widget::setEnabled(enabled);
+}
+
+Container::Container(const sf::String& name) :
+    Widget(name) {
 }
 
 void Container::setParentAndGui(Container* parent, Gui* gui) {

@@ -54,6 +54,8 @@ public:
     const sf::Transform& getTransform() const;
     const sf::Transform& getInverseTransform() const;
 
+    void setName(const sf::String& name);
+    const sf::String& getName() const;
     Container* getParent() const;
     Gui* getGui() const;
     virtual void setVisible(bool visible);
@@ -105,13 +107,14 @@ public:
     Signal<Widget*> onFocusLost;
 
 protected:
-    Widget();
+    Widget(const sf::String& name);
 
     virtual void setParentAndGui(Container* parent, Gui* gui);
     virtual void addWidgetUnderMouse(const sf::Vector2f& mouseParent);
 
 private:
     sf::Transformable transformable_;
+    sf::String name_;
     Container* parent_;
     Gui* gui_;
     bool visible_, enabled_, focused_;

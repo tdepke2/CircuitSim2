@@ -74,6 +74,14 @@ const sf::Transform& Widget::getInverseTransform() const {
     return transformable_.getInverseTransform();
 }
 
+void Widget::setName(const sf::String& name) {
+    name_ = name;
+}
+
+const sf::String& Widget::getName() const {
+    return name_;
+}
+
 Container* Widget::getParent() const {
     return parent_;
 }
@@ -186,7 +194,8 @@ void Widget::handleFocusChange(bool focused) {
     }
 }
 
-Widget::Widget() :
+Widget::Widget(const sf::String& name) :
+    name_(name),
     parent_(nullptr),
     gui_(nullptr),
     visible_(true),
