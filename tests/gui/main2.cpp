@@ -9,6 +9,7 @@
 
 #include <array>
 #include <cassert>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -309,9 +310,9 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
 }
 
 void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
-    auto menuBar = gui::MenuBar::create(theme);
+    auto menuBar = gui::MenuBar::create(theme, "menuBar");
     connectDebugSignals(menuBar.get(), "menuBar");
-    menuBar->setWidth(600.0f);
+    //menuBar->setWidth(800.0f);
     menuBar->setPosition(0.0f, 0.0f);
 
     gui::MenuList fileMenu("File");
@@ -347,26 +348,26 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     myGui.addChild(menuBar);
 
-    auto renameDialog = gui::Panel::create(theme);
+    auto renameDialog = gui::Panel::create(theme, "renameDialog");
     connectDebugSignals(renameDialog.get(), "renameDialog");
     renameDialog->setSize({200.0f, 100.0f});
     renameDialog->setVisible(false);
     renameDialog->setPosition(80.0f, 80.0f);
     myGui.addChild(renameDialog);
 
-    auto renameLabel = gui::Label::create(theme);
+    auto renameLabel = gui::Label::create(theme, "renameLabel");
     connectDebugSignals(renameLabel.get(), "renameLabel");
     renameLabel->setLabel("Name:");
     renameLabel->setPosition(10.0f, 10.0f);
     renameDialog->addChild(renameLabel);
 
-    auto renameTextBox = gui::TextBox::create(theme);
+    auto renameTextBox = gui::TextBox::create(theme, "renameTextBox");
     connectDebugSignals(renameTextBox.get(), "renameTextBox");
     renameTextBox->setWidthCharacters(8);
     renameTextBox->setPosition(100.0f, 10.0f);
     renameDialog->addChild(renameTextBox);
 
-    auto renameCancelButton = gui::Button::create(theme);
+    auto renameCancelButton = gui::Button::create(theme, "renameCancelButton");
     connectDebugSignals(renameCancelButton.get(), "renameCancelButton");
     renameCancelButton->setLabel("Cancel");
     renameCancelButton->setPosition(10.0f, 60.0f);
@@ -375,16 +376,20 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     });
     renameDialog->addChild(renameCancelButton);
 
-    auto renameSubmitButton = gui::Button::create(theme);
+    auto renameSubmitButton = gui::Button::create(theme, "renameSubmitButton");
     connectDebugSignals(renameSubmitButton.get(), "renameSubmitButton");
     renameSubmitButton->setLabel("Rename");
     renameSubmitButton->setPosition(100.0f, 60.0f);
-    renameSubmitButton->onClick.connect([=](){
+    renameDialog->addChild(renameSubmitButton);
+
+    // Look up the rename button by name as a test.
+    myGui.getChild<gui::Button>("renameSubmitButton")->onClick.connect([=](){
         renameDialog->setVisible(false);
         std::cout << "Rename dialog submitted!\n";
     });
-    renameDialog->addChild(renameSubmitButton);
-
+    assert(myGui.getChild<gui::Button>("renameSubmitButton", false) == nullptr);
+    assert(myGui.getChild("renameSubmitButton", false) == nullptr);
+    assert(myGui.getChild("idk") == nullptr);
 
     menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
         if (menu.name == "File") {
@@ -393,6 +398,50 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
             }
         }
     });
+
+    auto centeredPanel = gui::Panel::create(theme, "centeredPanel");
+    connectDebugSignals(centeredPanel.get(), "centeredPanel");
+    myGui.addChild(centeredPanel);
+
+    auto centeredLabel = gui::Label::create(theme, "centeredLabel");
+    connectDebugSignals(centeredLabel.get(), "centeredLabel");
+    centeredLabel->setLabel("Note: this scene allows the GUI to\nresize when the window size changes.\nThis label will stay centered.");
+    centeredPanel->addChild(centeredLabel);
+    centeredPanel->setSize(centeredLabel->getSize());
+    centeredPanel->setOrigin(centeredPanel->getSize() / 2.0f);
+
+    // Resize the GUI on window size changed.
+    myGui.onWindowResized.connect([=](gui::Gui* gui, sf::RenderWindow& window, const sf::Vector2u& size){
+        std::cout << "Window size changed!\n";
+        gui->setSize(size);
+        window.setView(sf::View(sf::FloatRect({0.0f, 0.0f}, static_cast<sf::Vector2f>(size))));
+
+        gui->getChild<gui::Button>("sceneButton")->setPosition(0.0f, size.y - 20.0f);
+        menuBar->setWidth(static_cast<float>(size.x));
+        centeredPanel->setPosition(static_cast<sf::Vector2f>(size) / 2.0f);
+    });
+
+    // Trigger a fake event to initialize the size.
+    sf::Event initSizeEvent;
+    initSizeEvent.type = sf::Event::Resized;
+    initSizeEvent.size.width = myGui.getSize().x;
+    initSizeEvent.size.height = myGui.getSize().y;
+    myGui.processEvent(initSizeEvent);
+
+    // Print the tree of Widgets.
+    std::function<void(const gui::ContainerBase* container, const std::string& prefix)> printWidgetNames;
+    printWidgetNames = [&printWidgetNames](const gui::ContainerBase* container, const std::string& prefix) {
+        for (const auto& child : container->getChildren()) {
+            std::cout << prefix << child->getName().toAnsiString() << "\n";
+            auto childContainer = dynamic_cast<gui::ContainerBase*>(child.get());
+            if (childContainer != nullptr) {
+                printWidgetNames(childContainer, prefix + "  ");
+            }
+        }
+    };
+    std::cout << "Widget hierarchy:\n";
+    std::cout << "myGui\n";
+    printWidgetNames(&myGui, "    ");
 }
 
 int main() {
@@ -412,7 +461,7 @@ int main() {
     size_t currentScene = 4;
     bool sceneChanged = true;
 
-    auto sceneButton = gui::Button::create(theme);
+    auto sceneButton = gui::Button::create(theme, "sceneButton");
     connectDebugSignals(sceneButton.get(), "sceneButton");
     sceneButton->setPosition(0.0f, window.getSize().y - 20.0f);
     sceneButton->onMousePress.connect([&](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/) {
@@ -439,6 +488,7 @@ int main() {
         if (sceneChanged) {
             sceneButton->setLabel("Scene: " + sceneNames[currentScene] + " (left/right click here)");
             myGui.removeAllChildren();
+            myGui.onWindowResized.disconnectAll();
             widgetNames.clear();
             assert(widgetNames.emplace(sceneButton.get(), "sceneButton").second);
             myGui.addChild(sceneButton);

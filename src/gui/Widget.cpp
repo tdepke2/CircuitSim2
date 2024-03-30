@@ -133,7 +133,7 @@ bool Widget::isFocused() const {
 }
 
 void Widget::sendToFront() {
-    if (parent_ != nullptr) {    // FIXME: why can't the gui be a parent?
+    if (parent_ != nullptr) {
         parent_->sendChildToFront(shared_from_this());
     } else if (gui_ != nullptr) {
         gui_->sendChildToFront(shared_from_this());

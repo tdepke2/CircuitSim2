@@ -4,12 +4,6 @@ namespace gui {
 
 ContainerBase::~ContainerBase() noexcept {
     removeAllChildren();
-
-
-    // FIXME does this make sense? also what happens if we add a widget to two different containers?
-    // what about adding it to the same one twice?
-
-
 }
 
 bool ContainerBase::removeChild(const std::shared_ptr<Widget>& child) {
@@ -44,7 +38,17 @@ std::shared_ptr<Widget> ContainerBase::getChild(const sf::String& name, bool rec
         }
     }
 
-    // FIXME how to do recursive?
+    if (recursive) {
+        for (const auto& c : children_) {
+            const auto container = dynamic_cast<ContainerBase*>(c.get());
+            if (container != nullptr) {
+                auto containerChild = container->getChild(name, recursive);
+                if (containerChild != nullptr) {
+                    return containerChild;
+                }
+            }
+        }
+    }
 
     return nullptr;
 }

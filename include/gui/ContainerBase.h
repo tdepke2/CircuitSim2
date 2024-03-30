@@ -21,7 +21,15 @@ public:
     bool removeChild(size_t index);
     void removeAllChildren();
     std::shared_ptr<Widget> getChild(const sf::String& name, bool recursive = true) const;
+    template<typename T>
+    std::shared_ptr<T> getChild(const sf::String& name, bool recursive = true) const {
+        return std::dynamic_pointer_cast<T>(getChild(name, recursive));
+    }
     std::shared_ptr<Widget> getChild(size_t index) const;
+    template<typename T>
+    std::shared_ptr<T> getChild(size_t index) const {
+        return std::dynamic_pointer_cast<T>(getChild(index));
+    }
     const std::vector<std::shared_ptr<Widget>>& getChildren() const;
     /**
      * Adjusts the ordering of widgets to ensure the specified child draws on

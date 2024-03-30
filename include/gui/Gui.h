@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gui/Container.h>
+#include <gui/Signal.h>
 
 #include <memory>
 #include <set>
@@ -40,6 +41,8 @@ public:
     virtual ~Gui() noexcept = default;
     // FIXME make non-copyable?
 
+    void setSize(const sf::Vector2u& size);
+    sf::Vector2u getSize() const;
     void setSmooth(bool smooth);
     bool isSmooth() const;
 
@@ -54,6 +57,8 @@ public:
 
     // Internal
     void requestRedraw() const;
+
+    Signal<Gui*, sf::RenderWindow&, const sf::Vector2u&> onWindowResized;
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

@@ -1,6 +1,9 @@
 #include <gui/Gui.h>
 #include <gui/Widget.h>
 
+#include <cassert>
+#include <stdexcept>
+#include <string>
 
 
 #include <iostream>
@@ -14,8 +17,19 @@ Gui::Gui(sf::RenderWindow& window) :
     redrawPending_(true),
     focusedWidget_(nullptr) {
 
-    renderTexture_.create(window.getSize().x, window.getSize().y);    // FIXME this never checks for failure, also shouldn't the texture get resized when the window changes size?
-    renderSprite_.setTexture(renderTexture_.getTexture());
+    setSize(window.getSize());
+}
+
+void Gui::setSize(const sf::Vector2u& size) {
+    if (!renderTexture_.create(size.x, size.y)) {
+        throw std::runtime_error("Unable to create GUI render texture (size " + std::to_string(size.x) + " by " + std::to_string(size.y) + ").");
+    }
+    renderSprite_.setTexture(renderTexture_.getTexture(), true);
+    requestRedraw();
+}
+
+sf::Vector2u Gui::getSize() const {
+    return renderTexture_.getSize();
 }
 
 void Gui::setSmooth(bool smooth) {
@@ -27,7 +41,9 @@ bool Gui::isSmooth() const {
 }
 
 void Gui::addChild(const std::shared_ptr<Widget>& child) {
+    assert(child->getGui() == nullptr);
     children_.push_back(child);
+    // The Gui itself is not added as a parent because it's not a Widget.
     child->setParentAndGui(nullptr, this);
 }
 
@@ -90,6 +106,8 @@ void Gui::processEvent(const sf::Event& event) {
         } else if (focusedWidget_ && focusedWidget_->isEnabled()) {
             focusedWidget_->handleKeyPressed(event.key);
         }
+    } else if (event.type == sf::Event::Resized) {
+        onWindowResized.emit(this, window_, sf::Vector2u(event.size.width, event.size.height));
     }
 }
 

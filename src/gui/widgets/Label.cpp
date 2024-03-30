@@ -110,10 +110,16 @@ Label::Label(std::shared_ptr<LabelStyle> style, const sf::String& name) :
 
 void Label::computeResize() const {
     style_->text_.setString(label_);
+    size_t numLines = 1;
+    for (auto c : label_) {
+        if (c == '\n') {
+            ++numLines;
+        }
+    }
     const auto bounds = style_->text_.getLocalBounds();
     size_ = sf::Vector2f(
         2.0f * style_->textPadding_.x + bounds.left + bounds.width,
-        2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize()
+        2.0f * style_->textPadding_.y + numLines * style_->textPadding_.z * style_->getCharacterSize()
     );
 }
 
