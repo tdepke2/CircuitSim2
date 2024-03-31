@@ -28,8 +28,9 @@ namespace gui {
  */
 class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
-    //static std::shared_ptr<Widget> create();
     virtual ~Widget() noexcept = default;
+    Widget(const Widget& rhs) = delete;
+    Widget& operator=(const Widget& rhs) = delete;
 
     // sf::Transformable interface.
     // The functions from sf::Transformable are reimplemented here instead of
@@ -65,6 +66,7 @@ public:
     bool isEnabled() const;
     void setFocused(bool focused);
     bool isFocused() const;
+    bool isMouseHovering() const;
 
     void sendToFront();
     void sendToBack();
@@ -83,7 +85,7 @@ public:
 
     // Get the bounding rectangle in local space, based on the origin and size of the `Widget`.
     virtual sf::FloatRect getLocalBounds() const = 0;
-    virtual bool isMouseHovering(const sf::Vector2f& mouseParent) const;
+    virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const;
 
     virtual void handleMouseMove(const sf::Vector2f& mouseParent);
     virtual void handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent);
@@ -95,11 +97,6 @@ public:
     virtual void handleMouseEntered();
     virtual void handleMouseLeft();
     virtual void handleFocusChange(bool focused);
-
-
-    // FIXME handleMouseLeft() should be thrown when a widget hides, may want an isMouseHovering() func.
-    // could we also make the handle() funcs protected?
-
 
     Signal<Widget*> onMouseEnter;
     Signal<Widget*> onMouseLeave;
@@ -118,6 +115,7 @@ private:
     Container* parent_;
     Gui* gui_;
     bool visible_, enabled_, focused_;
+    bool mouseHover_;
 
     friend class Container;
     friend class ContainerBase;

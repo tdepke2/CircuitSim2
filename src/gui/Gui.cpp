@@ -75,7 +75,7 @@ void Gui::processEvent(const sf::Event& event) {
             }
         }
         for (const auto& w : lastWidgetsUnderMouse_) {
-            if (widgetsUnderMouse_.count(w) == 0 && w->isEnabled()) {
+            if (widgetsUnderMouse_.count(w) == 0 && w->isEnabled() && w->isMouseHovering()) {
                 w->handleMouseLeft();
             }
         }
@@ -89,7 +89,7 @@ void Gui::processEvent(const sf::Event& event) {
         }
     } else if (event.type == sf::Event::MouseLeft) {
         for (const auto& w : widgetsUnderMouse_) {
-            if (w->isEnabled()) {
+            if (w->isEnabled() && w->isMouseHovering()) {
                 w->handleMouseLeft();
             }
         }
@@ -113,7 +113,7 @@ void Gui::processEvent(const sf::Event& event) {
 
 void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {
     widgetsUnderMouse_.emplace(widget);
-    if (lastWidgetsUnderMouse_.count(widget) == 0 && widget->isEnabled()) {
+    if (lastWidgetsUnderMouse_.count(widget) == 0 && widget->isEnabled() && !widget->isMouseHovering()) {
         widget->handleMouseEntered();
     }
 }
@@ -139,16 +139,11 @@ void Gui::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         std::cout << "Gui redraw...\n";
         renderTexture_.clear({0, 0, 0, 0});
         for (const auto& child : getChildren()) {
-            renderTexture_.draw(*child, states);
+            renderTexture_.draw(*child);
         }
         renderTexture_.display();
         redrawPending_ = false;
     }
-
-
-    // FIXME is it necessary to pass the RenderStates to renderTexture_ above?
-
-
 
     target.draw(renderSprite_, states);
 }

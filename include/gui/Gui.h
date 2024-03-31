@@ -39,7 +39,8 @@ class Gui : public ContainerBase, public sf::Drawable {
 public:
     Gui(sf::RenderWindow& window);
     virtual ~Gui() noexcept = default;
-    // FIXME make non-copyable?
+    Gui(const Gui& rhs) = delete;
+    Gui& operator=(const Gui& rhs) = delete;
 
     void setSize(const sf::Vector2u& size);
     sf::Vector2u getSize() const;

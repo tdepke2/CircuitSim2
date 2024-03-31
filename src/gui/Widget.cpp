@@ -8,10 +8,6 @@
 
 namespace gui {
 
-/*std::shared_ptr<Widget> Widget::create() {
-    return std::make_shared<Widget>();
-}*/
-
 void Widget::setPosition(float x, float y) {
     transformable_.setPosition(x, y);
     requestRedraw();
@@ -93,6 +89,9 @@ Gui* Widget::getGui() const {
 void Widget::setVisible(bool visible) {
     if (!visible) {
         setFocused(false);
+        if (mouseHover_) {
+            handleMouseLeft();
+        }
     }
     if (visible_ != visible) {
         requestRedraw();
@@ -106,6 +105,7 @@ bool Widget::isVisible() const {
 
 void Widget::setEnabled(bool enabled) {
     if (!enabled) {
+        mouseHover_ = false;
         setFocused(false);
     }
     if (enabled_ != enabled) {
@@ -132,6 +132,10 @@ bool Widget::isFocused() const {
     return focused_;
 }
 
+bool Widget::isMouseHovering() const {
+    return mouseHover_;
+}
+
 void Widget::sendToFront() {
     if (parent_ != nullptr) {
         parent_->sendChildToFront(shared_from_this());
@@ -155,7 +159,7 @@ void Widget::requestRedraw() const {
     }
 }
 
-bool Widget::isMouseHovering(const sf::Vector2f& mouseParent) const {
+bool Widget::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
 }
 void Widget::handleMouseMove(const sf::Vector2f& /*mouseParent*/) {
@@ -180,9 +184,11 @@ void Widget::handleKeyPressed(const sf::Event::KeyEvent& /*key*/) {
 }
 
 void Widget::handleMouseEntered() {
+    mouseHover_ = true;
     onMouseEnter.emit(this);
 }
 void Widget::handleMouseLeft() {
+    mouseHover_ = false;
     onMouseLeave.emit(this);
 }
 void Widget::handleFocusChange(bool focused) {
@@ -200,7 +206,8 @@ Widget::Widget(const sf::String& name) :
     gui_(nullptr),
     visible_(true),
     enabled_(true),
-    focused_(false) {
+    focused_(false),
+    mouseHover_(false) {
 }
 
 void Widget::setParentAndGui(Container* parent, Gui* gui) {

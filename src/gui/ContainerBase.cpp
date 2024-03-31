@@ -93,7 +93,7 @@ bool ContainerBase::sendChildToBack(const std::shared_ptr<Widget>& child) {
 Widget* ContainerBase::getWidgetUnderMouse(const sf::Vector2f& mouseLocal) const {
     // Find the top-most visible child.
     for (auto c = children_.crbegin(); c != children_.crend(); ++c) {
-        if ((*c)->isVisible() && (*c)->isMouseHovering(mouseLocal)) {
+        if ((*c)->isVisible() && (*c)->isMouseIntersecting(mouseLocal)) {
             return (*c).get();
         }
     }

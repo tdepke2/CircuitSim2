@@ -193,12 +193,10 @@ void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
 
 void Button::handleMouseEntered() {
     Widget::handleMouseEntered();
-    isHovered_ = true;
     requestRedraw();
 }
 
 void Button::handleMouseLeft() {
-    isHovered_ = false;
     requestRedraw();
     setPressed(false);
     Widget::handleMouseLeft();
@@ -209,7 +207,6 @@ Button::Button(std::shared_ptr<ButtonStyle> style, const sf::String& name) :
     style_(style),
     styleCopied_(false),
     autoResize_(true),
-    isHovered_(false),
     isPressed_(false) {
 }
 
@@ -236,7 +233,7 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     style_->rect_.setSize(size_);
     if (isPressed_) {
         style_->rect_.setFillColor(style_->colorDown_);
-    } else if (isHovered_) {
+    } else if (isMouseHovering()) {
         style_->rect_.setFillColor(style_->colorHover_);
     } else {
         style_->rect_.setFillColor(style_->colorUp_);

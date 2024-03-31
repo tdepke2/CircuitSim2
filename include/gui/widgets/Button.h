@@ -119,7 +119,7 @@ private:
     mutable sf::Vector2f size_;
     sf::String label_;
     bool autoResize_;
-    bool isHovered_, isPressed_;
+    bool isPressed_;
 };
 
 } // namespace gui

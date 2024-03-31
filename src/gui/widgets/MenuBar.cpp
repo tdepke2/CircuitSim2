@@ -274,7 +274,7 @@ std::shared_ptr<MenuBarStyle> MenuBar::getStyle() {
 sf::FloatRect MenuBar::getLocalBounds() const {
     return {-getOrigin(), barSize_};
 }
-bool MenuBar::isMouseHovering(const sf::Vector2f& mouseParent) const {
+bool MenuBar::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (menuIsOpen_) {
         sf::FloatRect menuBounds(-getOrigin() + getOpenMenuPosition(), menus_[selectedMenu_].menuSize_);
