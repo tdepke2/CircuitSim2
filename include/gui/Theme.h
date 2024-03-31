@@ -5,6 +5,7 @@
 
 namespace gui {
     class ButtonStyle;
+    class CheckBoxStyle;
     class Gui;
     class LabelStyle;
     class MenuBarStyle;
@@ -31,6 +32,7 @@ public:
     virtual ~Theme() noexcept = default;
 
     virtual std::shared_ptr<ButtonStyle> getButtonStyle() const = 0;
+    virtual std::shared_ptr<CheckBoxStyle> getCheckBoxStyle() const = 0;
     virtual std::shared_ptr<LabelStyle> getLabelStyle() const = 0;
     virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const = 0;
     virtual std::shared_ptr<MultilineTextBoxStyle> getMultilineTextBoxStyle() const = 0;
@@ -46,6 +48,7 @@ protected:
 
     const Gui& gui_;
     mutable std::shared_ptr<ButtonStyle> buttonStyle_;
+    mutable std::shared_ptr<CheckBoxStyle> checkBoxStyle_;
     mutable std::shared_ptr<LabelStyle> labelStyle_;
     mutable std::shared_ptr<MenuBarStyle> menuBarStyle_;
     mutable std::shared_ptr<MultilineTextBoxStyle> multilineTextBoxStyle_;

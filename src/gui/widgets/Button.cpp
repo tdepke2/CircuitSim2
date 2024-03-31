@@ -139,9 +139,9 @@ void Button::setLabel(const sf::String& label) {
 void Button::setAutoResize(bool autoResize) {
     autoResize_ = autoResize;
 }
-void Button::setPressed(bool isPressed) {
-    if (isPressed_ != isPressed) {
-        isPressed_ = isPressed;
+void Button::setPressed(bool pressed) {
+    if (isPressed_ != pressed) {
+        isPressed_ = pressed;
         requestRedraw();
     }
 }

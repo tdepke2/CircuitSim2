@@ -1,6 +1,7 @@
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/CheckBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
@@ -64,6 +65,9 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
     button->onMousePress.connect(mousePress);
     button->onMouseRelease.connect(mouseRelease);
     button->onClick.connect(click);
+}
+void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
 }
 void connectDebugSignals(gui::Label* label, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(label), name);
@@ -185,6 +189,21 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     customButtonStyle->setFillColor({20, 20, 200});
 
+}
+
+void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto testCheckBox = gui::CheckBox::create(theme);
+    connectDebugSignals(testCheckBox.get(), "testCheckBox");
+    testCheckBox->setLabel(sf::String("hello!"));
+    testCheckBox->setPosition(130.0f, 100.0f);
+    testCheckBox->onClick.connect([=]() {
+        if (testCheckBox->isChecked()) {
+            testCheckBox->setLabel("the box is checked!");
+        } else {
+            testCheckBox->setLabel("the box is not checked");
+        }
+    });
+    myGui.addChild(testCheckBox);
 }
 
 void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -451,9 +470,10 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 5> sceneNames = {
+    const std::array<std::string, 6> sceneNames = {
         "Empty",
         "ButtonDemo",
+        "CheckBoxDemo",
         "TextBoxDemo",
         "MenuBarDemo",
         "FullDemo"
@@ -498,6 +518,8 @@ int main() {
             if (sceneNames[currentScene] == "Empty") {
             } else if (sceneNames[currentScene] == "ButtonDemo") {
                 createButtonDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "CheckBoxDemo") {
+                createCheckBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "TextBoxDemo") {
                 createTextBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "MenuBarDemo") {

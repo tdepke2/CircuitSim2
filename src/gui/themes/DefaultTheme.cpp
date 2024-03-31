@@ -1,5 +1,6 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/CheckBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
@@ -34,6 +35,24 @@ std::shared_ptr<ButtonStyle> DefaultTheme::getButtonStyle() const {
 
         style->setFillColorHover({219, 233, 255});
         style->setFillColorDown({188, 214, 255});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    }
+    return style;
+}
+
+std::shared_ptr<CheckBoxStyle> DefaultTheme::getCheckBoxStyle() const {
+    auto& style = checkBoxStyle_;
+    if (!style) {
+        style = std::make_shared<CheckBoxStyle>(gui_);
+        style->setFillColor({240, 240, 240});
+        style->setOutlineColor(sf::Color::Black);
+        style->setOutlineThickness(-2.0f);
+
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
+
+        style->setFillColorChecked({80, 80, 80});
         style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
     return style;
