@@ -5,6 +5,7 @@
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
+#include <gui/widgets/RadioButton.h>
 #include <gui/widgets/TextBox.h>
 
 
@@ -126,6 +127,24 @@ std::shared_ptr<PanelStyle> DefaultTheme::getPanelStyle() const {
         style->setFillColor(sf::Color::White);
         style->setOutlineColor({140, 140, 140});
         style->setOutlineThickness(-2.0f);
+    }
+    return style;
+}
+
+std::shared_ptr<RadioButtonStyle> DefaultTheme::getRadioButtonStyle() const {
+    auto& style = radioButtonStyle_;
+    if (!style) {
+        style = std::make_shared<RadioButtonStyle>(gui_);
+        style->setFillColor({240, 240, 240});
+        style->setOutlineColor(sf::Color::Black);
+        style->setOutlineThickness(-2.0f);
+
+        style->setFont(consolasFont_);
+        style->setCharacterSize(15);
+        style->setTextFillColor(sf::Color::Black);
+
+        style->setFillColorChecked({80, 80, 80});
+        style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
     }
     return style;
 }

@@ -18,6 +18,7 @@ public:
     virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const override;
     virtual std::shared_ptr<MultilineTextBoxStyle> getMultilineTextBoxStyle() const override;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() const override;
+    virtual std::shared_ptr<RadioButtonStyle> getRadioButtonStyle() const override;
     virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const override;
 
 private:

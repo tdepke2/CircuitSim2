@@ -11,6 +11,7 @@ namespace gui {
     class MenuBarStyle;
     class MultilineTextBoxStyle;
     class PanelStyle;
+    class RadioButtonStyle;
     class TextBoxStyle;
 }
 
@@ -37,6 +38,7 @@ public:
     virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const = 0;
     virtual std::shared_ptr<MultilineTextBoxStyle> getMultilineTextBoxStyle() const = 0;
     virtual std::shared_ptr<PanelStyle> getPanelStyle() const = 0;
+    virtual std::shared_ptr<RadioButtonStyle> getRadioButtonStyle() const = 0;
     virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const = 0;
 
 protected:
@@ -53,6 +55,7 @@ protected:
     mutable std::shared_ptr<MenuBarStyle> menuBarStyle_;
     mutable std::shared_ptr<MultilineTextBoxStyle> multilineTextBoxStyle_;
     mutable std::shared_ptr<PanelStyle> panelStyle_;
+    mutable std::shared_ptr<RadioButtonStyle> radioButtonStyle_;
     mutable std::shared_ptr<TextBoxStyle> textBoxStyle_;
 };
 

@@ -6,6 +6,7 @@
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
+#include <gui/widgets/RadioButton.h>
 #include <gui/widgets/TextBox.h>
 
 #include <array>
@@ -192,10 +193,11 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 }
 
 void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    // Check boxes.
     auto testCheckBox = gui::CheckBox::create(theme);
     connectDebugSignals(testCheckBox.get(), "testCheckBox");
-    testCheckBox->setLabel(sf::String("hello!"));
-    testCheckBox->setPosition(130.0f, 100.0f);
+    testCheckBox->setLabel(sf::String("check box"));
+    testCheckBox->setPosition(10.0f, 10.0f);
     testCheckBox->onClick.connect([=]() {
         if (testCheckBox->isChecked()) {
             testCheckBox->setLabel("the box is checked!");
@@ -204,6 +206,84 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
         }
     });
     myGui.addChild(testCheckBox);
+
+    auto disabledCheckBox = gui::CheckBox::create(theme);
+    connectDebugSignals(disabledCheckBox.get(), "disabledCheckBox");
+    disabledCheckBox->setLabel(sf::String("check box (disabled)"));
+    disabledCheckBox->setPosition(10.0f, 70.0f);
+    disabledCheckBox->setEnabled(false);
+    myGui.addChild(disabledCheckBox);
+
+    auto checkBoxPanel = gui::Panel::create(theme);
+    connectDebugSignals(checkBoxPanel.get(), "checkBoxPanel");
+    checkBoxPanel->setPosition(10.0f, 130.0f);
+    myGui.addChild(checkBoxPanel);
+
+    auto checkBoxA = gui::CheckBox::create(theme);
+    connectDebugSignals(checkBoxA.get(), "checkBoxA");
+    checkBoxA->setLabel(sf::String("Option A"));
+    checkBoxA->setPosition(8.0f, 8.0f);
+    checkBoxPanel->addChild(checkBoxA);
+
+    auto checkBoxB = gui::CheckBox::create(theme);
+    connectDebugSignals(checkBoxB.get(), "checkBoxB");
+    checkBoxB->setLabel(sf::String("Option B"));
+    checkBoxB->setPosition(checkBoxA->getPosition() + sf::Vector2f(0.0f, checkBoxA->getSize().y + 8.0f));
+    checkBoxPanel->addChild(checkBoxB);
+
+    auto checkBoxC = gui::CheckBox::create(theme);
+    connectDebugSignals(checkBoxC.get(), "checkBoxC");
+    checkBoxC->setLabel(sf::String("Option C"));
+    checkBoxC->setPosition(checkBoxB->getPosition() + sf::Vector2f(0.0f, checkBoxB->getSize().y + 8.0f));
+    checkBoxPanel->addChild(checkBoxC);
+
+    checkBoxPanel->setSize(checkBoxC->getPosition() + checkBoxC->getSize() + sf::Vector2f(8.0f, 8.0f));
+
+    // Radio buttons.
+    auto testRadioButton = gui::RadioButton::create(theme);
+    connectDebugSignals(testRadioButton.get(), "testRadioButton");
+    testRadioButton->setLabel(sf::String("radio button"));
+    testRadioButton->setPosition(230.0f, 10.0f);
+    testRadioButton->onClick.connect([=]() {
+        if (testRadioButton->isChecked()) {
+            testRadioButton->setLabel("the button is checked!");
+        } else {
+            testRadioButton->setLabel("the button is not checked");
+        }
+    });
+    myGui.addChild(testRadioButton);
+
+    auto disabledRadioButton = gui::RadioButton::create(theme);
+    connectDebugSignals(disabledRadioButton.get(), "disabledRadioButton");
+    disabledRadioButton->setLabel(sf::String("radio button (disabled)"));
+    disabledRadioButton->setPosition(230.0f, 70.0f);
+    disabledRadioButton->setEnabled(false);
+    myGui.addChild(disabledRadioButton);
+
+    auto radioButtonPanel = gui::Panel::create(theme);
+    connectDebugSignals(radioButtonPanel.get(), "radioButtonPanel");
+    radioButtonPanel->setPosition(230.0f, 130.0f);
+    myGui.addChild(radioButtonPanel);
+
+    auto radioButtonA = gui::RadioButton::create(theme);
+    connectDebugSignals(radioButtonA.get(), "radioButtonA");
+    radioButtonA->setLabel(sf::String("Option A"));
+    radioButtonA->setPosition(8.0f, 8.0f);
+    radioButtonPanel->addChild(radioButtonA);
+
+    auto radioButtonB = gui::RadioButton::create(theme);
+    connectDebugSignals(radioButtonB.get(), "radioButtonB");
+    radioButtonB->setLabel(sf::String("Option B"));
+    radioButtonB->setPosition(radioButtonA->getPosition() + sf::Vector2f(0.0f, radioButtonA->getSize().y + 8.0f));
+    radioButtonPanel->addChild(radioButtonB);
+
+    auto radioButtonC = gui::RadioButton::create(theme);
+    connectDebugSignals(radioButtonC.get(), "radioButtonC");
+    radioButtonC->setLabel(sf::String("Option C"));
+    radioButtonC->setPosition(radioButtonB->getPosition() + sf::Vector2f(0.0f, radioButtonB->getSize().y + 8.0f));
+    radioButtonPanel->addChild(radioButtonC);
+
+    radioButtonPanel->setSize(radioButtonC->getPosition() + radioButtonC->getSize() + sf::Vector2f(8.0f, 8.0f));
 }
 
 void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {

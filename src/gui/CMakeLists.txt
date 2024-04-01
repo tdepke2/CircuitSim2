@@ -12,6 +12,7 @@ set(CS2_GUI_HEADERS
     widgets/MenuBar.h
     widgets/MultilineTextBox.h
     widgets/Panel.h
+    widgets/RadioButton.h
     widgets/TextBox.h
 )
 list(TRANSFORM CS2_GUI_HEADERS PREPEND "${PROJECT_SOURCE_DIR}/include/gui/")
@@ -30,6 +31,7 @@ add_library(cs2_gui
     widgets/MenuBar.cpp
     widgets/MultilineTextBox.cpp
     widgets/Panel.cpp
+    widgets/RadioButton.cpp
     widgets/TextBox.cpp
     ${CS2_GUI_HEADERS}
 )

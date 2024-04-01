@@ -194,7 +194,7 @@ void CheckBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->rect_.setFillColor(style_->colorUnchecked_);
     }
     target.draw(style_->rect_, states);
-    style_->text_.setPosition(style_->textPadding_.x + size_.y, style_->textPadding_.y);
+    style_->text_.setPosition(style_->textPadding_.x + static_cast<int>(size_.y), style_->textPadding_.y);
     target.draw(style_->text_, states);
 }
 
