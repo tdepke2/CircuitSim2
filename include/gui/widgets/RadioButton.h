@@ -69,8 +69,9 @@ private:
 
 
 /**
- * FIXME add comment
- * still need group for radio buttons. Make a generic Group class? What about a RadioGroup with a uncheckAllButtons() func? ##############################
+ * A button that is mutually exclusive. Setting the button checked will uncheck
+ * all other `RadioButton` widgets contained in the parent. A `Group` widget can
+ * be used to separate radio buttons from other unrelated ones.
  */
 class RadioButton : public Button {
 public:
@@ -82,6 +83,7 @@ public:
     bool isPressed() const = delete;
     void setChecked(bool checked);
     bool isChecked() const;
+    void uncheckRadioButtons();
 
     void setStyle(std::shared_ptr<RadioButtonStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.

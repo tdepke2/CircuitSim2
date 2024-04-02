@@ -82,43 +82,12 @@ std::shared_ptr<PanelStyle> Panel::getStyle() {
 sf::FloatRect Panel::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
-void Panel::handleMouseMove(const sf::Vector2f& mouseParent) {
-    Container::handleMouseMove(mouseParent);
-    auto mouseLocal = toLocalSpace(mouseParent);
-    auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMouseMove(mouseLocal);
-    }
-}
-void Panel::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
-    Container::handleMouseWheelScroll(wheel, delta, mouseParent);
-    auto mouseLocal = toLocalSpace(mouseParent);
-    auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMouseWheelScroll(wheel, delta, mouseLocal);
-    }
-}
-void Panel::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    auto mouseLocal = toLocalSpace(mouseParent);
-    auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMousePress(button, mouseLocal);
-    } else {
-        Container::handleMousePress(button, mouseParent);
-    }
-}
-void Panel::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    auto mouseLocal = toLocalSpace(mouseParent);
-    auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMouseRelease(button, mouseLocal);
-    } else {
-        Container::handleMouseRelease(button, mouseParent);
-    }
+bool Panel::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
+    return Widget::isMouseIntersecting(mouseParent);
 }
 
 Panel::Panel(std::shared_ptr<PanelStyle> style, const sf::String& name) :
-    Container(name),
+    Group(name),
     style_(style),
     styleCopied_(false) {
 }

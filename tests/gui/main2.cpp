@@ -2,6 +2,7 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/CheckBox.h>
+#include <gui/widgets/Group.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
@@ -70,11 +71,14 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
 void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
 }
+void connectDebugSignals(gui::Group* group, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(group), name);
+}
 void connectDebugSignals(gui::Label* label, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(label), name);
 }
 void connectDebugSignals(gui::Panel* panel, const std::string& name) {
-    connectDebugSignals(dynamic_cast<gui::Widget*>(panel), name);
+    connectDebugSignals(dynamic_cast<gui::Group*>(panel), name);
 }
 void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(textBox), name);
@@ -265,25 +269,45 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     radioButtonPanel->setPosition(230.0f, 130.0f);
     myGui.addChild(radioButtonPanel);
 
+    auto radioButtonGroup = gui::Group::create();
+    connectDebugSignals(radioButtonGroup.get(), "radioButtonGroup");
+    radioButtonPanel->addChild(radioButtonGroup);
+
     auto radioButtonA = gui::RadioButton::create(theme);
     connectDebugSignals(radioButtonA.get(), "radioButtonA");
     radioButtonA->setLabel(sf::String("Option A"));
     radioButtonA->setPosition(8.0f, 8.0f);
-    radioButtonPanel->addChild(radioButtonA);
+    radioButtonGroup->addChild(radioButtonA);
 
     auto radioButtonB = gui::RadioButton::create(theme);
     connectDebugSignals(radioButtonB.get(), "radioButtonB");
     radioButtonB->setLabel(sf::String("Option B"));
     radioButtonB->setPosition(radioButtonA->getPosition() + sf::Vector2f(0.0f, radioButtonA->getSize().y + 8.0f));
-    radioButtonPanel->addChild(radioButtonB);
+    radioButtonGroup->addChild(radioButtonB);
 
     auto radioButtonC = gui::RadioButton::create(theme);
     connectDebugSignals(radioButtonC.get(), "radioButtonC");
     radioButtonC->setLabel(sf::String("Option C"));
     radioButtonC->setPosition(radioButtonB->getPosition() + sf::Vector2f(0.0f, radioButtonB->getSize().y + 8.0f));
-    radioButtonPanel->addChild(radioButtonC);
+    radioButtonGroup->addChild(radioButtonC);
 
-    radioButtonPanel->setSize(radioButtonC->getPosition() + radioButtonC->getSize() + sf::Vector2f(8.0f, 8.0f));
+    auto radioButtonD = gui::RadioButton::create(theme);
+    connectDebugSignals(radioButtonD.get(), "radioButtonD");
+    radioButtonD->setLabel(sf::String("Option D (outside group)"));
+    radioButtonD->setPosition(radioButtonC->getPosition() + sf::Vector2f(0.0f, radioButtonC->getSize().y + 8.0f));
+    radioButtonPanel->addChild(radioButtonD);
+
+    radioButtonPanel->setSize(radioButtonD->getPosition() + radioButtonD->getSize() + sf::Vector2f(8.0f, 8.0f));
+
+    auto radioResetButton = gui::Button::create(theme);
+    connectDebugSignals(radioResetButton.get(), "radioResetButton");
+    radioResetButton->setLabel("Reset");
+    radioResetButton->setPosition(radioButtonPanel->getPosition() + sf::Vector2f(0.0f, radioButtonPanel->getSize().y + 8.0f));
+    radioResetButton->onClick.connect([=]() {
+        radioButtonA->uncheckRadioButtons();
+        radioButtonD->uncheckRadioButtons();
+    });
+    myGui.addChild(radioResetButton);
 }
 
 void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {

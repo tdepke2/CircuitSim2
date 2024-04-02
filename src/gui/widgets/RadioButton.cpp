@@ -120,10 +120,31 @@ std::shared_ptr<RadioButton> RadioButton::create(std::shared_ptr<RadioButtonStyl
 
 void RadioButton::setChecked(bool checked) {
     Button::setPressed(checked);
+    if (!checked || getParent() == nullptr) {
+        return;
+    }
+    for (const auto& child : getParent()->getChildren()) {
+        auto childButton = dynamic_cast<RadioButton*>(child.get());
+        if (childButton != nullptr && childButton != this) {
+            childButton->Button::setPressed(false);
+        }
+    }
 }
 
 bool RadioButton::isChecked() const {
     return Button::isPressed();
+}
+
+void RadioButton::uncheckRadioButtons() {
+    if (getParent() == nullptr) {
+        return;
+    }
+    for (const auto& child : getParent()->getChildren()) {
+        auto childButton = dynamic_cast<RadioButton*>(child.get());
+        if (childButton != nullptr) {
+            childButton->Button::setPressed(false);
+        }
+    }
 }
 
 void RadioButton::setStyle(std::shared_ptr<RadioButtonStyle> style) {
@@ -143,7 +164,7 @@ void RadioButton::handleMousePress(sf::Mouse::Button button, const sf::Vector2f&
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Button::Middle) {
-        Button::setPressed(true);
+        setChecked(true);
         onClick.emit(this, mouseLocal);
     }
     onMousePress.emit(this, button, mouseLocal);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gui/Container.h>
+#include <gui/widgets/Group.h>
 
 #include <memory>
 #include <SFML/Graphics.hpp>
@@ -49,7 +49,7 @@ private:
 /**
  * A rectangular box that contains other widgets.
  */
-class Panel : public Container {
+class Panel : public Group {
 public:
     static std::shared_ptr<Panel> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style, const sf::String& name = "");
@@ -64,10 +64,7 @@ public:
     std::shared_ptr<PanelStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
-    virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
-    virtual void handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
-    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
-    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
 
 protected:
     Panel(std::shared_ptr<PanelStyle> style, const sf::String& name);
