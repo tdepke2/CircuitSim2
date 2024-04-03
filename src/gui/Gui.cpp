@@ -97,14 +97,29 @@ void Gui::processEvent(const sf::Event& event) {
         lastWidgetsUnderMouse_.clear();
     } else if (event.type == sf::Event::TextEntered) {
         std::cout << "char code " << event.text.unicode << "\n";
-        if (focusedWidget_ && focusedWidget_->isEnabled()) {
-            focusedWidget_->handleTextEntered(event.text.unicode);
+        bool eventConsumed = false;
+        if (focusedWidget_) {
+            auto widget = focusedWidget_.get();
+            do {
+                if (widget->isEnabled()) {
+                    eventConsumed = widget->handleTextEntered(event.text.unicode);
+                }
+                widget = widget->getParent();
+            } while (!eventConsumed && widget != nullptr);
         }
     } else if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::Escape) {
+        bool eventConsumed = false;
+        if (focusedWidget_) {
+            auto widget = focusedWidget_.get();
+            do {
+                if (widget->isEnabled()) {
+                    eventConsumed = widget->handleKeyPressed(event.key);
+                }
+                widget = widget->getParent();
+            } while (!eventConsumed && widget != nullptr);
+        }
+        if (!eventConsumed && event.key.code == sf::Keyboard::Escape) {
             requestWidgetFocus(nullptr);
-        } else if (focusedWidget_ && focusedWidget_->isEnabled()) {
-            focusedWidget_->handleKeyPressed(event.key);
         }
     } else if (event.type == sf::Event::Resized) {
         onWindowResized.emit(this, window_, sf::Vector2u(event.size.width, event.size.height));
@@ -121,7 +136,7 @@ void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {
 void Gui::requestWidgetFocus(std::shared_ptr<Widget> widget) {
     if (focusedWidget_) {
         focusedWidget_->handleFocusChange(false);
-        requestRedraw();
+        requestRedraw();    // FIXME: this is weird, why do we need to redraw here? seems like widgets should hook into handleFocusChange to redraw themselves.
     }
     if (widget) {
         widget->handleFocusChange(true);

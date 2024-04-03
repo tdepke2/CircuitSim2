@@ -242,17 +242,19 @@ void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
     onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
     Widget::handleMouseRelease(button, mouseParent);
 }
-void TextBox::handleTextEntered(uint32_t unicode) {
-    Widget::handleTextEntered(unicode);
+bool TextBox::handleTextEntered(uint32_t unicode) {
+    bool eventConsumed = Widget::handleTextEntered(unicode);
     if (!readOnly_ && unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
         if (maxCharacters_ == 0 || boxString_.getSize() < maxCharacters_) {
             boxString_.insert(caretPosition_, sf::String(unicode));
             updateCaretPosition(caretPosition_ + 1);
         }
+        return true;
     }
+    return eventConsumed;
 }
-void TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
-    Widget::handleKeyPressed(key);
+bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
+    bool eventConsumed = Widget::handleKeyPressed(key);
     if (key.code == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
     } else if (key.code == sf::Keyboard::Backspace) {
@@ -287,7 +289,10 @@ void TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
         } else if (!readOnly_ && caretPosition_ < boxString_.getSize()) {
             updateCaretPosition(caretPosition_ + 1);
         }
+    } else {
+        return eventConsumed;
     }
+    return true;
 }
 
 TextBox::TextBox(std::shared_ptr<TextBoxStyle> style, const sf::String& name) :

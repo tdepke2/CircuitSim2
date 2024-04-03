@@ -157,11 +157,13 @@ std::shared_ptr<MultilineTextBoxStyle> MultilineTextBox::getStyle() {
 sf::FloatRect MultilineTextBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
-void MultilineTextBox::handleMouseMove(const sf::Vector2f& mouseParent) {
-    Widget::handleMouseMove(mouseParent);
+bool MultilineTextBox::handleMouseMove(const sf::Vector2f& mouseParent) {
+    if (Widget::handleMouseMove(mouseParent)) {
+        return true;
+    }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (!isFocused()) {
-        return;
+        return false;
     }
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         size_t offset = findClosestOffsetToMouse(mouseLocal);
@@ -169,10 +171,15 @@ void MultilineTextBox::handleMouseMove(const sf::Vector2f& mouseParent) {
             updateCaretPosition(offset, true);
         }
     }
+    return false;
 }
-void MultilineTextBox::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float delta, const sf::Vector2f& /*mouseParent*/) {
+bool MultilineTextBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
+    if (Widget::handleMouseWheelScroll(wheel, delta, mouseParent)) {
+        return true;
+    }
     const bool shiftKeyPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
     updateScroll(!shiftKeyPressed, static_cast<int>(std::round(delta)), false);
+    return true;
 }
 void MultilineTextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
@@ -189,14 +196,16 @@ void MultilineTextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Ve
     onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
     Widget::handleMouseRelease(button, mouseParent);
 }
-void MultilineTextBox::handleTextEntered(uint32_t unicode) {
-    Widget::handleTextEntered(unicode);
+bool MultilineTextBox::handleTextEntered(uint32_t unicode) {
+    bool eventConsumed = Widget::handleTextEntered(unicode);
     if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
         insertCharacter(unicode);
+        return true;
     }
+    return eventConsumed;
 }
-void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
-    Widget::handleKeyPressed(key);
+bool MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
+    bool eventConsumed = Widget::handleKeyPressed(key);
     size_t caretOffset = findCaretOffset(caretPosition_);
 
     auto getSelectedText = [this]() -> sf::String {
@@ -274,8 +283,10 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
             for (auto c : sf::Clipboard::getString()) {
                 insertCharacter(c);
             }
+        } else {
+            return eventConsumed;
         }
-        return;
+        return true;
     }
 
     if (key.code == sf::Keyboard::Enter) {
@@ -318,7 +329,10 @@ void MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
         } else if (caretOffset < findStringsLength(boxStrings_)) {
             updateCaretPosition(caretOffset + 1, key.shift);
         }
+    } else {
+        return eventConsumed;
     }
+    return true;
 }
 
 MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name) :

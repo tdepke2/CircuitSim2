@@ -62,12 +62,12 @@ public:
     std::shared_ptr<MultilineTextBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
-    virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
-    virtual void handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
+    virtual bool handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
-    virtual void handleTextEntered(uint32_t unicode) override;
-    virtual void handleKeyPressed(const sf::Event::KeyEvent& key) override;
+    virtual bool handleTextEntered(uint32_t unicode) override;
+    virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;

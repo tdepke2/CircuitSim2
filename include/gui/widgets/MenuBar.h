@@ -165,7 +165,7 @@ public:
     virtual sf::FloatRect getLocalBounds() const override;
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
 
-    virtual void handleMouseMove(const sf::Vector2f& mouseParent) override;
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
 

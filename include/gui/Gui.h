@@ -24,10 +24,11 @@ namespace gui {
  * drawing during event handling instead of every frame.
  * 
  * Events are processed in a simple manner. Mouse events are sent only to the
- * top-most visible widget the mouse touches (which will include any `Container`
- * types the widget is in). Text events are only sent to the focused widget.
- * Also, for mouse events to propagate through a `Container`, the mouse must be
- * touching the `Container` (a widget outside the bounds of its parent
+ * top-most visible widget the mouse touches and each of its `Container` derived
+ * parents. Keyboard events are sent only to the focused widget and the parents.
+ * Events can be consumed by a child which blocks further propagation to
+ * parents. Also, for mouse events to propagate through a `Container`, the mouse
+ * must be touching the `Container` (a widget outside the bounds of its parent
  * `Container` will not work).
  * 
  * Much of the GUI framework has taken inspiration from other SFML libraries

@@ -21,20 +21,22 @@ bool Group::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return false;
 }
 
-void Group::handleMouseMove(const sf::Vector2f& mouseParent) {
-    Container::handleMouseMove(mouseParent);
+bool Group::handleMouseMove(const sf::Vector2f& mouseParent) {
     auto mouseLocal = toLocalSpace(mouseParent);
     auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMouseMove(mouseLocal);
+    if (widget == nullptr || !widget->handleMouseMove(mouseLocal)) {
+        return Container::handleMouseMove(mouseParent);
+    } else {
+        return true;
     }
 }
-void Group::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
-    Container::handleMouseWheelScroll(wheel, delta, mouseParent);
+bool Group::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     auto mouseLocal = toLocalSpace(mouseParent);
     auto widget = getWidgetUnderMouse(mouseLocal);
-    if (widget != nullptr) {
-        widget->handleMouseWheelScroll(wheel, delta, mouseLocal);
+    if (widget == nullptr || !widget->handleMouseWheelScroll(wheel, delta, mouseLocal)) {
+        return Container::handleMouseWheelScroll(wheel, delta, mouseParent);
+    } else {
+        return true;
     }
 }
 void Group::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {

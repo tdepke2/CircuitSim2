@@ -284,11 +284,14 @@ bool MenuBar::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     }
 }
 
-void MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
-    Widget::handleMouseMove(mouseParent);
+bool MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
+    if (Widget::handleMouseMove(mouseParent)) {
+        return true;
+    }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
 
     mouseUpdate(false, mouseLocal);
+    return false;
 }
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);

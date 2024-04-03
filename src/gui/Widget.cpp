@@ -162,11 +162,11 @@ void Widget::requestRedraw() const {
 bool Widget::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
 }
-void Widget::handleMouseMove(const sf::Vector2f& /*mouseParent*/) {
-
+bool Widget::handleMouseMove(const sf::Vector2f& /*mouseParent*/) {
+    return false;
 }
-void Widget::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float /*delta*/, const sf::Vector2f& /*mouseParent*/) {
-
+bool Widget::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float /*delta*/, const sf::Vector2f& /*mouseParent*/) {
+    return false;
 }
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mouseParent*/) {
     if (button <= sf::Mouse::Button::Middle) {
@@ -176,11 +176,11 @@ void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mo
 void Widget::handleMouseRelease(sf::Mouse::Button /*button*/, const sf::Vector2f& /*mouseParent*/) {
 
 }
-void Widget::handleTextEntered(uint32_t /*unicode*/) {
-
+bool Widget::handleTextEntered(uint32_t /*unicode*/) {
+    return false;
 }
-void Widget::handleKeyPressed(const sf::Event::KeyEvent& /*key*/) {
-
+bool Widget::handleKeyPressed(const sf::Event::KeyEvent& /*key*/) {
+    return false;
 }
 
 void Widget::handleMouseEntered() {

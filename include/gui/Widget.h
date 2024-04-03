@@ -21,10 +21,12 @@ namespace gui {
  * a widget.
  * 
  * The functions beginning with "handle" are used internally to respond to
- * events and such. When adding overrides to these in derived classes, the base
- * class version should be called at the beginning or end depending on the
- * context (e.g. `handleMousePress()` at the beginning, `handleMouseRelease()`
- * at the end).
+ * events and such. Some of them return a boolean indicating if the event was
+ * consumed, consumed events are not passed along to parents (e.g. scrolling
+ * should work in a widget that is inside another scrollable area). When adding
+ * overrides to these in derived classes, the base class version should be
+ * called at the beginning or end depending on the context (e.g.
+ * `handleMousePress()` at the beginning, `handleMouseRelease()` at the end).
  */
 class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
@@ -87,12 +89,12 @@ public:
     virtual sf::FloatRect getLocalBounds() const = 0;
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const;
 
-    virtual void handleMouseMove(const sf::Vector2f& mouseParent);
-    virtual void handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent);
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent);
+    virtual bool handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent);
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent);
-    virtual void handleTextEntered(uint32_t unicode);
-    virtual void handleKeyPressed(const sf::Event::KeyEvent& key);
+    virtual bool handleTextEntered(uint32_t unicode);
+    virtual bool handleKeyPressed(const sf::Event::KeyEvent& key);
 
     virtual void handleMouseEntered();
     virtual void handleMouseLeft();

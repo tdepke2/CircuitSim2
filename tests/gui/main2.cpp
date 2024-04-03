@@ -471,12 +471,19 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     myGui.addChild(menuBar);
 
+    auto modalBackground = gui::Panel::create(theme, "modalBackground");
+    connectDebugSignals(modalBackground.get(), "modalBackground");
+    modalBackground->setSize(static_cast<sf::Vector2f>(myGui.getSize()));
+    modalBackground->setVisible(false);
+    modalBackground->getStyle()->setFillColor({0, 0, 0, 175});
+    modalBackground->getStyle()->setOutlineThickness(0.0f);
+    myGui.addChild(modalBackground);
+
     auto renameDialog = gui::Panel::create(theme, "renameDialog");
     connectDebugSignals(renameDialog.get(), "renameDialog");
     renameDialog->setSize({200.0f, 100.0f});
-    renameDialog->setVisible(false);
     renameDialog->setPosition(80.0f, 80.0f);
-    myGui.addChild(renameDialog);
+    modalBackground->addChild(renameDialog);
 
     auto renameLabel = gui::Label::create(theme, "renameLabel");
     connectDebugSignals(renameLabel.get(), "renameLabel");
@@ -495,7 +502,7 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     renameCancelButton->setLabel("Cancel");
     renameCancelButton->setPosition(10.0f, 60.0f);
     renameCancelButton->onClick.connect([=](){
-        renameDialog->setVisible(false);
+        modalBackground->setVisible(false);
     });
     renameDialog->addChild(renameCancelButton);
 
@@ -507,7 +514,7 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     // Look up the rename button by name as a test.
     myGui.getChild<gui::Button>("renameSubmitButton")->onClick.connect([=](){
-        renameDialog->setVisible(false);
+        modalBackground->setVisible(false);
         std::cout << "Rename dialog submitted!\n";
     });
     assert(myGui.getChild<gui::Button>("renameSubmitButton", false) == nullptr);
@@ -517,7 +524,8 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
         if (menu.name == "File") {
             if (menu.items[index].leftText == "Rename...") {
-                renameDialog->setVisible(true);
+                modalBackground->sendToFront();
+                modalBackground->setVisible(true);    // FIXME: oops, modal bg and the rename dialog should be set visible so that the modal bg can be reused.
             }
         }
     });
@@ -541,6 +549,7 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
         gui->getChild<gui::Button>("sceneButton")->setPosition(0.0f, size.y - 20.0f);
         menuBar->setWidth(static_cast<float>(size.x));
+        modalBackground->setSize(static_cast<sf::Vector2f>(size));
         centeredPanel->setPosition(static_cast<sf::Vector2f>(size) / 2.0f);
     });
 
