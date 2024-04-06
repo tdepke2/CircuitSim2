@@ -2,6 +2,7 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/CheckBox.h>
+#include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Group.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
@@ -310,6 +311,64 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     myGui.addChild(radioResetButton);
 }
 
+void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto dialogTest = gui::DialogBox::create(theme);
+    connectDebugSignals(dialogTest.get(), "dialogTest");
+    dialogTest->setSize({200.0f, 100.0f});
+    dialogTest->setPosition(80.0f, 80.0f);
+    myGui.addChild(dialogTest);
+
+    auto dialogTestTitle = gui::Label::create(theme);
+    connectDebugSignals(dialogTestTitle.get(), "dialogTestTitle");
+    dialogTestTitle->setLabel("my title");
+    dialogTest->setTitle(dialogTestTitle);
+
+    auto dialogTestLabel = gui::Label::create(theme);
+    connectDebugSignals(dialogTestLabel.get(), "dialogTestLabel");
+    dialogTestLabel->setLabel("Name:");
+    dialogTestLabel->setPosition(10.0f, 10.0f);
+    dialogTest->addChild(dialogTestLabel);
+
+    auto dialogTestTextBox = gui::TextBox::create(theme);
+    connectDebugSignals(dialogTestTextBox.get(), "dialogTestTextBox");
+    dialogTestTextBox->setWidthCharacters(8);
+    dialogTestTextBox->setPosition(100.0f, 10.0f);
+    dialogTest->addChild(dialogTestTextBox);
+
+    auto dialogTestTextBox2 = gui::TextBox::create(theme);
+    connectDebugSignals(dialogTestTextBox2.get(), "dialogTestTextBox2");
+    dialogTestTextBox2->setWidthCharacters(8);
+    dialogTestTextBox2->setPosition(100.0f, 30.0f);
+    dialogTest->addChild(dialogTestTextBox2);
+
+    auto dialogTestCancel = gui::Button::create(theme);
+    connectDebugSignals(dialogTestCancel.get(), "dialogTestCancel");
+    dialogTestCancel->setLabel("Cancel");
+    dialogTestCancel->setPosition(10.0f, 60.0f);
+    dialogTestCancel->onClick.connect([=]() {
+        std::cout << "Dialog cancelled!\n";
+    });
+    dialogTest->setCancelButton(dialogTestCancel);
+
+    auto dialogTestSubmit = gui::Button::create(theme);
+    connectDebugSignals(dialogTestSubmit.get(), "dialogTestSubmit");
+    dialogTestSubmit->setLabel("Rename");
+    dialogTestSubmit->setPosition(100.0f, 60.0f);
+    dialogTestSubmit->onClick.connect([=]() {
+        std::cout << "Dialog submitted!\n";
+    });
+    dialogTest->setSubmitButton(dialogTestSubmit);
+
+    auto dialogTestTextBox3 = gui::MultilineTextBox::create(theme);
+    connectDebugSignals(dialogTestTextBox3.get(), "dialogTestTextBox3");
+    dialogTestTextBox3->setSizeCharacters({10, 5});
+    dialogTestTextBox3->setPosition(100.0f, 90.0f);
+    dialogTest->addChild(dialogTestTextBox3);
+
+    // Trigger focus on the text box.
+    dialogTest->setVisible(true);
+}
+
 void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto hideBox = gui::TextBox::create(theme);
     connectDebugSignals(hideBox.get(), "hideBox");
@@ -583,10 +642,11 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 6> sceneNames = {
+    const std::array<std::string, 7> sceneNames = {
         "Empty",
         "ButtonDemo",
         "CheckBoxDemo",
+        "DialogBoxDemo",
         "TextBoxDemo",
         "MenuBarDemo",
         "FullDemo"
@@ -633,6 +693,8 @@ int main() {
                 createButtonDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "CheckBoxDemo") {
                 createCheckBoxDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "DialogBoxDemo") {
+                createDialogBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "TextBoxDemo") {
                 createTextBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "MenuBarDemo") {

@@ -257,6 +257,7 @@ bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     bool eventConsumed = Widget::handleKeyPressed(key);
     if (key.code == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
+        return eventConsumed;
     } else if (key.code == sf::Keyboard::Backspace) {
         if (!readOnly_ && caretPosition_ > 0) {
             if (horizontalScroll_ > 0 && horizontalScroll_ + widthCharacters_ >= boxString_.getSize()) {

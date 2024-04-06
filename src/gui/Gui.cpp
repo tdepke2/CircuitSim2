@@ -40,7 +40,7 @@ bool Gui::isSmooth() const {
     return renderTexture_.isSmooth();
 }
 
-void Gui::addChild(const std::shared_ptr<Widget>& child) {
+void Gui::addChild(std::shared_ptr<Widget> child) {
     assert(child->getGui() == nullptr);
     children_.push_back(child);
     // The Gui itself is not added as a parent because it's not a Widget.
@@ -97,6 +97,11 @@ void Gui::processEvent(const sf::Event& event) {
         lastWidgetsUnderMouse_.clear();
     } else if (event.type == sf::Event::TextEntered) {
         std::cout << "char code " << event.text.unicode << "\n";
+        // Key events are passed to the child first (focusedWidget_) and then
+        // passed along the chain of parents until it's consumed. This is
+        // similar to how it works for mouse events but the order is reversed.
+        // As a side effect, disabled widgets do not block propagation of key
+        // events.
         bool eventConsumed = false;
         if (focusedWidget_) {
             auto widget = focusedWidget_.get();

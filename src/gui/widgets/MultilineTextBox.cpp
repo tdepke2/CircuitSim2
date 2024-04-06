@@ -178,7 +178,7 @@ bool MultilineTextBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delt
         return true;
     }
     const bool shiftKeyPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
-    updateScroll(!shiftKeyPressed, static_cast<int>(std::round(delta)), false);
+    updateScroll(!shiftKeyPressed, static_cast<int>(std::round(delta)) * 3, false);
     return true;
 }
 void MultilineTextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {

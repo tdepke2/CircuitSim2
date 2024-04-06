@@ -1,6 +1,7 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/CheckBox.h>
+#include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/MultilineTextBox.h>
@@ -55,6 +56,17 @@ std::shared_ptr<CheckBoxStyle> DefaultTheme::getCheckBoxStyle() const {
 
         style->setFillColorChecked({80, 80, 80});
         style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    }
+    return style;
+}
+
+std::shared_ptr<DialogBoxStyle> DefaultTheme::getDialogBoxStyle() const {
+    auto& style = dialogBoxStyle_;
+    if (!style) {
+        style = std::make_shared<DialogBoxStyle>(gui_);
+        style->setFillColor(sf::Color::White);
+        style->setOutlineColor({140, 140, 140});
+        style->setOutlineThickness(-2.0f);
     }
     return style;
 }

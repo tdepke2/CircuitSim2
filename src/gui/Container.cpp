@@ -4,7 +4,7 @@
 
 namespace gui {
 
-void Container::addChild(const std::shared_ptr<Widget>& child) {
+void Container::addChild(std::shared_ptr<Widget> child) {
     assert(child->getGui() == nullptr);
     children_.push_back(child);
     child->setParentAndGui(this, getGui());

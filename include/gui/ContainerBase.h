@@ -16,10 +16,11 @@ class ContainerBase {
 public:
     virtual ~ContainerBase() noexcept;
 
-    virtual void addChild(const std::shared_ptr<Widget>& child) = 0;
+    virtual void addChild(std::shared_ptr<Widget> child) = 0;
     bool removeChild(const std::shared_ptr<Widget>& child);
     bool removeChild(size_t index);
     void removeAllChildren();
+    bool hasChild(const std::shared_ptr<Widget>& child) const;
     std::shared_ptr<Widget> getChild(const sf::String& name, bool recursive = true) const;
     template<typename T>
     std::shared_ptr<T> getChild(const sf::String& name, bool recursive = true) const {

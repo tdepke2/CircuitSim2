@@ -8,6 +8,7 @@ set(CS2_GUI_HEADERS
     Widget.h
     widgets/Button.h
     widgets/CheckBox.h
+    widgets/DialogBox.h
     widgets/Group.h
     widgets/Label.h
     widgets/MenuBar.h
@@ -28,6 +29,7 @@ add_library(cs2_gui
     Widget.cpp
     widgets/Button.cpp
     widgets/CheckBox.cpp
+    widgets/DialogBox.cpp
     widgets/Group.cpp
     widgets/Label.cpp
     widgets/MenuBar.cpp

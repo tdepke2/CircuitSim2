@@ -31,6 +31,15 @@ void ContainerBase::removeAllChildren() {
     children_.clear();
 }
 
+bool ContainerBase::hasChild(const std::shared_ptr<Widget>& child) const {
+    for (const auto& c : children_) {
+        if (c == child) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::shared_ptr<Widget> ContainerBase::getChild(const sf::String& name, bool recursive) const {
     for (const auto& c : children_) {
         if (c->getName() == name) {

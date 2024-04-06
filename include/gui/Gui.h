@@ -48,7 +48,7 @@ public:
     void setSmooth(bool smooth);
     bool isSmooth() const;
 
-    virtual void addChild(const std::shared_ptr<Widget>& child) override;
+    virtual void addChild(std::shared_ptr<Widget> child) override;
     void processEvent(const sf::Event& event);
 
     // Internal

@@ -18,7 +18,7 @@ class Container : public ContainerBase, public Widget {
 public:
     virtual ~Container() noexcept = default;
 
-    virtual void addChild(const std::shared_ptr<Widget>& child) override;
+    virtual void addChild(std::shared_ptr<Widget> child) override;
 
     virtual void setVisible(bool visible) override;
     virtual void setEnabled(bool enabled) override;
