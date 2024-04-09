@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -95,13 +96,14 @@ Editor::StaticInit::StaticInit() {
     DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks);
 }
 
-Editor::Editor(Board& board, const sf::View& initialView) :
+Editor::Editor(Board& board, sf::RenderWindow& window) :
+    interface_(window),
     board_(board),
-    editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), initialView),
+    editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), window.getDefaultView()),
     zoomLevel_(1.0f),
     mousePos_(),
     mouseOnScreen_(false),
-    windowSize_(initialView.getSize()),
+    windowSize_(window.getDefaultView().getSize()),
     cursor_({static_cast<float>(TileWidth::TEXELS), static_cast<float>(TileWidth::TEXELS)}),
     cursorCoords_({sf::Vector2i(), false}),
     cursorLabel_("", Locator::getResource()->getFont("resources/consolas.ttf"), 22),
@@ -123,6 +125,10 @@ Editor::Editor(Board& board, const sf::View& initialView) :
     cursorLabel_.setOutlineThickness(2.0f);
 }
 
+const sf::Drawable& Editor::getGraphicalInterface() const {
+    return interface_;
+}
+
 const OffsetView& Editor::getEditView() const {
     return editView_;
 }
@@ -136,7 +142,11 @@ void Editor::goToTile(int x, int y) {
     editView_ = findTileView(x, y);
 }
 
-void Editor::processEvent(const sf::Event& event) {
+bool Editor::processEvent(const sf::Event& event) {
+    if (interface_.processEvent(event)) {
+        return true;
+    }
+
     if (event.type == sf::Event::MouseMoved) {
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             editView_.setCenter({
@@ -185,6 +195,7 @@ void Editor::processEvent(const sf::Event& event) {
                 selectionEnd_ = selectionStart_.first;
             }
         }
+        return true;
     } else if (event.type == sf::Event::MouseButtonReleased) {
         const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
@@ -195,6 +206,7 @@ void Editor::processEvent(const sf::Event& event) {
                 selectionStart_.second = false;
             }
         }
+        return true;
     } else if (event.type == sf::Event::MouseWheelScrolled) {
         float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
         float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel_ * -0.04f;
@@ -204,13 +216,16 @@ void Editor::processEvent(const sf::Event& event) {
         zoomLevel_ += zoomDelta;
         zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);
         editView_.setSize(windowSize_.x * zoomLevel_, windowSize_.y * zoomLevel_);
+    } else if (event.type == sf::Event::TextEntered) {
+        return handleTextEntered(event.text.unicode);
     } else if (event.type == sf::Event::KeyPressed) {
-        handleKeyPress(event.key);
+        return handleKeyPressed(event.key);
     } else if (event.type == sf::Event::Resized) {
         windowSize_.x = event.size.width;
         windowSize_.y = event.size.height;
         editView_.setSize(static_cast<sf::Vector2f>(windowSize_) * zoomLevel_);
     }
+    return false;
 }
 
 void Editor::update() {
@@ -229,8 +244,77 @@ void Editor::update() {
     }
 }
 
-void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
+bool Editor::handleTextEntered(uint32_t unicode) {
     // Most key bindings are listed in the gui dropdown menus.
+
+    // We have separate processing for text versus key events to ensure that
+    // consumed events are dealt with correctly. If an event generates a
+    // printable character, handle it here and not in handleKeyPressed().
+
+    unsigned char key = '\0';
+    bool keyShift = false;
+    if (unicode <= std::numeric_limits<unsigned char>::max()) {
+        key = std::toupper(static_cast<unsigned char>(unicode));
+        keyShift = (unicode == key);
+    }
+
+    if (key == 'R') {
+        rotateTile(!keyShift);
+    } else if (key == 'F') {
+        flipTile(!keyShift);
+    } else if (key == 'E') {
+        editTile(!keyShift);
+    } else if (key == 'W') {
+        wireTool();
+    } else if (key == 'Q') {
+        queryTool();
+    } else if (key == ' ') {
+        pickTile(TileId::blank);
+    } else if (key == 'T') {
+        pickTile(!keyShift ? TileId::wireStraight : TileId::wireTee);
+    } else if (key == 'C') {
+        pickTile(!keyShift ? TileId::wireCorner : TileId::wireCrossover);
+    } else if (key == 'J') {
+        pickTile(TileId::wireJunction);
+    } else if (key == 'S') {
+        pickTile(!keyShift ? TileId::inSwitch : TileId::inButton);
+    } else if (key == 'L') {
+        pickTile(!keyShift ? TileId::outLed : TileId::label);
+    } else if (key == 'D') {
+        pickTile(TileId::gateDiode);
+    } else if (key == 'B') {
+        pickTile(!keyShift ? TileId::gateBuffer : TileId::gateNot);
+    } else if (key == 'A') {
+        pickTile(!keyShift ? TileId::gateAnd : TileId::gateNand);
+    } else if (key == 'O') {
+        pickTile(!keyShift ? TileId::gateOr : TileId::gateNor);
+    } else if (key == 'X') {
+        pickTile(!keyShift ? TileId::gateXor : TileId::gateXnor);
+    } else if (key == '1') {
+        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+    } else if (key == '2') {
+        goToTile(0, std::numeric_limits<int>::max());
+    } else if (key == '3') {
+        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    } else if (key == '4') {
+        goToTile(std::numeric_limits<int>::min(), 0);
+    } else if (key == '5') {
+        goToTile(0, 0);
+    } else if (key == '6') {
+        goToTile(std::numeric_limits<int>::max(), 0);
+    } else if (key == '7') {
+        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    } else if (key == '8') {
+        goToTile(0, std::numeric_limits<int>::min());
+    } else if (key == '9') {
+        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
     if (key.control) {
         if (key.code == sf::Keyboard::N) {
             //fileOption(0);
@@ -251,8 +335,10 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
             copyArea();
         } else if (key.code == sf::Keyboard::V) {
             pasteArea();
+        } else {
+            return false;
         }
-        return;
+        return true;
     }
 
     if (key.code == sf::Keyboard::Enter) {
@@ -261,59 +347,12 @@ void Editor::handleKeyPress(const sf::Event::KeyEvent& key) {
         //runOption(!key.shift);
     } else if (key.code == sf::Keyboard::Escape) {
         deselectAll();
-    } else if (key.code == sf::Keyboard::R) {
-        rotateTile(!key.shift);
-    } else if (key.code == sf::Keyboard::F) {
-        flipTile(!key.shift);
-    } else if (key.code == sf::Keyboard::E) {
-        editTile(!key.shift);
     } else if (key.code == sf::Keyboard::Delete) {
         deleteArea();
-    } else if (key.code == sf::Keyboard::W) {
-        wireTool();
-    } else if (key.code == sf::Keyboard::Q) {
-        queryTool();
-    } else if (key.code == sf::Keyboard::Space) {
-        pickTile(TileId::blank);
-    } else if (key.code == sf::Keyboard::T) {
-        pickTile(!key.shift ? TileId::wireStraight : TileId::wireTee);
-    } else if (key.code == sf::Keyboard::C) {
-        pickTile(!key.shift ? TileId::wireCorner : TileId::wireCrossover);
-    } else if (key.code == sf::Keyboard::J) {
-        pickTile(TileId::wireJunction);
-    } else if (key.code == sf::Keyboard::S) {
-        pickTile(!key.shift ? TileId::inSwitch : TileId::inButton);
-    } else if (key.code == sf::Keyboard::L) {
-        pickTile(!key.shift ? TileId::outLed : TileId::label);
-    } else if (key.code == sf::Keyboard::D) {
-        pickTile(TileId::gateDiode);
-    } else if (key.code == sf::Keyboard::B) {
-        pickTile(!key.shift ? TileId::gateBuffer : TileId::gateNot);
-    } else if (key.code == sf::Keyboard::A) {
-        pickTile(!key.shift ? TileId::gateAnd : TileId::gateNand);
-    } else if (key.code == sf::Keyboard::O) {
-        pickTile(!key.shift ? TileId::gateOr : TileId::gateNor);
-    } else if (key.code == sf::Keyboard::X) {
-        pickTile(!key.shift ? TileId::gateXor : TileId::gateXnor);
-    } else if (key.code == sf::Keyboard::Num1) {
-        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Num2) {
-        goToTile(0, std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Num3) {
-        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    } else if (key.code == sf::Keyboard::Num4) {
-        goToTile(std::numeric_limits<int>::min(), 0);
-    } else if (key.code == sf::Keyboard::Num5) {
-        goToTile(0, 0);
-    } else if (key.code == sf::Keyboard::Num6) {
-        goToTile(std::numeric_limits<int>::max(), 0);
-    } else if (key.code == sf::Keyboard::Num7) {
-        goToTile(std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
-    } else if (key.code == sf::Keyboard::Num8) {
-        goToTile(0, std::numeric_limits<int>::min());
-    } else if (key.code == sf::Keyboard::Num9) {
-        goToTile(std::numeric_limits<int>::max(), std::numeric_limits<int>::min());
+    } else {
+        return false;
     }
+    return true;
 }
 
 void Editor::undoEdit() {

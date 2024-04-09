@@ -43,11 +43,13 @@ public:
     DebugScreen& operator=(const DebugScreen& rhs) = delete;
     DebugScreen& operator=(DebugScreen&& rhs) noexcept = delete;
 
-    void processEvent(const sf::Event& event);
+    // Returns true if event was consumed (and should not be processed further).
+    bool processEvent(const sf::Event& event);
     Mode getMode() const;
     std::string getModeString() const;
     void setVisible(bool visible);
     bool isVisible() const;
+    void setBorders(const sf::Vector2i& topLeft, const sf::Vector2i& bottomRight);
     sf::Text& getField(Field field);
     sf::Text& getField(const std::string& customName);
     void registerTexture(const std::string& name, const sf::Texture* texture);
@@ -68,6 +70,7 @@ private:
     const sf::Font& font_;
     unsigned int characterSize_;
     sf::Vector2u windowSize_;
+    sf::Vector2i borderTopLeft_, borderBottomRight_;
     sf::Vector2f nextFieldPos_;
     std::vector<sf::Text> fields_;
     std::unordered_map<std::string, sf::Text> customFields_;

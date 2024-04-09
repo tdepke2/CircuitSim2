@@ -291,7 +291,7 @@ bool MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
 
     mouseUpdate(false, mouseLocal);
-    return false;
+    return isFocused();
 }
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);

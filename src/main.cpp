@@ -28,6 +28,7 @@ int main() {
 
     DebugScreen::init(Locator::getResource()->getFont("resources/consolas.ttf"), 16, window.getSize());
     DebugScreen::instance()->setVisible(true);
+    DebugScreen::instance()->setBorders({2, 25}, {2, 2});
 
     Board board;
     board.debugSetDrawChunkBorder(true);
@@ -40,7 +41,7 @@ int main() {
         spdlog::error(ex.what());
     }
 
-    Editor editor(board, window.getDefaultView());
+    Editor editor(board, window);
 
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
@@ -101,8 +102,10 @@ int main() {
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            DebugScreen::instance()->processEvent(event);
-            editor.processEvent(event);
+            bool eventConsumed = editor.processEvent(event);
+            if (!eventConsumed) {
+                eventConsumed = DebugScreen::instance()->processEvent(event);
+            }
 
             if (event.type == sf::Event::MouseMoved) {
                 /*if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -183,6 +186,7 @@ int main() {
 
         window.setView(fullWindowView);
         window.draw(*DebugScreen::instance());
+        window.draw(editor.getGraphicalInterface());
 
         DebugScreen::instance()->profilerEvent("main display");
         window.display();

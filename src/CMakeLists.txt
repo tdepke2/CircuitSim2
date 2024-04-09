@@ -54,6 +54,8 @@ add_library(cs2_src
     DebugScreen.h
     Editor.cpp
     Editor.h
+    EditorInterface.cpp
+    EditorInterface.h
     Entity.cpp
     Entity.h
     FileStorage.cpp
@@ -98,6 +100,7 @@ target_include_directories(cs2_src PUBLIC .)
 
 # Link to libraries and set C++ compilation version.
 target_link_libraries(cs2_src PUBLIC
+    cs2_gui
     sfml-graphics
     spdlog::spdlog
     ghc_filesystem

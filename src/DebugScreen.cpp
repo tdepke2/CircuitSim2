@@ -25,11 +25,9 @@ struct DebugScreen::NamedTexture {
     }
 };
 
-void DebugScreen::processEvent(const sf::Event& event) {
-    if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::F3) {
-            visible_ = !visible_;
-        } else if (event.key.code == sf::Keyboard::P) {
+bool DebugScreen::processEvent(const sf::Event& event) {
+    if (event.type == sf::Event::TextEntered) {
+        if (event.text.unicode == 'p') {
             spdlog::info("Captured trace ({} events):", profilerEvents_.size());
             decltype(profilerEvents_.begin()->second) firstTimePoint;
             while (!profilerEvents_.empty()) {
@@ -45,6 +43,13 @@ void DebugScreen::processEvent(const sf::Event& event) {
                 spdlog::info("  {} at time {}ms", minTimeEvent->first, std::chrono::duration<double, std::milli>(minTimeEvent->second - firstTimePoint).count());
                 profilerEvents_.erase(minTimeEvent);
             }
+        } else {
+            return false;
+        }
+        return true;
+    } else if (event.type == sf::Event::KeyPressed) {
+        if (event.key.code == sf::Keyboard::F3) {
+            visible_ = !visible_;
         } else if (event.key.code == sf::Keyboard::Up) {
             mode_ = static_cast<Mode>((static_cast<int>(mode_) + static_cast<int>(Mode::count) - 1) % static_cast<int>(Mode::count));
         } else if (event.key.code == sf::Keyboard::Down) {
@@ -53,11 +58,15 @@ void DebugScreen::processEvent(const sf::Event& event) {
             --modeStates_[static_cast<int>(mode_)];
         } else if (event.key.code == sf::Keyboard::Right) {
             ++modeStates_[static_cast<int>(mode_)];
+        } else {
+            return false;
         }
+        return true;
     } else if (event.type == sf::Event::Resized) {
         windowSize_.x = event.size.width;
         windowSize_.y = event.size.height;
     }
+    return false;
 }
 
 DebugScreen::Mode DebugScreen::getMode() const {
@@ -79,6 +88,11 @@ void DebugScreen::setVisible(bool visible) {
 
 bool DebugScreen::isVisible() const {
     return visible_;
+}
+
+void DebugScreen::setBorders(const sf::Vector2i& topLeft, const sf::Vector2i& bottomRight) {
+    borderTopLeft_ = topLeft;
+    borderBottomRight_ = bottomRight;
 }
 
 sf::Text& DebugScreen::getField(Field field) {
@@ -144,6 +158,12 @@ void DebugScreen::draw(sf::RenderTarget& target, sf::RenderStates states) const 
         return;
     }
 
+    sf::Vector2i clippedSize = {
+        std::max(static_cast<int>(windowSize_.x) - borderTopLeft_.x - borderBottomRight_.x, 0),
+        std::max(static_cast<int>(windowSize_.y) - borderTopLeft_.y - borderBottomRight_.y, 0),
+    };
+    states.transform.translate(static_cast<sf::Vector2f>(borderTopLeft_));
+
     if (mode_ == Mode::def) {
         for (const auto& field : fields_) {
             target.draw(field, states);
@@ -158,11 +178,10 @@ void DebugScreen::draw(sf::RenderTarget& target, sf::RenderStates states) const 
             const NamedTexture& namedTex = textures_[modeStates_[static_cast<int>(mode_)]];
             textureField.setString("Texture: " + namedTex.name + " (size " + std::to_string(namedTex.texture->getSize().x) + " by " + std::to_string(namedTex.texture->getSize().y) + ")");
 
-            float pixelPadding = 2.0f;
             sf::Sprite sprite(*namedTex.texture);
-            sprite.setPosition(pixelPadding, textureField.getPosition().y + 1.0f * characterSize_ + 4.0f);
-            float scaleX = (windowSize_.x - sprite.getPosition().x - pixelPadding) / namedTex.texture->getSize().x;
-            float scaleY = (windowSize_.y - sprite.getPosition().y - pixelPadding) / namedTex.texture->getSize().y;
+            sprite.setPosition(0.0f, textureField.getPosition().y + 1.0f * characterSize_ + 4.0f);
+            float scaleX = (clippedSize.x - sprite.getPosition().x) / namedTex.texture->getSize().x;
+            float scaleY = (clippedSize.y - sprite.getPosition().y) / namedTex.texture->getSize().y;
             float scale = std::min(scaleX, scaleY);
             sprite.setScale(scale, scale);
             target.draw(sprite, states);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <EditorInterface.h>
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
@@ -15,15 +16,17 @@ class Command;
 
 class Editor : public sf::Drawable {
 public:
-    Editor(Board& board, const sf::View& initialView);
+    Editor(Board& board, sf::RenderWindow& window);
     ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;
 
+    const sf::Drawable& getGraphicalInterface() const;
     const OffsetView& getEditView() const;
     float getZoom() const;
     void goToTile(int x, int y);
-    void processEvent(const sf::Event& event);
+    // Returns true if event was consumed (and should not be processed further).
+    bool processEvent(const sf::Event& event);
     void update();
 
 private:
@@ -38,7 +41,8 @@ private:
         empty, pickTile, pasteArea, wireTool
     };
 
-    void handleKeyPress(const sf::Event::KeyEvent& key);
+    bool handleTextEntered(uint32_t unicode);
+    bool handleKeyPressed(const sf::Event::KeyEvent& key);
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
     void undoEdit();
@@ -68,6 +72,7 @@ private:
     void pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+    EditorInterface interface_;
     Board& board_;
     OffsetView editView_;
     float zoomLevel_;

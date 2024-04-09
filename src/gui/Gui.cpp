@@ -47,12 +47,14 @@ void Gui::addChild(std::shared_ptr<Widget> child) {
     child->setParentAndGui(nullptr, this);
 }
 
-void Gui::processEvent(const sf::Event& event) {
+bool Gui::processEvent(const sf::Event& event) {
+    bool eventConsumed = false;
     if (event.type == sf::Event::MouseButtonPressed) {
         const auto mouseGlobal = window_.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
         auto widget = getWidgetUnderMouse(mouseGlobal);
         if (widget != nullptr && widget->isEnabled()) {
             widget->handleMousePress(event.mouseButton.button, mouseGlobal);
+            eventConsumed = true;
         } else if (event.mouseButton.button <= sf::Mouse::Button::Middle) {
             requestWidgetFocus(nullptr);
         }
@@ -61,6 +63,7 @@ void Gui::processEvent(const sf::Event& event) {
         auto widget = getWidgetUnderMouse(mouseGlobal);
         if (widget != nullptr && widget->isEnabled()) {
             widget->handleMouseRelease(event.mouseButton.button, mouseGlobal);
+            eventConsumed = true;
         }
     } else if (event.type == sf::Event::MouseMoved) {
         std::swap(widgetsUnderMouse_, lastWidgetsUnderMouse_);
@@ -71,7 +74,7 @@ void Gui::processEvent(const sf::Event& event) {
         if (widget != nullptr) {
             widget->addWidgetUnderMouse(mouseGlobal);
             if (widget->isEnabled()) {
-                widget->handleMouseMove(mouseGlobal);
+                eventConsumed = widget->handleMouseMove(mouseGlobal);
             }
         }
         for (const auto& w : lastWidgetsUnderMouse_) {
@@ -84,7 +87,7 @@ void Gui::processEvent(const sf::Event& event) {
         auto widget = getWidgetUnderMouse(mouseGlobal);
         if (widget != nullptr) {
             if (widget->isEnabled()) {
-                widget->handleMouseWheelScroll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, mouseGlobal);
+                eventConsumed = widget->handleMouseWheelScroll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, mouseGlobal);
             }
         }
     } else if (event.type == sf::Event::MouseLeft) {
@@ -102,7 +105,6 @@ void Gui::processEvent(const sf::Event& event) {
         // similar to how it works for mouse events but the order is reversed.
         // As a side effect, disabled widgets do not block propagation of key
         // events.
-        bool eventConsumed = false;
         if (focusedWidget_) {
             auto widget = focusedWidget_.get();
             do {
@@ -113,7 +115,6 @@ void Gui::processEvent(const sf::Event& event) {
             } while (!eventConsumed && widget != nullptr);
         }
     } else if (event.type == sf::Event::KeyPressed) {
-        bool eventConsumed = false;
         if (focusedWidget_) {
             auto widget = focusedWidget_.get();
             do {
@@ -122,13 +123,16 @@ void Gui::processEvent(const sf::Event& event) {
                 }
                 widget = widget->getParent();
             } while (!eventConsumed && widget != nullptr);
-        }
-        if (!eventConsumed && event.key.code == sf::Keyboard::Escape) {
-            requestWidgetFocus(nullptr);
+
+            if (!eventConsumed && event.key.code == sf::Keyboard::Escape) {
+                requestWidgetFocus(nullptr);
+                eventConsumed = true;
+            }
         }
     } else if (event.type == sf::Event::Resized) {
         onWindowResized.emit(this, window_, sf::Vector2u(event.size.width, event.size.height));
     }
+    return eventConsumed;
 }
 
 void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {

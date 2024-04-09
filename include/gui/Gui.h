@@ -49,7 +49,8 @@ public:
     bool isSmooth() const;
 
     virtual void addChild(std::shared_ptr<Widget> child) override;
-    void processEvent(const sf::Event& event);
+    // Returns true if event was consumed (and should not be processed further).
+    bool processEvent(const sf::Event& event);
 
     // Internal
     void addWidgetUnderMouse(std::shared_ptr<Widget> widget);

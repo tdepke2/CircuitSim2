@@ -171,7 +171,7 @@ bool MultilineTextBox::handleMouseMove(const sf::Vector2f& mouseParent) {
             updateCaretPosition(offset, true);
         }
     }
-    return false;
+    return true;
 }
 bool MultilineTextBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     if (Widget::handleMouseWheelScroll(wheel, delta, mouseParent)) {
