@@ -254,7 +254,7 @@ bool Editor::handleTextEntered(uint32_t unicode) {
     unsigned char key = '\0';
     bool keyShift = false;
     if (unicode <= std::numeric_limits<unsigned char>::max()) {
-        key = std::toupper(static_cast<unsigned char>(unicode));
+        key = static_cast<unsigned char>(std::toupper(static_cast<unsigned char>(unicode)));
         keyShift = (unicode == key);
     }
 

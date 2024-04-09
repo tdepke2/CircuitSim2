@@ -67,6 +67,9 @@ std::shared_ptr<DialogBoxStyle> DefaultTheme::getDialogBoxStyle() const {
         style->setFillColor(sf::Color::White);
         style->setOutlineColor({140, 140, 140});
         style->setOutlineThickness(-2.0f);
+
+        style->setTitleBarFillColor({80, 80, 80});
+        style->setTitleBarHeight(20.0f);
     }
     return style;
 }

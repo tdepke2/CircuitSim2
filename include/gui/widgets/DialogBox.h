@@ -37,6 +37,20 @@ public:
     const sf::Color& getOutlineColor() const;
     float getOutlineThickness() const;
 
+    void setTitleBarTexture(const sf::Texture* texture, bool resetRect = false);
+    void setTitleBarTextureRect(const sf::IntRect& rect);
+    void setTitleBarFillColor(const sf::Color& color);
+    void setTitleBarOutlineColor(const sf::Color& color);
+    void setTitleBarOutlineThickness(float thickness);
+    const sf::Texture* getTitleBarTexture() const;
+    const sf::IntRect& getTitleBarTextureRect() const;
+    const sf::Color& getTitleBarFillColor() const;
+    const sf::Color& getTitleBarOutlineColor() const;
+    float getTitleBarOutlineThickness() const;
+
+    void setTitleBarHeight(float height);
+    float getTitleBarHeight() const;
+
     std::shared_ptr<DialogBoxStyle> clone() const;
 
 protected:
@@ -44,6 +58,10 @@ protected:
 
 private:
     sf::RectangleShape rect_;
+    sf::RectangleShape titleBar_;
+    float titleBarHeight_;
+    sf::Vector2f titlePadding_;    // FIXME not yet used.
+    sf::Vector2f buttonPadding_;
 
     friend class DialogBox;
 };
@@ -54,18 +72,28 @@ private:
  */
 class DialogBox : public Group {
 public:
+    enum class Alignment {
+        left, center, right
+    };
+
     static std::shared_ptr<DialogBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<DialogBox> create(std::shared_ptr<DialogBoxStyle> style, const sf::String& name = "");
     virtual ~DialogBox() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
     void setTitle(std::shared_ptr<Label> title);
-    void setSubmitButton(std::shared_ptr<Button> button);
-    void setCancelButton(std::shared_ptr<Button> button);
+    void setSubmitButton(/*size_t index, */std::shared_ptr<Button> button);    // FIXME: consider putting the buttons in a vector, we can set/get by index. still need to assert that only one submit and cancel button.
+    void setCancelButton(/*size_t index, */std::shared_ptr<Button> button);
+    //void setOptionButton(size_t index, std::shared_ptr<Button> button);    // FIXME: todo
+    //void setTitleAlignment(Alignment titleAlignment);
+    //void setButtonAlignment(Alignment buttonAlignment);
     const sf::Vector2f& getSize() const;
     std::shared_ptr<Label> getTitle() const;
     std::shared_ptr<Button> getSubmitButton() const;
     std::shared_ptr<Button> getCancelButton() const;
+    //std::shared_ptr<Button> getOptionButton(size_t index) const;    // FIXME: todo
+    //Alignment getTitleAlignment() const;
+    //Alignment getButtonAlignment() const;
 
     virtual void setVisible(bool visible) override;
 

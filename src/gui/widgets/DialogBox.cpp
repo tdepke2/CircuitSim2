@@ -57,6 +57,50 @@ float DialogBoxStyle::getOutlineThickness() const {
     return rect_.getOutlineThickness();
 }
 
+void DialogBoxStyle::setTitleBarTexture(const sf::Texture* texture, bool resetRect) {
+    titleBar_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
+}
+void DialogBoxStyle::setTitleBarTextureRect(const sf::IntRect& rect) {
+    titleBar_.setTextureRect(rect);
+    gui_.requestRedraw();
+}
+void DialogBoxStyle::setTitleBarFillColor(const sf::Color& color) {
+    titleBar_.setFillColor(color);
+    gui_.requestRedraw();
+}
+void DialogBoxStyle::setTitleBarOutlineColor(const sf::Color& color) {
+    titleBar_.setOutlineColor(color);
+    gui_.requestRedraw();
+}
+void DialogBoxStyle::setTitleBarOutlineThickness(float thickness) {
+    titleBar_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
+}
+const sf::Texture* DialogBoxStyle::getTitleBarTexture() const {
+    return titleBar_.getTexture();
+}
+const sf::IntRect& DialogBoxStyle::getTitleBarTextureRect() const {
+    return titleBar_.getTextureRect();
+}
+const sf::Color& DialogBoxStyle::getTitleBarFillColor() const {
+    return titleBar_.getFillColor();
+}
+const sf::Color& DialogBoxStyle::getTitleBarOutlineColor() const {
+    return titleBar_.getOutlineColor();
+}
+float DialogBoxStyle::getTitleBarOutlineThickness() const {
+    return titleBar_.getOutlineThickness();
+}
+
+void DialogBoxStyle::setTitleBarHeight(float height) {
+    titleBarHeight_ = height;
+    gui_.requestRedraw();
+}
+float DialogBoxStyle::getTitleBarHeight() const {
+    return titleBarHeight_;
+}
+
 std::shared_ptr<DialogBoxStyle> DialogBoxStyle::clone() const {
     return std::make_shared<DialogBoxStyle>(*this);
 }
@@ -184,6 +228,10 @@ void DialogBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 
     style_->rect_.setSize(size_);
     target.draw(style_->rect_, states);
+    float outlineThickness = style_->rect_.getOutlineThickness();
+    style_->titleBar_.setPosition(-outlineThickness, -outlineThickness);
+    style_->titleBar_.setSize({size_.x + outlineThickness * 2.0f, style_->titleBarHeight_});
+    target.draw(style_->titleBar_, states);
 
     for (const auto& child : getChildren()) {
         target.draw(*child, states);
