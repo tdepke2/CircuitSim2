@@ -159,6 +159,22 @@ void Widget::requestRedraw() const {
     }
 }
 
+sf::Vector2f Widget::toGuiSpace(sf::Vector2f point) const {
+    const Container* container = parent_;
+    while (container != nullptr) {
+        point = container->getTransform().transformPoint(point);
+        container = container->getParent();
+    }
+    return point;
+}
+
+sf::Vector2f Widget::fromGuiSpace(const sf::Vector2f& point) const {
+    if (parent_ == nullptr) {
+        return point;
+    }
+    return parent_->getInverseTransform().transformPoint(parent_->fromGuiSpace(point));
+}
+
 bool Widget::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return getLocalBounds().contains(toLocalOriginSpace(mouseParent));
 }
@@ -169,7 +185,7 @@ bool Widget::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float /*delta*/,
     return false;
 }
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mouseParent*/) {
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         setFocused(true);
     }
 }

@@ -5,6 +5,7 @@
 #include <gui/widgets/Label.h>
 #include <gui/widgets/TextBox.h>
 
+#include <limits>
 
 
 
@@ -97,8 +98,22 @@ void DialogBoxStyle::setTitleBarHeight(float height) {
     titleBarHeight_ = height;
     gui_.requestRedraw();
 }
+void DialogBoxStyle::setTitlePadding(const sf::Vector2f& titlePadding) {
+    titlePadding_ = titlePadding;
+    gui_.requestRedraw();
+}
+void DialogBoxStyle::setButtonPadding(const sf::Vector2f& buttonPadding) {
+    buttonPadding_ = buttonPadding;
+    gui_.requestRedraw();
+}
 float DialogBoxStyle::getTitleBarHeight() const {
     return titleBarHeight_;
+}
+const sf::Vector2f& DialogBoxStyle::getTitlePadding() const {
+    return titlePadding_;
+}
+const sf::Vector2f& DialogBoxStyle::getButtonPadding() const {
+    return buttonPadding_;
 }
 
 std::shared_ptr<DialogBoxStyle> DialogBoxStyle::clone() const {
@@ -116,37 +131,87 @@ std::shared_ptr<DialogBox> DialogBox::create(std::shared_ptr<DialogBoxStyle> sty
 
 void DialogBox::setSize(const sf::Vector2f& size) {
     size_ = size;
+    updateTitle();
+    updateButtons();
     requestRedraw();
+}
+void DialogBox::setDraggable(bool draggable) {
+    draggable_ = draggable;
 }
 void DialogBox::setTitle(std::shared_ptr<Label> title) {
     if (!hasChild(title)) {
         addChild(title);
     }
     title_ = title;
+    updateTitle();
 }
-void DialogBox::setSubmitButton(std::shared_ptr<Button> button) {
-    if (!hasChild(button)) {
-        addChild(button);
-    }
-    submitButton_ = button;
+void DialogBox::setSubmitButton(size_t index, std::shared_ptr<Button> button) {
+    setOptionButton(index, button);
+    submitIndex_ = (button != nullptr ? index : std::numeric_limits<size_t>::max());
 }
-void DialogBox::setCancelButton(std::shared_ptr<Button> button) {
-    if (!hasChild(button)) {
-        addChild(button);
+void DialogBox::setCancelButton(size_t index, std::shared_ptr<Button> button) {
+    setOptionButton(index, button);
+    cancelIndex_ = (button != nullptr ? index : std::numeric_limits<size_t>::max());
+}
+void DialogBox::setOptionButton(size_t index, std::shared_ptr<Button> button) {
+    if (button != nullptr) {
+        if (!hasChild(button)) {
+            addChild(button);
+        }
+        if (index >= optionButtons_.size()) {
+            optionButtons_.resize(index + 1);
+        }
+        optionButtons_[index] = button;
+    } else if (index < optionButtons_.size()) {
+        removeChild(optionButtons_[index]);
+        optionButtons_[index] = nullptr;
+        bool foundButton = false;
+        for (size_t i = index; i < optionButtons_.size(); ++i) {
+            if (optionButtons_[i] != nullptr) {
+                foundButton = true;
+                break;
+            }
+        }
+        if (!foundButton) {
+            optionButtons_.resize(index);
+        }
     }
-    cancelButton_ = button;
+    updateButtons();
+}
+void DialogBox::setTitleAlignment(Alignment titleAlignment) {
+    titleAlignment_ = titleAlignment;
+    updateTitle();
+}
+void DialogBox::setButtonAlignment(Alignment buttonAlignment) {
+    buttonAlignment_ = buttonAlignment;
+    updateButtons();
 }
 const sf::Vector2f& DialogBox::getSize() const {
     return size_;
+}
+bool DialogBox::isDraggable() const {
+    return draggable_;
 }
 std::shared_ptr<Label> DialogBox::getTitle() const {
     return title_;
 }
 std::shared_ptr<Button> DialogBox::getSubmitButton() const {
-    return submitButton_;
+    return getOptionButton(submitIndex_);
 }
 std::shared_ptr<Button> DialogBox::getCancelButton() const {
-    return cancelButton_;
+    return getOptionButton(cancelIndex_);
+}
+std::shared_ptr<Button> DialogBox::getOptionButton(size_t index) const {
+    if (index < optionButtons_.size()) {
+        return optionButtons_[index];
+    }
+    return nullptr;
+}
+DialogBox::Alignment DialogBox::getTitleAlignment() const {
+    return titleAlignment_;
+}
+DialogBox::Alignment DialogBox::getButtonAlignment() const {
+    return buttonAlignment_;
 }
 
 void DialogBox::setVisible(bool visible) {
@@ -175,15 +240,52 @@ sf::FloatRect DialogBox::getLocalBounds() const {
 bool DialogBox::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return Widget::isMouseIntersecting(mouseParent);
 }
+
+bool DialogBox::handleMouseMove(const sf::Vector2f& mouseParent) {
+    if (Group::handleMouseMove(mouseParent)) {
+        return true;
+    }
+
+    if (dragPoint_.second) {
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            // Clamp the mouse position to the window area.
+            sf::Vector2f mouseAbsolute = toGuiSpace(mouseParent);
+            mouseAbsolute.x = std::min(std::max(mouseAbsolute.x, 0.0f), static_cast<float>(getGui()->getSize().x));
+            mouseAbsolute.y = std::min(std::max(mouseAbsolute.y, 0.0f), static_cast<float>(getGui()->getSize().y));
+
+            setPosition(fromGuiSpace(mouseAbsolute) - dragPoint_.first + initialPosition_);
+        } else {
+            dragPoint_.second = false;
+        }
+    }
+
+    return isFocused();
+}
+void DialogBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    Group::handleMousePress(button, mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
+    if (button == sf::Mouse::Left && draggable_ && mouseLocal.y <= style_->titleBarHeight_ - style_->rect_.getOutlineThickness()) {
+        dragPoint_ = {mouseParent, true};
+        initialPosition_ = getPosition();
+    }
+}
+void DialogBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    if (button == sf::Mouse::Left) {
+        dragPoint_.second = false;
+    }
+    Group::handleMouseRelease(button, mouseParent);
+}
 bool DialogBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
-    bool eventConsumed = Widget::handleKeyPressed(key);
+    bool eventConsumed = Group::handleKeyPressed(key);
     if (key.code == sf::Keyboard::Enter) {
-        if (submitButton_ != nullptr) {
-            submitButton_->onClick.emit(submitButton_.get(), sf::Vector2f(0.0f, 0.0f));
+        const auto& submitButton = getSubmitButton();
+        if (submitButton != nullptr) {
+            submitButton->onClick.emit(submitButton.get(), sf::Vector2f(0.0f, 0.0f));
         }
     } else if (key.code == sf::Keyboard::Escape) {
-        if (cancelButton_ != nullptr) {
-            cancelButton_->onClick.emit(cancelButton_.get(), sf::Vector2f(0.0f, 0.0f));
+        const auto& cancelButton = getCancelButton();
+        if (cancelButton != nullptr) {
+            cancelButton->onClick.emit(cancelButton.get(), sf::Vector2f(0.0f, 0.0f));
         }
         return eventConsumed;    // Do not consume escape event.
     } else if (key.code == sf::Keyboard::Tab) {
@@ -197,7 +299,55 @@ bool DialogBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
 DialogBox::DialogBox(std::shared_ptr<DialogBoxStyle> style, const sf::String& name) :
     Group(name),
     style_(style),
-    styleCopied_(false) {
+    styleCopied_(false),
+    draggable_(true),
+    dragPoint_({0.0f, 0.0f}, false),
+    submitIndex_(std::numeric_limits<size_t>::max()),
+    cancelIndex_(std::numeric_limits<size_t>::max()),
+    titleAlignment_(Alignment::center),
+    buttonAlignment_(Alignment::right) {
+}
+
+void DialogBox::updateTitle() {
+    if (title_ == nullptr) {
+        return;
+    }
+    if (titleAlignment_ == Alignment::left) {
+        title_->setPosition(style_->titlePadding_.x, style_->titlePadding_.y);
+    } else if (titleAlignment_ == Alignment::center) {
+        title_->setPosition(size_.x / 2.0f - title_->getSize().x / 2.0f, style_->titlePadding_.y);
+    } else if (titleAlignment_ == Alignment::right) {
+        title_->setPosition(size_.x - title_->getSize().x - style_->titlePadding_.x, style_->titlePadding_.y);
+    }
+}
+
+void DialogBox::updateButtons() {
+    std::cout << "DialogBox::updateButtons() called with " << optionButtons_.size() << " buttons.\n";
+    if (optionButtons_.empty()) {
+        return;
+    }
+    float totalButtonsLength = -style_->buttonPadding_.x;
+    for (const auto& button : optionButtons_) {
+        if (button != nullptr) {
+            totalButtonsLength += button->getSize().x + style_->buttonPadding_.x;
+        }
+    }
+
+    float currentPos = 0.0f;
+    if (buttonAlignment_ == Alignment::left) {
+        currentPos = style_->buttonPadding_.x;
+    } else if (buttonAlignment_ == Alignment::center) {
+        currentPos = size_.x / 2.0f - totalButtonsLength / 2.0f;
+    } else if (buttonAlignment_ == Alignment::right) {
+        currentPos = size_.x - totalButtonsLength - style_->buttonPadding_.x;
+    }
+
+    for (const auto& button : optionButtons_) {
+        if (button != nullptr) {
+            button->setPosition(currentPos, size_.y - button->getSize().y - style_->buttonPadding_.y);
+            currentPos += button->getSize().x + style_->buttonPadding_.x;
+        }
+    }
 }
 
 void DialogBox::focusNextTextBox() {

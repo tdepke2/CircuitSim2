@@ -219,7 +219,7 @@ sf::FloatRect TextBox::getLocalBounds() const {
 void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         onClick.emit(this, mouseLocal);
     }
     onMousePress.emit(this, button, mouseLocal);

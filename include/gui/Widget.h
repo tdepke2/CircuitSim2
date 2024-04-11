@@ -84,6 +84,9 @@ public:
     sf::Vector2f toLocalOriginSpace(const sf::Vector2f& point) const {
         return getInverseTransform().transformPoint(point) - getOrigin();
     }
+    // Converts a point (in parent space) into the `Gui`s coordinate system.
+    sf::Vector2f toGuiSpace(sf::Vector2f point) const;
+    sf::Vector2f fromGuiSpace(const sf::Vector2f& point) const;
 
     // Get the bounding rectangle in local space, based on the origin and size of the `Widget`.
     virtual sf::FloatRect getLocalBounds() const = 0;

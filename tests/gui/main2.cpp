@@ -326,19 +326,19 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto dialogTestLabel = gui::Label::create(theme);
     connectDebugSignals(dialogTestLabel.get(), "dialogTestLabel");
     dialogTestLabel->setLabel("Name:");
-    dialogTestLabel->setPosition(10.0f, 10.0f);
+    dialogTestLabel->setPosition(10.0f, 20.0f);
     dialogTest->addChild(dialogTestLabel);
 
     auto dialogTestTextBox = gui::TextBox::create(theme);
     connectDebugSignals(dialogTestTextBox.get(), "dialogTestTextBox");
     dialogTestTextBox->setWidthCharacters(8);
-    dialogTestTextBox->setPosition(100.0f, 10.0f);
+    dialogTestTextBox->setPosition(100.0f, 20.0f);
     dialogTest->addChild(dialogTestTextBox);
 
     auto dialogTestTextBox2 = gui::TextBox::create(theme);
     connectDebugSignals(dialogTestTextBox2.get(), "dialogTestTextBox2");
     dialogTestTextBox2->setWidthCharacters(8);
-    dialogTestTextBox2->setPosition(100.0f, 30.0f);
+    dialogTestTextBox2->setPosition(100.0f, 40.0f);
     dialogTest->addChild(dialogTestTextBox2);
 
     auto dialogTestCancel = gui::Button::create(theme);
@@ -347,8 +347,9 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     dialogTestCancel->setPosition(10.0f, 60.0f);
     dialogTestCancel->onClick.connect([=]() {
         std::cout << "Dialog cancelled!\n";
+        dialogTest->setSize(dialogTest->getSize() - sf::Vector2f(100.0f, 70.0f));
     });
-    dialogTest->setCancelButton(dialogTestCancel);
+    dialogTest->setCancelButton(0, dialogTestCancel);
 
     auto dialogTestSubmit = gui::Button::create(theme);
     connectDebugSignals(dialogTestSubmit.get(), "dialogTestSubmit");
@@ -356,14 +357,35 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     dialogTestSubmit->setPosition(100.0f, 60.0f);
     dialogTestSubmit->onClick.connect([=]() {
         std::cout << "Dialog submitted!\n";
+        dialogTest->setSize(dialogTest->getSize() + sf::Vector2f(100.0f, 70.0f));
     });
-    dialogTest->setSubmitButton(dialogTestSubmit);
+    dialogTest->setSubmitButton(1, dialogTestSubmit);
 
-    auto dialogTestTextBox3 = gui::MultilineTextBox::create(theme);
-    connectDebugSignals(dialogTestTextBox3.get(), "dialogTestTextBox3");
-    dialogTestTextBox3->setSizeCharacters({10, 5});
-    dialogTestTextBox3->setPosition(100.0f, 90.0f);
-    dialogTest->addChild(dialogTestTextBox3);
+    const std::string alignmentToString[3] = {
+        "left",
+        "center",
+        "right"
+    };
+
+    auto dialogTitleAlignment = gui::Button::create(theme);
+    connectDebugSignals(dialogTitleAlignment.get(), "dialogTitleAlignment");
+    dialogTitleAlignment->setLabel("Title: " + alignmentToString[static_cast<int>(dialogTest->getTitleAlignment())]);
+    dialogTitleAlignment->setPosition(10.0f, 10.0f);
+    dialogTitleAlignment->onClick.connect([=]() {
+        dialogTest->setTitleAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTest->getTitleAlignment()) + 1) % 3));
+        dialogTitleAlignment->setLabel("Title: " + alignmentToString[static_cast<int>(dialogTest->getTitleAlignment())]);
+    });
+    myGui.addChild(dialogTitleAlignment);
+
+    auto dialogButtonAlignment = gui::Button::create(theme);
+    connectDebugSignals(dialogButtonAlignment.get(), "dialogButtonAlignment");
+    dialogButtonAlignment->setLabel("Buttons: " + alignmentToString[static_cast<int>(dialogTest->getButtonAlignment())]);
+    dialogButtonAlignment->setPosition(10.0f, 40.0f);
+    dialogButtonAlignment->onClick.connect([=]() {
+        dialogTest->setButtonAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTest->getButtonAlignment()) + 1) % 3));
+        dialogButtonAlignment->setLabel("Buttons: " + alignmentToString[static_cast<int>(dialogTest->getButtonAlignment())]);
+    });
+    myGui.addChild(dialogButtonAlignment);
 
     // Trigger focus on the text box.
     dialogTest->setVisible(true);

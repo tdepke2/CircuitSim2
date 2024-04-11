@@ -55,7 +55,7 @@ bool Gui::processEvent(const sf::Event& event) {
         if (widget != nullptr && widget->isEnabled()) {
             widget->handleMousePress(event.mouseButton.button, mouseGlobal);
             eventConsumed = true;
-        } else if (event.mouseButton.button <= sf::Mouse::Button::Middle) {
+        } else if (event.mouseButton.button <= sf::Mouse::Middle) {
             requestWidgetFocus(nullptr);
         }
     } else if (event.type == sf::Event::MouseButtonReleased) {

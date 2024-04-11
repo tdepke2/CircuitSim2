@@ -163,7 +163,7 @@ std::shared_ptr<RadioButtonStyle> RadioButton::getStyle() {
 void RadioButton::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         setChecked(true);
         onClick.emit(this, mouseLocal);
     }

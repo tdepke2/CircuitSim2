@@ -141,7 +141,7 @@ std::shared_ptr<CheckBoxStyle> CheckBox::getStyle() {
 void CheckBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         Button::setPressed(!Button::isPressed());
         onClick.emit(this, mouseLocal);
     }

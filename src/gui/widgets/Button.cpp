@@ -177,14 +177,14 @@ sf::FloatRect Button::getLocalBounds() const {
 void Button::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         setPressed(true);
         onClick.emit(this, mouseLocal);
     }
     onMousePress.emit(this, button, mouseLocal);
 }
 void Button::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         setPressed(false);
     }
     onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));

@@ -70,6 +70,8 @@ std::shared_ptr<DialogBoxStyle> DefaultTheme::getDialogBoxStyle() const {
 
         style->setTitleBarFillColor({80, 80, 80});
         style->setTitleBarHeight(20.0f);
+        style->setTitlePadding({0.0f, 0.0f});
+        style->setButtonPadding({10.0f, 10.0f});
     }
     return style;
 }

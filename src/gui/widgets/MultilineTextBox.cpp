@@ -187,7 +187,7 @@ void MultilineTextBox::handleMousePress(sf::Mouse::Button button, const sf::Vect
     if (button == sf::Mouse::Left) {
         updateCaretPosition(findClosestOffsetToMouse(mouseLocal), false);
     }
-    if (button <= sf::Mouse::Button::Middle) {
+    if (button <= sf::Mouse::Middle) {
         onClick.emit(this, mouseLocal);
     }
     onMousePress.emit(this, button, mouseLocal);

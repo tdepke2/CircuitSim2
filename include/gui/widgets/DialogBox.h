@@ -4,6 +4,8 @@
 
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <utility>
+#include <vector>
 
 namespace gui {
     class Button;
@@ -49,7 +51,11 @@ public:
     float getTitleBarOutlineThickness() const;
 
     void setTitleBarHeight(float height);
+    void setTitlePadding(const sf::Vector2f& titlePadding);
+    void setButtonPadding(const sf::Vector2f& buttonPadding);
     float getTitleBarHeight() const;
+    const sf::Vector2f& getTitlePadding() const;
+    const sf::Vector2f& getButtonPadding() const;
 
     std::shared_ptr<DialogBoxStyle> clone() const;
 
@@ -60,7 +66,7 @@ private:
     sf::RectangleShape rect_;
     sf::RectangleShape titleBar_;
     float titleBarHeight_;
-    sf::Vector2f titlePadding_;    // FIXME not yet used.
+    sf::Vector2f titlePadding_;
     sf::Vector2f buttonPadding_;
 
     friend class DialogBox;
@@ -69,6 +75,7 @@ private:
 
 /**
  * FIXME
+ * The dialog box responds to the Enter and Escape keys to submit/cancel respectively. Pressing Tab will cycle through all `TextBox` widgets in the dialog.
  */
 class DialogBox : public Group {
 public:
@@ -81,19 +88,21 @@ public:
     virtual ~DialogBox() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
+    void setDraggable(bool draggable);
     void setTitle(std::shared_ptr<Label> title);
-    void setSubmitButton(/*size_t index, */std::shared_ptr<Button> button);    // FIXME: consider putting the buttons in a vector, we can set/get by index. still need to assert that only one submit and cancel button.
-    void setCancelButton(/*size_t index, */std::shared_ptr<Button> button);
-    //void setOptionButton(size_t index, std::shared_ptr<Button> button);    // FIXME: todo
-    //void setTitleAlignment(Alignment titleAlignment);
-    //void setButtonAlignment(Alignment buttonAlignment);
+    void setSubmitButton(size_t index, std::shared_ptr<Button> button);
+    void setCancelButton(size_t index, std::shared_ptr<Button> button);
+    void setOptionButton(size_t index, std::shared_ptr<Button> button);
+    void setTitleAlignment(Alignment titleAlignment);
+    void setButtonAlignment(Alignment buttonAlignment);
     const sf::Vector2f& getSize() const;
+    bool isDraggable() const;
     std::shared_ptr<Label> getTitle() const;
     std::shared_ptr<Button> getSubmitButton() const;
     std::shared_ptr<Button> getCancelButton() const;
-    //std::shared_ptr<Button> getOptionButton(size_t index) const;    // FIXME: todo
-    //Alignment getTitleAlignment() const;
-    //Alignment getButtonAlignment() const;
+    std::shared_ptr<Button> getOptionButton(size_t index) const;
+    Alignment getTitleAlignment() const;
+    Alignment getButtonAlignment() const;
 
     virtual void setVisible(bool visible) override;
 
@@ -104,21 +113,31 @@ public:
 
     virtual sf::FloatRect getLocalBounds() const override;
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
+
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
 
 protected:
     DialogBox(std::shared_ptr<DialogBoxStyle> style, const sf::String& name);
 
 private:
+    void updateTitle();
+    void updateButtons();
     void focusNextTextBox();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<DialogBoxStyle> style_;
     bool styleCopied_;
     sf::Vector2f size_;
+    bool draggable_;
+    std::pair<sf::Vector2f, bool> dragPoint_;
+    sf::Vector2f initialPosition_;
     std::shared_ptr<Label> title_;
-    std::shared_ptr<Button> submitButton_;
-    std::shared_ptr<Button> cancelButton_;
+    std::vector<std::shared_ptr<Button>> optionButtons_;
+    size_t submitIndex_, cancelIndex_;
+    Alignment titleAlignment_, buttonAlignment_;
 };
 
 } // namespace gui
