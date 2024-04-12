@@ -54,7 +54,7 @@ private:
 
 
 /**
- * Basic text which can be used to label other widgets on the `Gui`.
+ * Basic text which can be used to label other widgets in the `Gui`.
  */
 class Label : public Widget {
 public:

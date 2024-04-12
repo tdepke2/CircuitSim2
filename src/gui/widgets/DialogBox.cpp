@@ -3,6 +3,7 @@
 #include <gui/widgets/Button.h>
 #include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Label.h>
+#include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/TextBox.h>
 
 #include <limits>
@@ -365,6 +366,12 @@ void DialogBox::focusNextTextBox() {
         const auto textBox = dynamic_cast<TextBox*>(getChild(offsetIndex).get());
         if (textBox != nullptr) {
             textBox->setFocused(true);
+            break;
+        }
+        const auto multilineTextBox = dynamic_cast<MultilineTextBox*>(getChild(offsetIndex).get());
+        if (multilineTextBox != nullptr) {
+            multilineTextBox->setFocused(true);
+            multilineTextBox->selectAll();
             break;
         }
     }

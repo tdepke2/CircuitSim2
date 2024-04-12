@@ -38,23 +38,38 @@ private:
 };
 
 
+/**
+ * An editable text box for large areas. Supports selections with mouse and
+ * arrow keys, copy/paste, and scrolling. A character limit can be set and
+ * editing disabled if needed.
+ */
 class MultilineTextBox : public Widget {
 public:
+    enum class TabPolicy {
+        expandTab, ignoreTab
+    };
+
     static std::shared_ptr<MultilineTextBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name = "");
     virtual ~MultilineTextBox() noexcept = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
     void setMaxCharacters(size_t maxCharacters);
+    void setMaxLines(size_t maxLines);
     void setReadOnly(bool readOnly);
+    void setTabPolicy(TabPolicy tabPolicy);
     void setText(const sf::String& text);
     void setDefaultText(const sf::String& text);
     const sf::Vector2f& getSize() const;
     const sf::Vector2<size_t>& getSizeCharacters() const;
     size_t getMaxCharacters() const;
+    size_t getMaxLines() const;
     bool getReadOnly() const;
+    TabPolicy getTabPolicy() const;
     sf::String getText() const;
     sf::String getDefaultText() const;
+    void selectAll();
+    void deselectAll();
 
     void setStyle(std::shared_ptr<MultilineTextBoxStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
@@ -72,12 +87,13 @@ public:
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
     Signal<Widget*, const sf::Vector2f&> onClick;
+    Signal<Widget*, size_t> onTextChange;
 
 protected:
     MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name);
 
 private:
-    void insertCharacter(uint32_t unicode);
+    bool insertCharacter(uint32_t unicode, bool suppressSignals = false);
     // Internal. Should always be used to set the caret position as this updates the draw position as well.
     void updateCaretPosition(const sf::Vector2<size_t>& caretPosition, bool continueSelection);
     void updateCaretPosition(size_t caretOffset, bool continueSelection);
@@ -91,8 +107,9 @@ private:
     bool styleCopied_;
 
     sf::Vector2<size_t> sizeCharacters_;
-    size_t maxCharacters_;
+    size_t maxCharacters_, maxLines_;
     bool readOnly_;
+    TabPolicy tabPolicy_;
     sf::Vector2f size_;
     std::vector<sf::String> boxStrings_, defaultStrings_;
     sf::String visibleString_;

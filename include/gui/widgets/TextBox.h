@@ -49,12 +49,12 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
-    void setDisabledFillColor(const sf::Color& color);
+    void setReadOnlyFillColor(const sf::Color& color);
     void setDefaultTextFillColor(const sf::Color& color);
     void setCaretSize(const sf::Vector2f& size);
     void setCaretFillColor(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
-    const sf::Color& getDisabledFillColor() const;
+    const sf::Color& getReadOnlyFillColor() const;
     const sf::Color& getDefaultTextFillColor() const;
     const sf::Vector2f& getCaretSize() const;
     const sf::Color& getCaretFillColor() const;
@@ -68,7 +68,7 @@ protected:
 private:
     sf::RectangleShape box_, caret_;
     sf::Text text_;
-    sf::Color boxColor_, disabledBoxColor_;
+    sf::Color boxColor_, readOnlyBoxColor_;
     sf::Color textColor_, defaultTextColor_;
     sf::Vector3f textPadding_;
 
@@ -78,9 +78,9 @@ private:
 
 
 /**
- * An editable text box. Right now only a single line of text can be input. A
- * limit on the number of characters can be set and editing can be disabled if
- * needed.
+ * A simple editable text box. Only a single line of text can be input, see the
+ * `MultilineTextBox` for multiple lines and selection support. A limit on the
+ * number of characters can be set and editing can be disabled if needed.
  */
 class TextBox : public Widget {
 public:
@@ -114,6 +114,7 @@ public:
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
     Signal<Widget*, const sf::Vector2f&> onClick;
+    Signal<Widget*, const sf::String&> onTextChange;
     Signal<Widget*, const sf::String&> onEnterPressed;
 
 protected:

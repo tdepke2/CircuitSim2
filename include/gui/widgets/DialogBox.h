@@ -11,7 +11,6 @@ namespace gui {
     class Button;
     class Gui;
     class Label;
-    class TextBox;
     class Theme;
 }
 
@@ -74,8 +73,10 @@ private:
 
 
 /**
- * FIXME
- * The dialog box responds to the Enter and Escape keys to submit/cancel respectively. Pressing Tab will cycle through all `TextBox` widgets in the dialog.
+ * A draggable window with a title bar and some option buttons. The dialog box
+ * responds to the Enter and Escape keys to trigger the submit/cancel buttons
+ * respectively. Pressing Tab will cycle through all `TextBox` widgets in the
+ * dialog.
  */
 class DialogBox : public Group {
 public:

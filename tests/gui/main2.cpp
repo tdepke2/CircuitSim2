@@ -47,6 +47,14 @@ void click(gui::Widget* w, const sf::Vector2f& pos) {
     std::cout << "  onClick(\t\t" << w << " " << widgetNames[w] << ", \t\t("
     << pos.x << ", " << pos.y << "))\n";
 }
+void textChange1(gui::Widget* w, const sf::String& text) {
+    std::cout << "  onTextChange(\t" << w << " " << widgetNames[w] << ", \t\""
+    << text.toAnsiString() << "\")\n";
+}
+void textChange2(gui::Widget* w, size_t textLength) {
+    std::cout << "  onTextChange(\t" << w << " " << widgetNames[w] << ", \t"
+    << textLength << ")\n";
+}
 void enterPressed(gui::Widget* w, const sf::String& text) {
     std::cout << "  onEnterPressed(\t" << w << " " << widgetNames[w] << ", \t\""
     << text.toAnsiString() << "\")\n";
@@ -86,6 +94,7 @@ void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
     textBox->onMousePress.connect(mousePress);
     textBox->onMouseRelease.connect(mouseRelease);
     textBox->onClick.connect(click);
+    textBox->onTextChange.connect(textChange1);
     textBox->onEnterPressed.connect(enterPressed);
 }
 void connectDebugSignals(gui::MultilineTextBox* multilineTextBox, const std::string& name) {
@@ -93,6 +102,7 @@ void connectDebugSignals(gui::MultilineTextBox* multilineTextBox, const std::str
     multilineTextBox->onMousePress.connect(mousePress);
     multilineTextBox->onMouseRelease.connect(mouseRelease);
     multilineTextBox->onClick.connect(click);
+    multilineTextBox->onTextChange.connect(textChange2);
 }
 void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(menuBar), name);
@@ -335,9 +345,11 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     dialogTestTextBox->setPosition(100.0f, 20.0f);
     dialogTest->addChild(dialogTestTextBox);
 
-    auto dialogTestTextBox2 = gui::TextBox::create(theme);
+    auto dialogTestTextBox2 = gui::MultilineTextBox::create(theme);
     connectDebugSignals(dialogTestTextBox2.get(), "dialogTestTextBox2");
-    dialogTestTextBox2->setWidthCharacters(8);
+    dialogTestTextBox2->setSizeCharacters({8, 1});
+    dialogTestTextBox2->setMaxLines(1);
+    dialogTestTextBox2->setTabPolicy(gui::MultilineTextBox::TabPolicy::ignoreTab);
     dialogTestTextBox2->setPosition(100.0f, 40.0f);
     dialogTest->addChild(dialogTestTextBox2);
 
@@ -444,6 +456,23 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     //multilineBox->setOrigin(-40.0f, -90.0f);
     //multilineBox->setRotation(2.0f);
     myGui.addChild(multilineBox);
+
+    auto multilineBox2 = gui::MultilineTextBox::create(theme);
+    connectDebugSignals(multilineBox2.get(), "multilineBox2");
+    multilineBox2->setSizeCharacters({16, 3});
+    multilineBox2->setMaxLines(3);
+    multilineBox2->setDefaultText("Here is some default\ntext, this box\nhas max of 3 lines\nin it.");
+    multilineBox2->setPosition(200.0f, 130.0f);
+    myGui.addChild(multilineBox2);
+
+    auto readOnlyCheckBox = gui::CheckBox::create(theme);
+    connectDebugSignals(readOnlyCheckBox.get(), "readOnlyCheckBox");
+    readOnlyCheckBox->setLabel("Read Only");
+    readOnlyCheckBox->setPosition(multilineBox2->getPosition() + sf::Vector2f(0.0f, multilineBox2->getSize().y + 15.0f));
+    readOnlyCheckBox->onClick.connect([=]() {
+        multilineBox2->setReadOnly(readOnlyCheckBox->isChecked());
+    });
+    myGui.addChild(readOnlyCheckBox);
 }
 
 void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {

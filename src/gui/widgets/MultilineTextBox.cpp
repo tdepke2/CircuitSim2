@@ -110,13 +110,20 @@ void MultilineTextBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacte
 void MultilineTextBox::setMaxCharacters(size_t maxCharacters) {
     maxCharacters_ = maxCharacters;
 }
+void MultilineTextBox::setMaxLines(size_t maxLines) {
+    maxLines_ = maxLines;
+}
 void MultilineTextBox::setReadOnly(bool readOnly) {
     readOnly_ = readOnly;
     requestRedraw();
 }
+void MultilineTextBox::setTabPolicy(TabPolicy tabPolicy) {
+    tabPolicy_ = tabPolicy;
+}
 void MultilineTextBox::setText(const sf::String& text) {
     boxStrings_ = splitString(text);
     updateCaretPosition(0, false);
+    onTextChange.emit(this, findStringsLength(boxStrings_));
 }
 void MultilineTextBox::setDefaultText(const sf::String& text) {
     defaultStrings_ = splitString(text);
@@ -131,14 +138,27 @@ const sf::Vector2<size_t>& MultilineTextBox::getSizeCharacters() const {
 size_t MultilineTextBox::getMaxCharacters() const {
     return maxCharacters_;
 }
+size_t MultilineTextBox::getMaxLines() const {
+    return maxLines_;
+}
 bool MultilineTextBox::getReadOnly() const {
     return readOnly_;
+}
+MultilineTextBox::TabPolicy MultilineTextBox::getTabPolicy() const {
+    return tabPolicy_;
 }
 sf::String MultilineTextBox::getText() const {
     return combineStrings(boxStrings_);
 }
 sf::String MultilineTextBox::getDefaultText() const {
     return combineStrings(defaultStrings_);
+}
+void MultilineTextBox::selectAll() {
+    updateCaretPosition(0, false);
+    updateCaretPosition(findStringsLength(boxStrings_), true);
+}
+void MultilineTextBox::deselectAll() {
+    updateCaretPosition(0, false);
 }
 
 void MultilineTextBox::setStyle(std::shared_ptr<MultilineTextBoxStyle> style) {
@@ -198,7 +218,7 @@ void MultilineTextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Ve
 }
 bool MultilineTextBox::handleTextEntered(uint32_t unicode) {
     bool eventConsumed = Widget::handleTextEntered(unicode);
-    if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
+    if (unicode >= '\u0020' && unicode != '\u007f') {    // Printable character.
         insertCharacter(unicode);
         return true;
     }
@@ -280,8 +300,12 @@ bool MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
                 sf::Clipboard::setString(getSelectedText());
             }
         } else if (key.code == sf::Keyboard::V) {
+            bool textChanged = false;
             for (auto c : sf::Clipboard::getString()) {
-                insertCharacter(c);
+                textChanged = insertCharacter(c, true) || textChanged;
+            }
+            if (textChanged) {
+                onTextChange.emit(this, findStringsLength(boxStrings_));
             }
         } else {
             return eventConsumed;
@@ -290,10 +314,15 @@ bool MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
 
     if (key.code == sf::Keyboard::Enter) {
-        insertCharacter('\u000a');
+        if (maxLines_ == 1 || !insertCharacter('\u000a')) {
+            return eventConsumed;
+        }
     } else if (key.code == sf::Keyboard::Backspace) {
         insertCharacter('\u0008');
     } else if (key.code == sf::Keyboard::Tab) {
+        if (tabPolicy_ == TabPolicy::ignoreTab) {
+            return eventConsumed;
+        }
         insertCharacter('\u0009');
     } else if (key.code == sf::Keyboard::Delete) {
         insertCharacter('\u007f');
@@ -341,20 +370,28 @@ MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style,
     styleCopied_(false),
     sizeCharacters_(0, 0),
     maxCharacters_(0),
+    maxLines_(0),
     readOnly_(false),
+    tabPolicy_(TabPolicy::expandTab),
+    size_(0.0f, 0.0f),
     boxStrings_{""},
     defaultStrings_{""},
-    scroll_(0, 0) {
+    visibleString_(""),
+    scroll_(0, 0),
+    caretPosition_(),
+    caretDrawPosition_(),
+    selectionLines_(),
+    selectionStart_({0, 0}, false),
+    selectionEnd_(0, 0) {
 
     updateCaretPosition(0, false);
 }
 
-void MultilineTextBox::insertCharacter(uint32_t unicode) {
+bool MultilineTextBox::insertCharacter(uint32_t unicode, bool suppressSignals) {
     if (readOnly_) {
-        return;
+        return false;
     }
-    size_t caretOffset = findCaretOffset(caretPosition_);
-    bool clearedSelection = false;
+    bool textChanged = false, clearedSelection = false;
     if (selectionStart_.second) {
         auto selection = sortByYFirst(selectionStart_.first, selectionEnd_);
         for (size_t y = selection.first.y; y <= selection.second.y; ++y) {
@@ -372,21 +409,19 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
             }
         }
         if (selectionStart_.first != selectionEnd_) {
+            textChanged = true;
             clearedSelection = true;
         }
         updateCaretPosition(selection.first, false);
     }
+    size_t caretOffset = findCaretOffset(caretPosition_);
 
-    if (unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
-        if (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) {
-            boxStrings_[caretPosition_.y].insert(caretPosition_.x, sf::String(unicode));
-            updateCaretPosition(findCaretOffset(caretPosition_) + 1, false);
-        }
-    } else if (unicode == '\u000a') {    // Enter key.
-        if (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) {
+    if (unicode == '\u000a') {    // Enter key.
+        if ((maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) && (maxLines_ == 0 || boxStrings_.size() < maxLines_)) {
             boxStrings_.emplace(boxStrings_.begin() + caretPosition_.y + 1, boxStrings_[caretPosition_.y].substring(caretPosition_.x));
             boxStrings_[caretPosition_.y] = boxStrings_[caretPosition_.y].substring(0, caretPosition_.x);
             updateCaretPosition(caretOffset + 1, false);
+            textChanged = true;
         }
     } else if (unicode == '\u0008') {    // Backspace key.
         if (!clearedSelection && caretOffset > 0) {
@@ -400,11 +435,12 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
                 --scroll_.x;
             }
             updateCaretPosition(caretOffset - 1, false);
+            textChanged = true;
         }
     } else if (unicode == '\u0009') {    // Tab key.
         size_t count = 4 - caretPosition_.x % 4;
         for (size_t i = 0; i < count; ++i) {
-            insertCharacter(' ');
+            textChanged = insertCharacter(' ', true) || textChanged;
         }
     } else if (unicode == '\u007f') {    // Delete key.
         if (!clearedSelection && caretOffset < findStringsLength(boxStrings_)) {
@@ -418,8 +454,19 @@ void MultilineTextBox::insertCharacter(uint32_t unicode) {
                 --scroll_.x;
             }
             updateCaretPosition(caretPosition_, false);
+            textChanged = true;
+        }
+    } else {    // Printable character.
+        if (maxCharacters_ == 0 || findStringsLength(boxStrings_) < maxCharacters_) {
+            boxStrings_[caretPosition_.y].insert(caretPosition_.x, sf::String(unicode));
+            updateCaretPosition(caretOffset + 1, false);
+            textChanged = true;
         }
     }
+    if (textChanged && !suppressSignals) {
+        onTextChange.emit(this, findStringsLength(boxStrings_));
+    }
+    return textChanged;
 }
 
 void MultilineTextBox::updateCaretPosition(const sf::Vector2<size_t>& caretPosition, bool continueSelection) {
@@ -650,7 +697,7 @@ void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) c
     states.transform *= getTransform();
 
     style_->box_.setSize(size_);
-    style_->box_.setFillColor(isEnabled() ? style_->boxColor_ : style_->disabledBoxColor_);
+    style_->box_.setFillColor(readOnly_ ? style_->readOnlyBoxColor_ : style_->boxColor_);
     target.draw(style_->box_, states);
     if (boxStrings_.size() == 1 && boxStrings_[0].isEmpty() && (!isFocused() || readOnly_)) {
         sf::String defaultString = "";
@@ -663,7 +710,7 @@ void MultilineTextBox::draw(sf::RenderTarget& target, sf::RenderStates states) c
         style_->text_.setString(visibleString_);
         style_->text_.setFillColor(style_->textColor_);
     }
-    if (!isEnabled()) {
+    if (readOnly_) {
         style_->text_.setFillColor(style_->defaultTextColor_);
     }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);

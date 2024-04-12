@@ -126,7 +126,7 @@ std::shared_ptr<MultilineTextBoxStyle> DefaultTheme::getMultilineTextBoxStyle() 
         style->setCharacterSize(15);
         style->setTextFillColor(sf::Color::Black);
 
-        style->setDisabledFillColor({180, 180, 180});
+        style->setReadOnlyFillColor({180, 180, 180});
         style->setDefaultTextFillColor({100, 100, 100});
         style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
         style->setCaretFillColor({0, 255, 255});
@@ -178,7 +178,7 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::getTextBoxStyle() const {
         style->setCharacterSize(15);
         style->setTextFillColor(sf::Color::Black);
 
-        style->setDisabledFillColor({180, 180, 180});
+        style->setReadOnlyFillColor({180, 180, 180});
         style->setDefaultTextFillColor({100, 100, 100});
         style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
         style->setCaretFillColor({0, 255, 255});

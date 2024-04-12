@@ -103,8 +103,8 @@ const sf::Color& TextBoxStyle::getTextFillColor() const {
     return textColor_;
 }
 
-void TextBoxStyle::setDisabledFillColor(const sf::Color& color) {
-    disabledBoxColor_ = color;
+void TextBoxStyle::setReadOnlyFillColor(const sf::Color& color) {
+    readOnlyBoxColor_ = color;
     gui_.requestRedraw();
 }
 void TextBoxStyle::setDefaultTextFillColor(const sf::Color& color) {
@@ -123,8 +123,8 @@ void TextBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
 }
-const sf::Color& TextBoxStyle::getDisabledFillColor() const {
-    return disabledBoxColor_;
+const sf::Color& TextBoxStyle::getReadOnlyFillColor() const {
+    return readOnlyBoxColor_;
 }
 const sf::Color& TextBoxStyle::getDefaultTextFillColor() const {
     return defaultTextColor_;
@@ -176,6 +176,7 @@ void TextBox::setReadOnly(bool readOnly) {
 void TextBox::setText(const sf::String& text) {
     boxString_ = text;
     updateCaretPosition(0);
+    onTextChange.emit(this, boxString_);
 }
 void TextBox::setDefaultText(const sf::String& text) {
     defaultString_ = text;
@@ -244,10 +245,11 @@ void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
 }
 bool TextBox::handleTextEntered(uint32_t unicode) {
     bool eventConsumed = Widget::handleTextEntered(unicode);
-    if (!readOnly_ && unicode >= '\u0020' && unicode <= '\u007e') {    // Printable character.
+    if (!readOnly_ && unicode >= '\u0020' && unicode != '\u007f') {    // Printable character.
         if (maxCharacters_ == 0 || boxString_.getSize() < maxCharacters_) {
             boxString_.insert(caretPosition_, sf::String(unicode));
             updateCaretPosition(caretPosition_ + 1);
+            onTextChange.emit(this, boxString_);
         }
         return true;
     }
@@ -265,6 +267,7 @@ bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
             }
             boxString_.erase(caretPosition_ - 1, 1);
             updateCaretPosition(caretPosition_ - 1);
+            onTextChange.emit(this, boxString_);
         }
     } else if (key.code == sf::Keyboard::Delete) {
         if (!readOnly_ && caretPosition_ < boxString_.getSize() && boxString_.getSize() > 0) {
@@ -273,6 +276,7 @@ bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
             }
             boxString_.erase(caretPosition_, 1);
             updateCaretPosition(caretPosition_);
+            onTextChange.emit(this, boxString_);
         }
     } else if (key.code == sf::Keyboard::End && caretPosition_ != boxString_.getSize()) {
         updateCaretPosition(boxString_.getSize());
@@ -332,7 +336,7 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.transform *= getTransform();
 
     style_->box_.setSize(size_);
-    style_->box_.setFillColor(isEnabled() ? style_->boxColor_ : style_->disabledBoxColor_);
+    style_->box_.setFillColor(readOnly_ ? style_->readOnlyBoxColor_ : style_->boxColor_);
     target.draw(style_->box_, states);
     if (boxString_.isEmpty() && !defaultString_.isEmpty() && (!isFocused() || readOnly_)) {
         style_->text_.setString(defaultString_.substring(0, widthCharacters_));
@@ -341,7 +345,7 @@ void TextBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->text_.setString(visibleString_);
         style_->text_.setFillColor(style_->textColor_);
     }
-    if (!isEnabled()) {
+    if (readOnly_) {
         style_->text_.setFillColor(style_->defaultTextColor_);
     }
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
