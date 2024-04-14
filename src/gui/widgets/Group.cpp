@@ -44,7 +44,8 @@ void Group::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouse
     auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
         widget->handleMousePress(button, mouseLocal);
-    } else {
+    }
+    if (widget == nullptr || !widget->isFocusable()) {
         Container::handleMousePress(button, mouseParent);
     }
 }
@@ -53,7 +54,8 @@ void Group::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mou
     auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget != nullptr) {
         widget->handleMouseRelease(button, mouseLocal);
-    } else {
+    }
+    if (widget == nullptr || !widget->isFocusable()) {
         Container::handleMouseRelease(button, mouseParent);
     }
 }

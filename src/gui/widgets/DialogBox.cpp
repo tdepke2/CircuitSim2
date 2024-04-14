@@ -143,6 +143,7 @@ void DialogBox::setTitle(std::shared_ptr<Label> title) {
     if (!hasChild(title)) {
         addChild(title);
     }
+    title->setFocusable(false);
     title_ = title;
     updateTitle();
 }

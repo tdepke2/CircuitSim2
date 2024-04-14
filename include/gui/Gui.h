@@ -23,13 +23,14 @@ namespace gui {
  * The redraw operation draws all of the widgets, so it's ideal to only request
  * drawing during event handling instead of every frame.
  * 
- * Events are processed in a simple manner. Mouse events are sent only to the
- * top-most visible widget the mouse touches and each of its `Container` derived
- * parents. Keyboard events are sent only to the focused widget and the parents.
- * Events can be consumed by a child which blocks further propagation to
- * parents. Also, for mouse events to propagate through a `Container`, the mouse
- * must be touching the `Container` (a widget outside the bounds of its parent
- * `Container` will not work).
+ * Events are processed in a simple manner. Mouse events are sent to the
+ * top-most visible widget the mouse touches through each of its `Container`
+ * derived parents, and then to the focused widget. Keyboard events are sent
+ * only to the focused widget and then each of its parents. Events can be
+ * consumed by a child which blocks further propagation to parents. Also, for
+ * mouse events to propagate through a `Container`, the mouse must be touching
+ * the `Container` (a widget outside the bounds of its parent `Container` will
+ * not work).
  * 
  * Much of the GUI framework has taken inspiration from other SFML libraries
  * like TGUI (https://github.com/texus/TGUI/) and SFGUI

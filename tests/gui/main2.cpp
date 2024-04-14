@@ -328,6 +328,21 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     dialogTest->setPosition(80.0f, 80.0f);
     myGui.addChild(dialogTest);
 
+    /*auto panelThing = gui::Panel::create(theme);
+    connectDebugSignals(panelThing.get(), "panelThing");
+    panelThing->setSize({400.0f, 300.0f});
+    panelThing->setRotation(14.0f);
+    panelThing->setScale(1.8f, 1.3f);
+    panelThing->setPosition(90.0f, 70.0f);
+    panelThing->addChild(dialogTest);
+    myGui.addChild(panelThing);
+
+    auto dialogTest2 = gui::DialogBox::create(theme);
+    connectDebugSignals(dialogTest2.get(), "dialogTest2");
+    dialogTest2->setSize({130.0f, 70.0f});
+    dialogTest2->setPosition(140.0f, 230.0f);
+    panelThing->addChild(dialogTest2);*/
+
     auto dialogTestTitle = gui::Label::create(theme);
     connectDebugSignals(dialogTestTitle.get(), "dialogTestTitle");
     dialogTestTitle->setLabel("my title");
@@ -585,6 +600,7 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(modalBackground.get(), "modalBackground");
     modalBackground->setSize(static_cast<sf::Vector2f>(myGui.getSize()));
     modalBackground->setVisible(false);
+    modalBackground->setFocusable(false);
     modalBackground->getStyle()->setFillColor({0, 0, 0, 175});
     modalBackground->getStyle()->setOutlineThickness(0.0f);
     myGui.addChild(modalBackground);

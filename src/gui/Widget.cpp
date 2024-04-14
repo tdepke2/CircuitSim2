@@ -132,6 +132,17 @@ bool Widget::isFocused() const {
     return focused_;
 }
 
+void Widget::setFocusable(bool focusable) {
+    if (!focusable) {
+        setFocused(false);
+    }
+    focusable_ = focusable;
+}
+
+bool Widget::isFocusable() const {
+    return focusable_;
+}
+
 bool Widget::isMouseHovering() const {
     return mouseHover_;
 }
@@ -185,7 +196,7 @@ bool Widget::handleMouseWheelScroll(sf::Mouse::Wheel /*wheel*/, float /*delta*/,
     return false;
 }
 void Widget::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& /*mouseParent*/) {
-    if (button <= sf::Mouse::Middle) {
+    if (button <= sf::Mouse::Middle && focusable_) {
         setFocused(true);
     }
 }
@@ -223,6 +234,7 @@ Widget::Widget(const sf::String& name) :
     visible_(true),
     enabled_(true),
     focused_(false),
+    focusable_(true),
     mouseHover_(false) {
 }
 

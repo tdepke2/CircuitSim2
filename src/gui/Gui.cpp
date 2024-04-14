@@ -3,14 +3,55 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <stack>
 #include <string>
+#include <utility>
 
 
 #include <iostream>
 
 
 
+
 namespace gui {
+
+namespace {
+
+/**
+ * Transform a mouse position into the parent space of the `focusedWidget` so we
+ * can pass an event to this widget. Returns false if nothing focused or the
+ * mouse is already over the focused widget.
+ */
+std::pair<sf::Vector2f, bool> propagateMouseEvent(const sf::Vector2f& mouseGlobal, const Widget* widgetUnderMouse, const Widget* focusedWidget) {
+    if (focusedWidget != nullptr && focusedWidget->isEnabled()) {
+        auto widget = focusedWidget->getParent();
+        std::stack<Widget*> focusedBranch;
+        while (widget != nullptr) {
+            focusedBranch.push(widget);
+            widget = widget->getParent();
+        }
+        auto mouseLocal = mouseGlobal;
+        while (!focusedBranch.empty()) {
+            mouseLocal = focusedBranch.top()->toLocalSpace(mouseLocal);
+            auto container = dynamic_cast<ContainerBase*>(focusedBranch.top());
+            if (widgetUnderMouse != nullptr && container != nullptr) {
+                widgetUnderMouse = container->getWidgetUnderMouse(mouseLocal);
+            }
+            focusedBranch.pop();
+        }
+
+        if (focusedWidget != widgetUnderMouse) {
+            //std::cout << "The focused widget is not under mouse, send event. mouseLocal = " << mouseLocal.x << ", " << mouseLocal.y << "\n";
+            return {mouseLocal, true};
+        }
+        // else {
+        //    std::cout << "Focused widget under mouse already.\n";
+        //}
+    }
+    return {{0.0f, 0.0f}, false};
+}
+
+}
 
 Gui::Gui(sf::RenderWindow& window) :
     window_(window),
@@ -77,6 +118,13 @@ bool Gui::processEvent(const sf::Event& event) {
                 eventConsumed = widget->handleMouseMove(mouseGlobal);
             }
         }
+        if (!eventConsumed) {
+            auto mouseLocal = propagateMouseEvent(mouseGlobal, widget, focusedWidget_.get());
+            if (mouseLocal.second) {
+                eventConsumed = focusedWidget_->handleMouseMove(mouseLocal.first);
+            }
+        }
+
         for (const auto& w : lastWidgetsUnderMouse_) {
             if (widgetsUnderMouse_.count(w) == 0 && w->isEnabled() && w->isMouseHovering()) {
                 w->handleMouseLeft();
@@ -88,6 +136,12 @@ bool Gui::processEvent(const sf::Event& event) {
         if (widget != nullptr) {
             if (widget->isEnabled()) {
                 eventConsumed = widget->handleMouseWheelScroll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, mouseGlobal);
+            }
+        }
+        if (!eventConsumed) {
+            auto mouseLocal = propagateMouseEvent(mouseGlobal, widget, focusedWidget_.get());
+            if (mouseLocal.second) {
+                eventConsumed = focusedWidget_->handleMouseWheelScroll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, mouseLocal.first);
             }
         }
     } else if (event.type == sf::Event::MouseLeft) {
@@ -143,6 +197,9 @@ void Gui::addWidgetUnderMouse(std::shared_ptr<Widget> widget) {
 }
 
 void Gui::requestWidgetFocus(std::shared_ptr<Widget> widget) {
+    if (widget && !widget->isFocusable()) {
+        return;
+    }
     if (focusedWidget_) {
         focusedWidget_->handleFocusChange(false);
         requestRedraw();    // FIXME: this is weird, why do we need to redraw here? seems like widgets should hook into handleFocusChange to redraw themselves.

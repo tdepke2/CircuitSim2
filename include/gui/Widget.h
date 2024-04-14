@@ -68,6 +68,8 @@ public:
     bool isEnabled() const;
     void setFocused(bool focused);
     bool isFocused() const;
+    void setFocusable(bool focusable);
+    bool isFocusable() const;
     bool isMouseHovering() const;
 
     void sendToFront();
@@ -120,7 +122,7 @@ private:
     Container* parent_;
     Gui* gui_;
     bool visible_, enabled_, focused_;
-    bool mouseHover_;
+    bool focusable_, mouseHover_;
 
     friend class Container;
     friend class ContainerBase;
