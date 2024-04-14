@@ -367,15 +367,18 @@ void DialogBox::focusNextTextBox() {
         const auto textBox = dynamic_cast<TextBox*>(getChild(offsetIndex).get());
         if (textBox != nullptr) {
             textBox->setFocused(true);
-            break;
+            return;
         }
         const auto multilineTextBox = dynamic_cast<MultilineTextBox*>(getChild(offsetIndex).get());
         if (multilineTextBox != nullptr) {
             multilineTextBox->setFocused(true);
             multilineTextBox->selectAll();
-            break;
+            return;
         }
     }
+
+    // No text box found, focus the dialog itself.
+    setFocused(true);
 }
 
 void DialogBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {

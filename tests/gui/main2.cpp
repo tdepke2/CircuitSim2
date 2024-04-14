@@ -564,14 +564,14 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuBar->setPosition(0.0f, 0.0f);
 
     gui::MenuList fileMenu("File");
-    fileMenu.items.emplace_back("New", "Ctrl+N");
-    fileMenu.items.emplace_back("Open...", "Ctrl+O");
-    fileMenu.items.emplace_back("Save", "Ctrl+S");
-    fileMenu.items.emplace_back("Save As...");
+    fileMenu.items.emplace_back("New", "Ctrl+N", false);
+    fileMenu.items.emplace_back("Open...", "Ctrl+O", false);
+    fileMenu.items.emplace_back("Save", "Ctrl+S", false);
+    fileMenu.items.emplace_back("Save As...", "", false);
     fileMenu.items.emplace_back("Rename...");
-    fileMenu.items.emplace_back("Resize...");
-    fileMenu.items.emplace_back("Configuration...");
-    fileMenu.items.emplace_back("Exit");
+    fileMenu.items.emplace_back("Resize...", "", false);
+    fileMenu.items.emplace_back("Configuration...", "", false);
+    fileMenu.items.emplace_back("Exit", "", false);
     menuBar->insertMenu(fileMenu);
 
     gui::MenuList viewMenu("View");
@@ -605,41 +605,47 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     modalBackground->getStyle()->setOutlineThickness(0.0f);
     myGui.addChild(modalBackground);
 
-    auto renameDialog = gui::Panel::create(theme, "renameDialog");
+    auto renameDialog = gui::DialogBox::create(theme, "renameDialog");
     connectDebugSignals(renameDialog.get(), "renameDialog");
     renameDialog->setSize({200.0f, 100.0f});
-    renameDialog->setPosition(80.0f, 80.0f);
     modalBackground->addChild(renameDialog);
+
+    auto renameTitle = gui::Label::create(theme, "renameTitle");
+    connectDebugSignals(renameTitle.get(), "renameTitle");
+    renameTitle->setLabel("Rename");
+    renameDialog->setTitle(renameTitle);
 
     auto renameLabel = gui::Label::create(theme, "renameLabel");
     connectDebugSignals(renameLabel.get(), "renameLabel");
     renameLabel->setLabel("Name:");
-    renameLabel->setPosition(10.0f, 10.0f);
+    renameLabel->setPosition(10.0f, 30.0f);
     renameDialog->addChild(renameLabel);
 
-    auto renameTextBox = gui::TextBox::create(theme, "renameTextBox");
+    auto renameTextBox = gui::MultilineTextBox::create(theme, "renameTextBox");
     connectDebugSignals(renameTextBox.get(), "renameTextBox");
-    renameTextBox->setWidthCharacters(8);
-    renameTextBox->setPosition(100.0f, 10.0f);
+    renameTextBox->setSizeCharacters({8, 1});
+    renameTextBox->setMaxLines(1);
+    renameTextBox->setTabPolicy(gui::MultilineTextBox::TabPolicy::ignoreTab);
+    renameTextBox->setPosition(100.0f, 30.0f);
     renameDialog->addChild(renameTextBox);
 
     auto renameCancelButton = gui::Button::create(theme, "renameCancelButton");
     connectDebugSignals(renameCancelButton.get(), "renameCancelButton");
     renameCancelButton->setLabel("Cancel");
-    renameCancelButton->setPosition(10.0f, 60.0f);
     renameCancelButton->onClick.connect([=](){
+        renameDialog->setVisible(false);
         modalBackground->setVisible(false);
     });
-    renameDialog->addChild(renameCancelButton);
+    renameDialog->setCancelButton(0, renameCancelButton);
 
     auto renameSubmitButton = gui::Button::create(theme, "renameSubmitButton");
     connectDebugSignals(renameSubmitButton.get(), "renameSubmitButton");
-    renameSubmitButton->setLabel("Rename");
-    renameSubmitButton->setPosition(100.0f, 60.0f);
-    renameDialog->addChild(renameSubmitButton);
+    renameSubmitButton->setLabel("Ok");
+    renameDialog->setSubmitButton(1, renameSubmitButton);
 
     // Look up the rename button by name as a test.
     myGui.getChild<gui::Button>("renameSubmitButton")->onClick.connect([=](){
+        renameDialog->setVisible(false);
         modalBackground->setVisible(false);
         std::cout << "Rename dialog submitted!\n";
     });
@@ -651,7 +657,12 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
         if (menu.name == "File") {
             if (menu.items[index].leftText == "Rename...") {
                 modalBackground->sendToFront();
-                modalBackground->setVisible(true);    // FIXME: oops, modal bg and the rename dialog should be set visible so that the modal bg can be reused.
+                modalBackground->setVisible(true);
+                renameDialog->setVisible(true);
+                renameDialog->setPosition(
+                    std::min(80.0f, modalBackground->getSize().x / 2.0f),
+                    std::min(80.0f, modalBackground->getSize().y / 2.0f)
+                );
             }
         }
     });
@@ -699,7 +710,7 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     };
     std::cout << "Widget hierarchy:\n";
     std::cout << "myGui\n";
-    printWidgetNames(&myGui, "    ");
+    printWidgetNames(&myGui, "  ");
 }
 
 int main() {
