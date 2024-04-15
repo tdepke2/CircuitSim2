@@ -1,5 +1,5 @@
 add_executable(gui_demo
-    main2.cpp
+    main.cpp
 )
 target_link_libraries(gui_demo PRIVATE
     cs2_gui
