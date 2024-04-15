@@ -19,6 +19,7 @@
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <unordered_map>
 
 std::map<gui::Widget*, std::string> widgetNames;
 
@@ -110,6 +111,10 @@ void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
     menuBar->onMouseRelease.connect(mouseRelease);
     menuBar->onClick.connect(click);
     menuBar->onMenuItemClick.connect(menuItemClick);
+}
+
+sf::Color getRandColor() {
+    return {static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256)};
 }
 
 void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -205,6 +210,51 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     customButtonStyle->setFillColor({20, 20, 200});
 
+
+    auto panel = gui::Panel::create(theme);
+    connectDebugSignals(panel.get(), "panel");
+    panel->setSize({100, 90});
+    panel->setOrigin(5.0f, 15.0f);
+    panel->setPosition(50.0f, 250.0f);
+    //panel->setRotation(30.0f);
+    myGui.addChild(panel);
+
+    auto panelLabel = gui::Label::create(theme);
+    connectDebugSignals(panelLabel.get(), "panelLabel");
+    panelLabel->setLabel("Pixel Paint");
+    panelLabel->setPosition(0, 5);
+    panel->addChild(panelLabel);
+
+    // Ensure that lifetime of image and texture are bound to the button by
+    // using shared_ptr. Custom deleter is for debugging to prove this works.
+    std::shared_ptr<sf::Image> paintImage(new sf::Image(), [](sf::Image* p) {
+        std::cout << "Custom deleter called for paintImage.\n";
+        delete p;
+    });
+    std::shared_ptr<sf::Texture> paintTexture(new sf::Texture(), [](sf::Texture* p) {
+        std::cout << "Custom deleter called for paintTexture.\n";
+        delete p;
+    });
+    paintImage->create(70, 50, sf::Color(25, 25, 25));
+
+    auto paintButton = gui::Button::create(theme);
+    connectDebugSignals(paintButton.get(), "paintButton");
+    auto style = paintButton->getStyle();
+    style->setFillColor(sf::Color::White);
+    paintTexture->loadFromImage(*paintImage);
+    style->setTexture(paintTexture.get(), true);
+    paintButton->setSize(sf::Vector2f(paintImage->getSize()));
+    paintButton->setPosition(10, 30);
+    paintButton->onClick.connect([=](gui::Widget* /*w*/, const sf::Vector2f& mouseLocal) {
+        const sf::Vector2u point = {
+            std::min(static_cast<unsigned int>(mouseLocal.x), paintImage->getSize().x - 1),
+            std::min(static_cast<unsigned int>(mouseLocal.y), paintImage->getSize().y - 1)
+        };
+        std::cout << "Paint point at (" << point.x << ", " << point.y << ").\n";
+        paintImage->setPixel(point.x, point.y, getRandColor());
+        paintTexture->loadFromImage(*paintImage);
+    });
+    panel->addChild(paintButton);
 }
 
 void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -713,7 +763,48 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     printWidgetNames(&myGui, "  ");
 }
 
+void func() {
+    std::cout << "func called\n";
+}
+void func2(int n) {
+    std::cout << "func2 called with " << n << "\n";
+}
+void testCallbacks() {
+    std::cout << "Testing Callback functionality.\n";
+    // Value ctors
+    gui::Callback<int> cb(&func);
+    gui::Callback<int> cb2(&func2);
+    // Copy ctor
+    gui::Callback<int> cb3 = cb;
+    gui::Callback<int> cb4 = cb2;
+    // Move ctor
+    gui::Callback<int> cb5 = gui::Callback<int>(&func);
+    gui::Callback<int> cb6 = gui::Callback<int>(&func2);
+    // Swap function
+    swap(cb5, cb6);
+    swap(cb, cb6);
+    swap(cb2, cb5);
+    // Copy assignment
+    cb3 = cb5;
+    cb4 = cb6;
+    // Move assignment
+    cb3 = gui::Callback<int>(&func);
+    cb4 = gui::Callback<int>(&func2);
+    // Test with unordered_map and dtor
+    std::unordered_map<unsigned int, gui::Callback<int>> stuff;
+    stuff.emplace(1, &func);
+    stuff.emplace(2, &func2);
+    stuff.emplace(3, gui::Callback<int>(&func));
+    stuff.clear();
+    cb3.value<gui::Callback<int>::Tag::noArgs>()();
+    cb4.value<gui::Callback<int>::Tag::withArgs>()(123);
+    // Throws runtime error as intended
+    //cb3.value<gui::Callback<int>::Tag::withArgs>()(123);
+}
+
 int main() {
+    testCallbacks();
+
     sf::RenderWindow window(sf::VideoMode(800, 600), "GUI Test");
 
     gui::Gui myGui(window);
@@ -729,7 +820,7 @@ int main() {
         "MenuBarDemo",
         "FullDemo"
     };
-    size_t currentScene = 4;
+    size_t currentScene = 0;
     bool sceneChanged = true;
 
     auto sceneButton = gui::Button::create(theme, "sceneButton");
