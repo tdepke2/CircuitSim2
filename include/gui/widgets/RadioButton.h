@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gui/Style.h>
 #include <gui/widgets/Button.h>
 
 #include <memory>
@@ -18,7 +19,7 @@ namespace gui {
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class RadioButtonStyle {
+class RadioButtonStyle : public Style {
 public:
     RadioButtonStyle(const Gui& gui);
 
@@ -54,9 +55,6 @@ public:
     const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<RadioButtonStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::CircleShape circle_;

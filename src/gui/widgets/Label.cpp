@@ -5,7 +5,7 @@
 namespace gui {
 
 LabelStyle::LabelStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Text interface.
@@ -67,7 +67,7 @@ std::shared_ptr<LabelStyle> LabelStyle::clone() const {
 
 
 std::shared_ptr<Label> Label::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<Label>(new Label(theme.getLabelStyle(), name));
+    return std::shared_ptr<Label>(new Label(theme.getStyle<LabelStyle>("Label"), name));
 }
 std::shared_ptr<Label> Label::create(std::shared_ptr<LabelStyle> style, const sf::String& name) {
     return std::shared_ptr<Label>(new Label(style, name));

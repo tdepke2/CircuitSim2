@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gui/Style.h>
 #include <gui/widgets/Group.h>
 
 #include <memory>
@@ -22,7 +23,7 @@ namespace gui {
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class DialogBoxStyle {
+class DialogBoxStyle : public Style {
 public:
     DialogBoxStyle(const Gui& gui);
 
@@ -57,9 +58,6 @@ public:
     const sf::Vector2f& getButtonPadding() const;
 
     std::shared_ptr<DialogBoxStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::RectangleShape rect_;

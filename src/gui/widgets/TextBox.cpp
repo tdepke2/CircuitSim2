@@ -19,7 +19,7 @@
 namespace gui {
 
 TextBoxStyle::TextBoxStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -146,7 +146,7 @@ std::shared_ptr<TextBoxStyle> TextBoxStyle::clone() const {
 
 
 std::shared_ptr<TextBox> TextBox::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<TextBox>(new TextBox(theme.getTextBoxStyle(), name));
+    return std::shared_ptr<TextBox>(new TextBox(theme.getStyle<TextBoxStyle>("TextBox"), name));
 }
 std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<TextBoxStyle> style, const sf::String& name) {
     return std::shared_ptr<TextBox>(new TextBox(style, name));

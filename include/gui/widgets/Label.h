@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gui/Signal.h>
+#include <gui/Style.h>
 #include <gui/Widget.h>
 
 #include <memory>
@@ -19,7 +20,7 @@ namespace gui {
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class LabelStyle {
+class LabelStyle : public Style {
 public:
     LabelStyle(const Gui& gui);
 
@@ -41,9 +42,6 @@ public:
     const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<LabelStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::Text text_;

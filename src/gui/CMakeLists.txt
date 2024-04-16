@@ -3,6 +3,7 @@ set(CS2_GUI_HEADERS
     ContainerBase.h
     Gui.h
     Signal.h
+    Style.h
     Theme.h
     themes/DefaultTheme.h
     Widget.h
@@ -24,6 +25,7 @@ add_library(cs2_gui
     ContainerBase.cpp
     Gui.cpp
     Signal.cpp
+    Style.cpp
     Theme.cpp
     themes/DefaultTheme.cpp
     Widget.cpp

@@ -6,30 +6,38 @@
 #include <SFML/Graphics.hpp>
 
 namespace gui {
+    class ButtonStyle;
+    class CheckBoxStyle;
+    class DialogBoxStyle;
+    class LabelStyle;
+    class MenuBarStyle;
+    class MultilineTextBoxStyle;
+    class PanelStyle;
+    class RadioButtonStyle;
+    class TextBoxStyle;
+}
+
+namespace gui {
 
 class DefaultTheme : public Theme {
 public:
     DefaultTheme(const Gui& gui);
     virtual ~DefaultTheme() noexcept = default;
 
-    // FIXME: this is getting frustrating, could we just have one template getStyle() function?
-    // add template specializations for each type? then declare members in here for each widget instead of in the base class
-    //   won't work, the base class would need those specializations.
-    // should all the styles derive from a base class?
-
-    // would be nice if users could create custom widgets, and add these into an existing theme.
-
-    virtual std::shared_ptr<ButtonStyle> getButtonStyle() const override;
-    virtual std::shared_ptr<CheckBoxStyle> getCheckBoxStyle() const override;
-    virtual std::shared_ptr<DialogBoxStyle> getDialogBoxStyle() const override;
-    virtual std::shared_ptr<LabelStyle> getLabelStyle() const override;
-    virtual std::shared_ptr<MenuBarStyle> getMenuBarStyle() const override;
-    virtual std::shared_ptr<MultilineTextBoxStyle> getMultilineTextBoxStyle() const override;
-    virtual std::shared_ptr<PanelStyle> getPanelStyle() const override;
-    virtual std::shared_ptr<RadioButtonStyle> getRadioButtonStyle() const override;
-    virtual std::shared_ptr<TextBoxStyle> getTextBoxStyle() const override;
+protected:
+    virtual std::shared_ptr<Style> loadStyle(const sf::String& widgetName) const override;
 
 private:
+    std::shared_ptr<ButtonStyle> makeButtonStyle() const;
+    std::shared_ptr<CheckBoxStyle> makeCheckBoxStyle() const;
+    std::shared_ptr<DialogBoxStyle> makeDialogBoxStyle() const;
+    std::shared_ptr<LabelStyle> makeLabelStyle() const;
+    std::shared_ptr<MenuBarStyle> makeMenuBarStyle() const;
+    std::shared_ptr<MultilineTextBoxStyle> makeMultilineTextBoxStyle() const;
+    std::shared_ptr<PanelStyle> makePanelStyle() const;
+    std::shared_ptr<RadioButtonStyle> makeRadioButtonStyle() const;
+    std::shared_ptr<TextBoxStyle> makeTextBoxStyle() const;
+
     sf::Font consolasFont_;
     float consolasMaxHeightRatio_;
 };

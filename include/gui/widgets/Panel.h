@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gui/Style.h>
 #include <gui/widgets/Group.h>
 
 #include <memory>
@@ -18,7 +19,7 @@ namespace gui {
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class PanelStyle {
+class PanelStyle : public Style {
 public:
     PanelStyle(const Gui& gui);
 
@@ -35,9 +36,6 @@ public:
     float getOutlineThickness() const;
 
     std::shared_ptr<PanelStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::RectangleShape rect_;

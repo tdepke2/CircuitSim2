@@ -5,7 +5,7 @@
 namespace gui {
 
 RadioButtonStyle::RadioButtonStyle(const Gui& gui) :
-    gui_(gui),
+    Style(gui),
     circle_(0.0f, 4) {
 }
 
@@ -112,7 +112,7 @@ std::shared_ptr<RadioButtonStyle> RadioButtonStyle::clone() const {
 
 
 std::shared_ptr<RadioButton> RadioButton::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<RadioButton>(new RadioButton(theme.getRadioButtonStyle(), name));
+    return std::shared_ptr<RadioButton>(new RadioButton(theme.getStyle<RadioButtonStyle>("RadioButton"), name));
 }
 std::shared_ptr<RadioButton> RadioButton::create(std::shared_ptr<RadioButtonStyle> style, const sf::String& name) {
     return std::shared_ptr<RadioButton>(new RadioButton(style, name));

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gui/Style.h>
 #include <gui/widgets/Button.h>
 
 #include <memory>
@@ -18,7 +19,7 @@ namespace gui {
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class CheckBoxStyle {
+class CheckBoxStyle : public Style {
 public:
     CheckBoxStyle(const Gui& gui);
 
@@ -54,9 +55,6 @@ public:
     const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<CheckBoxStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::RectangleShape rect_;

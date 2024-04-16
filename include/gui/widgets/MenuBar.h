@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gui/Signal.h>
+#include <gui/Style.h>
 #include <gui/Widget.h>
 
 #include <memory>
@@ -63,7 +64,7 @@ private:
  * One instance is shared between objects that use the same style, private
  * members in this class operate as flyweights.
  */
-class MenuBarStyle {
+class MenuBarStyle : public Style {
 public:
     MenuBarStyle(const Gui& gui);
 
@@ -119,9 +120,6 @@ public:
     const sf::Color& getDisabledHighlightFillColor() const;
 
     std::shared_ptr<MenuBarStyle> clone() const;
-
-protected:
-    const Gui& gui_;
 
 private:
     sf::RectangleShape bar_, menu_, highlight_;

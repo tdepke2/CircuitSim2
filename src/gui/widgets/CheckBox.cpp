@@ -5,7 +5,7 @@
 namespace gui {
 
 CheckBoxStyle::CheckBoxStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -111,7 +111,7 @@ std::shared_ptr<CheckBoxStyle> CheckBoxStyle::clone() const {
 
 
 std::shared_ptr<CheckBox> CheckBox::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<CheckBox>(new CheckBox(theme.getCheckBoxStyle(), name));
+    return std::shared_ptr<CheckBox>(new CheckBox(theme.getStyle<CheckBoxStyle>("CheckBox"), name));
 }
 std::shared_ptr<CheckBox> CheckBox::create(std::shared_ptr<CheckBoxStyle> style, const sf::String& name) {
     return std::shared_ptr<CheckBox>(new CheckBox(style, name));

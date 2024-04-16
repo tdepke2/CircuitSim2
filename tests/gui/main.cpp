@@ -679,6 +679,9 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     renameTextBox->setPosition(100.0f, 30.0f);
     renameDialog->addChild(renameTextBox);
 
+    // FIXME: possible bug here? when dragging mouse outside dialog when open and text box is focused, it picks up drag events like they are hovering the text.
+    // may need to check in other places, now that mouse events sent to focused widget too.
+
     auto renameCancelButton = gui::Button::create(theme, "renameCancelButton");
     connectDebugSignals(renameCancelButton.get(), "renameCancelButton");
     renameCancelButton->setLabel("Cancel");

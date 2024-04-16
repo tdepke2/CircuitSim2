@@ -19,7 +19,7 @@
 namespace gui {
 
 DialogBoxStyle::DialogBoxStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -124,7 +124,7 @@ std::shared_ptr<DialogBoxStyle> DialogBoxStyle::clone() const {
 
 
 std::shared_ptr<DialogBox> DialogBox::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<DialogBox>(new DialogBox(theme.getDialogBoxStyle(), name));
+    return std::shared_ptr<DialogBox>(new DialogBox(theme.getStyle<DialogBoxStyle>("DialogBox"), name));
 }
 std::shared_ptr<DialogBox> DialogBox::create(std::shared_ptr<DialogBoxStyle> style, const sf::String& name) {
     return std::shared_ptr<DialogBox>(new DialogBox(style, name));

@@ -5,7 +5,7 @@
 namespace gui {
 
 ButtonStyle::ButtonStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -118,7 +118,7 @@ std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
 
 
 std::shared_ptr<Button> Button::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<Button>(new Button(theme.getButtonStyle(), name));
+    return std::shared_ptr<Button>(new Button(theme.getStyle<ButtonStyle>("Button"), name));
 }
 std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style, const sf::String& name) {
     return std::shared_ptr<Button>(new Button(style, name));

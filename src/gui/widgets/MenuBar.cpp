@@ -27,7 +27,7 @@ sf::Vector2f roundVector2f(sf::Vector2f v) {
 namespace gui {
 
 MenuBarStyle::MenuBarStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -198,7 +198,7 @@ std::shared_ptr<MenuBarStyle> MenuBarStyle::clone() const {
 
 
 std::shared_ptr<MenuBar> MenuBar::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<MenuBar>(new MenuBar(theme.getMenuBarStyle(), name));
+    return std::shared_ptr<MenuBar>(new MenuBar(theme.getStyle<MenuBarStyle>("MenuBar"), name));
 }
 std::shared_ptr<MenuBar> MenuBar::create(std::shared_ptr<MenuBarStyle> style, const sf::String& name) {
     return std::shared_ptr<MenuBar>(new MenuBar(style, name));

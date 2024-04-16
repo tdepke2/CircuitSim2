@@ -5,7 +5,7 @@
 namespace gui {
 
 PanelStyle::PanelStyle(const Gui& gui) :
-    gui_(gui) {
+    Style(gui) {
 }
 
 // sf::Shape interface.
@@ -52,7 +52,7 @@ std::shared_ptr<PanelStyle> PanelStyle::clone() const {
 
 
 std::shared_ptr<Panel> Panel::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<Panel>(new Panel(theme.getPanelStyle(), name));
+    return std::shared_ptr<Panel>(new Panel(theme.getStyle<PanelStyle>("Panel"), name));
 }
 std::shared_ptr<Panel> Panel::create(std::shared_ptr<PanelStyle> style, const sf::String& name) {
     return std::shared_ptr<Panel>(new Panel(style, name));

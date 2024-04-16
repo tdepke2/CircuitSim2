@@ -87,7 +87,7 @@ std::shared_ptr<MultilineTextBoxStyle> MultilineTextBoxStyle::clone() const {
 
 
 std::shared_ptr<MultilineTextBox> MultilineTextBox::create(const Theme& theme, const sf::String& name) {
-    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getMultilineTextBoxStyle(), name));
+    return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(theme.getStyle<MultilineTextBoxStyle>("MultilineTextBox"), name));
 }
 std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name) {
     return std::shared_ptr<MultilineTextBox>(new MultilineTextBox(style, name));
