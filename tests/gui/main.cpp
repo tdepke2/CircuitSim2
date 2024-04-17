@@ -9,6 +9,7 @@
 #include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/RadioButton.h>
+#include <gui/widgets/Slider.h>
 #include <gui/widgets/TextBox.h>
 
 #include <array>
@@ -64,6 +65,10 @@ void menuItemClick(gui::Widget* w, const gui::MenuList& menu, size_t index) {
     std::cout << "  onMenuItemClick(\t" << w << " " << widgetNames[w] << ", \t"
     << &menu << ", " << index << ")\n";
 }
+void valueChange(gui::Widget* w, float value) {
+    std::cout << "  onValueChange(\t" << w << " " << widgetNames[w] << ", \t"
+    << value << ")\n";
+}
 
 void connectDebugSignals(gui::Widget* widget, const std::string& name) {
     assert(widgetNames.emplace(widget, name).second);
@@ -81,22 +86,21 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
 void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
 }
+void connectDebugSignals(gui::DialogBox* dialogBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Group*>(dialogBox), name);
+}
 void connectDebugSignals(gui::Group* group, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(group), name);
 }
 void connectDebugSignals(gui::Label* label, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(label), name);
 }
-void connectDebugSignals(gui::Panel* panel, const std::string& name) {
-    connectDebugSignals(dynamic_cast<gui::Group*>(panel), name);
-}
-void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
-    connectDebugSignals(dynamic_cast<gui::Widget*>(textBox), name);
-    textBox->onMousePress.connect(mousePress);
-    textBox->onMouseRelease.connect(mouseRelease);
-    textBox->onClick.connect(click);
-    textBox->onTextChange.connect(textChange1);
-    textBox->onEnterPressed.connect(enterPressed);
+void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(menuBar), name);
+    menuBar->onMousePress.connect(mousePress);
+    menuBar->onMouseRelease.connect(mouseRelease);
+    menuBar->onClick.connect(click);
+    menuBar->onMenuItemClick.connect(menuItemClick);
 }
 void connectDebugSignals(gui::MultilineTextBox* multilineTextBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(multilineTextBox), name);
@@ -105,12 +109,23 @@ void connectDebugSignals(gui::MultilineTextBox* multilineTextBox, const std::str
     multilineTextBox->onClick.connect(click);
     multilineTextBox->onTextChange.connect(textChange2);
 }
-void connectDebugSignals(gui::MenuBar* menuBar, const std::string& name) {
-    connectDebugSignals(dynamic_cast<gui::Widget*>(menuBar), name);
-    menuBar->onMousePress.connect(mousePress);
-    menuBar->onMouseRelease.connect(mouseRelease);
-    menuBar->onClick.connect(click);
-    menuBar->onMenuItemClick.connect(menuItemClick);
+void connectDebugSignals(gui::Panel* panel, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Group*>(panel), name);
+}
+void connectDebugSignals(gui::RadioButton* radioButton, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Button*>(radioButton), name);
+}
+void connectDebugSignals(gui::Slider* slider, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(slider), name);
+    slider->onValueChange.connect(valueChange);
+}
+void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(textBox), name);
+    textBox->onMousePress.connect(mousePress);
+    textBox->onMouseRelease.connect(mouseRelease);
+    textBox->onClick.connect(click);
+    textBox->onTextChange.connect(textChange1);
+    textBox->onEnterPressed.connect(enterPressed);
 }
 
 sf::Color getRandColor() {
@@ -607,6 +622,17 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     myGui.addChild(menuBar);
 }
 
+void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto slider = gui::Slider::create(theme);
+    connectDebugSignals(slider.get(), "slider");
+    slider->setSize({100.0f, 20.0f});
+
+    slider->setStep(0.3f);
+
+    slider->setPosition(20.0f, 20.0f);
+    myGui.addChild(slider);
+}
+
 void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto menuBar = gui::MenuBar::create(theme, "menuBar");
     connectDebugSignals(menuBar.get(), "menuBar");
@@ -814,13 +840,14 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 7> sceneNames = {
+    const std::array<std::string, 8> sceneNames = {
         "Empty",
         "ButtonDemo",
         "CheckBoxDemo",
         "DialogBoxDemo",
         "TextBoxDemo",
         "MenuBarDemo",
+        "SliderDemo",
         "FullDemo"
     };
     size_t currentScene = 0;
@@ -871,6 +898,8 @@ int main() {
                 createTextBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "MenuBarDemo") {
                 createMenuBarDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "SliderDemo") {
+                createSliderDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "FullDemo") {
                 createFullDemo(myGui, theme);
             } else {

@@ -14,6 +14,7 @@ namespace gui {
     class MultilineTextBoxStyle;
     class PanelStyle;
     class RadioButtonStyle;
+    class SliderStyle;
     class TextBoxStyle;
 }
 
@@ -36,6 +37,7 @@ private:
     std::shared_ptr<MultilineTextBoxStyle> makeMultilineTextBoxStyle() const;
     std::shared_ptr<PanelStyle> makePanelStyle() const;
     std::shared_ptr<RadioButtonStyle> makeRadioButtonStyle() const;
+    std::shared_ptr<SliderStyle> makeSliderStyle() const;
     std::shared_ptr<TextBoxStyle> makeTextBoxStyle() const;
 
     sf::Font consolasFont_;

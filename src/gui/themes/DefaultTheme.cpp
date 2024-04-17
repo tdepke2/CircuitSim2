@@ -7,6 +7,7 @@
 #include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
 #include <gui/widgets/RadioButton.h>
+#include <gui/widgets/Slider.h>
 #include <gui/widgets/TextBox.h>
 
 
@@ -43,6 +44,8 @@ std::shared_ptr<Style> DefaultTheme::loadStyle(const sf::String& widgetName) con
         return makePanelStyle();
     } else if (widgetName == "RadioButton") {
         return makeRadioButtonStyle();
+    } else if (widgetName == "Slider") {
+        return makeSliderStyle();
     } else if (widgetName == "TextBox") {
         return makeTextBoxStyle();
     }
@@ -174,6 +177,17 @@ std::shared_ptr<RadioButtonStyle> DefaultTheme::makeRadioButtonStyle() const {
 
     style->setFillColorChecked({80, 80, 80});
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+
+    return style;
+}
+
+std::shared_ptr<SliderStyle> DefaultTheme::makeSliderStyle() const {
+    auto style = std::make_shared<SliderStyle>(gui_);
+    style->setFillColor({240, 240, 240});
+
+    style->setThumbFillColor({80, 80, 80});
+
+    style->setThumbMinWidth(10.0f);
 
     return style;
 }
