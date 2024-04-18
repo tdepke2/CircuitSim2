@@ -1,8 +1,10 @@
 #include <gui/Gui.h>
 #include <gui/Theme.h>
+#include <gui/widgets/Label.h>
 #include <gui/widgets/Slider.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 
 namespace gui {
@@ -110,20 +112,35 @@ void Slider::setSize(const sf::Vector2f& size) {
     size_ = size;
     requestRedraw();
 }
+void Slider::setLabel(std::shared_ptr<Label> label) {
+    label_ = label;
+    if (label != nullptr) {
+        onValueChange.emit(this, value_);
+    }
+    requestRedraw();
+}
 void Slider::setRange(const std::pair<float, float>& range) {
     range_.first = std::min(range.first, range.second);
     range_.second = std::max(range.first, range.second);
     setValue(value_);
 }
 void Slider::setValue(float value) {
-    value_ = std::min(std::max(value, range_.first), range_.second);
-    requestRedraw();
+    float newValue = std::min(std::max(value, range_.first), range_.second);
+    if (newValue != value_) {
+        value_ = newValue;
+        onValueChange.emit(this, newValue);
+        requestRedraw();
+    }
 }
 void Slider::setStep(float step) {
+    assert(step >= 0.0f);
     step_ = step;
 }
 const sf::Vector2f& Slider::getSize() const {
     return size_;
+}
+std::shared_ptr<Label> Slider::getLabel() const {
+    return label_;
 }
 const std::pair<float, float>& Slider::getRange() const {
     return range_;
@@ -156,10 +173,11 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
     if (Widget::handleMouseMove(mouseParent)) {
         return true;
     }
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
 
     if (isDragging_) {
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            // FIXME
+            updateThumb(mouseLocal.x + getOrigin().x);
         } else {
             isDragging_ = false;
         }
@@ -169,7 +187,9 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
 }
 void Slider::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button == sf::Mouse::Left) {
+        updateThumb(mouseLocal.x + getOrigin().x);
         isDragging_ = true;
     }
 }
@@ -185,10 +205,33 @@ Slider::Slider(std::shared_ptr<SliderStyle> style, const sf::String& name) :
     style_(style),
     styleCopied_(false),
     size_(0.0f, 0.0f),
+    label_(nullptr),
     range_(0.0f, 1.0f),
     value_(0.0f),
     step_(0.0f),
     isDragging_(false) {
+}
+
+float Slider::getThumbWidth() const {
+    float numThumbPositions;
+    if (step_ == 0.0f) {
+        numThumbPositions = size_.x;
+    } else {
+        numThumbPositions = std::floor((range_.second - range_.first) / step_) + 1.0f;
+    }
+    return std::max(size_.x / numThumbPositions, style_->thumbMinWidth_);
+}
+
+void Slider::updateThumb(float thumbPosition) {
+    const float thumbWidth = getThumbWidth();
+    const float thumbNormalized = std::min(std::max((thumbPosition - 0.5f * thumbWidth) / (size_.x - thumbWidth), 0.0f), 1.0f);
+
+    if (step_ == 0.0f) {
+        setValue((range_.second - range_.first) * thumbNormalized + range_.first);
+    } else {
+        float numThumbPositions = std::floor((range_.second - range_.first) / step_) + 1.0f;
+        setValue(std::round(thumbNormalized * (numThumbPositions - 1.0f)) * step_ + range_.first);
+    }
 }
 
 void Slider::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -197,17 +240,17 @@ void Slider::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     states.transform *= getTransform();
 
-    float numThumbPositions;
-    if (step_ == 0.0f) {
-        numThumbPositions = size_.x;
-    } else {
-        numThumbPositions = std::round((range_.second - range_.first) / step_) + 1.0f;
-    }
+    const float thumbWidth = getThumbWidth();
 
     style_->rect_.setSize(size_);
     target.draw(style_->rect_, states);
-    style_->thumb_.setSize({std::max(size_.x / numThumbPositions, style_->thumbMinWidth_), size_.y});
+    style_->thumb_.setSize({thumbWidth, size_.y});
+    style_->thumb_.setPosition((value_ - range_.first) / (range_.second - range_.first) * (size_.x - thumbWidth), 0.0f);
     target.draw(style_->thumb_, states);
+
+    if (label_ != nullptr) {
+        target.draw(*label_, states);
+    }
 }
 
 }

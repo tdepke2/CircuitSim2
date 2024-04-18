@@ -10,6 +10,7 @@
 
 namespace gui {
     class Gui;
+    class Label;
     class Theme;
 }
 
@@ -73,10 +74,12 @@ public:
     virtual ~Slider() noexcept = default;
 
     void setSize(const sf::Vector2f& size);
+    void setLabel(std::shared_ptr<Label> label);
     void setRange(const std::pair<float, float>& range);
     void setValue(float value);
     void setStep(float step);
     const sf::Vector2f& getSize() const;
+    std::shared_ptr<Label> getLabel() const;
     const std::pair<float, float>& getRange() const;
     float getValue() const;
     float getStep() const;
@@ -98,12 +101,15 @@ protected:
     Slider(std::shared_ptr<SliderStyle> style, const sf::String& name);
 
 private:
+    float getThumbWidth() const;
+    void updateThumb(float thumbPosition);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<SliderStyle> style_;
     bool styleCopied_;
 
     sf::Vector2f size_;
+    std::shared_ptr<Label> label_;
     std::pair<float, float> range_;
     float value_, step_;
     bool isDragging_;

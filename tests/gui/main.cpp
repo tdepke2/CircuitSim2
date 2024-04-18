@@ -623,14 +623,75 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
 }
 
 void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
-    auto slider = gui::Slider::create(theme);
-    connectDebugSignals(slider.get(), "slider");
-    slider->setSize({100.0f, 20.0f});
+    auto slider1 = gui::Slider::create(theme);
+    connectDebugSignals(slider1.get(), "slider1");
+    slider1->setSize({150.0f, 20.0f});
+    slider1->setValue(0.5f);
+    slider1->setPosition(10.0f, 10.0f);
+    myGui.addChild(slider1);
 
-    slider->setStep(0.3f);
+    auto slider1Label = gui::Label::create(theme);
+    connectDebugSignals(slider1Label.get(), "slider1Label");
+    slider1->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
+        slider1Label->setLabel(std::to_string(value));
+        slider1Label->setPosition(slider1->getSize() / 2.0f);
+        slider1Label->setOrigin(slider1Label->getSize() / 2.0f);
+    });
+    slider1->setLabel(slider1Label);
 
-    slider->setPosition(20.0f, 20.0f);
-    myGui.addChild(slider);
+    auto slider2 = gui::Slider::create(theme);
+    connectDebugSignals(slider2.get(), "slider2");
+    slider2->setSize({150.0f, 20.0f});
+    slider2->setRange({-7.0f, 11.0f});
+    slider2->setPosition(10.0f, 70.0f);
+    myGui.addChild(slider2);
+
+    auto slider2Label = gui::Label::create(theme);
+    connectDebugSignals(slider2Label.get(), "slider2Label");
+    slider2->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
+        slider2Label->setLabel(std::to_string(value));
+        slider2Label->setPosition(slider2->getSize() / 2.0f);
+        slider2Label->setOrigin(slider2Label->getSize() / 2.0f);
+    });
+    slider2->setLabel(slider2Label);
+
+    auto slider3 = gui::Slider::create(theme);
+    connectDebugSignals(slider3.get(), "slider3");
+    slider3->setSize({150.0f, 20.0f});
+    slider3->setStep(0.1f);
+    slider3->setPosition(10.0f, 130.0f);
+    myGui.addChild(slider3);
+
+    auto slider3Label = gui::Label::create(theme);
+    connectDebugSignals(slider3Label.get(), "slider3Label");
+    slider3->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
+        slider3Label->setLabel(std::to_string(value));
+        slider3Label->setPosition(slider3->getSize() / 2.0f);
+        slider3Label->setOrigin(slider3Label->getSize() / 2.0f);
+    });
+    slider3->setLabel(slider3Label);
+
+    const std::array<std::string, 4> elements = {
+        "Fire", "Earth", "Air", "Water"
+    };
+
+    auto sliderEnum = gui::Slider::create(theme);
+    connectDebugSignals(sliderEnum.get(), "sliderEnum");
+    sliderEnum->setSize({200.0f, 30.0f});
+    sliderEnum->setRange({0.0f, elements.size() - 1.0f});
+    sliderEnum->setStep(1.0f);
+    sliderEnum->setPosition(-30.0f, 195.0f);
+    sliderEnum->setOrigin(-40.0f, 5.0f);
+    myGui.addChild(sliderEnum);
+
+    auto sliderEnumLabel = gui::Label::create(theme);
+    connectDebugSignals(sliderEnumLabel.get(), "sliderEnumLabel");
+    sliderEnum->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
+        sliderEnumLabel->setLabel(elements[static_cast<unsigned int>(value)]);
+        sliderEnumLabel->setPosition(sliderEnum->getSize() / 2.0f);
+        sliderEnumLabel->setOrigin(sliderEnumLabel->getSize() / 2.0f);
+    });
+    sliderEnum->setLabel(sliderEnumLabel);
 }
 
 void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
