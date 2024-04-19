@@ -64,7 +64,7 @@ std::shared_ptr<ButtonStyle> DefaultTheme::makeButtonStyle() const {
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
-    style->setFillColorHover({219, 233, 255});
+    style->setFillColorHover({186, 222, 255, 100});
     style->setFillColorDown({188, 214, 255});
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
 
@@ -81,6 +81,7 @@ std::shared_ptr<CheckBoxStyle> DefaultTheme::makeCheckBoxStyle() const {
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
+    style->setFillColorHover({186, 222, 255, 100});
     style->setFillColorChecked({80, 80, 80});
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
 

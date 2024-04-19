@@ -2,6 +2,25 @@
 #include <gui/Theme.h>
 #include <gui/widgets/CheckBox.h>
 
+namespace {
+
+/**
+ * Blends two colors, just like the OpenGL blend mode:
+ * `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);`
+ * 
+ * For this function, the destination alpha is preserved though.
+ */
+sf::Color blendColors(const sf::Color& src, const sf::Color& dest) {
+    return {
+        static_cast<uint8_t>((static_cast<int>(src.r) * src.a + static_cast<int>(dest.r) * (255 - src.a)) / 255),
+        static_cast<uint8_t>((static_cast<int>(src.g) * src.a + static_cast<int>(dest.g) * (255 - src.a)) / 255),
+        static_cast<uint8_t>((static_cast<int>(src.b) * src.a + static_cast<int>(dest.b) * (255 - src.a)) / 255),
+        dest.a
+    };
+}
+
+}
+
 namespace gui {
 
 CheckBoxStyle::CheckBoxStyle(const Gui& gui) :
@@ -89,6 +108,10 @@ const sf::Color& CheckBoxStyle::getTextFillColor() const {
     return text_.getFillColor();
 }
 
+void CheckBoxStyle::setFillColorHover(const sf::Color& color) {
+    colorHover_ = color;
+    gui_.requestRedraw();
+}
 void CheckBoxStyle::setFillColorChecked(const sf::Color& color) {
     colorChecked_ = color;
     gui_.requestRedraw();
@@ -96,6 +119,9 @@ void CheckBoxStyle::setFillColorChecked(const sf::Color& color) {
 void CheckBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
+}
+const sf::Color& CheckBoxStyle::getFillColorHover() const {
+    return colorHover_;
 }
 const sf::Color& CheckBoxStyle::getFillColorChecked() const {
     return colorChecked_;
@@ -118,11 +144,14 @@ std::shared_ptr<CheckBox> CheckBox::create(std::shared_ptr<CheckBoxStyle> style,
 }
 
 void CheckBox::setChecked(bool checked) {
-    Button::setPressed(checked);
+    if (isChecked_ != checked) {
+        isChecked_ = checked;
+        requestRedraw();
+    }
 }
 
 bool CheckBox::isChecked() const {
-    return Button::isPressed();
+    return isChecked_;
 }
 
 void CheckBox::setStyle(std::shared_ptr<CheckBoxStyle> style) {
@@ -138,32 +167,18 @@ std::shared_ptr<CheckBoxStyle> CheckBox::getStyle() {
     return style_;
 }
 
-void CheckBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    Widget::handleMousePress(button, mouseParent);
-    const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button <= sf::Mouse::Middle) {
-        Button::setPressed(!Button::isPressed());
-        onClick.emit(this, mouseLocal);
-    }
-    onMousePress.emit(this, button, mouseLocal);
-}
 void CheckBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
-    Widget::handleMouseRelease(button, mouseParent);
-}
-
-void CheckBox::handleMouseEntered() {
-    Widget::handleMouseEntered();
-}
-
-void CheckBox::handleMouseLeft() {
-    Widget::handleMouseLeft();
+    if (button <= sf::Mouse::Middle && Button::isPressed()) {
+        setChecked(!isChecked_);
+    }
+    Button::handleMouseRelease(button, mouseParent);
 }
 
 CheckBox::CheckBox(std::shared_ptr<CheckBoxStyle> style, const sf::String& name) :
     Button(nullptr, name),
     style_(style),
-    styleCopied_(false) {
+    styleCopied_(false),
+    isChecked_(false) {
 }
 
 void CheckBox::computeResize() const {
@@ -188,11 +203,11 @@ void CheckBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->text_.setString(getLabel());
     }
     style_->rect_.setSize({size_.y, size_.y});
-    if (Button::isPressed()) {
-        style_->rect_.setFillColor(style_->colorChecked_);
-    } else {
-        style_->rect_.setFillColor(style_->colorUnchecked_);
+    sf::Color fillColor = (isChecked_ ? style_->colorChecked_ : style_->colorUnchecked_);
+    if (isMouseHovering()) {
+        fillColor = blendColors(style_->colorHover_, fillColor);
     }
+    style_->rect_.setFillColor(fillColor);
     target.draw(style_->rect_, states);
     style_->text_.setPosition(style_->textPadding_.x + static_cast<int>(size_.y), style_->textPadding_.y);
     target.draw(style_->text_, states);

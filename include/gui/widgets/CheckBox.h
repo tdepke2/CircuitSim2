@@ -49,8 +49,10 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setFillColorHover(const sf::Color& color);
     void setFillColorChecked(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getFillColorHover() const;
     const sf::Color& getFillColorChecked() const;
     const sf::Vector3f& getTextPadding() const;
 
@@ -59,7 +61,7 @@ public:
 private:
     sf::RectangleShape rect_;
     sf::Text text_;
-    sf::Color colorUnchecked_, colorChecked_;
+    sf::Color colorUnchecked_, colorHover_, colorChecked_;
     sf::Vector3f textPadding_;
 
     friend class CheckBox;
@@ -85,11 +87,7 @@ public:
     // To get the global style, get it from the theme.
     std::shared_ptr<CheckBoxStyle> getStyle();
 
-    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
-
-    virtual void handleMouseEntered() override;
-    virtual void handleMouseLeft() override;
 
 protected:
     CheckBox(std::shared_ptr<CheckBoxStyle> style, const sf::String& name);
@@ -100,6 +98,7 @@ private:
 
     std::shared_ptr<CheckBoxStyle> style_;
     bool styleCopied_;
+    bool isChecked_;
 };
 
 } // namespace gui
