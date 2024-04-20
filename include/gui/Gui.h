@@ -39,7 +39,7 @@ namespace gui {
  */
 class Gui : public ContainerBase, public sf::Drawable {
 public:
-    Gui(sf::RenderWindow& window);
+    Gui(sf::RenderWindow& window, unsigned int antialiasingLevel = 4);
     virtual ~Gui() noexcept = default;
     Gui(const Gui& rhs) = delete;
     Gui& operator=(const Gui& rhs) = delete;
@@ -68,6 +68,7 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::RenderWindow& window_;
+    unsigned int antialiasingLevel_;
     mutable sf::RenderTexture renderTexture_;
     mutable bool redrawPending_;
     sf::Sprite renderSprite_;

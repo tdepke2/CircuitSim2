@@ -184,7 +184,7 @@ private:
     void selectMenu(int index, bool isOpen);
     void selectMenuItem(int index);
     sf::Vector2f getOpenMenuPosition() const;
-    void mouseUpdate(bool clicked, const sf::Vector2f& mouseLocal);
+    void mouseUpdate(bool mouseClick, bool mouseDown, const sf::Vector2f& mouseLocal);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<MenuBarStyle> style_;

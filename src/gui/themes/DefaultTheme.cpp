@@ -176,8 +176,11 @@ std::shared_ptr<RadioButtonStyle> DefaultTheme::makeRadioButtonStyle() const {
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
+    style->setFillColorHover({186, 222, 255, 100});
     style->setFillColorChecked({80, 80, 80});
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+
+    style->setDiamond(true);
 
     return style;
 }

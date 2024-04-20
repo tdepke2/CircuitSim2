@@ -53,8 +53,9 @@ std::pair<sf::Vector2f, bool> propagateMouseEvent(const sf::Vector2f& mouseGloba
 
 }
 
-Gui::Gui(sf::RenderWindow& window) :
+Gui::Gui(sf::RenderWindow& window, unsigned int antialiasingLevel) :
     window_(window),
+    antialiasingLevel_(antialiasingLevel),
     redrawPending_(true),
     focusedWidget_(nullptr) {
 
@@ -62,8 +63,11 @@ Gui::Gui(sf::RenderWindow& window) :
 }
 
 void Gui::setSize(const sf::Vector2u& size) {
-    if (!renderTexture_.create(size.x, size.y)) {
-        throw std::runtime_error("Unable to create GUI render texture (size " + std::to_string(size.x) + " by " + std::to_string(size.y) + ").");
+    if (!renderTexture_.create(size.x, size.y, sf::ContextSettings(0, 0, antialiasingLevel_))) {
+        throw std::runtime_error(
+            "Unable to create GUI render texture (size " + std::to_string(size.x) + " by " + std::to_string(size.y) +
+            " with anti-aliasing level " + std::to_string(antialiasingLevel_) + ")."
+        );
     }
     renderSprite_.setTexture(renderTexture_.getTexture(), true);
     requestRedraw();

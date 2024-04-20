@@ -65,6 +65,7 @@ private:
     sf::Vector3f textPadding_;
 
     friend class CheckBox;
+    friend class RadioButton;
 };
 
 
