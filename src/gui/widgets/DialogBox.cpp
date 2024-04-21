@@ -261,7 +261,7 @@ bool DialogBox::handleMouseMove(const sf::Vector2f& mouseParent) {
         }
     }
 
-    return isFocused();
+    return isMouseIntersecting(mouseParent) && (isFocused() || findChildWithFocus() != nullptr);
 }
 void DialogBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Group::handleMousePress(button, mouseParent);

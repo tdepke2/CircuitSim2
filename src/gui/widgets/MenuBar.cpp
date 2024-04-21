@@ -287,6 +287,8 @@ bool MenuBar::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
 bool MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
     if (Widget::handleMouseMove(mouseParent)) {
         return true;
+    } else if (!isMouseIntersecting(mouseParent)) {
+        return false;
     }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
 

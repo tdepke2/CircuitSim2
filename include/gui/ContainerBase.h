@@ -32,6 +32,7 @@ public:
         return std::dynamic_pointer_cast<T>(getChild(index));
     }
     const std::vector<std::shared_ptr<Widget>>& getChildren() const;
+    std::shared_ptr<Widget> findChildWithFocus(bool recursive = true) const;
     /**
      * Adjusts the ordering of widgets to ensure the specified child draws on
      * top of others. Moving to the front means drawing last, so the child

@@ -217,7 +217,7 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
         }
     }
 
-    return isFocused();
+    return isDragging_;
 }
 void Slider::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);

@@ -73,6 +73,28 @@ const std::vector<std::shared_ptr<Widget>>& ContainerBase::getChildren() const {
     return children_;
 }
 
+std::shared_ptr<Widget> ContainerBase::findChildWithFocus(bool recursive) const {
+    for (const auto& c : children_) {
+        if (c->isFocused()) {
+            return c;
+        }
+    }
+
+    if (recursive) {
+        for (const auto& c : children_) {
+            const auto container = dynamic_cast<ContainerBase*>(c.get());
+            if (container != nullptr) {
+                auto containerChild = container->findChildWithFocus(recursive);
+                if (containerChild != nullptr) {
+                    return containerChild;
+                }
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 bool ContainerBase::sendChildToFront(const std::shared_ptr<Widget>& child) {
     for (size_t i = 0; i < children_.size(); ++i) {
         if (children_[i] == child) {

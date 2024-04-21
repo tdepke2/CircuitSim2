@@ -180,18 +180,19 @@ sf::FloatRect MultilineTextBox::getLocalBounds() const {
 bool MultilineTextBox::handleMouseMove(const sf::Vector2f& mouseParent) {
     if (Widget::handleMouseMove(mouseParent)) {
         return true;
-    }
-    const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (!isFocused()) {
+    } else if (!isFocused()) {
         return false;
     }
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         size_t offset = findClosestOffsetToMouse(mouseLocal);
         if (offset != findCaretOffset(caretPosition_)) {
             updateCaretPosition(offset, true);
         }
+        return true;
+    } else {
+        return false;
     }
-    return true;
 }
 bool MultilineTextBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     if (Widget::handleMouseWheelScroll(wheel, delta, mouseParent)) {
