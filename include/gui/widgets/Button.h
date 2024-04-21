@@ -23,6 +23,7 @@ namespace gui {
 class ButtonStyle : public Style {
 public:
     ButtonStyle(const Gui& gui);
+    virtual ~ButtonStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -76,7 +77,7 @@ class Button : public Widget {
 public:
     static std::shared_ptr<Button> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style, const sf::String& name = "");
-    virtual ~Button() noexcept = default;
+    virtual ~Button() = default;
 
     // Setting the size turns off auto-resize.
     void setSize(const sf::Vector2f& size);

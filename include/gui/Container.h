@@ -16,7 +16,7 @@ namespace gui {
  */
 class Container : public ContainerBase, public Widget {
 public:
-    virtual ~Container() noexcept = default;
+    virtual ~Container() = default;
 
     virtual void addChild(std::shared_ptr<Widget> child) override;
 

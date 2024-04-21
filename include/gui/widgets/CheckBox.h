@@ -22,6 +22,7 @@ namespace gui {
 class CheckBoxStyle : public Style {
 public:
     CheckBoxStyle(const Gui& gui);
+    virtual ~CheckBoxStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -76,7 +77,7 @@ class CheckBox : public Button {
 public:
     static std::shared_ptr<CheckBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<CheckBox> create(std::shared_ptr<CheckBoxStyle> style, const sf::String& name = "");
-    virtual ~CheckBox() noexcept = default;
+    virtual ~CheckBox() = default;
 
     void setPressed(bool pressed) = delete;
     bool isPressed() const = delete;

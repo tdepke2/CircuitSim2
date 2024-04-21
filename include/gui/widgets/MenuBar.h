@@ -67,6 +67,7 @@ private:
 class MenuBarStyle : public Style {
 public:
     MenuBarStyle(const Gui& gui);
+    virtual ~MenuBarStyle() = default;
 
     // sf::Shape interface.
     void setBarTexture(const sf::Texture* texture, bool resetRect = false);
@@ -140,7 +141,7 @@ class MenuBar : public Widget {
 public:
     static std::shared_ptr<MenuBar> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<MenuBar> create(std::shared_ptr<MenuBarStyle> style, const sf::String& name = "");
-    virtual ~MenuBar() noexcept = default;
+    virtual ~MenuBar() = default;
 
     void setWidth(float width);
     const sf::Vector2f& getSize() const;

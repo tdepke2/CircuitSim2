@@ -26,6 +26,7 @@ namespace gui {
 class DialogBoxStyle : public Style {
 public:
     DialogBoxStyle(const Gui& gui);
+    virtual ~DialogBoxStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -84,7 +85,7 @@ public:
 
     static std::shared_ptr<DialogBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<DialogBox> create(std::shared_ptr<DialogBoxStyle> style, const sf::String& name = "");
-    virtual ~DialogBox() noexcept = default;
+    virtual ~DialogBox() = default;
 
     void setSize(const sf::Vector2f& size);
     void setDraggable(bool draggable);

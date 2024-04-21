@@ -23,7 +23,7 @@ namespace gui {
 class DefaultTheme : public Theme {
 public:
     DefaultTheme(const Gui& gui);
-    virtual ~DefaultTheme() noexcept = default;
+    virtual ~DefaultTheme() = default;
 
 protected:
     virtual std::shared_ptr<Style> loadStyle(const sf::String& widgetName) const override;

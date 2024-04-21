@@ -2,7 +2,7 @@
 
 namespace gui {
 
-ContainerBase::~ContainerBase() noexcept {
+ContainerBase::~ContainerBase() {
     removeAllChildren();
 }
 

@@ -14,7 +14,7 @@ namespace gui {
  */
 class ContainerBase {
 public:
-    virtual ~ContainerBase() noexcept;
+    virtual ~ContainerBase();
 
     virtual void addChild(std::shared_ptr<Widget> child) = 0;
     bool removeChild(const std::shared_ptr<Widget>& child);

@@ -25,6 +25,7 @@ namespace gui {
 class SliderStyle : public Style {
 public:
     SliderStyle(const Gui& gui);
+    virtual ~SliderStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -71,18 +72,22 @@ private:
 
 
 /**
- * FIXME
+ * A bar with a movable thumb that can be used to select a value within a range.
+ * To show the current value on the `Slider`, a `Label` can be added that will
+ * function like a child widget. This label will draw on top of the slider but
+ * not respond to any events.
  */
 class Slider : public Widget {
 public:
     static std::shared_ptr<Slider> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Slider> create(std::shared_ptr<SliderStyle> style, const sf::String& name = "");
-    virtual ~Slider() noexcept = default;
+    virtual ~Slider() = default;
 
     void setSize(const sf::Vector2f& size);
     void setLabel(std::shared_ptr<Label> label);
     void setRange(const std::pair<float, float>& range);
     void setValue(float value);
+    // The provided step value must be non-negative.
     void setStep(float step);
     const sf::Vector2f& getSize() const;
     std::shared_ptr<Label> getLabel() const;

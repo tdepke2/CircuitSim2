@@ -9,10 +9,7 @@ namespace gui {
 class Style {
 public:
     Style(const Gui& gui);
-
-    virtual void idk() {    // FIXME
-
-    }
+    virtual ~Style() = default;
 
 protected:
     const Gui& gui_;

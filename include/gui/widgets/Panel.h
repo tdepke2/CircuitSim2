@@ -22,6 +22,7 @@ namespace gui {
 class PanelStyle : public Style {
 public:
     PanelStyle(const Gui& gui);
+    virtual ~PanelStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -51,7 +52,7 @@ class Panel : public Group {
 public:
     static std::shared_ptr<Panel> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style, const sf::String& name = "");
-    virtual ~Panel() noexcept = default;
+    virtual ~Panel() = default;
 
     void setSize(const sf::Vector2f& size);
     const sf::Vector2f& getSize() const;

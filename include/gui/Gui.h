@@ -40,7 +40,7 @@ namespace gui {
 class Gui : public ContainerBase, public sf::Drawable {
 public:
     Gui(sf::RenderWindow& window, unsigned int antialiasingLevel = 4);
-    virtual ~Gui() noexcept = default;
+    virtual ~Gui() = default;
     Gui(const Gui& rhs) = delete;
     Gui& operator=(const Gui& rhs) = delete;
 

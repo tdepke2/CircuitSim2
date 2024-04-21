@@ -23,6 +23,7 @@ namespace gui {
 class LabelStyle : public Style {
 public:
     LabelStyle(const Gui& gui);
+    virtual ~LabelStyle() = default;
 
     // sf::Text interface.
     void setFont(const sf::Font& font);
@@ -58,7 +59,7 @@ class Label : public Widget {
 public:
     static std::shared_ptr<Label> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Label> create(std::shared_ptr<LabelStyle> style, const sf::String& name = "");
-    virtual ~Label() noexcept = default;
+    virtual ~Label() = default;
 
     void setLabel(const sf::String& label);
     const sf::Vector2f& getSize() const;

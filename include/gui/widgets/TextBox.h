@@ -23,6 +23,7 @@ namespace gui {
 class TextBoxStyle : public Style {
 public:
     TextBoxStyle(const Gui& gui);
+    virtual ~TextBoxStyle() = default;
 
     // sf::Shape interface.
     void setTexture(const sf::Texture* texture, bool resetRect = false);
@@ -84,7 +85,7 @@ class TextBox : public Widget {
 public:
     static std::shared_ptr<TextBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<TextBox> create(std::shared_ptr<TextBoxStyle> style, const sf::String& name = "");
-    virtual ~TextBox() noexcept = default;
+    virtual ~TextBox() = default;
 
     void setWidthCharacters(size_t widthCharacters);
     void setMaxCharacters(size_t maxCharacters);

@@ -13,7 +13,7 @@ namespace gui {
 class Group : public Container {
 public:
     static std::shared_ptr<Group> create(const sf::String& name = "");
-    virtual ~Group() noexcept = default;
+    virtual ~Group() = default;
 
     virtual sf::FloatRect getLocalBounds() const override;
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;

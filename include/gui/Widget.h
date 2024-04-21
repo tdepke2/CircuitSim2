@@ -30,7 +30,7 @@ namespace gui {
  */
 class Widget : public std::enable_shared_from_this<Widget>, public sf::Drawable {
 public:
-    virtual ~Widget() noexcept = default;
+    virtual ~Widget() = default;
     Widget(const Widget& rhs) = delete;
     Widget& operator=(const Widget& rhs) = delete;
 

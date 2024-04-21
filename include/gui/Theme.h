@@ -29,7 +29,7 @@ namespace gui {
 class Theme {
 public:
     Theme(const Gui& gui);
-    virtual ~Theme() noexcept = default;
+    virtual ~Theme() = default;
 
     void addStyle(const sf::String& widgetName, std::shared_ptr<Style> style);
     bool removeStyle(const sf::String& widgetName);

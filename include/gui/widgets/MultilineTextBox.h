@@ -25,6 +25,7 @@ namespace gui {
 class MultilineTextBoxStyle : public TextBoxStyle {
 public:
     MultilineTextBoxStyle(const Gui& gui);
+    virtual ~MultilineTextBoxStyle() = default;
 
     void setHighlightFillColor(const sf::Color& color);
     const sf::Color& getHighlightFillColor() const;
@@ -51,7 +52,7 @@ public:
 
     static std::shared_ptr<MultilineTextBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<MultilineTextBox> create(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name = "");
-    virtual ~MultilineTextBox() noexcept = default;
+    virtual ~MultilineTextBox() = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
     void setMaxCharacters(size_t maxCharacters);

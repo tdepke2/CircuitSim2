@@ -23,6 +23,7 @@ namespace gui {
 class RadioButtonStyle : public CheckBoxStyle {
 public:
     RadioButtonStyle(const Gui& gui);
+    virtual ~RadioButtonStyle() = default;
 
     void setDiamond(bool diamond);
     bool isDiamond() const;
@@ -45,7 +46,7 @@ class RadioButton : public Button {
 public:
     static std::shared_ptr<RadioButton> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<RadioButton> create(std::shared_ptr<RadioButtonStyle> style, const sf::String& name = "");
-    virtual ~RadioButton() noexcept = default;
+    virtual ~RadioButton() = default;
 
     void setPressed(bool pressed) = delete;
     bool isPressed() const = delete;
