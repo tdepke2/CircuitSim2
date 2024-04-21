@@ -7,6 +7,25 @@
 #include <cassert>
 #include <cmath>
 
+namespace {
+
+/**
+ * Blends two colors, just like the OpenGL blend mode:
+ * `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);`
+ * 
+ * For this function, the destination alpha is preserved though.
+ */
+sf::Color blendColors(const sf::Color& src, const sf::Color& dest) {
+    return {
+        static_cast<uint8_t>((static_cast<int>(src.r) * src.a + static_cast<int>(dest.r) * (255 - src.a)) / 255),
+        static_cast<uint8_t>((static_cast<int>(src.g) * src.a + static_cast<int>(dest.g) * (255 - src.a)) / 255),
+        static_cast<uint8_t>((static_cast<int>(src.b) * src.a + static_cast<int>(dest.b) * (255 - src.a)) / 255),
+        dest.a
+    };
+}
+
+}
+
 namespace gui {
 
 SliderStyle::SliderStyle(const Gui& gui) :
@@ -23,7 +42,7 @@ void SliderStyle::setTextureRect(const sf::IntRect& rect) {
     gui_.requestRedraw();
 }
 void SliderStyle::setFillColor(const sf::Color& color) {
-    rect_.setFillColor(color);
+    colorRect_ = color;
     gui_.requestRedraw();
 }
 void SliderStyle::setOutlineColor(const sf::Color& color) {
@@ -41,7 +60,7 @@ const sf::IntRect& SliderStyle::getTextureRect() const {
     return rect_.getTextureRect();
 }
 const sf::Color& SliderStyle::getFillColor() const {
-    return rect_.getFillColor();
+    return colorRect_;
 }
 const sf::Color& SliderStyle::getOutlineColor() const {
     return rect_.getOutlineColor();
@@ -60,7 +79,7 @@ void SliderStyle::setThumbTextureRect(const sf::IntRect& rect) {
     gui_.requestRedraw();
 }
 void SliderStyle::setThumbFillColor(const sf::Color& color) {
-    thumb_.setFillColor(color);
+    colorThumb_ = color;
     gui_.requestRedraw();
 }
 void SliderStyle::setThumbOutlineColor(const sf::Color& color) {
@@ -78,7 +97,7 @@ const sf::IntRect& SliderStyle::getThumbTextureRect() const {
     return thumb_.getTextureRect();
 }
 const sf::Color& SliderStyle::getThumbFillColor() const {
-    return thumb_.getFillColor();
+    return colorThumb_;
 }
 const sf::Color& SliderStyle::getThumbOutlineColor() const {
     return thumb_.getOutlineColor();
@@ -87,9 +106,23 @@ float SliderStyle::getThumbOutlineThickness() const {
     return thumb_.getOutlineThickness();
 }
 
+void SliderStyle::setFillColorHover(const sf::Color& color) {
+    colorRectHover_ = color;
+    gui_.requestRedraw();
+}
+void SliderStyle::setFillColorDown(const sf::Color& color) {
+    colorThumbDown_ = color;
+    gui_.requestRedraw();
+}
 void SliderStyle::setThumbMinWidth(float thumbMinWidth) {
     thumbMinWidth_ = thumbMinWidth;
     gui_.requestRedraw();
+}
+const sf::Color& SliderStyle::getFillColorHover() const {
+    return colorRectHover_;
+}
+const sf::Color& SliderStyle::getFillColorDown() const {
+    return colorThumbDown_;
 }
 float SliderStyle::getThumbMinWidth() const {
     return thumbMinWidth_;
@@ -180,6 +213,7 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
             updateThumb(mouseLocal.x + getOrigin().x);
         } else {
             isDragging_ = false;
+            requestRedraw();
         }
     }
 
@@ -188,16 +222,28 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
 void Slider::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     Widget::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    if (button == sf::Mouse::Left) {
+    if (button == sf::Mouse::Left && !isDragging_) {
         updateThumb(mouseLocal.x + getOrigin().x);
         isDragging_ = true;
+        requestRedraw();
     }
 }
 void Slider::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    if (button == sf::Mouse::Left) {
+    if (button == sf::Mouse::Left && isDragging_) {
         isDragging_ = false;
+        requestRedraw();
     }
     Widget::handleMouseRelease(button, mouseParent);
+}
+
+void Slider::handleMouseEntered() {
+    Widget::handleMouseEntered();
+    requestRedraw();
+}
+
+void Slider::handleMouseLeft() {
+    requestRedraw();
+    Widget::handleMouseLeft();
 }
 
 Slider::Slider(std::shared_ptr<SliderStyle> style, const sf::String& name) :
@@ -243,9 +289,15 @@ void Slider::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     const float thumbWidth = getThumbWidth();
 
     style_->rect_.setSize(size_);
+    if (isMouseHovering()) {
+        style_->rect_.setFillColor(blendColors(style_->colorRectHover_, style_->colorRect_));
+    } else {
+        style_->rect_.setFillColor(style_->colorRect_);
+    }
     target.draw(style_->rect_, states);
     style_->thumb_.setSize({thumbWidth, size_.y});
     style_->thumb_.setPosition((value_ - range_.first) / (range_.second - range_.first) * (size_.x - thumbWidth), 0.0f);
+    style_->thumb_.setFillColor(isDragging_ ? style_->colorThumbDown_ : style_->colorThumb_);
     target.draw(style_->thumb_, states);
 
     if (label_ != nullptr) {

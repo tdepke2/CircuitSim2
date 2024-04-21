@@ -50,7 +50,11 @@ public:
     const sf::Color& getThumbOutlineColor() const;
     float getThumbOutlineThickness() const;
 
+    void setFillColorHover(const sf::Color& color);
+    void setFillColorDown(const sf::Color& color);
     void setThumbMinWidth(float thumbMinWidth);
+    const sf::Color& getFillColorHover() const;
+    const sf::Color& getFillColorDown() const;
     float getThumbMinWidth() const;
 
     std::shared_ptr<SliderStyle> clone() const;
@@ -58,6 +62,8 @@ public:
 private:
     sf::RectangleShape rect_;
     sf::RectangleShape thumb_;
+    sf::Color colorRect_, colorRectHover_;
+    sf::Color colorThumb_, colorThumbDown_;
     float thumbMinWidth_;
 
     friend class Slider;
@@ -94,6 +100,9 @@ public:
     virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+
+    virtual void handleMouseEntered() override;
+    virtual void handleMouseLeft() override;
 
     Signal<Widget*, float> onValueChange;
 
