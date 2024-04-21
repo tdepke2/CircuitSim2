@@ -4,25 +4,6 @@
 
 #include <cmath>
 
-namespace {
-
-/**
- * Blends two colors, just like the OpenGL blend mode:
- * `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);`
- * 
- * For this function, the destination alpha is preserved though.
- */
-sf::Color blendColors(const sf::Color& src, const sf::Color& dest) {
-    return {
-        static_cast<uint8_t>((static_cast<int>(src.r) * src.a + static_cast<int>(dest.r) * (255 - src.a)) / 255),
-        static_cast<uint8_t>((static_cast<int>(src.g) * src.a + static_cast<int>(dest.g) * (255 - src.a)) / 255),
-        static_cast<uint8_t>((static_cast<int>(src.b) * src.a + static_cast<int>(dest.b) * (255 - src.a)) / 255),
-        dest.a
-    };
-}
-
-}
-
 namespace gui {
 
 RadioButtonStyle::RadioButtonStyle(const Gui& gui) :
@@ -145,7 +126,7 @@ void RadioButton::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     }
     sf::Color fillColor = (isChecked_ ? style_->colorChecked_ : style_->colorUnchecked_);
     if (isMouseHovering()) {
-        fillColor = blendColors(style_->colorHover_, fillColor);
+        fillColor = Style::blendColors(style_->colorHover_, fillColor);
     }
     style_->rect_.setFillColor(fillColor);
     target.draw(style_->rect_, states);

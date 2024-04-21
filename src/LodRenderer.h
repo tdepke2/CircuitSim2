@@ -18,7 +18,7 @@ public:
     using DecorationMap = FlatMap<ChunkCoords::repr, FlatMap<unsigned int, const sf::Drawable*>>;
 
     LodRenderer();
-    virtual ~LodRenderer() noexcept = default;
+    virtual ~LodRenderer() = default;
     // FIXME should be private nonvirtual? probably should add virtual to other derived classes that missed it.
     LodRenderer(const LodRenderer& rhs) = default;
     LodRenderer& operator=(const LodRenderer& rhs) = default;

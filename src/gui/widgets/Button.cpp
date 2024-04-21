@@ -2,25 +2,6 @@
 #include <gui/Theme.h>
 #include <gui/widgets/Button.h>
 
-namespace {
-
-/**
- * Blends two colors, just like the OpenGL blend mode:
- * `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);`
- * 
- * For this function, the destination alpha is preserved though.
- */
-sf::Color blendColors(const sf::Color& src, const sf::Color& dest) {
-    return {
-        static_cast<uint8_t>((static_cast<int>(src.r) * src.a + static_cast<int>(dest.r) * (255 - src.a)) / 255),
-        static_cast<uint8_t>((static_cast<int>(src.g) * src.a + static_cast<int>(dest.g) * (255 - src.a)) / 255),
-        static_cast<uint8_t>((static_cast<int>(src.b) * src.a + static_cast<int>(dest.b) * (255 - src.a)) / 255),
-        dest.a
-    };
-}
-
-}
-
 namespace gui {
 
 ButtonStyle::ButtonStyle(const Gui& gui) :
@@ -254,7 +235,7 @@ void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (isPressed_) {
         style_->rect_.setFillColor(style_->colorDown_);
     } else if (isMouseHovering()) {
-        style_->rect_.setFillColor(blendColors(style_->colorHover_, style_->colorUp_));
+        style_->rect_.setFillColor(Style::blendColors(style_->colorHover_, style_->colorUp_));
     } else {
         style_->rect_.setFillColor(style_->colorUp_);
     }
