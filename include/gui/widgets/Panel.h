@@ -49,6 +49,8 @@ private:
  * A rectangular box that contains other widgets.
  */
 class Panel : public Group {
+    using baseClass = Group;
+
 public:
     static std::shared_ptr<Panel> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Panel> create(std::shared_ptr<PanelStyle> style, const sf::String& name = "");

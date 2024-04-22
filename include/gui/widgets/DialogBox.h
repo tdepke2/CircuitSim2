@@ -78,6 +78,8 @@ private:
  * dialog.
  */
 class DialogBox : public Group {
+    using baseClass = Group;
+
 public:
     enum class Alignment {
         left, center, right

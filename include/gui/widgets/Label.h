@@ -56,6 +56,8 @@ private:
  * Basic text which can be used to label other widgets in the `Gui`.
  */
 class Label : public Widget {
+    using baseClass = Widget;
+
 public:
     static std::shared_ptr<Label> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Label> create(std::shared_ptr<LabelStyle> style, const sf::String& name = "");

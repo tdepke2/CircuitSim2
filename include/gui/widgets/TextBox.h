@@ -82,6 +82,8 @@ private:
  * number of characters can be set and editing can be disabled if needed.
  */
 class TextBox : public Widget {
+    using baseClass = Widget;
+
 public:
     static std::shared_ptr<TextBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<TextBox> create(std::shared_ptr<TextBoxStyle> style, const sf::String& name = "");

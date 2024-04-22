@@ -45,6 +45,8 @@ private:
  * editing disabled if needed.
  */
 class MultilineTextBox : public Widget {
+    using baseClass = Widget;
+
 public:
     enum class TabPolicy {
         expandTab, ignoreTab

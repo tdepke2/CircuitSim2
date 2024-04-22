@@ -87,7 +87,7 @@ bool Panel::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
 }
 
 Panel::Panel(std::shared_ptr<PanelStyle> style, const sf::String& name) :
-    Group(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false) {
 }

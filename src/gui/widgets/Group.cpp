@@ -25,7 +25,7 @@ bool Group::handleMouseMove(const sf::Vector2f& mouseParent) {
     auto mouseLocal = toLocalSpace(mouseParent);
     auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget == nullptr || !widget->handleMouseMove(mouseLocal)) {
-        return Container::handleMouseMove(mouseParent);
+        return baseClass::handleMouseMove(mouseParent);
     } else {
         return true;
     }
@@ -34,7 +34,7 @@ bool Group::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf
     auto mouseLocal = toLocalSpace(mouseParent);
     auto widget = getWidgetUnderMouse(mouseLocal);
     if (widget == nullptr || !widget->handleMouseWheelScroll(wheel, delta, mouseLocal)) {
-        return Container::handleMouseWheelScroll(wheel, delta, mouseParent);
+        return baseClass::handleMouseWheelScroll(wheel, delta, mouseParent);
     } else {
         return true;
     }
@@ -46,7 +46,7 @@ void Group::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouse
         widget->handleMousePress(button, mouseLocal);
     }
     if (widget == nullptr || !widget->isFocusable()) {
-        Container::handleMousePress(button, mouseParent);
+        baseClass::handleMousePress(button, mouseParent);
     }
 }
 void Group::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
@@ -56,12 +56,12 @@ void Group::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mou
         widget->handleMouseRelease(button, mouseLocal);
     }
     if (widget == nullptr || !widget->isFocusable()) {
-        Container::handleMouseRelease(button, mouseParent);
+        baseClass::handleMouseRelease(button, mouseParent);
     }
 }
 
 Group::Group(const sf::String& name) :
-    Container(name) {
+    baseClass(name) {
 }
 
 void Group::draw(sf::RenderTarget& target, sf::RenderStates states) const {

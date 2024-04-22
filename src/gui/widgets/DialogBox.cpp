@@ -220,7 +220,7 @@ void DialogBox::setVisible(bool visible) {
     if (visible) {
         focusNextTextBox();
     }
-    Group::setVisible(visible);
+    baseClass::setVisible(visible);
 }
 
 void DialogBox::setStyle(std::shared_ptr<DialogBoxStyle> style) {
@@ -244,7 +244,7 @@ bool DialogBox::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
 }
 
 bool DialogBox::handleMouseMove(const sf::Vector2f& mouseParent) {
-    if (Group::handleMouseMove(mouseParent)) {
+    if (baseClass::handleMouseMove(mouseParent)) {
         return true;
     }
 
@@ -264,7 +264,7 @@ bool DialogBox::handleMouseMove(const sf::Vector2f& mouseParent) {
     return isMouseIntersecting(mouseParent) && (isFocused() || findChildWithFocus() != nullptr);
 }
 void DialogBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    Group::handleMousePress(button, mouseParent);
+    baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button == sf::Mouse::Left && draggable_ && mouseLocal.y <= style_->titleBarHeight_ - style_->rect_.getOutlineThickness()) {
         dragPoint_ = {mouseParent, true};
@@ -275,10 +275,10 @@ void DialogBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f&
     if (button == sf::Mouse::Left) {
         dragPoint_.second = false;
     }
-    Group::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 bool DialogBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
-    bool eventConsumed = Group::handleKeyPressed(key);
+    bool eventConsumed = baseClass::handleKeyPressed(key);
     if (key.code == sf::Keyboard::Enter) {
         const auto& submitButton = getSubmitButton();
         if (submitButton != nullptr) {
@@ -299,7 +299,7 @@ bool DialogBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
 }
 
 DialogBox::DialogBox(std::shared_ptr<DialogBoxStyle> style, const sf::String& name) :
-    Group(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false),
     draggable_(true),

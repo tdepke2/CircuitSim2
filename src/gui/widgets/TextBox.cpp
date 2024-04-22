@@ -218,7 +218,7 @@ sf::FloatRect TextBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
 void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    Widget::handleMousePress(button, mouseParent);
+    baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Middle) {
         onClick.emit(this, mouseLocal);
@@ -241,10 +241,10 @@ void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
 }
 void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
-    Widget::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 bool TextBox::handleTextEntered(uint32_t unicode) {
-    bool eventConsumed = Widget::handleTextEntered(unicode);
+    bool eventConsumed = baseClass::handleTextEntered(unicode);
     if (!readOnly_ && unicode >= '\u0020' && unicode != '\u007f') {    // Printable character.
         if (maxCharacters_ == 0 || boxString_.getSize() < maxCharacters_) {
             boxString_.insert(caretPosition_, sf::String(unicode));
@@ -256,7 +256,7 @@ bool TextBox::handleTextEntered(uint32_t unicode) {
     return eventConsumed;
 }
 bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
-    bool eventConsumed = Widget::handleKeyPressed(key);
+    bool eventConsumed = baseClass::handleKeyPressed(key);
     if (key.code == sf::Keyboard::Enter) {
         onEnterPressed.emit(this, boxString_);
         return eventConsumed;
@@ -300,12 +300,12 @@ bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     return true;
 }
 void TextBox::handleFocusChange(bool focused) {
-    Widget::handleFocusChange(focused);
+    baseClass::handleFocusChange(focused);
     requestRedraw();
 }
 
 TextBox::TextBox(std::shared_ptr<TextBoxStyle> style, const sf::String& name) :
-    Widget(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false),
     widthCharacters_(0),

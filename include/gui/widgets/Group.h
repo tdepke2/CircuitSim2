@@ -11,6 +11,8 @@ namespace gui {
  * An invisible widget that just groups other widgets.
  */
 class Group : public Container {
+    using baseClass = Container;
+
 public:
     static std::shared_ptr<Group> create(const sf::String& name = "");
     virtual ~Group() = default;

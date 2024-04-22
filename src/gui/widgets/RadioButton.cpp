@@ -80,14 +80,14 @@ std::shared_ptr<RadioButtonStyle> RadioButton::getStyle() {
 }
 
 void RadioButton::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    if (button <= sf::Mouse::Middle && Button::isPressed()) {
+    if (button <= sf::Mouse::Middle && baseClass::isPressed()) {
         setChecked(true);
     }
-    Button::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 
 RadioButton::RadioButton(std::shared_ptr<RadioButtonStyle> style, const sf::String& name) :
-    Button(nullptr, name),
+    baseClass(nullptr, name),
     style_(style),
     styleCopied_(false),
     isChecked_(false) {

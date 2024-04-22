@@ -138,6 +138,8 @@ private:
  * menus.
  */
 class MenuBar : public Widget {
+    using baseClass = Widget;
+
 public:
     static std::shared_ptr<MenuBar> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<MenuBar> create(std::shared_ptr<MenuBarStyle> style, const sf::String& name = "");

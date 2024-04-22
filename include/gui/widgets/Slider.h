@@ -78,6 +78,8 @@ private:
  * not respond to any events.
  */
 class Slider : public Widget {
+    using baseClass = Widget;
+
 public:
     static std::shared_ptr<Slider> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Slider> create(std::shared_ptr<SliderStyle> style, const sf::String& name = "");

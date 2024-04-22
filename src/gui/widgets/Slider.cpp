@@ -184,7 +184,7 @@ sf::FloatRect Slider::getLocalBounds() const {
 }
 
 bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
-    if (Widget::handleMouseMove(mouseParent)) {
+    if (baseClass::handleMouseMove(mouseParent)) {
         return true;
     }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
@@ -201,7 +201,7 @@ bool Slider::handleMouseMove(const sf::Vector2f& mouseParent) {
     return isDragging_;
 }
 void Slider::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    Widget::handleMousePress(button, mouseParent);
+    baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button == sf::Mouse::Left && !isDragging_) {
         updateThumb(mouseLocal.x + getOrigin().x);
@@ -214,21 +214,21 @@ void Slider::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mo
         isDragging_ = false;
         requestRedraw();
     }
-    Widget::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 
 void Slider::handleMouseEntered() {
-    Widget::handleMouseEntered();
+    baseClass::handleMouseEntered();
     requestRedraw();
 }
 
 void Slider::handleMouseLeft() {
     requestRedraw();
-    Widget::handleMouseLeft();
+    baseClass::handleMouseLeft();
 }
 
 Slider::Slider(std::shared_ptr<SliderStyle> style, const sf::String& name) :
-    Widget(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false),
     size_(0.0f, 0.0f),

@@ -285,7 +285,7 @@ bool MenuBar::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
 }
 
 bool MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
-    if (Widget::handleMouseMove(mouseParent)) {
+    if (baseClass::handleMouseMove(mouseParent)) {
         return true;
     } else if (!isMouseIntersecting(mouseParent)) {
         return false;
@@ -296,7 +296,7 @@ bool MenuBar::handleMouseMove(const sf::Vector2f& mouseParent) {
     return isFocused();
 }
 void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    Widget::handleMousePress(button, mouseParent);
+    baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Middle) {
         onClick.emit(this, mouseLocal);
@@ -310,7 +310,7 @@ void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
     mouseUpdate(true, false, mouseLocal);
     onMouseRelease.emit(this, button, mouseLocal);
 
-    Widget::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 
 void MenuBar::handleMouseLeft() {
@@ -319,18 +319,18 @@ void MenuBar::handleMouseLeft() {
     } else {
         selectMenuItem(-1);
     }
-    Widget::handleMouseLeft();
+    baseClass::handleMouseLeft();
 }
 
 void MenuBar::handleFocusChange(bool focused) {
-    Widget::handleFocusChange(focused);
+    baseClass::handleFocusChange(focused);
     if (!focused) {
         selectMenu(-1, false);
     }
 }
 
 MenuBar::MenuBar(std::shared_ptr<MenuBarStyle> style, const sf::String& name) :
-    Widget(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false),
     selectedMenu_(-1),

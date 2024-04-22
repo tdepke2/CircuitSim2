@@ -74,6 +74,8 @@ private:
  * A simple button with a text label.
  */
 class Button : public Widget {
+    using baseClass = Widget;
+
 public:
     static std::shared_ptr<Button> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<Button> create(std::shared_ptr<ButtonStyle> style, const sf::String& name = "");

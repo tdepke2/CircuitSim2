@@ -149,14 +149,14 @@ std::shared_ptr<CheckBoxStyle> CheckBox::getStyle() {
 }
 
 void CheckBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
-    if (button <= sf::Mouse::Middle && Button::isPressed()) {
+    if (button <= sf::Mouse::Middle && baseClass::isPressed()) {
         setChecked(!isChecked_);
     }
-    Button::handleMouseRelease(button, mouseParent);
+    baseClass::handleMouseRelease(button, mouseParent);
 }
 
 CheckBox::CheckBox(std::shared_ptr<CheckBoxStyle> style, const sf::String& name) :
-    Button(nullptr, name),
+    baseClass(nullptr, name),
     style_(style),
     styleCopied_(false),
     isChecked_(false) {

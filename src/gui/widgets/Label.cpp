@@ -103,7 +103,7 @@ sf::FloatRect Label::getLocalBounds() const {
 }
 
 Label::Label(std::shared_ptr<LabelStyle> style, const sf::String& name) :
-    Widget(name),
+    baseClass(name),
     style_(style),
     styleCopied_(false) {
 }

@@ -43,6 +43,8 @@ private:
  * be used to separate radio buttons from other unrelated ones.
  */
 class RadioButton : public Button {
+    using baseClass = Button;
+
 public:
     static std::shared_ptr<RadioButton> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<RadioButton> create(std::shared_ptr<RadioButtonStyle> style, const sf::String& name = "");

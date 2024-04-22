@@ -74,6 +74,8 @@ private:
  * A toggleable check box with a text label.
  */
 class CheckBox : public Button {
+    using baseClass = Button;
+
 public:
     static std::shared_ptr<CheckBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<CheckBox> create(std::shared_ptr<CheckBoxStyle> style, const sf::String& name = "");
