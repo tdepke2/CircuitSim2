@@ -1,6 +1,7 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/CheckBox.h>
+#include <gui/widgets/ColorPicker.h>
 #include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
@@ -48,6 +49,8 @@ std::shared_ptr<Style> DefaultTheme::loadStyle(const sf::String& widgetName) con
         return makeButtonStyle();
     } else if (widgetName == "CheckBox") {
         return makeCheckBoxStyle();
+    } else if (widgetName == "ColorPicker") {
+        return makeColorPickerStyle();
     } else if (widgetName == "DialogBox") {
         return makeDialogBoxStyle();
     } else if (widgetName == "Label") {
@@ -100,6 +103,12 @@ std::shared_ptr<CheckBoxStyle> DefaultTheme::makeCheckBoxStyle() const {
     style->setFillColorHover(colorLightBlueTransparent);
     style->setFillColorChecked(colorDarkBlue);
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+
+    return style;
+}
+
+std::shared_ptr<ColorPickerStyle> DefaultTheme::makeColorPickerStyle() const {
+    auto style = std::make_shared<ColorPickerStyle>(gui_);
 
     return style;
 }

@@ -2,6 +2,7 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/CheckBox.h>
+#include <gui/widgets/ColorPicker.h>
 #include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Group.h>
 #include <gui/widgets/Label.h>
@@ -384,6 +385,14 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
         radioButtonD->uncheckRadioButtons();
     });
     myGui.addChild(radioResetButton);
+}
+
+void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto colorPickerTest = gui::ColorPicker::create(theme);
+    connectDebugSignals(colorPickerTest.get(), "colorPickerTest");
+    colorPickerTest->setSize({500.0f, 500.0f});
+    colorPickerTest->setPosition(10.0f, 10.0f);
+    myGui.addChild(colorPickerTest);
 }
 
 void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -898,10 +907,11 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 8> sceneNames = {
+    const std::array<std::string, 9> sceneNames = {
         "Empty",
         "ButtonDemo",
         "CheckBoxDemo",
+        "ColorPickerDemo",
         "DialogBoxDemo",
         "TextBoxDemo",
         "MenuBarDemo",
@@ -952,6 +962,8 @@ int main() {
                 createButtonDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "CheckBoxDemo") {
                 createCheckBoxDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "ColorPickerDemo") {
+                createColorPickerDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "DialogBoxDemo") {
                 createDialogBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "TextBoxDemo") {
