@@ -364,6 +364,10 @@ bool MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
     return true;
 }
+void MultilineTextBox::handleFocusChange(bool focused) {
+    Widget::handleFocusChange(focused);
+    requestRedraw();
+}
 
 MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style, const sf::String& name) :
     Widget(name),

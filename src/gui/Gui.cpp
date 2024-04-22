@@ -206,11 +206,9 @@ void Gui::requestWidgetFocus(std::shared_ptr<Widget> widget) {
     }
     if (focusedWidget_) {
         focusedWidget_->handleFocusChange(false);
-        requestRedraw();    // FIXME: this is weird, why do we need to redraw here? seems like widgets should hook into handleFocusChange to redraw themselves.
     }
     if (widget) {
         widget->handleFocusChange(true);
-        requestRedraw();
     }
     focusedWidget_ = widget;
 }

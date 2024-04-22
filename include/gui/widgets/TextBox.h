@@ -109,6 +109,7 @@ public:
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual bool handleTextEntered(uint32_t unicode) override;
     virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
+    virtual void handleFocusChange(bool focused) override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;

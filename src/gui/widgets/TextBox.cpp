@@ -299,6 +299,10 @@ bool TextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     }
     return true;
 }
+void TextBox::handleFocusChange(bool focused) {
+    Widget::handleFocusChange(focused);
+    requestRedraw();
+}
 
 TextBox::TextBox(std::shared_ptr<TextBoxStyle> style, const sf::String& name) :
     Widget(name),
