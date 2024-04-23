@@ -2,6 +2,50 @@
 #include <gui/Theme.h>
 #include <gui/widgets/ColorPicker.h>
 
+#include <algorithm>
+#include <array>
+
+namespace {
+
+struct HsvColor {
+    HsvColor() :
+        h(0), s(0), v(0), a(255) {
+    }
+    HsvColor(uint8_t hue, uint8_t saturation, uint8_t value, uint8_t alpha = 255) :
+        h(hue), s(saturation), v(value), a(alpha) {
+    }
+
+    uint8_t h;
+    uint8_t s;
+    uint8_t v;
+    uint8_t a;
+};
+
+// Based on information found on the following page:
+// https://en.wikipedia.org/wiki/HSL_and_HSV
+HsvColor convertRgbToHsv(const sf::Color& color) {
+    uint8_t value = std::max(std::max(color.r, color.g), color.b);
+    uint8_t chroma = value - std::min(std::min(color.r, color.g), color.b);
+    float hue;
+    constexpr float hue60Degrees = 255.0f / 6.0f;
+    if (chroma == 0) {
+        hue = 0.0f;
+    } else if (value == color.r) {
+        hue = hue60Degrees * std::fmod(static_cast<float>(color.g - color.b) / chroma, 6.0f);
+    } else if (value == color.g) {
+        hue = hue60Degrees * (static_cast<float>(color.b - color.r) / chroma + 2.0f);
+    } else {    // value == color.b
+        hue = hue60Degrees * (static_cast<float>(color.r - color.g) / chroma + 4.0f);
+    }
+    uint8_t saturation = (value == 0 ? 0 : chroma / value);
+
+    return {
+        static_cast<uint8_t>(hue), saturation, value, color.a
+    };
+}
+
+}
+
 namespace gui {
 
 ColorPickerStyle::ColorPickerStyle(const Gui& gui) :
