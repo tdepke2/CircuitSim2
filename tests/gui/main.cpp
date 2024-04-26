@@ -388,11 +388,15 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
 }
 
 void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto panel = gui::Panel::create(theme);
+    panel->setPosition(10.0f, 10.0f);
+    myGui.addChild(panel);
+
     auto colorPickerTest = gui::ColorPicker::create(theme);
     connectDebugSignals(colorPickerTest.get(), "colorPickerTest");
-    colorPickerTest->setSize({500.0f, 500.0f});
-    colorPickerTest->setPosition(10.0f, 10.0f);
-    myGui.addChild(colorPickerTest);
+    colorPickerTest->setSize({700.0f, 500.0f});
+    panel->addChild(colorPickerTest);
+    panel->setSize(colorPickerTest->getSize());
 }
 
 void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {

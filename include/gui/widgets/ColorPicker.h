@@ -3,11 +3,15 @@
 #include <gui/Style.h>
 #include <gui/widgets/Group.h>
 
+#include <array>
 #include <memory>
 #include <SFML/Graphics.hpp>
 
 namespace gui {
     class Gui;
+    class Label;
+    class MultilineTextBox;
+    class Slider;
     class Theme;
 }
 
@@ -41,7 +45,7 @@ class ColorPicker : public Group {
 
 public:
     static std::shared_ptr<ColorPicker> create(const Theme& theme, const sf::String& name = "");
-    static std::shared_ptr<ColorPicker> create(std::shared_ptr<ColorPickerStyle> style, const sf::String& name = "");
+    //static std::shared_ptr<ColorPicker> create(std::shared_ptr<ColorPickerStyle> style, const sf::String& name = "");
     virtual ~ColorPicker() = default;
 
     void setSize(const sf::Vector2f& size);
@@ -56,7 +60,7 @@ public:
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
 
 protected:
-    ColorPicker(std::shared_ptr<ColorPickerStyle> style, const sf::String& name);
+    ColorPicker(const Theme& theme, const sf::String& name);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -64,7 +68,14 @@ private:
     std::shared_ptr<ColorPickerStyle> style_;
     bool styleCopied_;
     sf::Vector2f size_;
-    sf::VertexArray saturationArea_, hueBar_;
+    sf::Texture alphaTexture_;
+    sf::VertexArray shadingRectangle_, hueBar_, alphaBar_;
+    std::shared_ptr<Slider> hueSlider_;
+    std::shared_ptr<Slider> alphaSlider_;
+    std::shared_ptr<Label> rgbaLabel_, hsvaLabel_, rgbaHexLabel_;
+    std::array<std::shared_ptr<MultilineTextBox>, 4> rgbaTextBoxes_;
+    std::array<std::shared_ptr<MultilineTextBox>, 4> hsvaTextBoxes_;
+    std::shared_ptr<MultilineTextBox> rgbaHexTextBox_;
 };
 
 } // namespace gui
