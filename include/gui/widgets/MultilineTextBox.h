@@ -57,6 +57,7 @@ public:
     virtual ~MultilineTextBox() = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
+    void setSizeWithinBounds(const sf::Vector2f& size);
     void setMaxCharacters(size_t maxCharacters);
     void setMaxLines(size_t maxLines);
     void setReadOnly(bool readOnly);

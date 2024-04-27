@@ -28,10 +28,25 @@ public:
     ColorPickerStyle(const Gui& gui);
     virtual ~ColorPickerStyle() = default;
 
+    // sf::Shape interface.
+    void setTexture(const sf::Texture* texture, bool resetRect = false);
+    void setTextureRect(const sf::IntRect& rect);
+    //void setFillColor(const sf::Color& color);
+    void setOutlineColor(const sf::Color& color);
+    void setOutlineThickness(float thickness);
+    const sf::Texture* getTexture() const;
+    const sf::IntRect& getTextureRect() const;
+    //const sf::Color& getFillColor() const;
+    const sf::Color& getOutlineColor() const;
+    float getOutlineThickness() const;
+
+    void setDotRadius(float radius);
+    float getDotRadius() const;
+
     std::shared_ptr<ColorPickerStyle> clone() const;
 
 private:
-
+    sf::CircleShape dot_;
 
     friend class ColorPicker;
 };
@@ -63,6 +78,7 @@ protected:
     ColorPicker(const Theme& theme, const sf::String& name);
 
 private:
+    sf::Vector2f getShadingRectangleSize() const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ColorPickerStyle> style_;
@@ -70,6 +86,7 @@ private:
     sf::Vector2f size_;
     sf::Texture alphaTexture_;
     sf::VertexArray shadingRectangle_, hueBar_, alphaBar_;
+    sf::Color currentColor_;
     std::shared_ptr<Slider> hueSlider_;
     std::shared_ptr<Slider> alphaSlider_;
     std::shared_ptr<Label> rgbaLabel_, hsvaLabel_, rgbaHexLabel_;

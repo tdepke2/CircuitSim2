@@ -394,9 +394,26 @@ void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto colorPickerTest = gui::ColorPicker::create(theme);
     connectDebugSignals(colorPickerTest.get(), "colorPickerTest");
-    colorPickerTest->setSize({700.0f, 500.0f});
     panel->addChild(colorPickerTest);
     panel->setSize(colorPickerTest->getSize());
+
+    // Resize the GUI on window size changed.
+    myGui.onWindowResized.connect([=](gui::Gui* gui, sf::RenderWindow& window, const sf::Vector2u& size){
+        std::cout << "Window size changed!\n";
+        gui->setSize(size);
+        window.setView(sf::View(sf::FloatRect({0.0f, 0.0f}, static_cast<sf::Vector2f>(size))));
+
+        gui->getChild<gui::Button>("sceneButton")->setPosition(0.0f, size.y - 20.0f);
+        colorPickerTest->setSize({size.x - 100.0f, size.y - 100.0f});
+        panel->setSize(colorPickerTest->getSize());
+    });
+
+    // Trigger a fake event to initialize the size.
+    sf::Event initSizeEvent;
+    initSizeEvent.type = sf::Event::Resized;
+    initSizeEvent.size.width = myGui.getSize().x;
+    initSizeEvent.size.height = myGui.getSize().y;
+    myGui.processEvent(initSizeEvent);
 }
 
 void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {

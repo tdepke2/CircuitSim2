@@ -106,6 +106,52 @@ ColorPickerStyle::ColorPickerStyle(const Gui& gui) :
     Style(gui) {
 }
 
+// sf::Shape interface.
+void ColorPickerStyle::setTexture(const sf::Texture* texture, bool resetRect) {
+    dot_.setTexture(texture, resetRect);
+    gui_.requestRedraw();
+}
+void ColorPickerStyle::setTextureRect(const sf::IntRect& rect) {
+    dot_.setTextureRect(rect);
+    gui_.requestRedraw();
+}
+//void ColorPickerStyle::setFillColor(const sf::Color& color) {
+//    dot_.setFillColor(color);
+//    gui_.requestRedraw();
+//}
+void ColorPickerStyle::setOutlineColor(const sf::Color& color) {
+    dot_.setOutlineColor(color);
+    gui_.requestRedraw();
+}
+void ColorPickerStyle::setOutlineThickness(float thickness) {
+    dot_.setOutlineThickness(thickness);
+    gui_.requestRedraw();
+}
+const sf::Texture* ColorPickerStyle::getTexture() const {
+    return dot_.getTexture();
+}
+const sf::IntRect& ColorPickerStyle::getTextureRect() const {
+    return dot_.getTextureRect();
+}
+//const sf::Color& ColorPickerStyle::getFillColor() const {
+//    return dot_.getFillColor();
+//}
+const sf::Color& ColorPickerStyle::getOutlineColor() const {
+    return dot_.getOutlineColor();
+}
+float ColorPickerStyle::getOutlineThickness() const {
+    return dot_.getOutlineThickness();
+}
+
+void ColorPickerStyle::setDotRadius(float radius) {
+    dot_.setRadius(radius);
+    dot_.setOrigin(radius, radius);
+    gui_.requestRedraw();
+}
+float ColorPickerStyle::getDotRadius() const {
+    return dot_.getRadius();
+}
+
 std::shared_ptr<ColorPickerStyle> ColorPickerStyle::clone() const {
     return std::make_shared<ColorPickerStyle>(*this);
 }
@@ -131,10 +177,7 @@ void ColorPicker::setSize(const sf::Vector2f& size) {
 
     // FIXME: do this during ctor instead? maybe not, need to recompute colors each time hue changes.
     constexpr int gridSideCount = 16;
-    const sf::Vector2f shadingRectangleSize = {
-        size.x - (styleBarWidth + styleBarSpacing) * 2.0f,
-        size.y - (rgbaLabel_->getSize().y + styleLabelSpacing) * 3
-    };
+    const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
     const sf::Vector2f gridSize = shadingRectangleSize / static_cast<float>(gridSideCount);
 
     const float hue = hueSlider_->getValue() / 255.0f;
@@ -233,30 +276,35 @@ Example with gridSideCount = 3
     alphaSlider_->setSize({barHeight, styleBarWidth});
     alphaSlider_->setPosition(barX1 + styleBarWidth, 0.0f);
 
-    // FIXME would be nice if we could stretch the boxes to fit the area.
-    // maybe stretch the hex one first, then line up the others with the width of that one?
+    // Put the rgbaHexTextBox_ in position first, then line up the rest of the boxes with it.
+    const float textRow3 = size.y - rgbaLabel_->getSize().y;
+    rgbaHexLabel_->setPosition(0.0f, textRow3);
+    rgbaHexTextBox_->setPosition(rgbaHexLabel_->getPosition() + sf::Vector2f(rgbaHexLabel_->getSize().x + styleBoxSpacing, 0.0f));
+    rgbaHexTextBox_->setSizeWithinBounds({size.x - rgbaHexTextBox_->getPosition().x, rgbaHexTextBox_->getSize().y});
 
+    const float boxWidth = (rgbaHexTextBox_->getSize().x - 3.0f * styleBoxSpacing) / 4.0f;
+    rgbaTextBoxes_[0]->setSizeWithinBounds({boxWidth, rgbaTextBoxes_[0]->getSize().y});
+    const auto boxSizeCharacters = rgbaTextBoxes_[0]->getSizeCharacters();
+    const float adjustedBoxSpacing = (rgbaHexTextBox_->getSize().x - rgbaTextBoxes_[0]->getSize().x * 4.0f) / 3.0f;
     sf::Vector2f nextPosition;
 
     const float textRow1 = size.y - 3.0f * rgbaLabel_->getSize().y - 2.0f * styleLabelSpacing;
     rgbaLabel_->setPosition(0.0f, textRow1);
     nextPosition = rgbaLabel_->getPosition() + sf::Vector2f(rgbaLabel_->getSize().x + styleBoxSpacing, 0.0f);
     for (const auto& box : rgbaTextBoxes_) {
+        box->setSizeCharacters(boxSizeCharacters);
         box->setPosition(nextPosition);
-        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + styleBoxSpacing, 0.0f);
+        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
     }
 
     const float textRow2 = size.y - 2.0f * rgbaLabel_->getSize().y - styleLabelSpacing;
     hsvaLabel_->setPosition(0.0f, textRow2);
     nextPosition = hsvaLabel_->getPosition() + sf::Vector2f(hsvaLabel_->getSize().x + styleBoxSpacing, 0.0f);
     for (const auto& box : hsvaTextBoxes_) {
+        box->setSizeCharacters(boxSizeCharacters);
         box->setPosition(nextPosition);
-        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + styleBoxSpacing, 0.0f);
+        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
     }
-
-    const float textRow3 = size.y - rgbaLabel_->getSize().y;
-    rgbaHexLabel_->setPosition(0.0f, textRow3);
-    rgbaHexTextBox_->setPosition(rgbaHexLabel_->getPosition() + sf::Vector2f(rgbaHexLabel_->getSize().x + styleBoxSpacing, 0.0f));
 
     requestRedraw();
 }
@@ -292,7 +340,8 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     alphaTexture_(),
     shadingRectangle_(sf::TriangleStrip),
     hueBar_(sf::TriangleStrip, 14),
-    alphaBar_(sf::TriangleStrip, 14) {
+    alphaBar_(sf::TriangleStrip, 14),
+    currentColor_(sf::Color::Red) {
 
     constexpr unsigned int alphaSize = 16;
     sf::Image alphaImage;
@@ -367,15 +416,27 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     }
 
     rgbaHexLabel_ = Label::create(theme);
-    rgbaHexLabel_->setLabel("Hex:  ");
+    rgbaHexLabel_->setLabel("Hex#: ");
     addChild(rgbaHexLabel_);
 
     rgbaHexTextBox_ = MultilineTextBox::create(theme);
-    rgbaHexTextBox_->setSizeCharacters({10, 1});
-    rgbaHexTextBox_->setMaxCharacters(10);
+    rgbaHexTextBox_->setSizeCharacters({8, 1});
+    rgbaHexTextBox_->setMaxCharacters(8);
     rgbaHexTextBox_->setMaxLines(1);
     rgbaHexTextBox_->setTabPolicy(MultilineTextBox::TabPolicy::ignoreTab);
     addChild(rgbaHexTextBox_);
+}
+
+sf::Vector2f ColorPicker::getShadingRectangleSize() const {
+    // FIXME
+    const float styleBarWidth = 20.0f;
+    const float styleBarSpacing = 5.0f;
+    const float styleLabelSpacing = 5.0f;
+
+    return {
+        size_.x - (styleBarWidth + styleBarSpacing) * 2.0f,
+        size_.y - (rgbaLabel_->getSize().y + styleLabelSpacing) * 3.0f
+    };
 }
 
 void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -385,13 +446,16 @@ void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     states.transform *= getTransform();
 
     target.draw(shadingRectangle_, states);
+    HsvColor currentHsv = convertRgbToHsv(currentColor_);
+    const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
+    style_->dot_.setPosition(currentHsv.s / 255.0f * shadingRectangleSize.x, (255 - currentHsv.v) / 255.0f * shadingRectangleSize.y);
+    style_->dot_.setFillColor(currentColor_);
+    target.draw(style_->dot_, states);
+
     target.draw(hueBar_, states);
     states.texture = &alphaTexture_;
     target.draw(alphaBar_, states);
     states.texture = nullptr;
-
-    sf::Sprite test(alphaTexture_);
-    target.draw(test, states);
 
     for (const auto& child : getChildren()) {
         target.draw(*child, states);

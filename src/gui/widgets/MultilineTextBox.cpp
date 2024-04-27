@@ -3,6 +3,7 @@
 #include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/TextBox.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -106,6 +107,29 @@ void MultilineTextBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacte
     );
 
     updateCaretPosition(0, false);
+}
+void MultilineTextBox::setSizeWithinBounds(const sf::Vector2f& size) {
+    style_->text_.setString("A");
+    const auto bounds1 = style_->text_.getLocalBounds();
+    style_->text_.setString("AA");
+    const auto bounds2 = style_->text_.getLocalBounds();
+
+    // The first character may have some extra spacing, so figure out the actual width of each one.
+    const auto charWidthFirst = bounds1.left + bounds1.width;
+    const auto charWidth = bounds2.left + bounds2.width - charWidthFirst;
+
+    sf::Vector2<size_t> sizeCharacters;
+    if (size.x == size_.x) {
+        sizeCharacters.x = sizeCharacters_.x;
+    } else {
+        sizeCharacters.x = static_cast<size_t>(std::max((size.x - 2.0f * style_->textPadding_.x - charWidthFirst + charWidth) / charWidth, 0.0f));
+    }
+    if (size.y == size_.y) {
+        sizeCharacters.y = sizeCharacters_.y;
+    } else {
+        sizeCharacters.y = static_cast<size_t>(std::max((size.y - 2.0f * style_->textPadding_.y) / (style_->textPadding_.z * style_->getCharacterSize()), 0.0f));
+    }
+    setSizeCharacters(sizeCharacters);
 }
 void MultilineTextBox::setMaxCharacters(size_t maxCharacters) {
     maxCharacters_ = maxCharacters;

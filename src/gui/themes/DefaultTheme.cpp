@@ -109,6 +109,10 @@ std::shared_ptr<CheckBoxStyle> DefaultTheme::makeCheckBoxStyle() const {
 
 std::shared_ptr<ColorPickerStyle> DefaultTheme::makeColorPickerStyle() const {
     auto style = std::make_shared<ColorPickerStyle>(gui_);
+    style->setOutlineColor(sf::Color::White);
+    style->setOutlineThickness(-2.0f);
+
+    style->setDotRadius(5.0f);
 
     return style;
 }
