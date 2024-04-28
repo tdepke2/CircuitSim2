@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <regex>
 
 
 
@@ -144,6 +145,9 @@ void MultilineTextBox::setReadOnly(bool readOnly) {
 void MultilineTextBox::setTabPolicy(TabPolicy tabPolicy) {
     tabPolicy_ = tabPolicy;
 }
+void MultilineTextBox::setRegexPattern(const sf::String& regexPattern) {
+    regexPattern_ = regexPattern;
+}
 void MultilineTextBox::setText(const sf::String& text) {
     boxStrings_ = splitString(text);
     updateCaretPosition(0, false);
@@ -170,6 +174,9 @@ bool MultilineTextBox::getReadOnly() const {
 }
 MultilineTextBox::TabPolicy MultilineTextBox::getTabPolicy() const {
     return tabPolicy_;
+}
+sf::String MultilineTextBox::getRegexPattern() const {
+    return regexPattern_;
 }
 sf::String MultilineTextBox::getText() const {
     return combineStrings(boxStrings_);
@@ -402,6 +409,7 @@ MultilineTextBox::MultilineTextBox(std::shared_ptr<MultilineTextBoxStyle> style,
     maxLines_(0),
     readOnly_(false),
     tabPolicy_(TabPolicy::expandTab),
+    regexPattern_(".*"),
     size_(0.0f, 0.0f),
     boxStrings_{""},
     defaultStrings_{""},
@@ -420,6 +428,16 @@ bool MultilineTextBox::insertCharacter(uint32_t unicode, bool suppressSignals) {
     if (readOnly_) {
         return false;
     }
+    // For a regex pattern, first backup the state that we need to restore if the pattern match fails.
+    std::vector<sf::String> lastBoxStrings;
+    sf::Vector2<size_t> lastScroll, lastCaretPosition;
+    if (regexPattern_ != ".*") {
+        lastBoxStrings = boxStrings_;
+        lastScroll = scroll_;
+        lastCaretPosition = caretPosition_;
+    }
+
+    // Check if the selection will be replaced.
     bool textChanged = false, clearedSelection = false;
     if (selectionStart_.second) {
         auto selection = sortByYFirst(selectionStart_.first, selectionEnd_);
@@ -492,6 +510,18 @@ bool MultilineTextBox::insertCharacter(uint32_t unicode, bool suppressSignals) {
             textChanged = true;
         }
     }
+
+    if (regexPattern_ != ".*") {
+        std::wregex regex(regexPattern_.toWideString());
+        if (!std::regex_match(combineStrings(boxStrings_).toWideString(), regex)) {
+            std::cout << "Regex pattern match failed, discarding character input.\n";
+            boxStrings_ = lastBoxStrings;
+            scroll_ = lastScroll;
+            updateCaretPosition(lastCaretPosition, false);
+            textChanged = false;
+        }
+    }
+
     if (textChanged && !suppressSignals) {
         onTextChange.emit(this, findStringsLength(boxStrings_));
     }

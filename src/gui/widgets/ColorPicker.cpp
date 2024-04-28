@@ -9,6 +9,11 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 
 
@@ -167,146 +172,7 @@ std::shared_ptr<ColorPicker> ColorPicker::create(const Theme& theme, const sf::S
 
 void ColorPicker::setSize(const sf::Vector2f& size) {
     size_ = size;
-
-    // FIXME: these should go in style settings.
-    //const sf::Vector2f stylePadding = {0.0f, 0.0f};   // I don't think we need any global padding.
-    const float styleBarWidth = 20.0f;
-    const float styleBarSpacing = 5.0f;
-    const float styleLabelSpacing = 5.0f;
-    const float styleBoxSpacing = 5.0f;    // should combine into vec with above.
-
-    // FIXME: do this during ctor instead? maybe not, need to recompute colors each time hue changes.
-    constexpr int gridSideCount = 16;
-    const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
-    const sf::Vector2f gridSize = shadingRectangleSize / static_cast<float>(gridSideCount);
-
-    const float hue = hueSlider_->getValue() / 255.0f;
-    shadingRectangle_.resize(2 * (gridSideCount + 1) * gridSideCount);
-
-    int i = 0;
-    for (int y = 0; y < gridSideCount; ++y) {
-        int dx = 1 - (y % 2) * 2;
-        int xStart = (y % 2 == 0 ? 0 : gridSideCount);
-        int xStop = gridSideCount - xStart + dx;
-
-        for (int x = xStart; x != xStop; x += dx) {
-            sf::Color topColor, bottomColor;
-            if (y == 0) {
-                sf::Vector3f top = convertHsvToRgb(sf::Vector3f(hue, static_cast<float>(x) / gridSideCount, 1.0f - static_cast<float>(y) / gridSideCount));
-                topColor = {
-                    static_cast<uint8_t>(std::lround(top.x * 255.0f)),
-                    static_cast<uint8_t>(std::lround(top.y * 255.0f)),
-                    static_cast<uint8_t>(std::lround(top.z * 255.0f))
-                };
-            } else {
-                topColor = shadingRectangle_[i - std::abs(x - xStart) * 4 - 1].color;
-            }
-            sf::Vector3f bottom = convertHsvToRgb(sf::Vector3f(hue, static_cast<float>(x) / gridSideCount, 1.0f - static_cast<float>(y + 1) / gridSideCount));
-            bottomColor = {
-                static_cast<uint8_t>(std::lround(bottom.x * 255.0f)),
-                static_cast<uint8_t>(std::lround(bottom.y * 255.0f)),
-                static_cast<uint8_t>(std::lround(bottom.z * 255.0f))
-            };
-
-            shadingRectangle_[i++] = {{x * gridSize.x, y * gridSize.y}, topColor};
-            shadingRectangle_[i++] = {{x * gridSize.x, (y + 1) * gridSize.y}, bottomColor};
-        }
-    }
-    assert(i == static_cast<int>(shadingRectangle_.getVertexCount()));
-
-    /*
-
-Example with gridSideCount = 3
-
- 0----2----4----6
- |  / |  / |  / |
- | /  | /  | /  |
- 1----3----5----7
-14---12---10----8
- | \  | \  | \  |
- |  \ |  \ |  \ |
-15---13---11----9
-16---18---20---22
- |  / |  / |  / |
- | /  | /  | /  |
-17---19---21---23
-
-    */
-
-    float barHeight = shadingRectangleSize.y;
-    float barX1 = size.x - 2.0f * styleBarWidth - styleBarSpacing;
-    float barX2 = barX1 + styleBarWidth;
-    hueBar_[ 0] = {{barX1, barHeight * (0.0f / 6.0f)}, {255,   0,   0}};
-    hueBar_[ 1] = {{barX2, barHeight * (0.0f / 6.0f)}, {255,   0,   0}};
-    hueBar_[ 2] = {{barX1, barHeight * (1.0f / 6.0f)}, {255, 255,   0}};
-    hueBar_[ 3] = {{barX2, barHeight * (1.0f / 6.0f)}, {255, 255,   0}};
-    hueBar_[ 4] = {{barX1, barHeight * (2.0f / 6.0f)}, {  0, 255,   0}};
-    hueBar_[ 5] = {{barX2, barHeight * (2.0f / 6.0f)}, {  0, 255,   0}};
-    hueBar_[ 6] = {{barX1, barHeight * (3.0f / 6.0f)}, {  0, 255, 255}};
-    hueBar_[ 7] = {{barX2, barHeight * (3.0f / 6.0f)}, {  0, 255, 255}};
-    hueBar_[ 8] = {{barX1, barHeight * (4.0f / 6.0f)}, {  0,   0, 255}};
-    hueBar_[ 9] = {{barX2, barHeight * (4.0f / 6.0f)}, {  0,   0, 255}};
-    hueBar_[10] = {{barX1, barHeight * (5.0f / 6.0f)}, {255,   0, 255}};
-    hueBar_[11] = {{barX2, barHeight * (5.0f / 6.0f)}, {255,   0, 255}};
-    hueBar_[12] = {{barX1, barHeight * (6.0f / 6.0f)}, {255,   0,   0}};
-    hueBar_[13] = {{barX2, barHeight * (6.0f / 6.0f)}, {255,   0,   0}};
-
-    hueSlider_->setSize({barHeight, styleBarWidth});
-    hueSlider_->setPosition(barX1 + styleBarWidth, 0.0f);
-
-    const float alphaWidth = static_cast<float>(alphaTexture_.getSize().x);
-    const float alphaHeight = barHeight / (styleBarWidth * 6.0f) * alphaWidth;
-    barX1 = size.x - styleBarWidth;
-    barX2 = barX1 + styleBarWidth;
-    alphaBar_[ 0] = {{barX1, barHeight * (0.0f / 6.0f)}, {  0,   0,   0}, {     0.0f,  alphaHeight * 0.0f}};
-    alphaBar_[ 1] = {{barX2, barHeight * (0.0f / 6.0f)}, {  0,   0,   0}, {alphaWidth, alphaHeight * 0.0f}};
-    alphaBar_[ 2] = {{barX1, barHeight * (1.0f / 6.0f)}, { 43,  43,  43}, {     0.0f,  alphaHeight * 1.0f}};
-    alphaBar_[ 3] = {{barX2, barHeight * (1.0f / 6.0f)}, { 43,  43,  43}, {alphaWidth, alphaHeight * 1.0f}};
-    alphaBar_[ 4] = {{barX1, barHeight * (2.0f / 6.0f)}, { 85,  85,  85}, {     0.0f,  alphaHeight * 2.0f}};
-    alphaBar_[ 5] = {{barX2, barHeight * (2.0f / 6.0f)}, { 85,  85,  85}, {alphaWidth, alphaHeight * 2.0f}};
-    alphaBar_[ 6] = {{barX1, barHeight * (3.0f / 6.0f)}, {128, 128, 128}, {     0.0f,  alphaHeight * 3.0f}};
-    alphaBar_[ 7] = {{barX2, barHeight * (3.0f / 6.0f)}, {128, 128, 128}, {alphaWidth, alphaHeight * 3.0f}};
-    alphaBar_[ 8] = {{barX1, barHeight * (4.0f / 6.0f)}, {170, 170, 170}, {     0.0f,  alphaHeight * 4.0f}};
-    alphaBar_[ 9] = {{barX2, barHeight * (4.0f / 6.0f)}, {170, 170, 170}, {alphaWidth, alphaHeight * 4.0f}};
-    alphaBar_[10] = {{barX1, barHeight * (5.0f / 6.0f)}, {213, 213, 213}, {     0.0f,  alphaHeight * 5.0f}};
-    alphaBar_[11] = {{barX2, barHeight * (5.0f / 6.0f)}, {213, 213, 213}, {alphaWidth, alphaHeight * 5.0f}};
-    alphaBar_[12] = {{barX1, barHeight * (6.0f / 6.0f)}, {255, 255, 255}, {     0.0f,  alphaHeight * 6.0f}};
-    alphaBar_[13] = {{barX2, barHeight * (6.0f / 6.0f)}, {255, 255, 255}, {alphaWidth, alphaHeight * 6.0f}};
-
-    alphaSlider_->setSize({barHeight, styleBarWidth});
-    alphaSlider_->setPosition(barX1 + styleBarWidth, 0.0f);
-
-    // Put the rgbaHexTextBox_ in position first, then line up the rest of the boxes with it.
-    const float textRow3 = size.y - rgbaLabel_->getSize().y;
-    rgbaHexLabel_->setPosition(0.0f, textRow3);
-    rgbaHexTextBox_->setPosition(rgbaHexLabel_->getPosition() + sf::Vector2f(rgbaHexLabel_->getSize().x + styleBoxSpacing, 0.0f));
-    rgbaHexTextBox_->setSizeWithinBounds({size.x - rgbaHexTextBox_->getPosition().x, rgbaHexTextBox_->getSize().y});
-
-    const float boxWidth = (rgbaHexTextBox_->getSize().x - 3.0f * styleBoxSpacing) / 4.0f;
-    rgbaTextBoxes_[0]->setSizeWithinBounds({boxWidth, rgbaTextBoxes_[0]->getSize().y});
-    const auto boxSizeCharacters = rgbaTextBoxes_[0]->getSizeCharacters();
-    const float adjustedBoxSpacing = (rgbaHexTextBox_->getSize().x - rgbaTextBoxes_[0]->getSize().x * 4.0f) / 3.0f;
-    sf::Vector2f nextPosition;
-
-    const float textRow1 = size.y - 3.0f * rgbaLabel_->getSize().y - 2.0f * styleLabelSpacing;
-    rgbaLabel_->setPosition(0.0f, textRow1);
-    nextPosition = rgbaLabel_->getPosition() + sf::Vector2f(rgbaLabel_->getSize().x + styleBoxSpacing, 0.0f);
-    for (const auto& box : rgbaTextBoxes_) {
-        box->setSizeCharacters(boxSizeCharacters);
-        box->setPosition(nextPosition);
-        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
-    }
-
-    const float textRow2 = size.y - 2.0f * rgbaLabel_->getSize().y - styleLabelSpacing;
-    hsvaLabel_->setPosition(0.0f, textRow2);
-    nextPosition = hsvaLabel_->getPosition() + sf::Vector2f(hsvaLabel_->getSize().x + styleBoxSpacing, 0.0f);
-    for (const auto& box : hsvaTextBoxes_) {
-        box->setSizeCharacters(boxSizeCharacters);
-        box->setPosition(nextPosition);
-        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
-    }
-
-    requestRedraw();
+    updateLayout();
 }
 const sf::Vector2f& ColorPicker::getSize() const {
     return size_;
@@ -364,7 +230,10 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
 
     hueSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "hue changed to " << value << "\n";
-        setSize(size_);
+        hsvaTextBoxes_[0]->onTextChange.setEnabled(false);
+        hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(value)));
+        hsvaTextBoxes_[0]->onTextChange.setEnabled(true);
+        updateCurrentColor(ColorSource::hsva, true);
     });
 
     alphaSlider_ = Slider::create(theme);
@@ -375,7 +244,10 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
 
     alphaSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "alpha changed to " << value << "\n";
-        setSize(size_);
+        hsvaTextBoxes_[3]->onTextChange.setEnabled(false);
+        hsvaTextBoxes_[3]->setText(std::to_string(255 - static_cast<int>(value)));
+        hsvaTextBoxes_[3]->onTextChange.setEnabled(true);
+        updateCurrentColor(ColorSource::hsva, true);
     });
 
     auto barSliderStyle = hueSlider_->getStyle();
@@ -399,6 +271,13 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
         box->setMaxCharacters(3);
         box->setMaxLines(1);
         box->setTabPolicy(MultilineTextBox::TabPolicy::ignoreTab);
+        box->setRegexPattern("[0-9]*");
+        box->onTextChange.connect([this]() {
+            updateCurrentColor(ColorSource::rgba, false);
+        });
+        box->onFocusLost.connect([this]() {
+            updateCurrentColor(ColorSource::rgba, true);
+        });
         addChild(box);
     }
 
@@ -412,6 +291,13 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
         box->setMaxCharacters(3);
         box->setMaxLines(1);
         box->setTabPolicy(MultilineTextBox::TabPolicy::ignoreTab);
+        box->setRegexPattern("[0-9]*");
+        box->onTextChange.connect([this]() {
+            updateCurrentColor(ColorSource::hsva, false);
+        });
+        box->onFocusLost.connect([this]() {
+            updateCurrentColor(ColorSource::hsva, true);
+        });
         addChild(box);
     }
 
@@ -424,7 +310,16 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     rgbaHexTextBox_->setMaxCharacters(8);
     rgbaHexTextBox_->setMaxLines(1);
     rgbaHexTextBox_->setTabPolicy(MultilineTextBox::TabPolicy::ignoreTab);
+    rgbaHexTextBox_->setRegexPattern("[0-9a-fA-F]*");
+    rgbaHexTextBox_->onTextChange.connect([this]() {
+        updateCurrentColor(ColorSource::rgbaHex, false);
+    });
+    rgbaHexTextBox_->onFocusLost.connect([this]() {
+        updateCurrentColor(ColorSource::rgbaHex, true);
+    });
     addChild(rgbaHexTextBox_);
+
+    updateCurrentColor(ColorSource::input, true, currentColor_);
 }
 
 sf::Vector2f ColorPicker::getShadingRectangleSize() const {
@@ -439,6 +334,247 @@ sf::Vector2f ColorPicker::getShadingRectangleSize() const {
     };
 }
 
+void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, const sf::Color& inputColor) {
+    auto getBoxValue = [](const std::shared_ptr<MultilineTextBox>& box) {
+        int value = std::stoi(box->getText().toWideString());
+        return static_cast<uint8_t>(std::min(std::max(value, 0), 255));
+    };
+
+    // FIXME: issue with current approach, hsv to rgb mapping is not 1:1 so some colors cannot be selected with hue bar and shading area.
+    // to fix, we may want to increase precision of hsv and only scale to uint8_t when setting text box. slider should have step 0 and range 0 to 1?
+
+    if (source != ColorSource::none) {
+        // Set current color from source.
+        std::pair<HsvColor, bool> currentHsva = {{}, false};
+        if (source == ColorSource::rgba) {
+            try {
+                sf::Color rgba = {
+                    getBoxValue(rgbaTextBoxes_[0]),
+                    getBoxValue(rgbaTextBoxes_[1]),
+                    getBoxValue(rgbaTextBoxes_[2]),
+                    getBoxValue(rgbaTextBoxes_[3])
+                };
+                currentColor_ = rgba;
+            } catch (const std::invalid_argument& ex) {
+                std::cout << "ColorSource::rgba failed: " << ex.what() << "\n";
+            }
+        } else if (source == ColorSource::hsva) {
+            try {
+                HsvColor hsva = {
+                    getBoxValue(hsvaTextBoxes_[0]),
+                    getBoxValue(hsvaTextBoxes_[1]),
+                    getBoxValue(hsvaTextBoxes_[2]),
+                    getBoxValue(hsvaTextBoxes_[3])
+                };
+                currentColor_ = convertHsvToRgb(hsva);
+                currentHsva = {hsva, true};
+            } catch (const std::invalid_argument& ex) {
+                std::cout << "ColorSource::hsva failed: " << ex.what() << "\n";
+            }
+        } else if (source == ColorSource::rgbaHex) {
+            try {
+                sf::Color rgba(static_cast<uint32_t>(std::stoll(rgbaHexTextBox_->getText().toWideString(), nullptr, 16)));
+                currentColor_ = rgba;
+            } catch (const std::invalid_argument& ex) {
+                std::cout << "ColorSource::rgbaHex failed: " << ex.what() << "\n";
+            }
+        } else if (source == ColorSource::input) {
+            currentColor_ = inputColor;
+            validateSource = true;
+        }
+
+        // Fill in text boxes from current color.
+        if (!currentHsva.second) {
+            currentHsva = {convertRgbToHsv(currentColor_), true};
+        }
+        if (source != ColorSource::rgba || validateSource) {
+            for (auto& box : rgbaTextBoxes_) {
+                box->onTextChange.setEnabled(false);
+            }
+            rgbaTextBoxes_[0]->setText(std::to_string(static_cast<int>(currentColor_.r)));
+            rgbaTextBoxes_[1]->setText(std::to_string(static_cast<int>(currentColor_.g)));
+            rgbaTextBoxes_[2]->setText(std::to_string(static_cast<int>(currentColor_.b)));
+            rgbaTextBoxes_[3]->setText(std::to_string(static_cast<int>(currentColor_.a)));
+            for (auto& box : rgbaTextBoxes_) {
+                box->onTextChange.setEnabled(true);
+            }
+        }
+        if (source != ColorSource::hsva || validateSource) {
+            for (auto& box : hsvaTextBoxes_) {
+                box->onTextChange.setEnabled(false);
+            }
+            hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(currentHsva.first.h)));
+            hsvaTextBoxes_[1]->setText(std::to_string(static_cast<int>(currentHsva.first.s)));
+            hsvaTextBoxes_[2]->setText(std::to_string(static_cast<int>(currentHsva.first.v)));
+            hsvaTextBoxes_[3]->setText(std::to_string(static_cast<int>(currentHsva.first.a)));
+            for (auto& box : hsvaTextBoxes_) {
+                box->onTextChange.setEnabled(true);
+            }
+        }
+        if (source != ColorSource::rgbaHex || validateSource) {
+            std::stringstream ss;
+            ss << std::setfill('0') << std::setw(8) << std::hex << currentColor_.toInteger();
+            rgbaHexTextBox_->onTextChange.setEnabled(false);
+            rgbaHexTextBox_->setText(ss.str());
+            rgbaHexTextBox_->onTextChange.setEnabled(true);
+        }
+
+        hueSlider_->onValueChange.setEnabled(false);
+        alphaSlider_->onValueChange.setEnabled(false);
+        hueSlider_->setValue(static_cast<float>(currentHsva.first.h));
+        alphaSlider_->setValue(static_cast<float>(255 - currentHsva.first.a));
+        hueSlider_->onValueChange.setEnabled(true);
+        alphaSlider_->onValueChange.setEnabled(true);
+    }
+
+    /**
+     * To display the `shadingRectangle_`, we build a grid of triangles to
+     * approximate a linearly interpolated color area. This does not work with
+     * just two triangles as the interpolation of vertex coords in OpenGL uses
+     * barycentric coordinates.
+     * 
+     * Example showing vertex indices forming the TriangleStrip, here the
+     * `gridSideCount` is set to 3:
+     * 
+     *  0----2----4----6
+     *  |  / |  / |  / |
+     *  | /  | /  | /  |
+     *  1----3----5----7
+     * 14---12---10----8
+     *  | \  | \  | \  |
+     *  |  \ |  \ |  \ |
+     * 15---13---11----9
+     * 16---18---20---22
+     *  |  / |  / |  / |
+     *  | /  | /  | /  |
+     * 17---19---21---23
+     */
+
+    constexpr int gridSideCount = 16;
+    const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
+    const sf::Vector2f gridSize = shadingRectangleSize / static_cast<float>(gridSideCount);
+
+    const float hue = hueSlider_->getValue() / 255.0f;
+    shadingRectangle_.resize(2 * (gridSideCount + 1) * gridSideCount);
+
+    int i = 0;
+    for (int y = 0; y < gridSideCount; ++y) {
+        int dx = 1 - (y % 2) * 2;
+        int xStart = (y % 2 == 0 ? 0 : gridSideCount);
+        int xStop = gridSideCount - xStart + dx;
+
+        for (int x = xStart; x != xStop; x += dx) {
+            sf::Color topColor, bottomColor;
+            if (y == 0) {
+                sf::Vector3f top = convertHsvToRgb(sf::Vector3f(hue, static_cast<float>(x) / gridSideCount, 1.0f - static_cast<float>(y) / gridSideCount));
+                topColor = {
+                    static_cast<uint8_t>(std::lround(top.x * 255.0f)),
+                    static_cast<uint8_t>(std::lround(top.y * 255.0f)),
+                    static_cast<uint8_t>(std::lround(top.z * 255.0f))
+                };
+            } else {
+                topColor = shadingRectangle_[i - std::abs(x - xStart) * 4 - 1].color;
+            }
+            sf::Vector3f bottom = convertHsvToRgb(sf::Vector3f(hue, static_cast<float>(x) / gridSideCount, 1.0f - static_cast<float>(y + 1) / gridSideCount));
+            bottomColor = {
+                static_cast<uint8_t>(std::lround(bottom.x * 255.0f)),
+                static_cast<uint8_t>(std::lround(bottom.y * 255.0f)),
+                static_cast<uint8_t>(std::lround(bottom.z * 255.0f))
+            };
+
+            shadingRectangle_[i++] = {{x * gridSize.x, y * gridSize.y}, topColor};
+            shadingRectangle_[i++] = {{x * gridSize.x, (y + 1) * gridSize.y}, bottomColor};
+        }
+    }
+    assert(i == static_cast<int>(shadingRectangle_.getVertexCount()));
+
+    requestRedraw();
+}
+
+void ColorPicker::updateLayout() {
+    // FIXME: these should go in style settings.
+    //const sf::Vector2f stylePadding = {0.0f, 0.0f};   // I don't think we need any global padding.
+    const float styleBarWidth = 20.0f;
+    const float styleBarSpacing = 5.0f;
+    const float styleLabelSpacing = 5.0f;
+    const float styleBoxSpacing = 5.0f;    // should combine into vec with above.
+
+    float barHeight = getShadingRectangleSize().y;
+    float barX1 = size_.x - 2.0f * styleBarWidth - styleBarSpacing;
+    float barX2 = barX1 + styleBarWidth;
+    hueBar_[ 0] = {{barX1, barHeight * (0.0f / 6.0f)}, {255,   0,   0}};
+    hueBar_[ 1] = {{barX2, barHeight * (0.0f / 6.0f)}, {255,   0,   0}};
+    hueBar_[ 2] = {{barX1, barHeight * (1.0f / 6.0f)}, {255, 255,   0}};
+    hueBar_[ 3] = {{barX2, barHeight * (1.0f / 6.0f)}, {255, 255,   0}};
+    hueBar_[ 4] = {{barX1, barHeight * (2.0f / 6.0f)}, {  0, 255,   0}};
+    hueBar_[ 5] = {{barX2, barHeight * (2.0f / 6.0f)}, {  0, 255,   0}};
+    hueBar_[ 6] = {{barX1, barHeight * (3.0f / 6.0f)}, {  0, 255, 255}};
+    hueBar_[ 7] = {{barX2, barHeight * (3.0f / 6.0f)}, {  0, 255, 255}};
+    hueBar_[ 8] = {{barX1, barHeight * (4.0f / 6.0f)}, {  0,   0, 255}};
+    hueBar_[ 9] = {{barX2, barHeight * (4.0f / 6.0f)}, {  0,   0, 255}};
+    hueBar_[10] = {{barX1, barHeight * (5.0f / 6.0f)}, {255,   0, 255}};
+    hueBar_[11] = {{barX2, barHeight * (5.0f / 6.0f)}, {255,   0, 255}};
+    hueBar_[12] = {{barX1, barHeight * (6.0f / 6.0f)}, {255,   0,   0}};
+    hueBar_[13] = {{barX2, barHeight * (6.0f / 6.0f)}, {255,   0,   0}};
+
+    hueSlider_->setSize({barHeight, styleBarWidth});
+    hueSlider_->setPosition(barX1 + styleBarWidth, 0.0f);
+
+    const float alphaWidth = static_cast<float>(alphaTexture_.getSize().x);
+    const float alphaHeight = barHeight / (styleBarWidth * 6.0f) * alphaWidth;
+    barX1 = size_.x - styleBarWidth;
+    barX2 = barX1 + styleBarWidth;
+    alphaBar_[ 0] = {{barX1, barHeight * (0.0f / 6.0f)}, {  0,   0,   0}, {     0.0f,  alphaHeight * 0.0f}};
+    alphaBar_[ 1] = {{barX2, barHeight * (0.0f / 6.0f)}, {  0,   0,   0}, {alphaWidth, alphaHeight * 0.0f}};
+    alphaBar_[ 2] = {{barX1, barHeight * (1.0f / 6.0f)}, { 43,  43,  43}, {     0.0f,  alphaHeight * 1.0f}};
+    alphaBar_[ 3] = {{barX2, barHeight * (1.0f / 6.0f)}, { 43,  43,  43}, {alphaWidth, alphaHeight * 1.0f}};
+    alphaBar_[ 4] = {{barX1, barHeight * (2.0f / 6.0f)}, { 85,  85,  85}, {     0.0f,  alphaHeight * 2.0f}};
+    alphaBar_[ 5] = {{barX2, barHeight * (2.0f / 6.0f)}, { 85,  85,  85}, {alphaWidth, alphaHeight * 2.0f}};
+    alphaBar_[ 6] = {{barX1, barHeight * (3.0f / 6.0f)}, {128, 128, 128}, {     0.0f,  alphaHeight * 3.0f}};
+    alphaBar_[ 7] = {{barX2, barHeight * (3.0f / 6.0f)}, {128, 128, 128}, {alphaWidth, alphaHeight * 3.0f}};
+    alphaBar_[ 8] = {{barX1, barHeight * (4.0f / 6.0f)}, {170, 170, 170}, {     0.0f,  alphaHeight * 4.0f}};
+    alphaBar_[ 9] = {{barX2, barHeight * (4.0f / 6.0f)}, {170, 170, 170}, {alphaWidth, alphaHeight * 4.0f}};
+    alphaBar_[10] = {{barX1, barHeight * (5.0f / 6.0f)}, {213, 213, 213}, {     0.0f,  alphaHeight * 5.0f}};
+    alphaBar_[11] = {{barX2, barHeight * (5.0f / 6.0f)}, {213, 213, 213}, {alphaWidth, alphaHeight * 5.0f}};
+    alphaBar_[12] = {{barX1, barHeight * (6.0f / 6.0f)}, {255, 255, 255}, {     0.0f,  alphaHeight * 6.0f}};
+    alphaBar_[13] = {{barX2, barHeight * (6.0f / 6.0f)}, {255, 255, 255}, {alphaWidth, alphaHeight * 6.0f}};
+
+    alphaSlider_->setSize({barHeight, styleBarWidth});
+    alphaSlider_->setPosition(barX1 + styleBarWidth, 0.0f);
+
+    // Put the rgbaHexTextBox_ in position first, then line up the rest of the boxes with it.
+    const float textRow3 = size_.y - rgbaLabel_->getSize().y;
+    rgbaHexLabel_->setPosition(0.0f, textRow3);
+    rgbaHexTextBox_->setPosition(rgbaHexLabel_->getPosition() + sf::Vector2f(rgbaHexLabel_->getSize().x + styleBoxSpacing, 0.0f));
+    rgbaHexTextBox_->setSizeWithinBounds({size_.x - rgbaHexTextBox_->getPosition().x, rgbaHexTextBox_->getSize().y});
+
+    const float boxWidth = (rgbaHexTextBox_->getSize().x - 3.0f * styleBoxSpacing) / 4.0f;
+    rgbaTextBoxes_[0]->setSizeWithinBounds({boxWidth, rgbaTextBoxes_[0]->getSize().y});
+    const auto boxSizeCharacters = rgbaTextBoxes_[0]->getSizeCharacters();
+    const float adjustedBoxSpacing = (rgbaHexTextBox_->getSize().x - rgbaTextBoxes_[0]->getSize().x * 4.0f) / 3.0f;
+    sf::Vector2f nextPosition;
+
+    const float textRow1 = size_.y - 3.0f * rgbaLabel_->getSize().y - 2.0f * styleLabelSpacing;
+    rgbaLabel_->setPosition(0.0f, textRow1);
+    nextPosition = rgbaLabel_->getPosition() + sf::Vector2f(rgbaLabel_->getSize().x + styleBoxSpacing, 0.0f);
+    for (const auto& box : rgbaTextBoxes_) {
+        box->setSizeCharacters(boxSizeCharacters);
+        box->setPosition(nextPosition);
+        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
+    }
+
+    const float textRow2 = size_.y - 2.0f * rgbaLabel_->getSize().y - styleLabelSpacing;
+    hsvaLabel_->setPosition(0.0f, textRow2);
+    nextPosition = hsvaLabel_->getPosition() + sf::Vector2f(hsvaLabel_->getSize().x + styleBoxSpacing, 0.0f);
+    for (const auto& box : hsvaTextBoxes_) {
+        box->setSizeCharacters(boxSizeCharacters);
+        box->setPosition(nextPosition);
+        nextPosition = box->getPosition() + sf::Vector2f(box->getSize().x + adjustedBoxSpacing, 0.0f);
+    }
+
+    updateCurrentColor(ColorSource::none, false);
+}
+
 void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (!isVisible()) {
         return;
@@ -449,7 +585,7 @@ void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     HsvColor currentHsv = convertRgbToHsv(currentColor_);
     const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
     style_->dot_.setPosition(currentHsv.s / 255.0f * shadingRectangleSize.x, (255 - currentHsv.v) / 255.0f * shadingRectangleSize.y);
-    style_->dot_.setFillColor(currentColor_);
+    style_->dot_.setFillColor({currentColor_.r, currentColor_.g, currentColor_.b, 255});
     target.draw(style_->dot_, states);
 
     target.draw(hueBar_, states);

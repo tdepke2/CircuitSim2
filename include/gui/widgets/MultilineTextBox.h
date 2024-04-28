@@ -62,6 +62,7 @@ public:
     void setMaxLines(size_t maxLines);
     void setReadOnly(bool readOnly);
     void setTabPolicy(TabPolicy tabPolicy);
+    void setRegexPattern(const sf::String& regexPattern = ".*");
     void setText(const sf::String& text);
     void setDefaultText(const sf::String& text);
     const sf::Vector2f& getSize() const;
@@ -70,6 +71,7 @@ public:
     size_t getMaxLines() const;
     bool getReadOnly() const;
     TabPolicy getTabPolicy() const;
+    sf::String getRegexPattern() const;
     sf::String getText() const;
     sf::String getDefaultText() const;
     void selectAll();
@@ -115,6 +117,7 @@ private:
     size_t maxCharacters_, maxLines_;
     bool readOnly_;
     TabPolicy tabPolicy_;
+    sf::String regexPattern_;
     sf::Vector2f size_;
     std::vector<sf::String> boxStrings_, defaultStrings_;
     sf::String visibleString_;

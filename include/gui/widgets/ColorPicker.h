@@ -78,7 +78,13 @@ protected:
     ColorPicker(const Theme& theme, const sf::String& name);
 
 private:
+    enum class ColorSource {
+        none, rgba, hsva, rgbaHex, input
+    };
+
     sf::Vector2f getShadingRectangleSize() const;
+    void updateCurrentColor(ColorSource source, bool validateSource, const sf::Color& inputColor = sf::Color::Black);
+    void updateLayout();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ColorPickerStyle> style_;
