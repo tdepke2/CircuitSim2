@@ -61,7 +61,12 @@ sf::Vector3f convertRgbToHsv(const sf::Vector3f& rgb) {
     };
 }
 
-HsvColor convertRgbToHsv(const sf::Color& color) {
+inline std::array<float, 4> convertRgbToHsv(const std::array<float, 4>& rgb) {
+    sf::Vector3f hsv = convertRgbToHsv(sf::Vector3f(rgb[0], rgb[1], rgb[2]));
+    return {hsv.x, hsv.y, hsv.z, rgb[3]};
+}
+
+/*inline HsvColor convertRgbToHsv(const sf::Color& color) {
     sf::Vector3f hsv = convertRgbToHsv(sf::Vector3f(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f));
     return {
         static_cast<uint8_t>(std::lround(hsv.x * 255.0f)),
@@ -69,7 +74,7 @@ HsvColor convertRgbToHsv(const sf::Color& color) {
         static_cast<uint8_t>(std::lround(hsv.z * 255.0f)),
         color.a
     };
-}
+}*/
 
 sf::Vector3f convertHsvToRgb(const sf::Vector3f& hsv) {
     float chroma = hsv.y * hsv.z;
@@ -93,13 +98,44 @@ sf::Vector3f convertHsvToRgb(const sf::Vector3f& hsv) {
     }
 }
 
-sf::Color convertHsvToRgb(const HsvColor& color) {
+inline std::array<float, 4> convertHsvToRgb(const std::array<float, 4>& hsv) {
+    sf::Vector3f rgb = convertHsvToRgb(sf::Vector3f(hsv[0], hsv[1], hsv[2]));
+    return {rgb.x, rgb.y, rgb.z, hsv[3]};
+}
+
+/*inline sf::Color convertHsvToRgb(const HsvColor& color) {
     sf::Vector3f rgb = convertHsvToRgb(sf::Vector3f(color.h / 255.0f, color.s / 255.0f, color.v / 255.0f));
     return {
         static_cast<uint8_t>(std::lround(rgb.x * 255.0f)),
         static_cast<uint8_t>(std::lround(rgb.y * 255.0f)),
         static_cast<uint8_t>(std::lround(rgb.z * 255.0f)),
         color.a
+    };
+}*/
+
+inline std::array<float, 4> normalizeRgb(const sf::Color& color) {
+    return {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f};
+}
+
+inline std::array<float, 4> normalizeHsv(const HsvColor& color) {
+    return {color.h / 255.0f, color.s / 255.0f, color.v / 255.0f, color.a / 255.0f};
+}
+
+inline sf::Color denormalizeRgb(const std::array<float, 4>& arr) {
+    return {
+        static_cast<uint8_t>(std::lround(arr[0] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[1] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[2] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[3] * 255.0f))
+    };
+}
+
+inline HsvColor denormalizeHsv(const std::array<float, 4>& arr) {
+    return {
+        static_cast<uint8_t>(std::lround(arr[0] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[1] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[2] * 255.0f)),
+        static_cast<uint8_t>(std::lround(arr[3] * 255.0f))
     };
 }
 
@@ -198,6 +234,41 @@ bool ColorPicker::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
     return Widget::isMouseIntersecting(mouseParent);
 }
 
+bool ColorPicker::handleMouseMove(const sf::Vector2f& mouseParent) {
+    if (baseClass::handleMouseMove(mouseParent)) {
+        return true;
+    }
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
+
+    if (isDragging_) {
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            std::cout << "ColorPicker::handleMouseMove() with mouse down.\n";
+            const auto shadingRectangleSize = getShadingRectangleSize();
+            updateShadingRectangle(mouseLocal.x / shadingRectangleSize.x, 1.0f - mouseLocal.y / shadingRectangleSize.y);
+        } else {
+            isDragging_ = false;
+        }
+    }
+
+    return isDragging_;
+}
+void ColorPicker::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    baseClass::handleMousePress(button, mouseParent);
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
+    const auto shadingRectangleSize = getShadingRectangleSize();
+    if (button == sf::Mouse::Left && !isDragging_ && mouseLocal.x < shadingRectangleSize.x && mouseLocal.y < shadingRectangleSize.y) {
+        std::cout << "ColorPicker::handleMousePress().\n";
+        updateShadingRectangle(mouseLocal.x / shadingRectangleSize.x, 1.0f - mouseLocal.y / shadingRectangleSize.y);
+        isDragging_ = true;
+    }
+}
+void ColorPicker::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
+    if (button == sf::Mouse::Left && isDragging_) {
+        isDragging_ = false;
+    }
+    baseClass::handleMouseRelease(button, mouseParent);
+}
+
 ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     baseClass(name),
     style_(theme.getStyle<ColorPickerStyle>("ColorPicker")),
@@ -207,7 +278,8 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     shadingRectangle_(sf::TriangleStrip),
     hueBar_(sf::TriangleStrip, 14),
     alphaBar_(sf::TriangleStrip, 14),
-    currentColor_(sf::Color::Red) {
+    currentColorRgba_{1.0f, 0.0f, 0.0f, 1.0f},
+    isDragging_(false) {
 
     constexpr unsigned int alphaSize = 16;
     sf::Image alphaImage;
@@ -223,31 +295,33 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     alphaTexture_.setRepeated(true);
 
     hueSlider_ = Slider::create(theme);
-    hueSlider_->setRange({0.0f, 255.0f});
-    hueSlider_->setStep(1.0f);
+    hueSlider_->setRange({0.0f, 1.0f});
+    hueSlider_->setStep(0.0f);
     hueSlider_->setRotation(90.0f);
     addChild(hueSlider_);
 
     hueSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "hue changed to " << value << "\n";
-        hsvaTextBoxes_[0]->onTextChange.setEnabled(false);
-        hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(value)));
-        hsvaTextBoxes_[0]->onTextChange.setEnabled(true);
-        updateCurrentColor(ColorSource::hsva, true);
+        auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
+        convertedHsvaNormalized[0] = value;
+        updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
     });
 
+    // FIXME: when we convert to rgb for updateCurrentColor, we lose info about the hsv (hue 0 and 255 same)
+    // observe by sliding hue all the way down or dragging dot to bottom (value 0).
+    // just change currentColorRgba_ to be in hsv space?
+
     alphaSlider_ = Slider::create(theme);
-    alphaSlider_->setRange({0.0f, 255.0f});
-    alphaSlider_->setStep(1.0f);
+    alphaSlider_->setRange({0.0f, 1.0f});
+    alphaSlider_->setStep(0.0f);
     alphaSlider_->setRotation(90.0f);
     addChild(alphaSlider_);
 
     alphaSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "alpha changed to " << value << "\n";
-        hsvaTextBoxes_[3]->onTextChange.setEnabled(false);
-        hsvaTextBoxes_[3]->setText(std::to_string(255 - static_cast<int>(value)));
-        hsvaTextBoxes_[3]->onTextChange.setEnabled(true);
-        updateCurrentColor(ColorSource::hsva, true);
+        auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
+        convertedHsvaNormalized[3] = 1.0f - value;
+        updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
     });
 
     auto barSliderStyle = hueSlider_->getStyle();
@@ -319,7 +393,7 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     });
     addChild(rgbaHexTextBox_);
 
-    updateCurrentColor(ColorSource::input, true, currentColor_);
+    updateCurrentColor(ColorSource::inputRgba, true, currentColorRgba_);
 }
 
 sf::Vector2f ColorPicker::getShadingRectangleSize() const {
@@ -334,7 +408,14 @@ sf::Vector2f ColorPicker::getShadingRectangleSize() const {
     };
 }
 
-void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, const sf::Color& inputColor) {
+void ColorPicker::updateShadingRectangle(float saturation, float value) {
+    auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
+    convertedHsvaNormalized[1] = std::min(std::max(saturation, 0.0f), 1.0f);
+    convertedHsvaNormalized[2] = std::min(std::max(value, 0.0f), 1.0f);
+    updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
+}
+
+void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputRgba) {
     auto getBoxValue = [](const std::shared_ptr<MultilineTextBox>& box) {
         int value = std::stoi(box->getText().toWideString());
         return static_cast<uint8_t>(std::min(std::max(value, 0), 255));
@@ -345,7 +426,6 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
 
     if (source != ColorSource::none) {
         // Set current color from source.
-        std::pair<HsvColor, bool> currentHsva = {{}, false};
         if (source == ColorSource::rgba) {
             try {
                 sf::Color rgba = {
@@ -354,7 +434,7 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                     getBoxValue(rgbaTextBoxes_[2]),
                     getBoxValue(rgbaTextBoxes_[3])
                 };
-                currentColor_ = rgba;
+                currentColorRgba_ = normalizeRgb(rgba);
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::rgba failed: " << ex.what() << "\n";
             }
@@ -366,35 +446,34 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                     getBoxValue(hsvaTextBoxes_[2]),
                     getBoxValue(hsvaTextBoxes_[3])
                 };
-                currentColor_ = convertHsvToRgb(hsva);
-                currentHsva = {hsva, true};
+                currentColorRgba_ = convertHsvToRgb(normalizeHsv(hsva));
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::hsva failed: " << ex.what() << "\n";
             }
         } else if (source == ColorSource::rgbaHex) {
             try {
                 sf::Color rgba(static_cast<uint32_t>(std::stoll(rgbaHexTextBox_->getText().toWideString(), nullptr, 16)));
-                currentColor_ = rgba;
+                currentColorRgba_ = normalizeRgb(rgba);
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::rgbaHex failed: " << ex.what() << "\n";
             }
-        } else if (source == ColorSource::input) {
-            currentColor_ = inputColor;
+        } else if (source == ColorSource::inputRgba) {
+            currentColorRgba_ = inputRgba;
             validateSource = true;
         }
 
         // Fill in text boxes from current color.
-        if (!currentHsva.second) {
-            currentHsva = {convertRgbToHsv(currentColor_), true};
-        }
+        const sf::Color convertedRgba = denormalizeRgb(currentColorRgba_);
+        const auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
+        const HsvColor convertedHsva = denormalizeHsv(convertedHsvaNormalized);
         if (source != ColorSource::rgba || validateSource) {
             for (auto& box : rgbaTextBoxes_) {
                 box->onTextChange.setEnabled(false);
             }
-            rgbaTextBoxes_[0]->setText(std::to_string(static_cast<int>(currentColor_.r)));
-            rgbaTextBoxes_[1]->setText(std::to_string(static_cast<int>(currentColor_.g)));
-            rgbaTextBoxes_[2]->setText(std::to_string(static_cast<int>(currentColor_.b)));
-            rgbaTextBoxes_[3]->setText(std::to_string(static_cast<int>(currentColor_.a)));
+            rgbaTextBoxes_[0]->setText(std::to_string(static_cast<int>(convertedRgba.r)));
+            rgbaTextBoxes_[1]->setText(std::to_string(static_cast<int>(convertedRgba.g)));
+            rgbaTextBoxes_[2]->setText(std::to_string(static_cast<int>(convertedRgba.b)));
+            rgbaTextBoxes_[3]->setText(std::to_string(static_cast<int>(convertedRgba.a)));
             for (auto& box : rgbaTextBoxes_) {
                 box->onTextChange.setEnabled(true);
             }
@@ -403,17 +482,17 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
             for (auto& box : hsvaTextBoxes_) {
                 box->onTextChange.setEnabled(false);
             }
-            hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(currentHsva.first.h)));
-            hsvaTextBoxes_[1]->setText(std::to_string(static_cast<int>(currentHsva.first.s)));
-            hsvaTextBoxes_[2]->setText(std::to_string(static_cast<int>(currentHsva.first.v)));
-            hsvaTextBoxes_[3]->setText(std::to_string(static_cast<int>(currentHsva.first.a)));
+            hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(convertedHsva.h)));
+            hsvaTextBoxes_[1]->setText(std::to_string(static_cast<int>(convertedHsva.s)));
+            hsvaTextBoxes_[2]->setText(std::to_string(static_cast<int>(convertedHsva.v)));
+            hsvaTextBoxes_[3]->setText(std::to_string(static_cast<int>(convertedHsva.a)));
             for (auto& box : hsvaTextBoxes_) {
                 box->onTextChange.setEnabled(true);
             }
         }
         if (source != ColorSource::rgbaHex || validateSource) {
             std::stringstream ss;
-            ss << std::setfill('0') << std::setw(8) << std::hex << currentColor_.toInteger();
+            ss << std::setfill('0') << std::setw(8) << std::hex << convertedRgba.toInteger();
             rgbaHexTextBox_->onTextChange.setEnabled(false);
             rgbaHexTextBox_->setText(ss.str());
             rgbaHexTextBox_->onTextChange.setEnabled(true);
@@ -421,8 +500,8 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
 
         hueSlider_->onValueChange.setEnabled(false);
         alphaSlider_->onValueChange.setEnabled(false);
-        hueSlider_->setValue(static_cast<float>(currentHsva.first.h));
-        alphaSlider_->setValue(static_cast<float>(255 - currentHsva.first.a));
+        hueSlider_->setValue(convertedHsvaNormalized[0]);
+        alphaSlider_->setValue(1.0f - convertedHsvaNormalized[3]);
         hueSlider_->onValueChange.setEnabled(true);
         alphaSlider_->onValueChange.setEnabled(true);
     }
@@ -454,7 +533,7 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
     const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
     const sf::Vector2f gridSize = shadingRectangleSize / static_cast<float>(gridSideCount);
 
-    const float hue = hueSlider_->getValue() / 255.0f;
+    const float hue = hueSlider_->getValue();
     shadingRectangle_.resize(2 * (gridSideCount + 1) * gridSideCount);
 
     int i = 0;
@@ -582,10 +661,11 @@ void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     states.transform *= getTransform();
 
     target.draw(shadingRectangle_, states);
-    HsvColor currentHsv = convertRgbToHsv(currentColor_);
+    const sf::Color convertedRgba = denormalizeRgb(currentColorRgba_);
+    const auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
     const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
-    style_->dot_.setPosition(currentHsv.s / 255.0f * shadingRectangleSize.x, (255 - currentHsv.v) / 255.0f * shadingRectangleSize.y);
-    style_->dot_.setFillColor({currentColor_.r, currentColor_.g, currentColor_.b, 255});
+    style_->dot_.setPosition(convertedHsvaNormalized[1] * shadingRectangleSize.x, (1.0f - convertedHsvaNormalized[2]) * shadingRectangleSize.y);
+    style_->dot_.setFillColor({convertedRgba.r, convertedRgba.g, convertedRgba.b, 255});
     target.draw(style_->dot_, states);
 
     target.draw(hueBar_, states);

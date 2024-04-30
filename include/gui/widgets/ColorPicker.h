@@ -74,16 +74,21 @@ public:
     virtual sf::FloatRect getLocalBounds() const override;
     virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
 
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+
 protected:
     ColorPicker(const Theme& theme, const sf::String& name);
 
 private:
     enum class ColorSource {
-        none, rgba, hsva, rgbaHex, input
+        none, rgba, hsva, rgbaHex, inputRgba
     };
 
     sf::Vector2f getShadingRectangleSize() const;
-    void updateCurrentColor(ColorSource source, bool validateSource, const sf::Color& inputColor = sf::Color::Black);
+    void updateShadingRectangle(float saturation, float value);
+    void updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputRgba = {0.0f, 0.0f, 0.0f, 1.0f});
     void updateLayout();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
@@ -92,13 +97,14 @@ private:
     sf::Vector2f size_;
     sf::Texture alphaTexture_;
     sf::VertexArray shadingRectangle_, hueBar_, alphaBar_;
-    sf::Color currentColor_;
+    std::array<float, 4> currentColorRgba_;
     std::shared_ptr<Slider> hueSlider_;
     std::shared_ptr<Slider> alphaSlider_;
     std::shared_ptr<Label> rgbaLabel_, hsvaLabel_, rgbaHexLabel_;
     std::array<std::shared_ptr<MultilineTextBox>, 4> rgbaTextBoxes_;
     std::array<std::shared_ptr<MultilineTextBox>, 4> hsvaTextBoxes_;
     std::shared_ptr<MultilineTextBox> rgbaHexTextBox_;
+    bool isDragging_;
 };
 
 } // namespace gui
