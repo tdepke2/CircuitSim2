@@ -70,6 +70,11 @@ void valueChange(gui::Widget* w, float value) {
     std::cout << "  onValueChange(\t" << w << " " << widgetNames[w] << ", \t"
     << value << ")\n";
 }
+void colorChange(gui::Widget* w, const sf::Color& color) {
+    std::cout << "  onColorChange(\t" << w << " " << widgetNames[w] << ", \t("
+    << static_cast<int>(color.r) << ", \t" << static_cast<int>(color.g) << ", \t"
+    << static_cast<int>(color.b) << ", \t" << static_cast<int>(color.a) << ")\n";
+}
 
 void connectDebugSignals(gui::Widget* widget, const std::string& name) {
     assert(widgetNames.emplace(widget, name).second);
@@ -86,6 +91,10 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
 }
 void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
+}
+void connectDebugSignals(gui::ColorPicker* colorPicker, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Group*>(colorPicker), name);
+    colorPicker->onColorChange.connect(colorChange);
 }
 void connectDebugSignals(gui::DialogBox* dialogBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Group*>(dialogBox), name);
@@ -389,13 +398,41 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
 void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto panel = gui::Panel::create(theme);
+    connectDebugSignals(panel.get(), "panel");
     panel->setPosition(10.0f, 10.0f);
+    panel->getStyle()->setOutlineThickness(0.0f);
     myGui.addChild(panel);
 
     auto colorPickerTest = gui::ColorPicker::create(theme);
     connectDebugSignals(colorPickerTest.get(), "colorPickerTest");
     panel->addChild(colorPickerTest);
-    panel->setSize(colorPickerTest->getSize());
+
+    auto paletteButton1 = gui::Button::create(theme);
+    connectDebugSignals(paletteButton1.get(), "paletteButton1");
+    paletteButton1->getStyle()->setFillColor({240, 182, 58});
+    paletteButton1->setLabel("240, 182, 58");
+    paletteButton1->onClick.connect([=]() {
+        colorPickerTest->setColor(paletteButton1->getStyle()->getFillColor());
+    });
+    myGui.addChild(paletteButton1);
+
+    auto paletteButton2 = gui::Button::create(theme);
+    connectDebugSignals(paletteButton2.get(), "paletteButton2");
+    paletteButton2->getStyle()->setFillColor({90, 222, 242});
+    paletteButton2->setLabel("90, 222, 242");
+    paletteButton2->onClick.connect([=]() {
+        colorPickerTest->setColor(paletteButton2->getStyle()->getFillColor());
+    });
+    myGui.addChild(paletteButton2);
+
+    auto colorPreview = gui::Button::create(theme);
+    connectDebugSignals(colorPreview.get(), "colorPreview");
+    colorPreview->setLabel(" Color ");
+    myGui.addChild(colorPreview);
+
+    colorPickerTest->onColorChange.connect([=](gui::Widget* /*w*/, const sf::Color& color) {
+        colorPreview->getStyle()->setFillColor(color);
+    });
 
     // Resize the GUI on window size changed.
     myGui.onWindowResized.connect([=](gui::Gui* gui, sf::RenderWindow& window, const sf::Vector2u& size){
@@ -406,6 +443,9 @@ void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
         gui->getChild<gui::Button>("sceneButton")->setPosition(0.0f, size.y - 20.0f);
         colorPickerTest->setSize({size.x - 100.0f, size.y - 100.0f});
         panel->setSize(colorPickerTest->getSize());
+        paletteButton1->setPosition(panel->getPosition() + sf::Vector2f(0.0f, panel->getSize().y + 10.0f));
+        paletteButton2->setPosition(panel->getPosition() + sf::Vector2f(120.0f, panel->getSize().y + 10.0f));
+        colorPreview->setPosition(panel->getPosition() + sf::Vector2f(240.0f, panel->getSize().y + 10.0f));
     });
 
     // Trigger a fake event to initialize the size.

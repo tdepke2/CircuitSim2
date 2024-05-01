@@ -41,19 +41,30 @@ public:
     float getOutlineThickness() const;
 
     void setDotRadius(float radius);
+    void setBarWidth(float barWidth);
+    void setBarSpacing(float barSpacing);
+    void setBoxSpacing(const sf::Vector2f& boxSpacing);
     float getDotRadius() const;
+    float getBarWidth() const;
+    float getBarSpacing() const;
+    const sf::Vector2f& getBoxSpacing() const;
 
     std::shared_ptr<ColorPickerStyle> clone() const;
 
 private:
     sf::CircleShape dot_;
+    float barWidth_;
+    float barSpacing_;
+    sf::Vector2f boxSpacing_;
 
     friend class ColorPicker;
 };
 
 
 /**
- * FIXME
+ * Displays a shading area, hue/alpha bar, and RGBA/HSVA text boxes for color
+ * selection. Note that color change events are only sent when the RGBA color
+ * changes, and conversions between RGBA and HSVA are not one to one.
  */
 class ColorPicker : public Group {
     using baseClass = Group;
@@ -64,7 +75,9 @@ public:
     virtual ~ColorPicker() = default;
 
     void setSize(const sf::Vector2f& size);
+    void setColor(const sf::Color& color);
     const sf::Vector2f& getSize() const;
+    const sf::Color& getColor() const;
 
     void setStyle(std::shared_ptr<ColorPickerStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
@@ -77,6 +90,8 @@ public:
     virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+
+    Signal<Widget*, const sf::Color&> onColorChange;
 
 protected:
     ColorPicker(const Theme& theme, const sf::String& name);
@@ -98,6 +113,7 @@ private:
     sf::Texture alphaTexture_;
     sf::VertexArray shadingRectangle_, hueBar_, alphaBar_;
     std::array<float, 4> currentColorHsva_;
+    sf::Color roundedColorRgba_;
     std::shared_ptr<Slider> hueSlider_;
     std::shared_ptr<Slider> alphaSlider_;
     std::shared_ptr<Label> rgbaLabel_, hsvaLabel_, rgbaHexLabel_;

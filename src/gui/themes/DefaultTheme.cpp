@@ -113,6 +113,9 @@ std::shared_ptr<ColorPickerStyle> DefaultTheme::makeColorPickerStyle() const {
     style->setOutlineThickness(-2.0f);
 
     style->setDotRadius(5.0f);
+    style->setBarWidth(20.0f);
+    style->setBarSpacing(5.0f);
+    style->setBoxSpacing({5.0f, 5.0f});
 
     return style;
 }
