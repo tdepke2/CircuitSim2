@@ -83,12 +83,12 @@ protected:
 
 private:
     enum class ColorSource {
-        none, rgba, hsva, rgbaHex, inputRgba
+        none, rgba, hsva, rgbaHex, inputHsva
     };
 
     sf::Vector2f getShadingRectangleSize() const;
     void updateShadingRectangle(float saturation, float value);
-    void updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputRgba = {0.0f, 0.0f, 0.0f, 1.0f});
+    void updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputHsva = {0.0f, 0.0f, 0.0f, 1.0f});
     void updateLayout();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
@@ -97,7 +97,7 @@ private:
     sf::Vector2f size_;
     sf::Texture alphaTexture_;
     sf::VertexArray shadingRectangle_, hueBar_, alphaBar_;
-    std::array<float, 4> currentColorRgba_;
+    std::array<float, 4> currentColorHsva_;
     std::shared_ptr<Slider> hueSlider_;
     std::shared_ptr<Slider> alphaSlider_;
     std::shared_ptr<Label> rgbaLabel_, hsvaLabel_, rgbaHexLabel_;

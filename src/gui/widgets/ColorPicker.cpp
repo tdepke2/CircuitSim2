@@ -278,7 +278,7 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     shadingRectangle_(sf::TriangleStrip),
     hueBar_(sf::TriangleStrip, 14),
     alphaBar_(sf::TriangleStrip, 14),
-    currentColorRgba_{1.0f, 0.0f, 0.0f, 1.0f},
+    currentColorHsva_{0.0f, 1.0f, 1.0f, 1.0f},
     isDragging_(false) {
 
     constexpr unsigned int alphaSize = 16;
@@ -302,14 +302,9 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
 
     hueSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "hue changed to " << value << "\n";
-        auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
-        convertedHsvaNormalized[0] = value;
-        updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
+        currentColorHsva_[0] = value;
+        updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
     });
-
-    // FIXME: when we convert to rgb for updateCurrentColor, we lose info about the hsv (hue 0 and 255 same)
-    // observe by sliding hue all the way down or dragging dot to bottom (value 0).
-    // just change currentColorRgba_ to be in hsv space?
 
     alphaSlider_ = Slider::create(theme);
     alphaSlider_->setRange({0.0f, 1.0f});
@@ -319,9 +314,8 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
 
     alphaSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
         std::cout << "alpha changed to " << value << "\n";
-        auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
-        convertedHsvaNormalized[3] = 1.0f - value;
-        updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
+        currentColorHsva_[3] = 1.0f - value;
+        updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
     });
 
     auto barSliderStyle = hueSlider_->getStyle();
@@ -393,7 +387,7 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     });
     addChild(rgbaHexTextBox_);
 
-    updateCurrentColor(ColorSource::inputRgba, true, currentColorRgba_);
+    updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
 }
 
 sf::Vector2f ColorPicker::getShadingRectangleSize() const {
@@ -409,20 +403,16 @@ sf::Vector2f ColorPicker::getShadingRectangleSize() const {
 }
 
 void ColorPicker::updateShadingRectangle(float saturation, float value) {
-    auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
-    convertedHsvaNormalized[1] = std::min(std::max(saturation, 0.0f), 1.0f);
-    convertedHsvaNormalized[2] = std::min(std::max(value, 0.0f), 1.0f);
-    updateCurrentColor(ColorSource::inputRgba, true, convertHsvToRgb(convertedHsvaNormalized));
+    currentColorHsva_[1] = std::min(std::max(saturation, 0.0f), 1.0f);
+    currentColorHsva_[2] = std::min(std::max(value, 0.0f), 1.0f);
+    updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
 }
 
-void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputRgba) {
+void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, const std::array<float, 4>& inputHsva) {
     auto getBoxValue = [](const std::shared_ptr<MultilineTextBox>& box) {
         int value = std::stoi(box->getText().toWideString());
         return static_cast<uint8_t>(std::min(std::max(value, 0), 255));
     };
-
-    // FIXME: issue with current approach, hsv to rgb mapping is not 1:1 so some colors cannot be selected with hue bar and shading area.
-    // to fix, we may want to increase precision of hsv and only scale to uint8_t when setting text box. slider should have step 0 and range 0 to 1?
 
     if (source != ColorSource::none) {
         // Set current color from source.
@@ -434,7 +424,7 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                     getBoxValue(rgbaTextBoxes_[2]),
                     getBoxValue(rgbaTextBoxes_[3])
                 };
-                currentColorRgba_ = normalizeRgb(rgba);
+                currentColorHsva_ = convertRgbToHsv(normalizeRgb(rgba));
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::rgba failed: " << ex.what() << "\n";
             }
@@ -446,34 +436,33 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                     getBoxValue(hsvaTextBoxes_[2]),
                     getBoxValue(hsvaTextBoxes_[3])
                 };
-                currentColorRgba_ = convertHsvToRgb(normalizeHsv(hsva));
+                currentColorHsva_ = normalizeHsv(hsva);
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::hsva failed: " << ex.what() << "\n";
             }
         } else if (source == ColorSource::rgbaHex) {
             try {
                 sf::Color rgba(static_cast<uint32_t>(std::stoll(rgbaHexTextBox_->getText().toWideString(), nullptr, 16)));
-                currentColorRgba_ = normalizeRgb(rgba);
+                currentColorHsva_ = convertRgbToHsv(normalizeRgb(rgba));
             } catch (const std::invalid_argument& ex) {
                 std::cout << "ColorSource::rgbaHex failed: " << ex.what() << "\n";
             }
-        } else if (source == ColorSource::inputRgba) {
-            currentColorRgba_ = inputRgba;
+        } else if (source == ColorSource::inputHsva) {
+            currentColorHsva_ = inputHsva;
             validateSource = true;
         }
 
         // Fill in text boxes from current color.
-        const sf::Color convertedRgba = denormalizeRgb(currentColorRgba_);
-        const auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
-        const HsvColor convertedHsva = denormalizeHsv(convertedHsvaNormalized);
+        const sf::Color roundedRgba = denormalizeRgb(convertHsvToRgb(currentColorHsva_));
+        const HsvColor roundedHsva = denormalizeHsv(currentColorHsva_);
         if (source != ColorSource::rgba || validateSource) {
             for (auto& box : rgbaTextBoxes_) {
                 box->onTextChange.setEnabled(false);
             }
-            rgbaTextBoxes_[0]->setText(std::to_string(static_cast<int>(convertedRgba.r)));
-            rgbaTextBoxes_[1]->setText(std::to_string(static_cast<int>(convertedRgba.g)));
-            rgbaTextBoxes_[2]->setText(std::to_string(static_cast<int>(convertedRgba.b)));
-            rgbaTextBoxes_[3]->setText(std::to_string(static_cast<int>(convertedRgba.a)));
+            rgbaTextBoxes_[0]->setText(std::to_string(static_cast<int>(roundedRgba.r)));
+            rgbaTextBoxes_[1]->setText(std::to_string(static_cast<int>(roundedRgba.g)));
+            rgbaTextBoxes_[2]->setText(std::to_string(static_cast<int>(roundedRgba.b)));
+            rgbaTextBoxes_[3]->setText(std::to_string(static_cast<int>(roundedRgba.a)));
             for (auto& box : rgbaTextBoxes_) {
                 box->onTextChange.setEnabled(true);
             }
@@ -482,17 +471,17 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
             for (auto& box : hsvaTextBoxes_) {
                 box->onTextChange.setEnabled(false);
             }
-            hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(convertedHsva.h)));
-            hsvaTextBoxes_[1]->setText(std::to_string(static_cast<int>(convertedHsva.s)));
-            hsvaTextBoxes_[2]->setText(std::to_string(static_cast<int>(convertedHsva.v)));
-            hsvaTextBoxes_[3]->setText(std::to_string(static_cast<int>(convertedHsva.a)));
+            hsvaTextBoxes_[0]->setText(std::to_string(static_cast<int>(roundedHsva.h)));
+            hsvaTextBoxes_[1]->setText(std::to_string(static_cast<int>(roundedHsva.s)));
+            hsvaTextBoxes_[2]->setText(std::to_string(static_cast<int>(roundedHsva.v)));
+            hsvaTextBoxes_[3]->setText(std::to_string(static_cast<int>(roundedHsva.a)));
             for (auto& box : hsvaTextBoxes_) {
                 box->onTextChange.setEnabled(true);
             }
         }
         if (source != ColorSource::rgbaHex || validateSource) {
             std::stringstream ss;
-            ss << std::setfill('0') << std::setw(8) << std::hex << convertedRgba.toInteger();
+            ss << std::setfill('0') << std::setw(8) << std::hex << roundedRgba.toInteger();
             rgbaHexTextBox_->onTextChange.setEnabled(false);
             rgbaHexTextBox_->setText(ss.str());
             rgbaHexTextBox_->onTextChange.setEnabled(true);
@@ -500,8 +489,8 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
 
         hueSlider_->onValueChange.setEnabled(false);
         alphaSlider_->onValueChange.setEnabled(false);
-        hueSlider_->setValue(convertedHsvaNormalized[0]);
-        alphaSlider_->setValue(1.0f - convertedHsvaNormalized[3]);
+        hueSlider_->setValue(currentColorHsva_[0]);
+        alphaSlider_->setValue(1.0f - currentColorHsva_[3]);
         hueSlider_->onValueChange.setEnabled(true);
         alphaSlider_->onValueChange.setEnabled(true);
     }
@@ -661,11 +650,10 @@ void ColorPicker::draw(sf::RenderTarget& target, sf::RenderStates states) const 
     states.transform *= getTransform();
 
     target.draw(shadingRectangle_, states);
-    const sf::Color convertedRgba = denormalizeRgb(currentColorRgba_);
-    const auto convertedHsvaNormalized = convertRgbToHsv(currentColorRgba_);
+    const sf::Color roundedRgba = denormalizeRgb(convertHsvToRgb(currentColorHsva_));
     const sf::Vector2f shadingRectangleSize = getShadingRectangleSize();
-    style_->dot_.setPosition(convertedHsvaNormalized[1] * shadingRectangleSize.x, (1.0f - convertedHsvaNormalized[2]) * shadingRectangleSize.y);
-    style_->dot_.setFillColor({convertedRgba.r, convertedRgba.g, convertedRgba.b, 255});
+    style_->dot_.setPosition(currentColorHsva_[1] * shadingRectangleSize.x, (1.0f - currentColorHsva_[2]) * shadingRectangleSize.y);
+    style_->dot_.setFillColor({roundedRgba.r, roundedRgba.g, roundedRgba.b, 255});
     target.draw(style_->dot_, states);
 
     target.draw(hueBar_, states);
