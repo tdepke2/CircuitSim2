@@ -1,6 +1,7 @@
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/ChatBox.h>
 #include <gui/widgets/CheckBox.h>
 #include <gui/widgets/ColorPicker.h>
 #include <gui/widgets/DialogBox.h>
@@ -88,6 +89,9 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
     button->onMousePress.connect(mousePress);
     button->onMouseRelease.connect(mouseRelease);
     button->onClick.connect(click);
+}
+void connectDebugSignals(gui::ChatBox* chatBox, const std::string& name) {
+    connectDebugSignals(dynamic_cast<gui::Widget*>(chatBox), name);
 }
 void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
@@ -280,6 +284,14 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
         paintTexture->loadFromImage(*paintImage);
     });
     panel->addChild(paintButton);
+}
+
+void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
+    auto chatTest = gui::ChatBox::create(theme);
+    connectDebugSignals(chatTest.get(), "chatTest");
+    chatTest->setSizeCharacters({10, 3});
+    chatTest->setPosition(10.0f, 10.0f);
+    myGui.addChild(chatTest);
 }
 
 void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -968,9 +980,10 @@ int main() {
 
     gui::DefaultTheme theme(myGui);
 
-    const std::array<std::string, 9> sceneNames = {
+    const std::array<std::string, 10> sceneNames = {
         "Empty",
         "ButtonDemo",
+        "ChatBoxDemo",
         "CheckBoxDemo",
         "ColorPickerDemo",
         "DialogBoxDemo",
@@ -1021,6 +1034,8 @@ int main() {
             if (sceneNames[currentScene] == "Empty") {
             } else if (sceneNames[currentScene] == "ButtonDemo") {
                 createButtonDemo(myGui, theme);
+            } else if (sceneNames[currentScene] == "ChatBoxDemo") {
+                createChatBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "CheckBoxDemo") {
                 createCheckBoxDemo(myGui, theme);
             } else if (sceneNames[currentScene] == "ColorPickerDemo") {

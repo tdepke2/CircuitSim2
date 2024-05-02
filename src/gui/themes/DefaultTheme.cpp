@@ -1,5 +1,6 @@
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
+#include <gui/widgets/ChatBox.h>
 #include <gui/widgets/CheckBox.h>
 #include <gui/widgets/ColorPicker.h>
 #include <gui/widgets/DialogBox.h>
@@ -47,6 +48,8 @@ std::shared_ptr<Style> DefaultTheme::loadStyle(const sf::String& widgetName) con
     std::cout << "Loading style for \"" << widgetName.toAnsiString() << "\".\n";
     if (widgetName == "Button") {
         return makeButtonStyle();
+    } else if (widgetName == "ChatBox") {
+        return makeChatBoxStyle();
     } else if (widgetName == "CheckBox") {
         return makeCheckBoxStyle();
     } else if (widgetName == "ColorPicker") {
@@ -85,6 +88,21 @@ std::shared_ptr<ButtonStyle> DefaultTheme::makeButtonStyle() const {
 
     style->setFillColorHover(colorLightBlueTransparent);
     style->setFillColorDown(colorDarkBlue);
+    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+
+    return style;
+}
+
+std::shared_ptr<ChatBoxStyle> DefaultTheme::makeChatBoxStyle() const {
+    auto style = std::make_shared<ChatBoxStyle>(gui_);
+    style->setFillColor(sf::Color::White);
+    style->setOutlineColor(colorGray);
+    style->setOutlineThickness(-1.0f);
+
+    style->setFont(consolasFont_);
+    style->setCharacterSize(15);
+    style->setTextFillColor(sf::Color::Black);
+
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
 
     return style;

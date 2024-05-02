@@ -7,6 +7,7 @@
 
 namespace gui {
     class ButtonStyle;
+    class ChatBoxStyle;
     class CheckBoxStyle;
     class ColorPickerStyle;
     class DialogBoxStyle;
@@ -31,6 +32,7 @@ protected:
 
 private:
     std::shared_ptr<ButtonStyle> makeButtonStyle() const;
+    std::shared_ptr<ChatBoxStyle> makeChatBoxStyle() const;
     std::shared_ptr<CheckBoxStyle> makeCheckBoxStyle() const;
     std::shared_ptr<ColorPickerStyle> makeColorPickerStyle() const;
     std::shared_ptr<DialogBoxStyle> makeDialogBoxStyle() const;

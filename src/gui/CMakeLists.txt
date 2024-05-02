@@ -8,6 +8,7 @@ set(CS2_GUI_HEADERS
     themes/DefaultTheme.h
     Widget.h
     widgets/Button.h
+    widgets/ChatBox.h
     widgets/CheckBox.h
     widgets/ColorPicker.h
     widgets/DialogBox.h
@@ -32,6 +33,7 @@ add_library(cs2_gui
     themes/DefaultTheme.cpp
     Widget.cpp
     widgets/Button.cpp
+    widgets/ChatBox.cpp
     widgets/CheckBox.cpp
     widgets/ColorPicker.cpp
     widgets/DialogBox.cpp
