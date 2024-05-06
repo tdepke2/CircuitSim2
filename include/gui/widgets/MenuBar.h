@@ -20,7 +20,7 @@ namespace gui {
  */
 struct MenuItem {
 public:
-    MenuItem(sf::String leftText = "", sf::String rightText = "", bool enabled = true) :
+    MenuItem(const sf::String& leftText = "", const sf::String& rightText = "", bool enabled = true) :
         leftText(leftText),
         rightText(rightText),
         enabled(enabled) {
@@ -42,7 +42,7 @@ private:
  */
 struct MenuList {
 public:
-    MenuList(sf::String name = "") :
+    MenuList(const sf::String& name = "") :
         name(name) {
     }
 

@@ -2,6 +2,8 @@
 #include <gui/Theme.h>
 #include <gui/widgets/ChatBox.h>
 
+#include <algorithm>
+#include <cmath>
 
 
 
@@ -12,11 +14,19 @@
 
 
 
+namespace {
+
+sf::Vector2f roundVector2f(sf::Vector2f v) {
+    return {std::round(v.x), std::round(v.y)};
+}
+
+}
 
 namespace gui {
 
 ChatBoxStyle::ChatBoxStyle(const Gui& gui) :
-    Style(gui) {
+    Style(gui),
+    textStyle_(sf::Text::Regular) {
 }
 
 // sf::Shape interface.
@@ -74,11 +84,11 @@ void ChatBoxStyle::setLetterSpacing(float spacingFactor) {
     gui_.requestRedraw();
 }
 void ChatBoxStyle::setTextStyle(uint32_t style) {
-    text_.setStyle(style);
+    textStyle_ = style;
     gui_.requestRedraw();
 }
 void ChatBoxStyle::setTextFillColor(const sf::Color& color) {
-    text_.setFillColor(color);
+    textColor_ = color;
     gui_.requestRedraw();
 }
 const sf::Font* ChatBoxStyle::getFont() const {
@@ -94,10 +104,10 @@ float ChatBoxStyle::getLetterSpacing() const {
     return text_.getLetterSpacing();
 }
 uint32_t ChatBoxStyle::getTextStyle() const {
-    return text_.getStyle();
+    return textStyle_;
 }
 const sf::Color& ChatBoxStyle::getTextFillColor() const {
-    return text_.getFillColor();
+    return textColor_;
 }
 
 void ChatBoxStyle::setTextPadding(const sf::Vector3f& padding) {
@@ -134,6 +144,7 @@ void ChatBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters) {
     );
 
     // FIXME update and redraw?
+    updateVisibleLines();
 }
 void ChatBox::setMaxLines(size_t maxLines) {
     maxLines_ = maxLines;
@@ -147,6 +158,38 @@ const sf::Vector2<size_t>& ChatBox::getSizeCharacters() const {
 }
 size_t ChatBox::getMaxLines() const {
     return maxLines_;
+}
+void ChatBox::addLine(const sf::String& str) {
+    addLine(str, style_->textColor_, style_->textStyle_);
+}
+void ChatBox::addLine(const sf::String& str, const sf::Color& color) {
+    addLine(str, color, style_->textStyle_);
+}
+void ChatBox::addLine(const sf::String& str, uint32_t style) {
+    addLine(str, style_->textColor_, style);
+}
+void ChatBox::addLine(const sf::String& str, const sf::Color& color, uint32_t style) {
+    lines_.emplace_front(str, color, style);
+    // FIXME: insert multiple lines if we need to split it up? nope, not anymore
+    updateVisibleLines();
+}
+const ChatBoxLine& ChatBox::getLine(size_t index) const {
+    return lines_.at(index);
+}
+size_t ChatBox::getNumLines() const {
+    return lines_.size();
+}
+bool ChatBox::removeLine(size_t index) {
+    if (index < lines_.size()) {
+        lines_.erase(lines_.begin() + index);
+        updateVisibleLines();
+        return true;
+    }
+    return false;
+}
+void ChatBox::removeAllLines() {
+    lines_.clear();
+    updateVisibleLines();
 }
 
 void ChatBox::setStyle(std::shared_ptr<ChatBoxStyle> style) {
@@ -174,7 +217,32 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     maxLines_(0),
     size_(),
     lines_(),
+    visibleLines_(),
     verticalScroll_(0) {
+}
+
+void ChatBox::updateVisibleLines() {
+    visibleLines_.clear();
+    size_t currentLine = 0;
+    while (visibleLines_.size() < sizeCharacters_.y) {
+        if (currentLine >= lines_.size()) {
+            break;
+        }
+        size_t lastTrimPos = lines_[currentLine].str.getSize();
+        do {
+            if (lastTrimPos > sizeCharacters_.x) {
+                lastTrimPos = (lastTrimPos - 1) / sizeCharacters_.x * sizeCharacters_.x;
+                visibleLines_.emplace_back(lines_[currentLine].str.substring(lastTrimPos, sizeCharacters_.x), lines_[currentLine].color, lines_[currentLine].style);
+                std::cout << "line [" << visibleLines_.back().str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().style) << "\n";
+            } else {
+                visibleLines_.emplace_back(lines_[currentLine].str.substring(0, sizeCharacters_.x), lines_[currentLine].color, lines_[currentLine].style);
+                std::cout << "line [" << visibleLines_.back().str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().style) << "\n";
+                break;
+            }
+        } while (visibleLines_.size() < sizeCharacters_.y);
+        ++currentLine;
+    }
+    requestRedraw();
 }
 
 void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
@@ -186,9 +254,19 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     style_->rect_.setSize(size_);
     target.draw(style_->rect_, states);
 
-    style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
-    style_->text_.setString("Hello\nfrom\nChatBox");
-    target.draw(style_->text_, states);
+    const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
+    sf::Vector2f lastPosition = {
+        style_->textPadding_.x,
+        style_->textPadding_.y + textHeight * (sizeCharacters_.y - 1)
+    };
+    for (const auto& line : visibleLines_) {
+        style_->text_.setPosition(roundVector2f(lastPosition));
+        style_->text_.setString(line.str);
+        style_->text_.setFillColor(line.color);
+        style_->text_.setStyle(line.style);
+        target.draw(style_->text_, states);
+        lastPosition.y -= textHeight;
+    }
 }
 
 }

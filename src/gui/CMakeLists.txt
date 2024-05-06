@@ -6,6 +6,7 @@ set(CS2_GUI_HEADERS
     Style.h
     Theme.h
     themes/DefaultTheme.h
+    Timer.h
     Widget.h
     widgets/Button.h
     widgets/ChatBox.h
@@ -31,6 +32,7 @@ add_library(cs2_gui
     Style.cpp
     Theme.cpp
     themes/DefaultTheme.cpp
+    Timer.cpp
     Widget.cpp
     widgets/Button.cpp
     widgets/ChatBox.cpp

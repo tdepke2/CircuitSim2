@@ -1,5 +1,6 @@
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
+#include <gui/Timer.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/ChatBox.h>
 #include <gui/widgets/CheckBox.h>
@@ -16,6 +17,7 @@
 
 #include <array>
 #include <cassert>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <map>
@@ -143,7 +145,7 @@ void connectDebugSignals(gui::TextBox* textBox, const std::string& name) {
 }
 
 sf::Color getRandColor() {
-    return {static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256), static_cast<uint8_t>(rand() % 256)};
+    return {static_cast<uint8_t>(std::rand() % 256), static_cast<uint8_t>(std::rand() % 256), static_cast<uint8_t>(std::rand() % 256)};
 }
 
 void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -289,9 +291,46 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto chatTest = gui::ChatBox::create(theme);
     connectDebugSignals(chatTest.get(), "chatTest");
-    chatTest->setSizeCharacters({10, 3});
+    chatTest->setSizeCharacters({10, 7});
     chatTest->setPosition(10.0f, 10.0f);
     myGui.addChild(chatTest);
+
+    auto textBox = gui::TextBox::create(theme);
+    connectDebugSignals(textBox.get(), "textBox");
+    textBox->setPosition(chatTest->getPosition() + sf::Vector2f(0.0f, chatTest->getSize().y + 5.0f));
+    textBox->setWidthCharacters(chatTest->getSizeCharacters().x);
+    textBox->setDefaultText("enter message");
+    myGui.addChild(textBox);
+
+    const std::array<std::string, 10> responses = {
+        "Is that so?",
+        "Unbelievable",
+        "Hmm, I would tend to agree.",
+        "You can\'t be serious.",
+        "Oh for sure.",
+        "No way...",
+        "Real",
+        "Nuh uh",
+        "Please stop talking.",
+        "Are you a bot? Get out of my chat bro."
+    };
+
+    textBox->onEnterPressed.connect([=]() {
+        chatTest->addLine(textBox->getText(), sf::Color::Blue);
+        textBox->setText("");
+        gui::Timer::create([=]() {
+            chatTest->addLine(responses[rand() % responses.size()], sf::Color::Red, sf::Text::Italic);
+        }, std::chrono::milliseconds(500 + rand() % 1000));
+    });
+
+    gui::Timer::create([=]() {
+        chatTest->addLine("user entered chat", sf::Color::Red);
+    }, std::chrono::milliseconds(1000));
+
+    /*auto t1 = gui::Timer::create([=](gui::Timer* timer) {
+        std::cout << "t1 called at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << "\n";
+        chatTest->addLine("[timer count is " + std::to_string(timer->getCount()) + "]");
+    }, std::chrono::milliseconds(1000), 5);*/
 }
 
 void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
@@ -972,6 +1011,48 @@ void testCallbacks() {
 }
 
 int main() {
+    // Just use a simple rng for now.
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    /*std::shared_ptr<gui::Timer> t1;
+    auto chain4 = [](gui::Timer* timer) {
+        std::cout << "callback chain4 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+    };
+    auto chain3 = [=](gui::Timer* timer) {
+        std::cout << "callback chain3 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        timer->setCallback(chain4);
+    };
+    auto chain2 = [&]() {
+        std::cout << "callback chain2 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << t1->getCount() << "\n";
+        t1->setCallback(chain3);
+    };
+    auto chain1 = [=](gui::Timer* timer) {
+        std::cout << "callback chain1 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        timer->setCallback(chain2);
+    };
+    t1 = gui::Timer::create(chain1, std::chrono::milliseconds(1000), 5);*/
+
+    /*auto t1 = gui::Timer::create([](gui::Timer* timer){
+        std::cout << "callback t1 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        //timer->setCount(3);
+    }, std::chrono::milliseconds(1000), 5);
+    auto t2 = gui::Timer::create([](gui::Timer* timer){
+        std::cout << "callback t2 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        //timer->setCount(3);
+    });
+    auto t3 = gui::Timer::create([](gui::Timer* timer){
+        std::cout << "callback t3 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        //timer->setCount(3);
+    }, std::chrono::milliseconds(50));
+    auto t4 = gui::Timer::create([](gui::Timer* timer){
+        std::cout << "callback t4 at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << ", count = " << timer->getCount() << "\n";
+        //timer->setCount(3);
+    }, std::chrono::milliseconds(1500), 5);*/
+
+    //auto t2 = gui::Timer::create(func, std::chrono::milliseconds(2));
+    //auto t3 = gui::Timer::create(func);
+    //auto t4 = gui::Timer::create(func, std::chrono::milliseconds(30));
+
     testCallbacks();
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "GUI Test");
@@ -1009,6 +1090,8 @@ int main() {
     });
 
     while (window.isOpen()) {
+        gui::Timer::updateTimers();
+
         sf::Event event;
         while (window.pollEvent(event)) {
             if (myGui.processEvent(event)) {

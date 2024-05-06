@@ -7,6 +7,7 @@
 #include <deque>
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <vector>
 
 namespace gui {
     class Gui;
@@ -14,6 +15,20 @@ namespace gui {
 }
 
 namespace gui {
+
+/**
+ * FIXME
+ */
+struct ChatBoxLine {
+public:
+    ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style) :
+        str(str), color(color), style(style) {
+    }
+
+    sf::String str;
+    sf::Color color;
+    uint32_t style;
+};
 
 /**
  * Visual styling for `ChatBox`.
@@ -60,6 +75,8 @@ public:
 private:
     sf::RectangleShape rect_;
     sf::Text text_;
+    sf::Color textColor_;
+    uint32_t textStyle_;
     sf::Vector3f textPadding_;
 
     friend class ChatBox;
@@ -82,6 +99,14 @@ public:
     const sf::Vector2f& getSize() const;
     const sf::Vector2<size_t>& getSizeCharacters() const;
     size_t getMaxLines() const;
+    void addLine(const sf::String& str);
+    void addLine(const sf::String& str, const sf::Color& color);
+    void addLine(const sf::String& str, uint32_t style);
+    void addLine(const sf::String& str, const sf::Color& color, uint32_t style);
+    const ChatBoxLine& getLine(size_t index) const;
+    size_t getNumLines() const;
+    bool removeLine(size_t index);
+    void removeAllLines();
 
     void setStyle(std::shared_ptr<ChatBoxStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
@@ -94,6 +119,7 @@ protected:
     ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name);
 
 private:
+    void updateVisibleLines();
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ChatBoxStyle> style_;
@@ -102,7 +128,8 @@ private:
     sf::Vector2<size_t> sizeCharacters_;
     size_t maxLines_;
     sf::Vector2f size_;
-    std::deque<sf::String> lines_;
+    std::deque<ChatBoxLine> lines_;
+    std::vector<ChatBoxLine> visibleLines_;
     size_t verticalScroll_;
 };
 
