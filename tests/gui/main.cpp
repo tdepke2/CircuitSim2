@@ -94,6 +94,9 @@ void connectDebugSignals(gui::Button* button, const std::string& name) {
 }
 void connectDebugSignals(gui::ChatBox* chatBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Widget*>(chatBox), name);
+    chatBox->onMousePress.connect(mousePress);
+    chatBox->onMouseRelease.connect(mouseRelease);
+    chatBox->onClick.connect(click);
 }
 void connectDebugSignals(gui::CheckBox* checkBox, const std::string& name) {
     connectDebugSignals(dynamic_cast<gui::Button*>(checkBox), name);
@@ -293,6 +296,7 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(chatTest.get(), "chatTest");
     chatTest->setSizeCharacters({10, 7});
     chatTest->setPosition(10.0f, 10.0f);
+    chatTest->setOrigin(-20.0f, -170.0f);
     myGui.addChild(chatTest);
 
     auto textBox = gui::TextBox::create(theme);
@@ -319,8 +323,8 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
         chatTest->addLine(textBox->getText(), sf::Color::Blue);
         textBox->setText("");
         gui::Timer::create([=]() {
-            chatTest->addLine(responses[rand() % responses.size()], sf::Color::Red, sf::Text::Italic);
-        }, std::chrono::milliseconds(500 + rand() % 1000));
+            chatTest->addLine(responses[std::rand() % responses.size()], sf::Color::Red, sf::Text::Italic);
+        }, std::chrono::milliseconds(500 + std::rand() % 1000));
     });
 
     gui::Timer::create([=]() {

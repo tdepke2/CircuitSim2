@@ -7,6 +7,7 @@
 #include <deque>
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <utility>
 #include <vector>
 
 namespace gui {
@@ -21,13 +22,14 @@ namespace gui {
  */
 struct ChatBoxLine {
 public:
-    ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style) :
-        str(str), color(color), style(style) {
+    ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style, unsigned int id = 0) :
+        str(str), color(color), style(style), id(id) {
     }
 
     sf::String str;
     sf::Color color;
     uint32_t style;
+    unsigned int id;
 };
 
 /**
@@ -114,12 +116,23 @@ public:
     std::shared_ptr<ChatBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
+    virtual bool handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
+    virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
+    //virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
+    //virtual void handleFocusChange(bool focused) override;
+
+    Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
+    Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
+    Signal<Widget*, const sf::Vector2f&> onClick;
 
 protected:
     ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name);
 
 private:
     void updateVisibleLines();
+    void updateSelection(size_t pos, bool continueSelection);
+    void updateScroll(int delta);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ChatBoxStyle> style_;
@@ -131,6 +144,8 @@ private:
     std::deque<ChatBoxLine> lines_;
     std::vector<ChatBoxLine> visibleLines_;
     size_t verticalScroll_;
+    std::pair<size_t, bool> selectionStart_;
+    size_t selectionEnd_;
 };
 
 } // namespace gui
