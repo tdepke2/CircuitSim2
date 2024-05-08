@@ -160,6 +160,16 @@ void ChatBox::setMaxLines(size_t maxLines) {
         removeLine(maxLines);
     }
 }
+void ChatBox::setAutoHide(bool autoHide) {
+    if (autoHide_ != autoHide) {
+        autoHide_ = autoHide;
+
+        // FIXME need to do more in here?
+        verticalScroll_ = 0;
+        selectionStart_.second = false;
+        updateVisibleLines();
+    }
+}
 const sf::Vector2f& ChatBox::getSize() const {
     return size_;
 }
@@ -168,6 +178,9 @@ const sf::Vector2<size_t>& ChatBox::getSizeCharacters() const {
 }
 size_t ChatBox::getMaxLines() const {
     return maxLines_;
+}
+bool ChatBox::getAutoHide() const {
+    return autoHide_;
 }
 void ChatBox::addLine(const sf::String& str) {
     addLine(str, style_->textColor_, style_->textStyle_);
@@ -325,6 +338,7 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     styleCopied_(false),
     sizeCharacters_(0, 0),
     maxLines_(0),
+    autoHide_(false),
     size_(),
     lines_(),
     visibleLines_(),
@@ -422,8 +436,10 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     }
     states.transform *= getTransform();
 
-    style_->rect_.setSize(size_);
-    target.draw(style_->rect_, states);
+    if (!autoHide_) {
+        style_->rect_.setSize(size_);
+        target.draw(style_->rect_, states);
+    }
 
     const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
     sf::Vector2f lastPosition = {
@@ -439,7 +455,7 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         lastPosition.y -= textHeight;
     }
 
-    if (isFocused()) {
+    if (!autoHide_ && isFocused()) {
         for (auto& line : selectionLines_) {
             line.setFillColor(style_->highlightColor_);
             target.draw(line, states);

@@ -104,9 +104,11 @@ public:
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
     void setMaxLines(size_t maxLines);
+    void setAutoHide(bool autoHide);
     const sf::Vector2f& getSize() const;
     const sf::Vector2<size_t>& getSizeCharacters() const;
     size_t getMaxLines() const;
+    bool getAutoHide() const;
     void addLine(const sf::String& str);
     void addLine(const sf::String& str, const sf::Color& color);
     void addLine(const sf::String& str, uint32_t style);
@@ -148,6 +150,7 @@ private:
 
     sf::Vector2<size_t> sizeCharacters_;
     size_t maxLines_;
+    bool autoHide_;
     sf::Vector2f size_;
     std::deque<ChatBoxLine> lines_;
     std::vector<ChatBoxLine> visibleLines_;

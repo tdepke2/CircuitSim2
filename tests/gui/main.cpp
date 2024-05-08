@@ -306,6 +306,15 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     textBox->setDefaultText("enter message");
     myGui.addChild(textBox);
 
+    auto autoHideToggle = gui::CheckBox::create(theme);
+    connectDebugSignals(autoHideToggle.get(), "autoHideToggle");
+    autoHideToggle->setLabel("Auto Hide");
+    autoHideToggle->setPosition(textBox->getPosition() + sf::Vector2f(0.0f, textBox->getSize().y + 5.0f));
+    autoHideToggle->onClick.connect([=]() {
+        chatTest->setAutoHide(autoHideToggle->isChecked());
+    });
+    myGui.addChild(autoHideToggle);
+
     const std::array<std::string, 10> responses = {
         "Is that so?",
         "Unbelievable",
