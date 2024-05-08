@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 
 
@@ -110,9 +111,16 @@ const sf::Color& ChatBoxStyle::getTextFillColor() const {
     return textColor_;
 }
 
+void ChatBoxStyle::setHighlightFillColor(const sf::Color& color) {
+    highlightColor_ = color;
+    gui_.requestRedraw();
+}
 void ChatBoxStyle::setTextPadding(const sf::Vector3f& padding) {
     textPadding_ = padding;
     gui_.requestRedraw();
+}
+const sf::Color& ChatBoxStyle::getHighlightFillColor() const {
+    return highlightColor_;
 }
 const sf::Vector3f& ChatBoxStyle::getTextPadding() const {
     return textPadding_;
@@ -143,12 +151,14 @@ void ChatBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters) {
         2.0f * style_->textPadding_.y + style_->textPadding_.z * style_->getCharacterSize() * sizeCharacters.y
     );
 
-    // FIXME update and redraw?
     updateVisibleLines();
 }
 void ChatBox::setMaxLines(size_t maxLines) {
     maxLines_ = maxLines;
-    // FIXME trim lines to fit the new max.
+    if (maxLines > 0 && lines_.size() > maxLines) {
+        lines_.resize(maxLines + 1);
+        removeLine(maxLines);
+    }
 }
 const sf::Vector2f& ChatBox::getSize() const {
     return size_;
@@ -169,9 +179,16 @@ void ChatBox::addLine(const sf::String& str, uint32_t style) {
     addLine(str, style_->textColor_, style);
 }
 void ChatBox::addLine(const sf::String& str, const sf::Color& color, uint32_t style) {
+    if (maxLines_ > 0 && lines_.size() == maxLines_) {
+        lines_.pop_back();
+    }
     lines_.emplace_front(str, color, style);
-    if (verticalScroll_ > 0) {
+    if (verticalScroll_ > 0 && verticalScroll_ < lines_.size() - 1) {
         ++verticalScroll_;
+    }
+    if (selectionStart_.second && lines_.size() > 0) {
+        selectionStart_.first = std::min(selectionStart_.first, lines_.size() - 1);
+        selectionEnd_ = std::min(selectionEnd_, lines_.size() - 1);
     }
     updateVisibleLines();
 }
@@ -185,6 +202,10 @@ bool ChatBox::removeLine(size_t index) {
     if (index < lines_.size()) {
         lines_.erase(lines_.begin() + index);
         verticalScroll_ = std::min(verticalScroll_, (lines_.size() > 0 ? lines_.size() - 1 : 0));
+        if (selectionStart_.second && lines_.size() > 0) {
+            selectionStart_.first = std::min(selectionStart_.first, lines_.size() - 1);
+            selectionEnd_ = std::min(selectionEnd_, lines_.size() - 1);
+        }
         updateVisibleLines();
         return true;
     }
@@ -193,6 +214,7 @@ bool ChatBox::removeLine(size_t index) {
 void ChatBox::removeAllLines() {
     lines_.clear();
     verticalScroll_ = 0;
+    selectionStart_.second = false;
     updateVisibleLines();
 }
 
@@ -212,6 +234,20 @@ std::shared_ptr<ChatBoxStyle> ChatBox::getStyle() {
 sf::FloatRect ChatBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
+bool ChatBox::handleMouseMove(const sf::Vector2f& mouseParent) {
+    if (baseClass::handleMouseMove(mouseParent)) {
+        return true;
+    } else if (!isFocused()) {
+        return false;
+    }
+    const auto mouseLocal = toLocalOriginSpace(mouseParent);
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+        updateSelection(findClosestLineToMouse(mouseLocal), true);
+        return true;
+    } else {
+        return false;
+    }
+}
 bool ChatBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     if (baseClass::handleMouseWheelScroll(wheel, delta, mouseParent)) {
         return true;
@@ -223,13 +259,7 @@ void ChatBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
     baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button == sf::Mouse::Left) {
-        std::cout << "chat clicked at: " << mouseLocal.x << ", " << mouseLocal.y << "\n";
-        const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
-        size_t visibleLineClicked = std::max(static_cast<int>(sizeCharacters_.y) - 1 - static_cast<int>((mouseLocal.y + getOrigin().y - style_->textPadding_.y) / textHeight), 0);
-        std::cout << "visibleLineClicked = " << visibleLineClicked << "\n";
-        if (visibleLineClicked < visibleLines_.size()) {
-            updateSelection(visibleLines_[visibleLineClicked].id, false);
-        }
+        updateSelection(findClosestLineToMouse(mouseLocal), false);
     }
     if (button <= sf::Mouse::Middle) {
         onClick.emit(this, mouseLocal);
@@ -240,26 +270,24 @@ void ChatBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
     onMouseRelease.emit(this, button, toLocalOriginSpace(mouseParent));
     baseClass::handleMouseRelease(button, mouseParent);
 }
-/*bool ChatBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
+bool ChatBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     bool eventConsumed = baseClass::handleKeyPressed(key);
-    size_t caretOffset = findCaretOffset(caretPosition_);
 
     if (key.control) {
-        if (key.code == sf::Keyboard::Up) {
-            updateScroll(true, 1, key.shift);
-        } else if (key.code == sf::Keyboard::Down) {
-            updateScroll(true, -1, key.shift);
-        } else if (key.code == sf::Keyboard::A) {
-            updateCaretPosition(0, false);
-            updateCaretPosition(findStringsLength(boxStrings_), true);
-        } else if (key.code == sf::Keyboard::X) {
-            if (selectionStart_.second) {
-                sf::Clipboard::setString(getSelectedText());
-                insertCharacter('\u0008');
+        if (key.code == sf::Keyboard::A) {
+            if (lines_.size() > 0) {
+                updateSelection(0, false);
+                updateSelection(lines_.size() - 1, true);
             }
-        } else if (key.code == sf::Keyboard::C) {
+        } else if (key.code == sf::Keyboard::X || key.code == sf::Keyboard::C) {
             if (selectionStart_.second) {
-                sf::Clipboard::setString(getSelectedText());
+                sf::String selectedText;
+                size_t selectionMin = std::min(selectionStart_.first, selectionEnd_);
+                size_t selectionMax = std::max(selectionStart_.first, selectionEnd_);
+                for (size_t i = selectionMin; i <= selectionMax; ++i) {
+                    selectedText = lines_[i].str + "\n" + selectedText;
+                }
+                sf::Clipboard::setString(selectedText);
             }
         } else {
             return eventConsumed;
@@ -268,25 +296,19 @@ void ChatBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
     }
 
     if (key.code == sf::Keyboard::PageUp) {
-        updateCaretPosition(0, key.shift);
+        updateScroll(static_cast<int>(sizeCharacters_.y) - 1);
     } else if (key.code == sf::Keyboard::PageDown) {
-        updateCaretPosition(findStringsLength(boxStrings_), key.shift);
+        updateScroll(-static_cast<int>(sizeCharacters_.y) + 1);
     } else if (key.code == sf::Keyboard::Home) {
-        updateCaretPosition({0, caretPosition_.y}, key.shift);
+        verticalScroll_ = 0;
+        updateVisibleLines();
     } else if (key.code == sf::Keyboard::End) {
-        updateCaretPosition({boxStrings_[caretPosition_.y].getSize(), caretPosition_.y}, key.shift);
+        verticalScroll_ = (lines_.size() > 0 ? lines_.size() - 1 : 0);
+        updateVisibleLines();
     } else if (key.code == sf::Keyboard::Up) {
-        if (caretPosition_.y > 0) {
-            updateCaretPosition(findCaretOffset({caretPosition_.x, caretPosition_.y - 1}), key.shift);
-        } else {
-            updateCaretPosition(0, key.shift);
-        }
+        updateScroll(1);
     } else if (key.code == sf::Keyboard::Down) {
-        if (caretPosition_.y < boxStrings_.size() - 1) {
-            updateCaretPosition(findCaretOffset({caretPosition_.x, caretPosition_.y + 1}), key.shift);
-        } else {
-            updateCaretPosition(findStringsLength(boxStrings_), key.shift);
-        }
+        updateScroll(-1);
     } else {
         return eventConsumed;
     }
@@ -295,7 +317,7 @@ void ChatBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
 void ChatBox::handleFocusChange(bool focused) {
     baseClass::handleFocusChange(focused);
     requestRedraw();
-}*/
+}
 
 ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     baseClass(name),
@@ -312,6 +334,15 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
 }
 
 void ChatBox::updateVisibleLines() {
+    size_t selectionMin = std::numeric_limits<size_t>::max();
+    size_t selectionMax = std::numeric_limits<size_t>::max();
+    if (selectionStart_.second) {
+        selectionMin = std::min(selectionStart_.first, selectionEnd_);
+        selectionMax = std::max(selectionStart_.first, selectionEnd_);
+    }
+    selectionLines_.clear();
+
+    const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
     visibleLines_.clear();
     size_t currentLine = verticalScroll_;
     while (visibleLines_.size() < sizeCharacters_.y) {
@@ -327,30 +358,61 @@ void ChatBox::updateVisibleLines() {
             } else {
                 visibleLines_.emplace_back(lines_[currentLine].str.substring(0, sizeCharacters_.x), lines_[currentLine].color, lines_[currentLine].style, currentLine);
                 std::cout << "line [" << visibleLines_.back().str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().style) << "\n";
-                break;
+                lastTrimPos = 0;
             }
-        } while (visibleLines_.size() < sizeCharacters_.y);
+            if (currentLine >= selectionMin && currentLine <= selectionMax) {
+                style_->text_.setPosition(
+                    style_->textPadding_.x,
+                    style_->textPadding_.y + textHeight * (sizeCharacters_.y - visibleLines_.size())
+                );
+                style_->text_.setString(visibleLines_.back().str);
+                sf::Vector2f pos1 = style_->text_.findCharacterPos(0);
+                sf::Vector2f pos2 = style_->text_.findCharacterPos(style_->text_.getString().getSize());
+                selectionLines_.emplace_back(sf::Vector2f(pos2.x - pos1.x, textHeight));
+                selectionLines_.back().setPosition(pos1);
+            }
+        } while (visibleLines_.size() < sizeCharacters_.y && lastTrimPos != 0);
         ++currentLine;
     }
     requestRedraw();
 }
 void ChatBox::updateSelection(size_t pos, bool continueSelection) {
-    /*if (!selectionStart_.second && continueSelection) {
-        selectionStart_.first = pos;
-        selectionStart_.second = true;
+    const auto lastSelectionStart = selectionStart_;
+    const auto lastSelectionEnd = selectionEnd_;
+
+    if (selectionStart_.second && continueSelection) {
+        if (pos != std::numeric_limits<size_t>::max()) {
+            selectionEnd_ = pos;
+        }
+    } else if (pos == std::numeric_limits<size_t>::max()) {
+        selectionStart_ = {0, false};
+        selectionEnd_ = 0;
+    } else {
+        selectionStart_ = {pos, true};
+        selectionEnd_ = pos;
     }
 
-    if (selectionStart_.second) {
-
-    }*/
-
-    std::cout << "need to select line " << pos << "\n";
+    if (selectionStart_ != lastSelectionStart || selectionEnd_ != lastSelectionEnd) {
+        std::cout << "Selection now " << selectionStart_.first << " to " << selectionEnd_ << (selectionStart_.second ? "" : " (no selection)") << "\n";
+        updateVisibleLines();
+    }
 }
 void ChatBox::updateScroll(int delta) {
     size_t newScroll = std::min(std::max(static_cast<int>(verticalScroll_) + delta, 0), static_cast<int>(lines_.size() > 0 ? lines_.size() - 1 : 0));
     if (verticalScroll_ != newScroll) {
         verticalScroll_ = newScroll;
         updateVisibleLines();
+    }
+}
+size_t ChatBox::findClosestLineToMouse(const sf::Vector2f& mouseLocal) const {
+    std::cout << "chat clicked at: " << mouseLocal.x << ", " << mouseLocal.y << "\n";
+    const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
+    size_t visibleLineClicked = std::max(static_cast<int>(sizeCharacters_.y) - 1 - static_cast<int>((mouseLocal.y + getOrigin().y - style_->textPadding_.y) / textHeight), 0);
+    std::cout << "visibleLineClicked = " << visibleLineClicked << "\n";
+    if (visibleLineClicked < visibleLines_.size()) {
+        return visibleLines_[visibleLineClicked].id;
+    } else {
+        return std::numeric_limits<size_t>::max();
     }
 }
 
@@ -375,6 +437,13 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->text_.setStyle(line.style);
         target.draw(style_->text_, states);
         lastPosition.y -= textHeight;
+    }
+
+    if (isFocused()) {
+        for (auto& line : selectionLines_) {
+            line.setFillColor(style_->highlightColor_);
+            target.draw(line, states);
+        }
     }
 }
 

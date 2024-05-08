@@ -103,6 +103,7 @@ std::shared_ptr<ChatBoxStyle> DefaultTheme::makeChatBoxStyle() const {
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
+    style->setHighlightFillColor(colorLightBlueTransparent);
     style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
 
     return style;

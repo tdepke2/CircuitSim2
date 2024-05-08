@@ -22,6 +22,9 @@ namespace gui {
  */
 struct ChatBoxLine {
 public:
+    ChatBoxLine() :
+        str(), color(), style(sf::Text::Regular), id(0) {
+    }
     ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style, unsigned int id = 0) :
         str(str), color(color), style(style), id(id) {
     }
@@ -69,7 +72,9 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setHighlightFillColor(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getHighlightFillColor() const;
     const sf::Vector3f& getTextPadding() const;
 
     std::shared_ptr<ChatBoxStyle> clone() const;
@@ -79,6 +84,7 @@ private:
     sf::Text text_;
     sf::Color textColor_;
     uint32_t textStyle_;
+    sf::Color highlightColor_;
     sf::Vector3f textPadding_;
 
     friend class ChatBox;
@@ -116,11 +122,12 @@ public:
     std::shared_ptr<ChatBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
+    virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual bool handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
     virtual void handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;
-    //virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
-    //virtual void handleFocusChange(bool focused) override;
+    virtual bool handleKeyPressed(const sf::Event::KeyEvent& key) override;
+    virtual void handleFocusChange(bool focused) override;
 
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMousePress;
     Signal<Widget*, sf::Mouse::Button, const sf::Vector2f&> onMouseRelease;
@@ -133,6 +140,7 @@ private:
     void updateVisibleLines();
     void updateSelection(size_t pos, bool continueSelection);
     void updateScroll(int delta);
+    size_t findClosestLineToMouse(const sf::Vector2f& mouseLocal) const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::shared_ptr<ChatBoxStyle> style_;
@@ -144,6 +152,7 @@ private:
     std::deque<ChatBoxLine> lines_;
     std::vector<ChatBoxLine> visibleLines_;
     size_t verticalScroll_;
+    mutable std::vector<sf::RectangleShape> selectionLines_;
     std::pair<size_t, bool> selectionStart_;
     size_t selectionEnd_;
 };

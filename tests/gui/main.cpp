@@ -294,9 +294,9 @@ void createButtonDemo(gui::Gui& myGui, const gui::Theme& theme) {
 void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto chatTest = gui::ChatBox::create(theme);
     connectDebugSignals(chatTest.get(), "chatTest");
-    chatTest->setSizeCharacters({10, 7});
+    chatTest->setSizeCharacters({20, 7});
+    chatTest->setMaxLines(8);
     chatTest->setPosition(10.0f, 10.0f);
-    chatTest->setOrigin(-20.0f, -170.0f);
     myGui.addChild(chatTest);
 
     auto textBox = gui::TextBox::create(theme);
