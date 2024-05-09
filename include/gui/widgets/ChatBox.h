@@ -5,10 +5,21 @@
 #include <gui/Widget.h>
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <utility>
 #include <vector>
+
+
+
+
+
+#include <iostream>
+
+
+
+
 
 namespace gui {
     class Gui;
@@ -100,7 +111,7 @@ class ChatBox : public Widget {
 public:
     static std::shared_ptr<ChatBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<ChatBox> create(std::shared_ptr<ChatBoxStyle> style, const sf::String& name = "");
-    virtual ~ChatBox() = default;
+    virtual ~ChatBox() { std::cout << "ChatBox dtor ############################################\n"; };
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
     void setMaxLines(size_t maxLines);
@@ -158,6 +169,8 @@ private:
     mutable std::vector<sf::RectangleShape> selectionLines_;
     std::pair<size_t, bool> selectionStart_;
     size_t selectionEnd_;
+    std::function<void()> hideCallback_;
+    size_t hideCounter_;
 };
 
 } // namespace gui

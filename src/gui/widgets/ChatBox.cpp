@@ -1,8 +1,10 @@
 #include <gui/Gui.h>
 #include <gui/Theme.h>
+#include <gui/Timer.h>
 #include <gui/widgets/ChatBox.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 
@@ -164,7 +166,20 @@ void ChatBox::setAutoHide(bool autoHide) {
     if (autoHide_ != autoHide) {
         autoHide_ = autoHide;
 
-        // FIXME need to do more in here?
+        // We set up the callback here, as `shared_from_this()` will not work in
+        // the ctor before a shared_ptr can take ownership of the object.
+        if (!hideCallback_) {
+            std::cout << "First time setup for hideCallback_\n";
+            auto sharedThis = std::dynamic_pointer_cast<ChatBox>(shared_from_this());
+            hideCallback_ = [sharedThis]() {
+                if (sharedThis->hideCounter_ > 0) {
+                    --sharedThis->hideCounter_;
+                    sharedThis->requestRedraw();
+                }
+            };
+        }
+
+        // FIXME need to do more in here? like reset hide counter to zero?
         verticalScroll_ = 0;
         selectionStart_.second = false;
         updateVisibleLines();
@@ -202,6 +217,10 @@ void ChatBox::addLine(const sf::String& str, const sf::Color& color, uint32_t st
     if (selectionStart_.second && lines_.size() > 0) {
         selectionStart_.first = std::min(selectionStart_.first, lines_.size() - 1);
         selectionEnd_ = std::min(selectionEnd_, lines_.size() - 1);
+    }
+    if (autoHide_ && hideCounter_ < sizeCharacters_.y) {
+        ++hideCounter_;
+        Timer::create(hideCallback_, std::chrono::milliseconds(2000));
     }
     updateVisibleLines();
 }
@@ -344,7 +363,9 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     visibleLines_(),
     verticalScroll_(0),
     selectionStart_(0, false),
-    selectionEnd_(0) {
+    selectionEnd_(0),
+    hideCallback_(),
+    hideCounter_(0) {
 }
 
 void ChatBox::updateVisibleLines() {
@@ -446,13 +467,20 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         style_->textPadding_.x,
         style_->textPadding_.y + textHeight * (sizeCharacters_.y - 1)
     };
-    for (const auto& line : visibleLines_) {
+    size_t lineCount = 0;
+    for (size_t i = 0; i < visibleLines_.size(); ++i) {
+        if (autoHide_ && lineCount == hideCounter_) {
+            break;
+        }
         style_->text_.setPosition(roundVector2f(lastPosition));
-        style_->text_.setString(line.str);
-        style_->text_.setFillColor(line.color);
-        style_->text_.setStyle(line.style);
+        style_->text_.setString(visibleLines_[i].str);
+        style_->text_.setFillColor(visibleLines_[i].color);
+        style_->text_.setStyle(visibleLines_[i].style);
         target.draw(style_->text_, states);
         lastPosition.y -= textHeight;
+        if (i + 1 < visibleLines_.size() && visibleLines_[i].id != visibleLines_[i + 1].id) {
+            ++lineCount;
+        }
     }
 
     if (!autoHide_ && isFocused()) {

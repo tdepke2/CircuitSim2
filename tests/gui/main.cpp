@@ -310,7 +310,7 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(autoHideToggle.get(), "autoHideToggle");
     autoHideToggle->setLabel("Auto Hide");
     autoHideToggle->setPosition(textBox->getPosition() + sf::Vector2f(0.0f, textBox->getSize().y + 5.0f));
-    autoHideToggle->onClick.connect([=]() {
+    autoHideToggle->onClick.connect([chatTest,&autoHideToggle]() {
         chatTest->setAutoHide(autoHideToggle->isChecked());
     });
     myGui.addChild(autoHideToggle);
@@ -327,6 +327,10 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
         "Please stop talking.",
         "Are you a bot? Get out of my chat bro."
     };
+
+    // FIXME: issues with cyclic shared ptr below, seems to be a common issue in demo. see above connect() for solution.
+    // this issue is probably in the ChatBox hideCallback_ too.
+    // maybe we should add some instrumentation for dtors in general to make sure clean up is working?
 
     textBox->onEnterPressed.connect([=]() {
         chatTest->addLine(textBox->getText(), sf::Color::Blue);
