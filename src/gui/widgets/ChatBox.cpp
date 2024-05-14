@@ -170,9 +170,10 @@ void ChatBox::setAutoHide(bool autoHide) {
         // the ctor before a shared_ptr can take ownership of the object.
         if (!hideCallback_) {
             std::cout << "First time setup for hideCallback_\n";
-            auto sharedThis = std::dynamic_pointer_cast<ChatBox>(shared_from_this());
-            hideCallback_ = [sharedThis]() {
-                if (sharedThis->hideCounter_ > 0) {
+            auto weakThis = std::weak_ptr<ChatBox>(std::dynamic_pointer_cast<ChatBox>(shared_from_this()));
+            hideCallback_ = [weakThis]() {
+                auto sharedThis = weakThis.lock();
+                if (sharedThis != nullptr && sharedThis->hideCounter_ > 0) {
                     --sharedThis->hideCounter_;
                     sharedThis->requestRedraw();
                 }

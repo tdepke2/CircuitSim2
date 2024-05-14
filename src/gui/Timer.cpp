@@ -58,6 +58,10 @@ void Timer::updateTimers() {
     }
 }
 
+void Timer::clearTimers() {
+    timers_ = {};
+}
+
 void Timer::setCallback(const std::function<void(Timer*)>& callback) {
     callback_ = callback;
 }

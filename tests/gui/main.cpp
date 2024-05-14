@@ -18,9 +18,10 @@
  * ```
  * 
  * In general it is not recommended to put std::shared_ptr in a lambda capture
- * as it is difficult to track down potential cycles, some of this demo code
- * does this though (there's a memory leak detector in here that makes sure the
- * widgets actually get cleaned up).
+ * as it is difficult to track down potential cycles, neither is it recommended
+ * to use default captures (`[&]` and `[=]`). Some of this demo code does this
+ * anyways (there's a memory leak detector in here that makes sure the widgets
+ * actually get cleaned up).
  * 
  * In C++14 the lambda can be created without a temporary by using a capture
  * with an initializer:
@@ -373,12 +374,8 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
         "Are you a bot? Get out of my chat bro."
     };
 
-    // FIXME: issues with cyclic shared ptr still need to be fixed in some places.
-    // this issue is probably in the ChatBox hideCallback_ too.
-    // maybe we should add some instrumentation for dtors in general to make sure clean up is working? done
-
     auto textBoxPtr = textBox.get();
-    textBox->onEnterPressed.connect([chatTest,textBoxPtr,&responses]() {
+    textBox->onEnterPressed.connect([chatTest,textBoxPtr,responses]() {
         chatTest->addLine(textBoxPtr->getText(), sf::Color::Blue);
         textBoxPtr->setText("");
         gui::Timer::create([=]() {
@@ -402,11 +399,12 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(testCheckBox, "testCheckBox");
     testCheckBox->setLabel(sf::String("check box"));
     testCheckBox->setPosition(10.0f, 10.0f);
-    testCheckBox->onClick.connect([=]() {
-        if (testCheckBox->isChecked()) {
-            testCheckBox->setLabel("the box is checked!");
+    auto testCheckBoxPtr = testCheckBox.get();
+    testCheckBox->onClick.connect([testCheckBoxPtr]() {
+        if (testCheckBoxPtr->isChecked()) {
+            testCheckBoxPtr->setLabel("the box is checked!");
         } else {
-            testCheckBox->setLabel("the box is not checked");
+            testCheckBoxPtr->setLabel("the box is not checked");
         }
     });
     myGui.addChild(testCheckBox);
@@ -448,11 +446,12 @@ void createCheckBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(testRadioButton, "testRadioButton");
     testRadioButton->setLabel(sf::String("radio button"));
     testRadioButton->setPosition(230.0f, 10.0f);
-    testRadioButton->onClick.connect([=]() {
-        if (testRadioButton->isChecked()) {
-            testRadioButton->setLabel("the button is checked!");
+    auto testRadioButtonPtr = testRadioButton.get();
+    testRadioButton->onClick.connect([testRadioButtonPtr]() {
+        if (testRadioButtonPtr->isChecked()) {
+            testRadioButtonPtr->setLabel("the button is checked!");
         } else {
-            testRadioButton->setLabel("the button is not checked");
+            testRadioButtonPtr->setLabel("the button is not checked");
         }
     });
     myGui.addChild(testRadioButton);
@@ -525,8 +524,9 @@ void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(paletteButton1, "paletteButton1");
     paletteButton1->getStyle()->setFillColor({240, 182, 58});
     paletteButton1->setLabel("240, 182, 58");
-    paletteButton1->onClick.connect([=]() {
-        colorPickerTest->setColor(paletteButton1->getStyle()->getFillColor());
+    auto paletteButton1Ptr = paletteButton1.get();
+    paletteButton1->onClick.connect([paletteButton1Ptr,colorPickerTest]() {
+        colorPickerTest->setColor(paletteButton1Ptr->getStyle()->getFillColor());
     });
     myGui.addChild(paletteButton1);
 
@@ -534,8 +534,9 @@ void createColorPickerDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(paletteButton2, "paletteButton2");
     paletteButton2->getStyle()->setFillColor({90, 222, 242});
     paletteButton2->setLabel("90, 222, 242");
-    paletteButton2->onClick.connect([=]() {
-        colorPickerTest->setColor(paletteButton2->getStyle()->getFillColor());
+    auto paletteButton2Ptr = paletteButton2.get();
+    paletteButton2->onClick.connect([paletteButton2Ptr,colorPickerTest]() {
+        colorPickerTest->setColor(paletteButton2Ptr->getStyle()->getFillColor());
     });
     myGui.addChild(paletteButton2);
 
@@ -576,6 +577,7 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     dialogTest->setSize({200.0f, 100.0f});
     dialogTest->setPosition(80.0f, 80.0f);
     myGui.addChild(dialogTest);
+    auto dialogTestPtr = dialogTest.get();
 
     /*auto panelThing = gui::Panel::create(theme);
     connectDebugSignals(panelThing, "panelThing");
@@ -621,9 +623,9 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(dialogTestCancel, "dialogTestCancel");
     dialogTestCancel->setLabel("Cancel");
     dialogTestCancel->setPosition(10.0f, 60.0f);
-    dialogTestCancel->onClick.connect([=]() {
+    dialogTestCancel->onClick.connect([dialogTestPtr]() {
         std::cout << "Dialog cancelled!\n";
-        dialogTest->setSize(dialogTest->getSize() - sf::Vector2f(100.0f, 70.0f));
+        dialogTestPtr->setSize(dialogTestPtr->getSize() - sf::Vector2f(100.0f, 70.0f));
     });
     dialogTest->setCancelButton(0, dialogTestCancel);
 
@@ -631,9 +633,9 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(dialogTestSubmit, "dialogTestSubmit");
     dialogTestSubmit->setLabel("Rename");
     dialogTestSubmit->setPosition(100.0f, 60.0f);
-    dialogTestSubmit->onClick.connect([=]() {
+    dialogTestSubmit->onClick.connect([dialogTestPtr]() {
         std::cout << "Dialog submitted!\n";
-        dialogTest->setSize(dialogTest->getSize() + sf::Vector2f(100.0f, 70.0f));
+        dialogTestPtr->setSize(dialogTestPtr->getSize() + sf::Vector2f(100.0f, 70.0f));
     });
     dialogTest->setSubmitButton(1, dialogTestSubmit);
 
@@ -647,9 +649,10 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(dialogTitleAlignment, "dialogTitleAlignment");
     dialogTitleAlignment->setLabel("Title: " + alignmentToString[static_cast<int>(dialogTest->getTitleAlignment())]);
     dialogTitleAlignment->setPosition(10.0f, 10.0f);
-    dialogTitleAlignment->onClick.connect([=]() {
-        dialogTest->setTitleAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTest->getTitleAlignment()) + 1) % 3));
-        dialogTitleAlignment->setLabel("Title: " + alignmentToString[static_cast<int>(dialogTest->getTitleAlignment())]);
+    auto dialogTitleAlignmentPtr = dialogTitleAlignment.get();
+    dialogTitleAlignment->onClick.connect([dialogTestPtr,dialogTitleAlignmentPtr,alignmentToString]() {
+        dialogTestPtr->setTitleAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTestPtr->getTitleAlignment()) + 1) % 3));
+        dialogTitleAlignmentPtr->setLabel("Title: " + alignmentToString[static_cast<int>(dialogTestPtr->getTitleAlignment())]);
     });
     myGui.addChild(dialogTitleAlignment);
 
@@ -657,9 +660,10 @@ void createDialogBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(dialogButtonAlignment, "dialogButtonAlignment");
     dialogButtonAlignment->setLabel("Buttons: " + alignmentToString[static_cast<int>(dialogTest->getButtonAlignment())]);
     dialogButtonAlignment->setPosition(10.0f, 40.0f);
-    dialogButtonAlignment->onClick.connect([=]() {
-        dialogTest->setButtonAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTest->getButtonAlignment()) + 1) % 3));
-        dialogButtonAlignment->setLabel("Buttons: " + alignmentToString[static_cast<int>(dialogTest->getButtonAlignment())]);
+    auto dialogButtonAlignmentPtr = dialogButtonAlignment.get();
+    dialogButtonAlignment->onClick.connect([dialogTestPtr,dialogButtonAlignmentPtr,alignmentToString]() {
+        dialogTestPtr->setButtonAlignment(static_cast<gui::DialogBox::Alignment>((static_cast<int>(dialogTestPtr->getButtonAlignment()) + 1) % 3));
+        dialogButtonAlignmentPtr->setLabel("Buttons: " + alignmentToString[static_cast<int>(dialogTestPtr->getButtonAlignment())]);
     });
     myGui.addChild(dialogButtonAlignment);
 
@@ -673,9 +677,10 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     hideBox->setWidthCharacters(16);
     hideBox->setText("right click hide");
     hideBox->setPosition(10.0f, 10.0f);
-    hideBox->onMousePress.connect([=](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
+    auto hideBoxPtr = hideBox.get();
+    hideBox->onMousePress.connect([hideBoxPtr](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
         if (button == sf::Mouse::Right) {
-            hideBox->setVisible(false);
+            hideBoxPtr->setVisible(false);
         }
     });
     myGui.addChild(hideBox);
@@ -685,9 +690,10 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     disableBox->setWidthCharacters(16);
     disableBox->setText("right click disable");
     disableBox->setPosition(200.0f, 10.0f);
-    disableBox->onMousePress.connect([=](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
+    auto disableBoxPtr = disableBox.get();
+    disableBox->onMousePress.connect([disableBoxPtr](gui::Widget* /*w*/, sf::Mouse::Button button, const sf::Vector2f& /*pos*/){
         if (button == sf::Mouse::Right) {
-            disableBox->setEnabled(false);
+            disableBoxPtr->setEnabled(false);
         }
     });
     myGui.addChild(disableBox);
@@ -733,8 +739,9 @@ void createTextBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
     connectDebugSignals(readOnlyCheckBox, "readOnlyCheckBox");
     readOnlyCheckBox->setLabel("Read Only");
     readOnlyCheckBox->setPosition(multilineBox2->getPosition() + sf::Vector2f(0.0f, multilineBox2->getSize().y + 15.0f));
-    readOnlyCheckBox->onClick.connect([=]() {
-        multilineBox2->setReadOnly(readOnlyCheckBox->isChecked());
+    auto readOnlyCheckBoxPtr = readOnlyCheckBox.get();
+    readOnlyCheckBox->onClick.connect([readOnlyCheckBoxPtr,multilineBox2]() {
+        multilineBox2->setReadOnly(readOnlyCheckBoxPtr->isChecked());
     });
     myGui.addChild(readOnlyCheckBox);
 }
@@ -759,8 +766,9 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
     menuList.items.emplace_back("pong", "", false);
     menuBar->insertMenu(menuList);
 
-    menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
-        size_t menuIndex = menuBar->findMenuIndex(menu.name);
+    auto menuBarPtr = menuBar.get();
+    menuBar->onMenuItemClick.connect([menuBarPtr](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
+        size_t menuIndex = menuBarPtr->findMenuIndex(menu.name);
         gui::MenuList newMenu = menu;
         if (newMenu.name.getSize() > 4) {
             newMenu.name = "menu" + std::to_string(std::stoi(newMenu.name.substring(4).toAnsiString()) + 1);
@@ -768,31 +776,31 @@ void createMenuBarDemo(gui::Gui& myGui, const gui::Theme& theme) {
         }
 
         if (menu.items[index].leftText == "insert left") {
-            menuBar->insertMenu(newMenu, menuIndex);
+            menuBarPtr->insertMenu(newMenu, menuIndex);
         } else if (menu.items[index].leftText == "insert right") {
-            menuBar->insertMenu(newMenu, menuIndex + 1);
+            menuBarPtr->insertMenu(newMenu, menuIndex + 1);
         } else if (menu.items[index].leftText == "remove left") {
             if (menuIndex > 0) {
-                menuBar->removeMenu(menuIndex - 1);
+                menuBarPtr->removeMenu(menuIndex - 1);
             } else {
                 std::cout << "No menu on the left side to remove!\n";
             }
         } else if (menu.items[index].leftText == "remove right") {
-            menuBar->removeMenu(menuIndex + 1);
+            menuBarPtr->removeMenu(menuIndex + 1);
         } else if (menu.items[index].leftText == "remove me") {
-            menuBar->removeMenu(menuIndex);
+            menuBarPtr->removeMenu(menuIndex);
         } else if (menu.items[index].leftText == "ping") {
             newMenu = menu;
             newMenu.items[index].rightText = "bounced";
             newMenu.items[index].enabled = false;
             newMenu.items[index + 1].enabled = true;
-            menuBar->setMenu(newMenu, menuIndex);
+            menuBarPtr->setMenu(newMenu, menuIndex);
         } else if (menu.items[index].leftText == "pong") {
             newMenu = menu;
             newMenu.items[index].rightText = "bounced again";
             newMenu.items[index].enabled = false;
             newMenu.items[index - 1].enabled = true;
-            menuBar->setMenu(newMenu, menuIndex);
+            menuBarPtr->setMenu(newMenu, menuIndex);
         } else {
             std::cout << "That menu option doesn't do anything :(\n";
         }
@@ -816,9 +824,10 @@ void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto slider1Label = gui::Label::create(theme);
     connectDebugSignals(slider1Label, "slider1Label");
+    auto slider1Ptr = slider1.get();
     slider1->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
         slider1Label->setLabel(std::to_string(value));
-        slider1Label->setPosition(slider1->getSize() / 2.0f);
+        slider1Label->setPosition(slider1Ptr->getSize() / 2.0f);
         slider1Label->setOrigin(slider1Label->getSize() / 2.0f);
     });
     slider1->setLabel(slider1Label);
@@ -832,9 +841,10 @@ void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto slider2Label = gui::Label::create(theme);
     connectDebugSignals(slider2Label, "slider2Label");
+    auto slider2Ptr = slider2.get();
     slider2->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
         slider2Label->setLabel(std::to_string(value));
-        slider2Label->setPosition(slider2->getSize() / 2.0f);
+        slider2Label->setPosition(slider2Ptr->getSize() / 2.0f);
         slider2Label->setOrigin(slider2Label->getSize() / 2.0f);
     });
     slider2->setLabel(slider2Label);
@@ -848,9 +858,10 @@ void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto slider3Label = gui::Label::create(theme);
     connectDebugSignals(slider3Label, "slider3Label");
+    auto slider3Ptr = slider3.get();
     slider3->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
         slider3Label->setLabel(std::to_string(value));
-        slider3Label->setPosition(slider3->getSize() / 2.0f);
+        slider3Label->setPosition(slider3Ptr->getSize() / 2.0f);
         slider3Label->setOrigin(slider3Label->getSize() / 2.0f);
     });
     slider3->setLabel(slider3Label);
@@ -870,9 +881,10 @@ void createSliderDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto sliderEnumLabel = gui::Label::create(theme);
     connectDebugSignals(sliderEnumLabel, "sliderEnumLabel");
+    auto sliderEnumPtr = sliderEnum.get();
     sliderEnum->onValueChange.connect([=](gui::Widget* /*w*/, float value) {
         sliderEnumLabel->setLabel(elements[static_cast<unsigned int>(value)]);
-        sliderEnumLabel->setPosition(sliderEnum->getSize() / 2.0f);
+        sliderEnumLabel->setPosition(sliderEnumPtr->getSize() / 2.0f);
         sliderEnumLabel->setOrigin(sliderEnumLabel->getSize() / 2.0f);
     });
     sliderEnum->setLabel(sliderEnumLabel);
@@ -925,11 +937,13 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     modalBackground->getStyle()->setFillColor({0, 0, 0, 175});
     modalBackground->getStyle()->setOutlineThickness(0.0f);
     myGui.addChild(modalBackground);
+    auto modalBackgroundPtr = modalBackground.get();
 
     auto renameDialog = gui::DialogBox::create(theme, "renameDialog");
     connectDebugSignals(renameDialog, "renameDialog");
     renameDialog->setSize({200.0f, 100.0f});
     modalBackground->addChild(renameDialog);
+    auto renameDialogPtr = renameDialog.get();
 
     auto renameTitle = gui::Label::create(theme, "renameTitle");
     connectDebugSignals(renameTitle, "renameTitle");
@@ -953,9 +967,9 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     auto renameCancelButton = gui::Button::create(theme, "renameCancelButton");
     connectDebugSignals(renameCancelButton, "renameCancelButton");
     renameCancelButton->setLabel("Cancel");
-    renameCancelButton->onClick.connect([=](){
-        renameDialog->setVisible(false);
-        modalBackground->setVisible(false);
+    renameCancelButton->onClick.connect([modalBackgroundPtr,renameDialogPtr](){
+        renameDialogPtr->setVisible(false);
+        modalBackgroundPtr->setVisible(false);
     });
     renameDialog->setCancelButton(0, renameCancelButton);
 
@@ -965,24 +979,24 @@ void createFullDemo(gui::Gui& myGui, const gui::Theme& theme) {
     renameDialog->setSubmitButton(1, renameSubmitButton);
 
     // Look up the rename button by name as a test.
-    myGui.getChild<gui::Button>("renameSubmitButton")->onClick.connect([=](){
-        renameDialog->setVisible(false);
-        modalBackground->setVisible(false);
+    myGui.getChild<gui::Button>("renameSubmitButton")->onClick.connect([modalBackgroundPtr,renameDialogPtr](){
+        renameDialogPtr->setVisible(false);
+        modalBackgroundPtr->setVisible(false);
         std::cout << "Rename dialog submitted!\n";
     });
     assert(myGui.getChild<gui::Button>("renameSubmitButton", false) == nullptr);
     assert(myGui.getChild("renameSubmitButton", false) == nullptr);
     assert(myGui.getChild("idk") == nullptr);
 
-    menuBar->onMenuItemClick.connect([=](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
+    menuBar->onMenuItemClick.connect([modalBackgroundPtr,renameDialogPtr](gui::Widget* /*w*/, const gui::MenuList& menu, size_t index){
         if (menu.name == "File") {
             if (menu.items[index].leftText == "Rename...") {
-                modalBackground->sendToFront();
-                modalBackground->setVisible(true);
-                renameDialog->setVisible(true);
-                renameDialog->setPosition(
-                    std::min(80.0f, modalBackground->getSize().x / 2.0f),
-                    std::min(80.0f, modalBackground->getSize().y / 2.0f)
+                modalBackgroundPtr->sendToFront();
+                modalBackgroundPtr->setVisible(true);
+                renameDialogPtr->setVisible(true);
+                renameDialogPtr->setPosition(
+                    std::min(80.0f, modalBackgroundPtr->getSize().x / 2.0f),
+                    std::min(80.0f, modalBackgroundPtr->getSize().y / 2.0f)
                 );
             }
         }
@@ -1171,6 +1185,7 @@ int main() {
         }
 
         if (sceneChanged) {
+            gui::Timer::clearTimers();
             sceneButton->setLabel("Scene: " + sceneNames[currentScene] + " (left/right click here)");
             myGui.removeAllChildren();
             myGui.onWindowResized.disconnectAll();

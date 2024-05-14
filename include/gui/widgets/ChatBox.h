@@ -11,16 +11,6 @@
 #include <utility>
 #include <vector>
 
-
-
-
-
-#include <iostream>
-
-
-
-
-
 namespace gui {
     class Gui;
     class Theme;
@@ -111,7 +101,7 @@ class ChatBox : public Widget {
 public:
     static std::shared_ptr<ChatBox> create(const Theme& theme, const sf::String& name = "");
     static std::shared_ptr<ChatBox> create(std::shared_ptr<ChatBoxStyle> style, const sf::String& name = "");
-    virtual ~ChatBox() { std::cout << "ChatBox dtor ############################################\n"; };
+    virtual ~ChatBox() = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
     void setMaxLines(size_t maxLines);

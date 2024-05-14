@@ -27,6 +27,7 @@ public:
     static std::shared_ptr<Timer> create(const std::function<void()>& callback, Clock::duration interval = std::chrono::milliseconds(0), unsigned int count = 1);
     // Measures the current time and updates any timers that are ready.
     static void updateTimers();
+    static void clearTimers();
 
     Timer(const Timer& rhs) = delete;
     Timer& operator=(const Timer& rhs) = delete;
