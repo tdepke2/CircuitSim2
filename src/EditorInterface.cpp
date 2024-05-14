@@ -1,9 +1,42 @@
 #include <EditorInterface.h>
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
+#include <gui/widgets/Button.h>
+#include <gui/widgets/ChatBox.h>
 #include <gui/widgets/MenuBar.h>
 
+#include <mutex>
+#include <spdlog/details/null_mutex.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/base_sink.h>
+
+namespace {
+
+template<typename Mutex>
+class MySink : public spdlog::sinks::base_sink<Mutex> {
+public:
+    MySink(std::shared_ptr<gui::ChatBox> chatBox) :
+        chatBox_(chatBox) {
+    }
+
+protected:
+    virtual void sink_it_(const spdlog::details::log_msg& msg) override {
+        spdlog::memory_buf_t formatted;
+        spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+        chatBox_->addLine(fmt::to_string(formatted));
+    }
+    virtual void flush_() override {
+
+    }
+
+private:
+    std::shared_ptr<gui::ChatBox> chatBox_;
+};
+
+using MySinkMt = MySink<std::mutex>;
+using MySinkSt = MySink<spdlog::details::null_mutex>;
+
+}
 
 EditorInterface::EditorInterface(sf::RenderWindow& window) :
     gui_(new gui::Gui(window)),
@@ -88,9 +121,18 @@ EditorInterface::EditorInterface(sf::RenderWindow& window) :
 
     gui_->addChild(menuBar);
 
-    gui_->onWindowResized.connect([=](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
+    auto messageLog = gui::ChatBox::create(*theme_, "messageLog");
+    messageLog->setSizeCharacters({80, 15});
+    messageLog->setAutoHide(true);
+    gui_->addChild(messageLog);
+
+    auto sink = std::make_shared<MySinkMt>(messageLog);
+    spdlog::default_logger()->sinks().push_back(sink);
+
+    gui_->onWindowResized.connect([menuBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
+        messageLog->setPosition(0.0f, size.y - messageLog->getSize().y);
     });
 
     // Trigger a fake event to initialize the size.
