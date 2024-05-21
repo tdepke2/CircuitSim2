@@ -23,7 +23,7 @@ protected:
     virtual void sink_it_(const spdlog::details::log_msg& msg) override {
         spdlog::memory_buf_t formatted;
         spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-        chatBox_->addLine(fmt::to_string(formatted));
+        chatBox_->addLines(fmt::to_string(formatted));
     }
     virtual void flush_() override {
 

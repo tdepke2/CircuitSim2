@@ -376,20 +376,20 @@ void createChatBoxDemo(gui::Gui& myGui, const gui::Theme& theme) {
 
     auto textBoxPtr = textBox.get();
     textBox->onEnterPressed.connect([chatTest,textBoxPtr,responses]() {
-        chatTest->addLine(textBoxPtr->getText(), sf::Color::Blue);
+        chatTest->addLines(textBoxPtr->getText(), sf::Color::Blue);
         textBoxPtr->setText("");
         gui::Timer::create([=]() {
-            chatTest->addLine(responses[std::rand() % responses.size()], sf::Color::Red, sf::Text::Italic);
+            chatTest->addLines(responses[std::rand() % responses.size()], sf::Color::Red, sf::Text::Italic);
         }, std::chrono::milliseconds(500 + std::rand() % 1000));
     });
 
     gui::Timer::create([=]() {
-        chatTest->addLine("user entered chat", sf::Color::Red);
+        chatTest->addLines("user entered chat", sf::Color::Red);
     }, std::chrono::milliseconds(1000));
 
     /*auto t1 = gui::Timer::create([=](gui::Timer* timer) {
         std::cout << "t1 called at time " << std::chrono::duration_cast<std::chrono::milliseconds>(gui::Timer::Clock::now().time_since_epoch()).count() << "\n";
-        chatTest->addLine("[timer count is " + std::to_string(timer->getCount()) + "]");
+        chatTest->addLines("[timer count is " + std::to_string(timer->getCount()) + "]");
     }, std::chrono::milliseconds(1000), 5);*/
 }
 

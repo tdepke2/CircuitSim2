@@ -73,8 +73,10 @@ public:
     uint32_t getTextStyle() const;
     const sf::Color& getTextFillColor() const;
 
+    void setInvertedTextFillColor(const sf::Color& color);
     void setHighlightFillColor(const sf::Color& color);
     void setTextPadding(const sf::Vector3f& padding);
+    const sf::Color& getInvertedTextFillColor() const;
     const sf::Color& getHighlightFillColor() const;
     const sf::Vector3f& getTextPadding() const;
 
@@ -85,7 +87,7 @@ private:
     sf::Text text_;
     sf::Color textColor_;
     uint32_t textStyle_;
-    sf::Color highlightColor_;
+    sf::Color invertedTextColor_, highlightColor_;
     sf::Vector3f textPadding_;
 
     friend class ChatBox;
@@ -110,10 +112,10 @@ public:
     const sf::Vector2<size_t>& getSizeCharacters() const;
     size_t getMaxLines() const;
     bool getAutoHide() const;
-    void addLine(const sf::String& str);
-    void addLine(const sf::String& str, const sf::Color& color);
-    void addLine(const sf::String& str, uint32_t style);
-    void addLine(const sf::String& str, const sf::Color& color, uint32_t style);
+    void addLines(const sf::String& str);
+    void addLines(const sf::String& str, const sf::Color& color);
+    void addLines(const sf::String& str, uint32_t style);
+    void addLines(const sf::String& str, const sf::Color& color, uint32_t style);
     const ChatBoxLine& getLine(size_t index) const;
     size_t getNumLines() const;
     bool removeLine(size_t index);
@@ -154,9 +156,8 @@ private:
     bool autoHide_;
     sf::Vector2f size_;
     std::deque<ChatBoxLine> lines_;
-    std::vector<ChatBoxLine> visibleLines_;
+    mutable std::vector<std::pair<ChatBoxLine, sf::RectangleShape>> visibleLines_;
     size_t verticalScroll_;
-    mutable std::vector<sf::RectangleShape> selectionLines_;
     std::pair<size_t, bool> selectionStart_;
     size_t selectionEnd_;
     std::function<void()> hideCallback_;
