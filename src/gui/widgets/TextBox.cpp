@@ -1,20 +1,10 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
 #include <gui/widgets/TextBox.h>
 
 #include <cmath>
 #include <limits>
-
-
-
-
-
-
-
-#include <iostream>
-
-
-
 
 namespace gui {
 
@@ -236,7 +226,7 @@ void TextBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
             closestDistance = distance;
         }
     }
-    std::cout << "mouseLocal.x = " << mouseLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
+    GUI_DEBUG << "mouseLocal.x = " << mouseLocal.x << ", closest = " << closestIndex << ", " << closestDistance << "\n";
     updateCaretPosition(closestIndex + horizontalScroll_);
 }
 void TextBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
@@ -329,7 +319,7 @@ void TextBox::updateCaretPosition(size_t caretPosition) {
     style_->text_.setPosition(style_->textPadding_.x, style_->textPadding_.y);
     caretDrawPosition_ = style_->text_.findCharacterPos(caretPosition - horizontalScroll_);
 
-    std::cout << "TextBox::updateCaretPosition(), caretPosition = " << caretPosition << ", horizontalScroll_ = " << horizontalScroll_ << "\n";
+    GUI_DEBUG << "TextBox::updateCaretPosition(), caretPosition = " << caretPosition << ", horizontalScroll_ = " << horizontalScroll_ << "\n";
     requestRedraw();
 }
 

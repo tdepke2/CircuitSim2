@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/themes/DefaultTheme.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/ChatBox.h>
@@ -11,11 +12,6 @@
 #include <gui/widgets/RadioButton.h>
 #include <gui/widgets/Slider.h>
 #include <gui/widgets/TextBox.h>
-
-
-#include <iostream>
-
-
 
 namespace {
 
@@ -45,7 +41,7 @@ DefaultTheme::DefaultTheme(const Gui& gui) :
 }
 
 std::shared_ptr<Style> DefaultTheme::loadStyle(const sf::String& widgetName) const {
-    std::cout << "Loading style for \"" << widgetName.toAnsiString() << "\".\n";
+    GUI_DEBUG << "Loading style for \"" << widgetName.toAnsiString() << "\".\n";
     if (widgetName == "Button") {
         return makeButtonStyle();
     } else if (widgetName == "ChatBox") {

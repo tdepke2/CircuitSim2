@@ -1,6 +1,6 @@
+#include <gui/Debug.h>
 #include <gui/Theme.h>
 
-#include <iostream>
 #include <stdexcept>
 
 namespace gui {
@@ -37,7 +37,7 @@ float Theme::computeTextMaxHeightRatio(const sf::Font& font) const {
     for (char c = '\u0020'; c < '\u007f'; ++c) {
         characterSample.push_back(c);
     }
-    std::cout << "characterSample = [" << characterSample << "]\n";
+    GUI_DEBUG << "characterSample = [" << characterSample << "]\n";
 
     sf::Text text(characterSample, font);
     const auto bounds = text.getLocalBounds();

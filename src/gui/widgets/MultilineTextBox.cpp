@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
 #include <gui/widgets/MultilineTextBox.h>
@@ -7,16 +8,6 @@
 #include <cmath>
 #include <limits>
 #include <regex>
-
-
-
-
-
-
-
-#include <iostream>
-
-
 
 namespace {
 
@@ -276,7 +267,7 @@ bool MultilineTextBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
                 selectedText += "\n" + boxStrings_[y].substring(0, selection.second.x);
             }
         }
-        std::cout << "selectedText = [" << selectedText.toAnsiString() << "]\n";
+        GUI_DEBUG << "selectedText = [" << selectedText.toAnsiString() << "]\n";
         return selectedText;
     };
 
@@ -514,7 +505,7 @@ bool MultilineTextBox::insertCharacter(uint32_t unicode, bool suppressSignals) {
     if (regexPattern_ != ".*") {
         std::wregex regex(regexPattern_.toWideString());
         if (!std::regex_match(combineStrings(boxStrings_).toWideString(), regex)) {
-            std::cout << "Regex pattern match failed, discarding character input.\n";
+            GUI_DEBUG << "Regex pattern match failed, discarding character input.\n";
             boxStrings_ = lastBoxStrings;
             scroll_ = lastScroll;
             updateCaretPosition(lastCaretPosition, false);
@@ -602,17 +593,17 @@ void MultilineTextBox::updateCaretPosition(const sf::Vector2<size_t>& caretPosit
                 }
                 stringLength += deltaLength;
             }
-            std::cout << "MultilineTextBox::updateCaretPosition(), selection from (" << selectionStart_.first.x << ", " << selectionStart_.first.y << ") to (" << selectionEnd_.x << ", " << selectionEnd_.y << ") with " << selectionLines_.size() << " lines.\n";
+            GUI_DEBUG << "MultilineTextBox::updateCaretPosition(), selection from (" << selectionStart_.first.x << ", " << selectionStart_.first.y << ") to (" << selectionEnd_.x << ", " << selectionEnd_.y << ") with " << selectionLines_.size() << " lines.\n";
         } else {
             selectionStart_.second = false;
             selectionLines_.clear();
         }
     }
 
-    std::cout << "MultilineTextBox::updateCaretPosition(), caretPosition_ = (" << caretPosition_.x << ", " << caretPosition_.y << "), visibleCaretOffset = " << visibleCaretOffset << ", scroll_ = (" << scroll_.x << ", " << scroll_.y << ")\n";
-    /*std::cout << "boxStrings_ =\n";
+    GUI_DEBUG << "MultilineTextBox::updateCaretPosition(), caretPosition_ = (" << caretPosition_.x << ", " << caretPosition_.y << "), visibleCaretOffset = " << visibleCaretOffset << ", scroll_ = (" << scroll_.x << ", " << scroll_.y << ")\n";
+    /*GUI_DEBUG << "boxStrings_ =\n";
     for (size_t i = 0; i < boxStrings_.size(); ++i) {
-        std::cout << i << ": [" << boxStrings_[i].toAnsiString() << "]\n";
+        GUI_DEBUG << i << ": [" << boxStrings_[i].toAnsiString() << "]\n";
     }*/
     requestRedraw();
 }
@@ -695,11 +686,11 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
             firstIndexInLine.push_back(i + 1);
         }
     }
-    /*std::cout << "firstIndexInLine: ";
+    /*GUI_DEBUG << "firstIndexInLine: ";
     for (auto x : firstIndexInLine) {
-        std::cout << x << " ";
+        GUI_DEBUG << x << " ";
     }
-    std::cout << "\n";*/
+    GUI_DEBUG << "\n";*/
 
     sf::Vector2<size_t> closestPos = {0, 0};
     size_t left, count;
@@ -726,7 +717,7 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
     while (count > 0) {
         sf::Vector2f charPos = style_->text_.findCharacterPos(left + count / 2);
         float localX = charPos.x - getOrigin().x;
-        //std::cout << "checking pos " << left + count / 2 << ", localX = " << localX << ", mouseLocal.x = " << mouseLocal.x << "\n";
+        //GUI_DEBUG << "checking pos " << left + count / 2 << ", localX = " << localX << ", mouseLocal.x = " << mouseLocal.x << "\n";
         if (localX < mouseLocal.x) {
             left = left + count / 2 + 1;
             count -= count / 2 + 1;
@@ -736,7 +727,7 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
     }
     // Final check against current and previous character to decide closest.
     if (left > firstIndexInLine[closestPos.y]) {
-        //std::cout << "do final check\n";
+        //GUI_DEBUG << "do final check\n";
         float localX = style_->text_.findCharacterPos(left).x - getOrigin().x;
         float localXPrevious = style_->text_.findCharacterPos(left - 1).x - getOrigin().x;
         if (mouseLocal.x < localXPrevious + (localX - localXPrevious) / 2.0f) {
@@ -745,7 +736,7 @@ size_t MultilineTextBox::findClosestOffsetToMouse(const sf::Vector2f& mouseLocal
     }
     closestPos.x = left - firstIndexInLine[closestPos.y];
 
-    std::cout << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << "), closest = (" << closestPos.x << ", " << closestPos.y << ")\n";
+    GUI_DEBUG << "mouseLocal = (" << mouseLocal.x << ", " << mouseLocal.y << "), closest = (" << closestPos.x << ", " << closestPos.y << ")\n";
     return findCaretOffset(closestPos + scroll_);
 }
 

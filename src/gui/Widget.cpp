@@ -1,10 +1,6 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Widget.h>
-
-
-#include <iostream>
-
-
 
 namespace gui {
 
@@ -164,7 +160,7 @@ void Widget::sendToBack() {
 }
 
 void Widget::requestRedraw() const {
-    std::cout << "Widget::requestRedraw() from " << this << (gui_ != nullptr ? "" : " (gui_ null)") << "\n";
+    GUI_DEBUG << "Widget::requestRedraw() from " << this << (gui_ != nullptr ? "" : " (gui_ null)") << "\n";
     if (gui_ != nullptr) {
         gui_->requestRedraw();
     }

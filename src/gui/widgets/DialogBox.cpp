@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
 #include <gui/widgets/Button.h>
@@ -7,14 +8,6 @@
 #include <gui/widgets/TextBox.h>
 
 #include <limits>
-
-
-
-
-#include <iostream>
-
-
-
 
 namespace gui {
 
@@ -324,7 +317,7 @@ void DialogBox::updateTitle() {
 }
 
 void DialogBox::updateButtons() {
-    std::cout << "DialogBox::updateButtons() called with " << optionButtons_.size() << " buttons.\n";
+    GUI_DEBUG << "DialogBox::updateButtons() called with " << optionButtons_.size() << " buttons.\n";
     if (optionButtons_.empty()) {
         return;
     }
@@ -360,7 +353,7 @@ void DialogBox::focusNextTextBox() {
             break;
         }
     }
-    std::cout << "currentFocus = " << currentFocus << "\n";
+    GUI_DEBUG << "currentFocus = " << currentFocus << "\n";
 
     for (size_t i = 0; i < getChildren().size(); ++i) {
         size_t offsetIndex = (i + currentFocus + 1) % getChildren().size();

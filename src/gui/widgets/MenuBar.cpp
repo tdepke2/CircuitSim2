@@ -6,16 +6,6 @@
 #include <cmath>
 #include <stdexcept>
 
-
-
-
-
-
-#include <iostream>
-
-
-
-
 namespace {
 
 sf::Vector2f roundVector2f(sf::Vector2f v) {

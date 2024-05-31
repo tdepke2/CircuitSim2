@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
 #include <gui/widgets/ColorPicker.h>
@@ -14,14 +15,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-
-
-#include <iostream>
-
-
-
-
 
 namespace {
 
@@ -269,7 +262,7 @@ bool ColorPicker::handleMouseMove(const sf::Vector2f& mouseParent) {
 
     if (isDragging_) {
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            std::cout << "ColorPicker::handleMouseMove() with mouse down.\n";
+            GUI_DEBUG << "ColorPicker::handleMouseMove() with mouse down.\n";
             const auto shadingRectangleSize = getShadingRectangleSize();
             updateShadingRectangle(mouseLocal.x / shadingRectangleSize.x, 1.0f - mouseLocal.y / shadingRectangleSize.y);
         } else {
@@ -284,7 +277,7 @@ void ColorPicker::handleMousePress(sf::Mouse::Button button, const sf::Vector2f&
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     const auto shadingRectangleSize = getShadingRectangleSize();
     if (button == sf::Mouse::Left && !isDragging_ && mouseLocal.x < shadingRectangleSize.x && mouseLocal.y < shadingRectangleSize.y) {
-        std::cout << "ColorPicker::handleMousePress().\n";
+        GUI_DEBUG << "ColorPicker::handleMousePress().\n";
         updateShadingRectangle(mouseLocal.x / shadingRectangleSize.x, 1.0f - mouseLocal.y / shadingRectangleSize.y);
         isDragging_ = true;
     }
@@ -329,7 +322,7 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     addChild(hueSlider_);
 
     hueSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
-        std::cout << "hue changed to " << value << "\n";
+        GUI_DEBUG << "hue changed to " << value << "\n";
         currentColorHsva_[0] = value;
         updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
     });
@@ -341,7 +334,7 @@ ColorPicker::ColorPicker(const Theme& theme, const sf::String& name) :
     addChild(alphaSlider_);
 
     alphaSlider_->onValueChange.connect([this](Widget* /*w*/, float value) {
-        std::cout << "alpha changed to " << value << "\n";
+        GUI_DEBUG << "alpha changed to " << value << "\n";
         currentColorHsva_[3] = 1.0f - value;
         updateCurrentColor(ColorSource::inputHsva, true, currentColorHsva_);
     });
@@ -449,7 +442,7 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                 };
                 currentColorHsva_ = convertRgbToHsv(normalizeRgb(rgba));
             } catch (const std::invalid_argument& ex) {
-                std::cout << "ColorSource::rgba failed: " << ex.what() << "\n";
+                GUI_DEBUG << "ColorSource::rgba failed: " << ex.what() << "\n";
             }
         } else if (source == ColorSource::hsva) {
             try {
@@ -461,14 +454,14 @@ void ColorPicker::updateCurrentColor(ColorSource source, bool validateSource, co
                 };
                 currentColorHsva_ = normalizeHsv(hsva);
             } catch (const std::invalid_argument& ex) {
-                std::cout << "ColorSource::hsva failed: " << ex.what() << "\n";
+                GUI_DEBUG << "ColorSource::hsva failed: " << ex.what() << "\n";
             }
         } else if (source == ColorSource::rgbaHex) {
             try {
                 sf::Color rgba(static_cast<uint32_t>(std::stoll(rgbaHexTextBox_->getText().toWideString(), nullptr, 16)));
                 currentColorHsva_ = convertRgbToHsv(normalizeRgb(rgba));
             } catch (const std::invalid_argument& ex) {
-                std::cout << "ColorSource::rgbaHex failed: " << ex.what() << "\n";
+                GUI_DEBUG << "ColorSource::rgbaHex failed: " << ex.what() << "\n";
             }
         } else if (source == ColorSource::inputHsva) {
             currentColorHsva_ = inputHsva;

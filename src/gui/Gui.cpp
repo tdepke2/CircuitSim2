@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Widget.h>
 
@@ -6,12 +7,6 @@
 #include <stack>
 #include <string>
 #include <utility>
-
-
-#include <iostream>
-
-
-
 
 namespace gui {
 
@@ -41,11 +36,11 @@ std::pair<sf::Vector2f, bool> propagateMouseEvent(const sf::Vector2f& mouseGloba
         }
 
         if (focusedWidget != widgetUnderMouse) {
-            //std::cout << "The focused widget is not under mouse, send event. mouseLocal = " << mouseLocal.x << ", " << mouseLocal.y << "\n";
+            //GUI_DEBUG << "The focused widget is not under mouse, send event. mouseLocal = " << mouseLocal.x << ", " << mouseLocal.y << "\n";
             return {mouseLocal, true};
         }
         // else {
-        //    std::cout << "Focused widget under mouse already.\n";
+        //    GUI_DEBUG << "Focused widget under mouse already.\n";
         //}
     }
     return {{0.0f, 0.0f}, false};
@@ -157,7 +152,7 @@ bool Gui::processEvent(const sf::Event& event) {
         widgetsUnderMouse_.clear();
         lastWidgetsUnderMouse_.clear();
     } else if (event.type == sf::Event::TextEntered) {
-        std::cout << "char code " << event.text.unicode << "\n";
+        GUI_DEBUG << "char code " << event.text.unicode << "\n";
         // Key events are passed to the child first (focusedWidget_) and then
         // passed along the chain of parents until it's consumed. This is
         // similar to how it works for mouse events but the order is reversed.
@@ -219,7 +214,7 @@ void Gui::requestRedraw() const {
 
 void Gui::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (redrawPending_) {
-        std::cout << "Gui redraw...\n";
+        GUI_DEBUG << "Gui redraw...\n";
         renderTexture_.clear({0, 0, 0, 0});
         for (const auto& child : getChildren()) {
             renderTexture_.draw(*child);

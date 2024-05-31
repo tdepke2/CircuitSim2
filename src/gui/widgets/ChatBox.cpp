@@ -1,3 +1,4 @@
+#include <gui/Debug.h>
 #include <gui/Gui.h>
 #include <gui/Theme.h>
 #include <gui/Timer.h>
@@ -7,15 +8,6 @@
 #include <chrono>
 #include <cmath>
 #include <limits>
-
-
-
-
-
-
-#include <iostream>
-
-
 
 namespace {
 
@@ -176,7 +168,7 @@ void ChatBox::setAutoHide(bool autoHide) {
         // We set up the callback here, as `shared_from_this()` will not work in
         // the ctor before a shared_ptr can take ownership of the object.
         if (!hideCallback_) {
-            std::cout << "First time setup for hideCallback_\n";
+            GUI_DEBUG << "First time setup for hideCallback_\n";
             auto weakThis = std::weak_ptr<ChatBox>(std::dynamic_pointer_cast<ChatBox>(shared_from_this()));
             hideCallback_ = [weakThis]() {
                 auto sharedThis = weakThis.lock();
@@ -423,7 +415,7 @@ void ChatBox::updateVisibleLines() {
             rect.setPosition(pos1 - sf::Vector2f(style_->textPadding_.x / 2.0f, 0.0f));
 
             visibleLines_.emplace_back(std::move(line), std::move(rect));
-            std::cout << "line [" << visibleLines_.back().first.str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().first.style) << "\n";
+            GUI_DEBUG << "line [" << visibleLines_.back().first.str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().first.style) << "\n";
 
             // FIXME delet this below. also we can remove some calls to this function now that selections can be updated in draw.
 
@@ -460,7 +452,7 @@ void ChatBox::updateSelection(size_t pos, bool continueSelection) {
     }
 
     if (selectionStart_ != lastSelectionStart || selectionEnd_ != lastSelectionEnd) {
-        std::cout << "Selection now " << selectionStart_.first << " to " << selectionEnd_ << (selectionStart_.second ? "" : " (no selection)") << "\n";
+        GUI_DEBUG << "Selection now " << selectionStart_.first << " to " << selectionEnd_ << (selectionStart_.second ? "" : " (no selection)") << "\n";
         updateVisibleLines();
     }
 }
@@ -472,10 +464,10 @@ void ChatBox::updateScroll(int delta) {
     }
 }
 size_t ChatBox::findClosestLineToMouse(const sf::Vector2f& mouseLocal) const {
-    std::cout << "chat clicked at: " << mouseLocal.x << ", " << mouseLocal.y << "\n";
+    GUI_DEBUG << "chat clicked at: " << mouseLocal.x << ", " << mouseLocal.y << "\n";
     const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
     size_t visibleLineClicked = std::max(static_cast<int>(sizeCharacters_.y) - 1 - static_cast<int>((mouseLocal.y + getOrigin().y - style_->textPadding_.y) / textHeight), 0);
-    std::cout << "visibleLineClicked = " << visibleLineClicked << "\n";
+    GUI_DEBUG << "visibleLineClicked = " << visibleLineClicked << "\n";
     if (visibleLineClicked < visibleLines_.size()) {
         return visibleLines_[visibleLineClicked].first.id;
     } else {

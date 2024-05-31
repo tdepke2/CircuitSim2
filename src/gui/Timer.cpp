@@ -1,13 +1,7 @@
+#include <gui/Debug.h>
 #include <gui/Timer.h>
 
 #include <limits>
-
-
-
-
-#include <iostream>
-
-
 
 namespace gui {
 
@@ -87,7 +81,7 @@ Timer::Timer(const std::function<void(Timer*)>& callback, Clock::duration interv
     count_(count),
     nextTime_(Clock::now() + interval) {
 
-    std::cout << "Timer::Timer(callback Timer*), the time is " << std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count() << "\n";
+    GUI_DEBUG << "Timer::Timer(callback Timer*), the time is " << std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count() << "\n";
 }
 Timer::Timer(const std::function<void()>& callback, Clock::duration interval, unsigned int count) :
     callback_(callback),
@@ -95,7 +89,7 @@ Timer::Timer(const std::function<void()>& callback, Clock::duration interval, un
     count_(count),
     nextTime_(Clock::now() + interval) {
 
-    std::cout << "Timer::Timer(callback void), the time is " << std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count() << "\n";
+    GUI_DEBUG << "Timer::Timer(callback void), the time is " << std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count() << "\n";
 }
 
 }

@@ -59,3 +59,8 @@ source_group(
 target_include_directories(cs2_gui PUBLIC "${PROJECT_SOURCE_DIR}/include")
 target_link_libraries(cs2_gui PUBLIC sfml-graphics)
 cs2_add_cxx_properties(cs2_gui)
+
+option(CS2_GUI_DEBUG "Allow GUI debug logging to stdout." OFF)
+target_compile_definitions(cs2_gui PRIVATE
+    $<$<BOOL:${CS2_GUI_DEBUG}>:CS2_GUI_DEBUG>
+)
