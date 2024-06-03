@@ -1,6 +1,7 @@
 #include <EditorInterface.h>
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
+#include <gui/Timer.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/ChatBox.h>
 #include <gui/widgets/MenuBar.h>
@@ -123,16 +124,27 @@ EditorInterface::EditorInterface(sf::RenderWindow& window) :
 
     auto messageLog = gui::ChatBox::create(*theme_, "messageLog");
     messageLog->setSizeCharacters({80, 15});
+    messageLog->setMaxLines(100);
     messageLog->setAutoHide(true);
     gui_->addChild(messageLog);
 
     auto sink = std::make_shared<MySinkMt>(messageLog);
     spdlog::default_logger()->sinks().push_back(sink);
 
-    gui_->onWindowResized.connect([menuBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
+    auto messageLogToggle = gui::Button::create(*theme_, "messageLogToggle");
+    messageLogToggle->setLabel("^^^");
+    messageLogToggle->setSize({messageLog->getSize().x, 20.0f});
+    auto messageLogPtr = messageLog.get();
+    messageLogToggle->onClick.connect([messageLogPtr]() {
+        messageLogPtr->setAutoHide(!messageLogPtr->getAutoHide());
+    });
+    gui_->addChild(messageLogToggle);
+
+    gui_->onWindowResized.connect([menuBar,messageLog,messageLogToggle](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
-        messageLog->setPosition(0.0f, size.y - messageLog->getSize().y);
+        messageLogToggle->setPosition(0.0f, size.y - messageLogToggle->getSize().y);
+        messageLog->setPosition(0.0f, messageLogToggle->getPosition().y - messageLog->getSize().y);
     });
 
     // Trigger a fake event to initialize the size.
@@ -145,10 +157,17 @@ EditorInterface::EditorInterface(sf::RenderWindow& window) :
 
 // Must declare the dtor here instead of header file so that the unique_ptr does
 // not need to know how to delete `gui_` in the header.
-EditorInterface::~EditorInterface() = default;
+EditorInterface::~EditorInterface() {
+    // FIXME: bit of a hack, need a better method.
+    spdlog::default_logger()->sinks().pop_back();
+}
 
 bool EditorInterface::processEvent(const sf::Event& event) {
     return gui_->processEvent(event);
+}
+
+void EditorInterface::update() {
+    gui::Timer::updateTimers();
 }
 
 void EditorInterface::draw(sf::RenderTarget& target, sf::RenderStates states) const {

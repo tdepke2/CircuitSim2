@@ -229,6 +229,7 @@ bool Editor::processEvent(const sf::Event& event) {
 }
 
 void Editor::update() {
+    interface_.update();
     updateCursor();
 
     const sf::Texture* tileset = staticInit_->tilesetBright;

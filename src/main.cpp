@@ -33,6 +33,8 @@ int main() {
     Board board;
     board.debugSetDrawChunkBorder(true);
 
+    Editor editor(board, window);
+
     try {
         board.loadFromFile("boards/NewBoard/board.txt");
         //board.loadFromFile("boards/Calculator.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
@@ -40,8 +42,6 @@ int main() {
     } catch (std::exception& ex) {
         spdlog::error(ex.what());
     }
-
-    Editor editor(board, window);
 
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);

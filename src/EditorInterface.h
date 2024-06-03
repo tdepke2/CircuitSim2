@@ -17,6 +17,7 @@ public:
 
     // Returns true if event was consumed (and should not be processed further).
     bool processEvent(const sf::Event& event);
+    void update();
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
