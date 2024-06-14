@@ -19,7 +19,9 @@ namespace gui {
 namespace gui {
 
 /**
- * FIXME
+ * A single line in the `ChatBox`, containing the text, color, and
+ * `sf::Text::Style` information. The `id` is internally used for visible line
+ * numbering.
  */
 struct ChatBoxLine {
 public:
@@ -95,7 +97,10 @@ private:
 
 
 /**
- * FIXME
+ * Shows a box with lines of text. Each line can have a color and text style.
+ * Supports setting a line limit, scrolling, and lines can be selected and
+ * copied. An auto-hide mode is available to make the box invisible, and have
+ * lines hide after a delay.
  */
 class ChatBox : public Widget {
     using baseClass = Widget;
@@ -127,6 +132,8 @@ public:
     std::shared_ptr<ChatBoxStyle> getStyle();
 
     virtual sf::FloatRect getLocalBounds() const override;
+    virtual bool isMouseIntersecting(const sf::Vector2f& mouseParent) const override;
+
     virtual bool handleMouseMove(const sf::Vector2f& mouseParent) override;
     virtual bool handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) override;
     virtual void handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) override;

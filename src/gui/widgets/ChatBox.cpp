@@ -179,9 +179,11 @@ void ChatBox::setAutoHide(bool autoHide) {
             };
         }
 
-        // FIXME need to do more in here? like reset hide counter to zero?
         verticalScroll_ = 0;
         selectionStart_.second = false;
+        if (autoHide) {
+            setFocused(false);
+        }
         updateVisibleLines();
     }
 }
@@ -224,7 +226,7 @@ void ChatBox::addLines(const sf::String& str, const sf::Color& color, uint32_t s
         selectionStart_.first = std::min(selectionStart_.first, lines_.size() - 1);
         selectionEnd_ = std::min(selectionEnd_, lines_.size() - 1);
     }
-    if (autoHide_ && hideCounter_ < sizeCharacters_.y) {
+    if (autoHide_) {
         ++hideCounter_;
         Timer::create(hideCallback_, std::chrono::milliseconds(2000));
     }
@@ -277,10 +279,14 @@ std::shared_ptr<ChatBoxStyle> ChatBox::getStyle() {
 sf::FloatRect ChatBox::getLocalBounds() const {
     return {-getOrigin(), size_};
 }
+bool ChatBox::isMouseIntersecting(const sf::Vector2f& mouseParent) const {
+    return (autoHide_ ? false : baseClass::isMouseIntersecting(mouseParent));
+}
+
 bool ChatBox::handleMouseMove(const sf::Vector2f& mouseParent) {
     if (baseClass::handleMouseMove(mouseParent)) {
         return true;
-    } else if (!isFocused()) {
+    } else if (!isFocused() || autoHide_) {
         return false;
     }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
@@ -294,12 +300,17 @@ bool ChatBox::handleMouseMove(const sf::Vector2f& mouseParent) {
 bool ChatBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     if (baseClass::handleMouseWheelScroll(wheel, delta, mouseParent)) {
         return true;
+    } else if (autoHide_) {
+        return false;
     }
     updateScroll(static_cast<int>(std::round(delta)) * 3);
     return true;
 }
 void ChatBox::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     baseClass::handleMousePress(button, mouseParent);
+    if (autoHide_) {
+        return;
+    }
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button == sf::Mouse::Left) {
         updateSelection(findClosestLineToMouse(mouseLocal), false);
@@ -315,6 +326,9 @@ void ChatBox::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& m
 }
 bool ChatBox::handleKeyPressed(const sf::Event::KeyEvent& key) {
     bool eventConsumed = baseClass::handleKeyPressed(key);
+    if (autoHide_) {
+        return eventConsumed;
+    }
 
     if (key.control) {
         if (key.code == sf::Keyboard::A) {
@@ -416,20 +430,6 @@ void ChatBox::updateVisibleLines() {
 
             visibleLines_.emplace_back(std::move(line), std::move(rect));
             GUI_DEBUG << "line [" << visibleLines_.back().first.str.toAnsiString() << "] has style " << static_cast<int>(visibleLines_.back().first.style) << "\n";
-
-            // FIXME delet this below. also we can remove some calls to this function now that selections can be updated in draw.
-
-            /*if (currentLine >= selectionMin && currentLine <= selectionMax) {
-                style_->text_.setPosition(
-                    style_->textPadding_.x,
-                    style_->textPadding_.y + textHeight * (sizeCharacters_.y - visibleLines_.size())
-                );
-                style_->text_.setString(visibleLines_.back().str);
-                sf::Vector2f pos1 = style_->text_.findCharacterPos(0);
-                sf::Vector2f pos2 = style_->text_.findCharacterPos(style_->text_.getString().getSize());
-                selectionLines_.emplace_back(sf::Vector2f(pos2.x - pos1.x, textHeight));
-                selectionLines_.back().setPosition(pos1);
-            }*/
         } while (visibleLines_.size() < sizeCharacters_.y && lastTrimPos != 0);
         ++currentLine;
     }
@@ -453,7 +453,7 @@ void ChatBox::updateSelection(size_t pos, bool continueSelection) {
 
     if (selectionStart_ != lastSelectionStart || selectionEnd_ != lastSelectionEnd) {
         GUI_DEBUG << "Selection now " << selectionStart_.first << " to " << selectionEnd_ << (selectionStart_.second ? "" : " (no selection)") << "\n";
-        updateVisibleLines();
+        requestRedraw();
     }
 }
 void ChatBox::updateScroll(int delta) {
