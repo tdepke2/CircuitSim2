@@ -223,8 +223,8 @@ void ChatBox::addLines(const sf::String& str, const sf::Color& color, uint32_t s
         ++verticalScroll_;
     }
     if (selectionStart_.second && lines_.size() > 0) {
-        selectionStart_.first = std::min(selectionStart_.first, lines_.size() - 1);
-        selectionEnd_ = std::min(selectionEnd_, lines_.size() - 1);
+        selectionStart_.first = std::min(selectionStart_.first + 1, lines_.size() - 1);
+        selectionEnd_ = std::min(selectionEnd_ + 1, lines_.size() - 1);
     }
     if (autoHide_) {
         ++hideCounter_;

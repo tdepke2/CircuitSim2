@@ -6,10 +6,12 @@
 #include <gui/widgets/ChatBox.h>
 #include <gui/widgets/MenuBar.h>
 
+#include <array>
 #include <mutex>
 #include <spdlog/details/null_mutex.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/base_sink.h>
+#include <utility>
 
 namespace {
 
@@ -18,13 +20,21 @@ class MySink : public spdlog::sinks::base_sink<Mutex> {
 public:
     MySink(std::shared_ptr<gui::ChatBox> chatBox) :
         chatBox_(chatBox) {
+
+        styles_[spdlog::level::trace] = {sf::Color::White, sf::Text::Regular};
+        styles_[spdlog::level::debug] = {sf::Color::Cyan, sf::Text::Regular};
+        styles_[spdlog::level::info] = {sf::Color::Green, sf::Text::Regular};
+        styles_[spdlog::level::warn] = {sf::Color::Yellow, sf::Text::Regular};
+        styles_[spdlog::level::err] = {sf::Color::Red, sf::Text::Regular};
+        styles_[spdlog::level::critical] = {sf::Color::Red, sf::Text::Italic};
+        styles_[spdlog::level::off] = {sf::Color::White, sf::Text::Regular};
     }
 
 protected:
     virtual void sink_it_(const spdlog::details::log_msg& msg) override {
         spdlog::memory_buf_t formatted;
         spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-        chatBox_->addLines(fmt::to_string(formatted));
+        chatBox_->addLines(fmt::to_string(formatted), styles_[msg.level].first, styles_[msg.level].second);
     }
     virtual void flush_() override {
 
@@ -32,6 +42,7 @@ protected:
 
 private:
     std::shared_ptr<gui::ChatBox> chatBox_;
+    std::array<std::pair<sf::Color, uint32_t>, spdlog::level::n_levels> styles_;
 };
 
 using MySinkMt = MySink<std::mutex>;
@@ -126,6 +137,7 @@ EditorInterface::EditorInterface(sf::RenderWindow& window) :
     messageLog->setSizeCharacters({80, 15});
     messageLog->setMaxLines(100);
     messageLog->setAutoHide(true);
+    messageLog->getStyle()->setFillColor({12, 12, 12});
     gui_->addChild(messageLog);
 
     auto sink = std::make_shared<MySinkMt>(messageLog);
