@@ -13,6 +13,15 @@
 #include <utility>
 #include <vector>
 
+/**
+ * Custom spdlog sink for writing messages to a `gui::ChatBox`. This can be
+ * added to the default logger before the gui is initialized, and any received
+ * messages will be buffered until the chat box is provided.
+ * 
+ * Note that we must not keep ownership of any SFML objects in this class to
+ * ensure the sink can be independent of an OpenGL context. This is the reason
+ * for the `std::weak_ptr<gui::ChatBox>` below.
+ */
 template<typename Mutex>
 class MessageLogSink : public spdlog::sinks::base_sink<Mutex> {
 public:
