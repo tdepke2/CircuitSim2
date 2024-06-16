@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <SFML/Graphics.hpp>
 
 namespace gui {
@@ -8,9 +9,13 @@ namespace gui {
     class Theme;
 }
 
+template<typename Mutex>
+class MessageLogSink;
+using MessageLogSinkMt = MessageLogSink<std::mutex>;
+
 class EditorInterface : public sf::Drawable {
 public:
-    EditorInterface(sf::RenderWindow& window);
+    EditorInterface(sf::RenderWindow& window, MessageLogSinkMt* messageLogSink);
     ~EditorInterface();
     EditorInterface(const EditorInterface& rhs) = delete;
     EditorInterface& operator=(const EditorInterface& rhs) = delete;

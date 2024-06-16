@@ -8,15 +8,20 @@
 
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <SFML/Graphics.hpp>
 #include <utility>
 
 class Board;
 class Command;
 
+template<typename Mutex>
+class MessageLogSink;
+using MessageLogSinkMt = MessageLogSink<std::mutex>;
+
 class Editor : public sf::Drawable {
 public:
-    Editor(Board& board, sf::RenderWindow& window);
+    Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink);
     ~Editor() = default;
     Editor(const Editor& rhs) = delete;
     Editor& operator=(const Editor& rhs) = delete;

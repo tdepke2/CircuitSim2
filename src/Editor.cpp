@@ -96,8 +96,8 @@ Editor::StaticInit::StaticInit() {
     DebugScreen::instance()->registerTexture("tilesetBrightNoBlanks", tilesetBrightNoBlanks);
 }
 
-Editor::Editor(Board& board, sf::RenderWindow& window) :
-    interface_(window),
+Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
+    interface_(window, messageLogSink),
     board_(board),
     editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), window.getDefaultView()),
     zoomLevel_(1.0f),
