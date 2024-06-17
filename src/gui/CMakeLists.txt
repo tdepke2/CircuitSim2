@@ -1,6 +1,7 @@
 set(CS2_GUI_HEADERS
     Container.h
     ContainerBase.h
+    Debug.h
     Gui.h
     Signal.h
     Style.h

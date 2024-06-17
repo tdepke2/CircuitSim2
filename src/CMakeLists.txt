@@ -69,6 +69,7 @@ add_library(cs2_src
     Locator.h
     LodRenderer.cpp
     LodRenderer.h
+    MessageLogSink.h
     OffsetView.cpp
     OffsetView.h
     RegionFileFormat.cpp
@@ -108,10 +109,22 @@ target_link_libraries(cs2_src PUBLIC
 cs2_add_cxx_properties(cs2_src)
 
 add_executable(CircuitSim2_experimental
-    main.cpp
+    main/main.cpp
+    $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Windows>:main/MainWin32.cpp>
 )
 target_link_libraries(CircuitSim2_experimental PRIVATE cs2_src)
 cs2_add_cxx_properties(CircuitSim2_experimental)
+
+# On Windows, disable console from opening with application (except when the
+# build type is Debug).
+# See: https://www.sfml-dev.org/faq.php#tr-win-console
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set_target_properties(CircuitSim2_experimental PROPERTIES WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
+
+    # We could link against sfml-main to have the WinMain entry point provided.
+    # Instead, a customized WinMain is used that does console redirection.
+    #target_link_libraries(CircuitSim2_experimental PRIVATE sfml-main)
+endif()
 
 # Build the gui.
 add_subdirectory(gui)
