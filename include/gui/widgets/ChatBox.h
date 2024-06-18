@@ -149,7 +149,7 @@ protected:
     ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name);
 
 private:
-    void updateVisibleLines();
+    void updateVisibleLines(bool applyUpdate = false) const;
     void updateSelection(size_t pos, bool continueSelection);
     void updateScroll(int delta);
     size_t findClosestLineToMouse(const sf::Vector2f& mouseLocal) const;
@@ -164,6 +164,7 @@ private:
     sf::Vector2f size_;
     std::deque<ChatBoxLine> lines_;
     mutable std::vector<std::pair<ChatBoxLine, sf::RectangleShape>> visibleLines_;
+    mutable bool visibleLinesChanged_;
     size_t verticalScroll_;
     std::pair<size_t, bool> selectionStart_;
     size_t selectionEnd_;

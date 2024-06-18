@@ -386,6 +386,7 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     size_(),
     lines_(),
     visibleLines_(),
+    visibleLinesChanged_(false),
     verticalScroll_(0),
     selectionStart_(0, false),
     selectionEnd_(0),
@@ -393,7 +394,15 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     hideCounter_(0) {
 }
 
-void ChatBox::updateVisibleLines() {
+void ChatBox::updateVisibleLines(bool applyUpdate) const {
+    if (!applyUpdate) {
+        visibleLinesChanged_ = true;
+        requestRedraw();
+        return;
+    } else if (!visibleLinesChanged_) {
+        return;
+    }
+
     const float textHeight = style_->textPadding_.z * style_->getCharacterSize();
     visibleLines_.clear();
     size_t currentLine = verticalScroll_;
@@ -433,7 +442,7 @@ void ChatBox::updateVisibleLines() {
         } while (visibleLines_.size() < sizeCharacters_.y && lastTrimPos != 0);
         ++currentLine;
     }
-    requestRedraw();
+    visibleLinesChanged_ = false;
 }
 void ChatBox::updateSelection(size_t pos, bool continueSelection) {
     const auto lastSelectionStart = selectionStart_;
@@ -480,6 +489,8 @@ void ChatBox::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         return;
     }
     states.transform *= getTransform();
+
+    updateVisibleLines(true);
 
     if (!autoHide_) {
         style_->rect_.setSize(size_);
