@@ -106,7 +106,6 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     windowSize_(window.getDefaultView().getSize()),
     cursor_({static_cast<float>(TileWidth::TEXELS), static_cast<float>(TileWidth::TEXELS)}),
     cursorCoords_({sf::Vector2i(), false}),
-    cursorLabel_("", Locator::getResource()->getFont("resources/consolas.ttf"), 22),
     cursorState_(CursorState::empty),
     cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
@@ -121,8 +120,6 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     staticInit_ = &staticInit;
 
     cursor_.setFillColor({255, 80, 255, 100});
-    cursorLabel_.setOutlineColor(sf::Color::Black);
-    cursorLabel_.setOutlineThickness(2.0f);
 }
 
 const sf::Drawable& Editor::getGraphicalInterface() const {
@@ -607,15 +604,17 @@ void Editor::updateCursor() {
     const auto cursorCoords = mapMouseToNearestTile(mousePos_);
     if (cursorCoords_.first != cursorCoords.first) {
         //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.first.x, cursorCoords.first.y);
-        cursorLabel_.setString("(" + std::to_string(cursorCoords.first.x) + ", " + std::to_string(cursorCoords.first.y) + ")");
+        interface_.updateCursorCoords(cursorCoords.first);
     }
     if (!cursorCoords.second) {
         cursorVisible_ = false;
     }
     cursorCoords_ = cursorCoords;
     cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(TileWidth::TEXELS)));
-    cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
-    cursorLabel_.setScale(zoomLevel_, zoomLevel_);
+    // For reference below: drawing a shape that ignores the Editor view transforms.
+    //cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
+    //cursorLabel_.setScale(zoomLevel_, zoomLevel_);
+    interface_.setCursorVisible(cursorVisible_);
 }
 
 void Editor::updateSelection(const sf::Vector2i& newSelectionEnd) {
@@ -859,5 +858,4 @@ void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
             target.draw(outline, states2);
         }
     }
-    target.draw(cursorLabel_, states);
 }

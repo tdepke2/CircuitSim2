@@ -6,6 +6,7 @@
 
 namespace gui {
     class Gui;
+    class Label;
     class Theme;
 }
 
@@ -20,6 +21,9 @@ public:
     EditorInterface(const EditorInterface& rhs) = delete;
     EditorInterface& operator=(const EditorInterface& rhs) = delete;
 
+    void setCursorVisible(bool visible);
+    void updateCursorCoords(const sf::Vector2i& coords);
+
     // Returns true if event was consumed (and should not be processed further).
     bool processEvent(const sf::Event& event);
     void update();
@@ -29,4 +33,5 @@ private:
 
     std::unique_ptr<gui::Gui> gui_;
     std::unique_ptr<gui::Theme> theme_;
+    std::shared_ptr<gui::Label> cursorLabel_;
 };

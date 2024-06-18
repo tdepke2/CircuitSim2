@@ -87,7 +87,6 @@ private:
 
     sf::RectangleShape cursor_;
     std::pair<sf::Vector2i, bool> cursorCoords_;
-    sf::Text cursorLabel_;
     CursorState cursorState_;
     bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;

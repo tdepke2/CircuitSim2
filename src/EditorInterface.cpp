@@ -4,10 +4,14 @@
 #include <gui/Timer.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/ChatBox.h>
+#include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
+#include <gui/widgets/Panel.h>
 #include <MessageLogSink.h>
 
+#include <limits>
 #include <spdlog/spdlog.h>
+#include <string>
 
 EditorInterface::EditorInterface(sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
     gui_(new gui::Gui(window)),
@@ -92,6 +96,12 @@ EditorInterface::EditorInterface(sf::RenderWindow& window, MessageLogSinkMt* mes
 
     gui_->addChild(menuBar);
 
+    auto statusBar = gui::Panel::create(*theme_, "statusBar");
+    gui_->addChild(statusBar);
+
+    // FIXME: have the message log stretch to fit the screen?
+    // we also should have a keybind to open/close it. losing focus may also need to close it?
+
     auto messageLog = gui::ChatBox::create(*theme_, "messageLog");
     messageLog->setSizeCharacters({80, 15});
     messageLog->setMaxLines(500);
@@ -105,19 +115,27 @@ EditorInterface::EditorInterface(sf::RenderWindow& window, MessageLogSinkMt* mes
     }
 
     auto messageLogToggle = gui::Button::create(*theme_, "messageLogToggle");
-    messageLogToggle->setLabel("^^^");
-    messageLogToggle->setSize({messageLog->getSize().x, 20.0f});
+    messageLogToggle->setLabel("Message Log");
+    messageLogToggle->setPosition(2.0f, 2.0f);
     auto messageLogPtr = messageLog.get();
     messageLogToggle->onClick.connect([messageLogPtr]() {
         messageLogPtr->setAutoHide(!messageLogPtr->getAutoHide());
     });
-    gui_->addChild(messageLogToggle);
+    statusBar->addChild(messageLogToggle);
 
-    gui_->onWindowResized.connect([menuBar,messageLog,messageLogToggle](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
+    cursorLabel_ = gui::Label::create(*theme_, "cursorLabel_");
+    // Initialize label text with the longest coords possible.
+    cursorLabel_->setLabel("(" + std::to_string(std::numeric_limits<int>::min()) + ", " + std::to_string(std::numeric_limits<int>::min()) + ")");
+    cursorLabel_->setVisible(false);
+    statusBar->addChild(cursorLabel_);
+
+    gui_->onWindowResized.connect([this,menuBar,statusBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
-        messageLogToggle->setPosition(0.0f, size.y - messageLogToggle->getSize().y);
-        messageLog->setPosition(0.0f, messageLogToggle->getPosition().y - messageLog->getSize().y);
+        statusBar->setSize({static_cast<float>(size.x), menuBar->getSize().y});
+        statusBar->setPosition(0.0f, size.y - statusBar->getSize().y);
+        messageLog->setPosition(0.0f, statusBar->getPosition().y - messageLog->getSize().y);
+        cursorLabel_->setPosition(statusBar->getSize().x - cursorLabel_->getSize().x, 2.0f);
     });
 
     // Trigger a fake event to initialize the size.
@@ -131,6 +149,19 @@ EditorInterface::EditorInterface(sf::RenderWindow& window, MessageLogSinkMt* mes
 // Must declare the dtor here instead of header file so that the unique_ptr does
 // not need to know how to delete `gui_` in the header.
 EditorInterface::~EditorInterface() = default;
+
+void EditorInterface::setCursorVisible(bool visible) {
+    cursorLabel_->setVisible(visible);
+}
+
+void EditorInterface::updateCursorCoords(const sf::Vector2i& coords) {
+    std::string label = "(" + std::to_string(coords.x) + ", " + std::to_string(coords.y) + ")";
+    if (cursorLabel_->getLabel().getSize() > label.size()) {
+        cursorLabel_->setLabel(std::string(cursorLabel_->getLabel().getSize() - label.size(), '.') + label);
+    } else {
+        cursorLabel_->setLabel(label);
+    }
+}
 
 bool EditorInterface::processEvent(const sf::Event& event) {
     return gui_->processEvent(event);
