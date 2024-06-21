@@ -24,7 +24,8 @@ namespace gui {
 
 class DefaultTheme : public Theme {
 public:
-    DefaultTheme(const Gui& gui);
+    DefaultTheme(const Gui& gui, const std::string& fontFile = "resources/consolas.ttf");
+    DefaultTheme(const Gui& gui, sf::Font& font);
     virtual ~DefaultTheme() = default;
 
 protected:
@@ -44,8 +45,8 @@ private:
     std::shared_ptr<SliderStyle> makeSliderStyle() const;
     std::shared_ptr<TextBoxStyle> makeTextBoxStyle() const;
 
-    sf::Font consolasFont_;
-    float consolasMaxHeightRatio_;
+    std::unique_ptr<sf::Font, void(*)(sf::Font*)> font_;
+    float fontMaxHeightRatio_;
 };
 
 } // namespace gui

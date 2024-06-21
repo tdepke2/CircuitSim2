@@ -50,6 +50,7 @@ private:
     bool handleKeyPressed(const sf::Event::KeyEvent& key);
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
+    // now the question remains: should these be private? maybe so
     void undoEdit();
     void redoEdit();
     void selectAll();
@@ -96,4 +97,6 @@ private:
     TilePool tilePool_;
     std::deque<std::unique_ptr<Command>> editHistory_;
     size_t lastEditSize_;
+
+    friend class EditorInterface;
 };

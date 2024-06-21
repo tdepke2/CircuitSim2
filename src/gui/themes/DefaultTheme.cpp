@@ -31,13 +31,21 @@ const sf::Color colorDarkBlue2(15, 135, 250);
 
 namespace gui {
 
-DefaultTheme::DefaultTheme(const Gui& gui) :
-    Theme(gui) {
+DefaultTheme::DefaultTheme(const Gui& gui, const std::string& fontFile) :
+    Theme(gui),
+    font_(new sf::Font(), [](sf::Font* ptr) { delete ptr; }) {
 
-    if (!consolasFont_.loadFromFile("resources/consolas.ttf")) {
-        throw std::runtime_error("\"resources/consolas.ttf\": Unable to load font file.");
+    if (!font_->loadFromFile(fontFile)) {
+        throw std::runtime_error("\"" + fontFile + "\": unable to load font file.");
     }
-    consolasMaxHeightRatio_ = computeTextMaxHeightRatio(consolasFont_);
+    fontMaxHeightRatio_ = computeTextMaxHeightRatio(*font_);
+}
+
+DefaultTheme::DefaultTheme(const Gui& gui, sf::Font& font) :
+    Theme(gui),
+    font_(&font, [](sf::Font* /*ptr*/) { /* Do nothing.*/ }) {
+
+    fontMaxHeightRatio_ = computeTextMaxHeightRatio(*font_);
 }
 
 std::shared_ptr<Style> DefaultTheme::loadStyle(const sf::String& widgetName) const {
@@ -78,13 +86,13 @@ std::shared_ptr<ButtonStyle> DefaultTheme::makeButtonStyle() const {
     auto style = std::make_shared<ButtonStyle>(gui_);
     style->setFillColor(sf::Color::White);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
     style->setFillColorHover(colorLightBlueTransparent);
     style->setFillColorDown(colorDarkBlue);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     return style;
 }
@@ -95,13 +103,13 @@ std::shared_ptr<ChatBoxStyle> DefaultTheme::makeChatBoxStyle() const {
     style->setOutlineColor(colorGray);
     style->setOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(colorGray2);
 
     style->setInvertedTextFillColor(sf::Color::Black);
     style->setHighlightFillColor(colorLightBlueTransparent);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     return style;
 }
@@ -112,13 +120,13 @@ std::shared_ptr<CheckBoxStyle> DefaultTheme::makeCheckBoxStyle() const {
     style->setOutlineColor(sf::Color::Black);
     style->setOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
     style->setFillColorHover(colorLightBlueTransparent);
     style->setFillColorChecked(colorDarkBlue);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     return style;
 }
@@ -153,11 +161,11 @@ std::shared_ptr<DialogBoxStyle> DefaultTheme::makeDialogBoxStyle() const {
 std::shared_ptr<LabelStyle> DefaultTheme::makeLabelStyle() const {
     auto style = std::make_shared<LabelStyle>(gui_);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     return style;
 }
@@ -170,12 +178,12 @@ std::shared_ptr<MenuBarStyle> DefaultTheme::makeMenuBarStyle() const {
     style->setMenuOutlineColor(colorGray2);
     style->setMenuOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
-    style->setBarTextPadding({10.0f, 3.0f, consolasMaxHeightRatio_});
-    style->setMenuTextPadding({18.0f, 3.0f, consolasMaxHeightRatio_});
+    style->setBarTextPadding({10.0f, 3.0f, fontMaxHeightRatio_});
+    style->setMenuTextPadding({18.0f, 3.0f, fontMaxHeightRatio_});
     style->setMinLeftRightTextWidth(40.0f);
     style->setDisabledTextFillColor(colorGray3);
     style->setHighlightFillColor(colorLightBlue);
@@ -190,15 +198,15 @@ std::shared_ptr<MultilineTextBoxStyle> DefaultTheme::makeMultilineTextBoxStyle()
     style->setOutlineColor(colorGray);
     style->setOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
     style->setReadOnlyFillColor(colorLightGray2);
     style->setDefaultTextFillColor(colorGray3);
-    style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
+    style->setCaretSize({2.0f, fontMaxHeightRatio_ * style->getCharacterSize()});
     style->setCaretFillColor(colorDarkBlue);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     style->setHighlightFillColor(colorLightBlueTransparent);
 
@@ -220,13 +228,13 @@ std::shared_ptr<RadioButtonStyle> DefaultTheme::makeRadioButtonStyle() const {
     style->setOutlineColor(sf::Color::Black);
     style->setOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
     style->setFillColorHover(colorLightBlueTransparent);
     style->setFillColorChecked(colorDarkBlue);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     style->setDiamond(true);
 
@@ -252,15 +260,15 @@ std::shared_ptr<TextBoxStyle> DefaultTheme::makeTextBoxStyle() const {
     style->setOutlineColor(colorGray);
     style->setOutlineThickness(-1.0f);
 
-    style->setFont(consolasFont_);
+    style->setFont(*font_);
     style->setCharacterSize(15);
     style->setTextFillColor(sf::Color::Black);
 
     style->setReadOnlyFillColor(colorLightGray2);
     style->setDefaultTextFillColor(colorGray3);
-    style->setCaretSize({2.0f, consolasMaxHeightRatio_ * style->getCharacterSize()});
+    style->setCaretSize({2.0f, fontMaxHeightRatio_ * style->getCharacterSize()});
     style->setCaretFillColor(colorDarkBlue);
-    style->setTextPadding({8.0f, 1.0f, consolasMaxHeightRatio_});
+    style->setTextPadding({8.0f, 1.0f, fontMaxHeightRatio_});
 
     return style;
 }
