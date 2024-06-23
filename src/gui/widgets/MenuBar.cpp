@@ -248,6 +248,14 @@ size_t MenuBar::findMenuIndex(const sf::String& name) const {
     throw std::out_of_range("MenuBar::findMenuIndex");
 }
 
+bool MenuBar::isMenuOpen() const {
+    return menuIsOpen_;
+}
+
+void MenuBar::closeAllMenus() {
+    selectMenu(-1, false);
+}
+
 void MenuBar::setStyle(std::shared_ptr<MenuBarStyle> style) {
     style_ = style;
     styleCopied_ = false;
@@ -289,15 +297,16 @@ void MenuBar::handleMousePress(sf::Mouse::Button button, const sf::Vector2f& mou
     baseClass::handleMousePress(button, mouseParent);
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (button <= sf::Mouse::Middle) {
+        mouseUpdate(true, true, mouseLocal);
         onClick.emit(this, mouseLocal);
     }
     onMousePress.emit(this, button, mouseLocal);
-
-    mouseUpdate(true, true, mouseLocal);
 }
 void MenuBar::handleMouseRelease(sf::Mouse::Button button, const sf::Vector2f& mouseParent) {
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
-    mouseUpdate(true, false, mouseLocal);
+    if (button <= sf::Mouse::Middle) {
+        mouseUpdate(true, false, mouseLocal);
+    }
     onMouseRelease.emit(this, button, mouseLocal);
 
     baseClass::handleMouseRelease(button, mouseParent);

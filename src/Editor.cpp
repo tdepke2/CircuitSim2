@@ -333,6 +333,8 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
             copyArea();
         } else if (key.code == sf::Keyboard::V) {
             pasteArea();
+        } else if (key.code == sf::Keyboard::M) {
+            interface_.toggleMessageLog();
         } else {
             return false;
         }

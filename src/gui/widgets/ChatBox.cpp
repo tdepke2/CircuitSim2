@@ -292,10 +292,8 @@ bool ChatBox::handleMouseMove(const sf::Vector2f& mouseParent) {
     const auto mouseLocal = toLocalOriginSpace(mouseParent);
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
         updateSelection(findClosestLineToMouse(mouseLocal), true);
-        return true;
-    } else {
-        return false;
     }
+    return isMouseIntersecting(mouseParent);
 }
 bool ChatBox::handleMouseWheelScroll(sf::Mouse::Wheel wheel, float delta, const sf::Vector2f& mouseParent) {
     if (baseClass::handleMouseWheelScroll(wheel, delta, mouseParent)) {

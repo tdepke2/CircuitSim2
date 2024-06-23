@@ -1,3 +1,4 @@
+#include <DebugScreen.h>
 #include <Editor.h>
 #include <EditorInterface.h>
 #include <gui/Gui.h>
@@ -26,45 +27,50 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     gui_->addChild(menuBar);
 
     auto statusBar = gui::Panel::create(*theme_, "statusBar");
+    statusBar->setFocusable(false);
     gui_->addChild(statusBar);
 
     // FIXME: have the message log stretch to fit the screen?
-    // we also should have a keybind to open/close it. losing focus may also need to close it?
 
-    auto messageLog = gui::ChatBox::create(*theme_, "messageLog");
-    messageLog->setSizeCharacters({80, 15});
-    messageLog->setMaxLines(500);
-    messageLog->setAutoHide(true);
-    messageLog->getStyle()->setFillColor({12, 12, 12});
-    gui_->addChild(messageLog);
+    messageLog_ = gui::ChatBox::create(*theme_, "messageLog");
+    messageLog_->setSizeCharacters({80, 15});
+    messageLog_->setMaxLines(500);
+    messageLog_->setAutoHide(true);
+    messageLog_->getStyle()->setFillColor({12, 12, 12});
+    gui_->addChild(messageLog_);
 
     // Register the message log with the spdlog sink so we can see debug log messages show up.
     if (messageLogSink != nullptr) {
-        messageLogSink->registerChatBox(messageLog);
+        messageLogSink->registerChatBox(messageLog_);
     }
 
     auto messageLogToggle = gui::Button::create(*theme_, "messageLogToggle");
-    messageLogToggle->setLabel("Message Log");
+    messageLogToggle->setFocusable(false);
+    messageLogToggle->setLabel("Messages (Ctrl+M)");
     messageLogToggle->setPosition(2.0f, 2.0f);
-    auto messageLogPtr = messageLog.get();
-    messageLogToggle->onClick.connect([messageLogPtr]() {
-        messageLogPtr->setAutoHide(!messageLogPtr->getAutoHide());
+    messageLogToggle->onClick.connect([this]() {
+        toggleMessageLog();
     });
     statusBar->addChild(messageLogToggle);
 
     cursorLabel_ = gui::Label::create(*theme_, "cursorLabel_");
+    cursorLabel_->setFocusable(false);
     // Initialize label text with the longest coords possible.
     cursorLabel_->setLabel("(" + std::to_string(std::numeric_limits<int>::min()) + ", " + std::to_string(std::numeric_limits<int>::min()) + ")");
     cursorLabel_->setVisible(false);
     statusBar->addChild(cursorLabel_);
 
-    gui_->onWindowResized.connect([this,menuBar,statusBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
+    gui_->onWindowResized.connect([this,menuBar,statusBar](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
         statusBar->setSize({static_cast<float>(size.x), menuBar->getSize().y});
         statusBar->setPosition(0.0f, size.y - statusBar->getSize().y);
-        messageLog->setPosition(0.0f, statusBar->getPosition().y - messageLog->getSize().y);
+        messageLog_->setPosition(0.0f, statusBar->getPosition().y - messageLog_->getSize().y);
         cursorLabel_->setPosition(statusBar->getSize().x - cursorLabel_->getSize().x, 2.0f);
+
+        int menuBarHeight = static_cast<int>(menuBar->getSize().y);
+        int statusBarHeight = static_cast<int>(statusBar->getSize().y);
+        DebugScreen::instance()->setBorders({2, menuBarHeight + 2}, {2, statusBarHeight + 2});
     });
 
     // Trigger a fake event to initialize the size.
@@ -90,6 +96,10 @@ void EditorInterface::updateCursorCoords(const sf::Vector2i& coords) {
     } else {
         cursorLabel_->setLabel(label);
     }
+}
+
+void EditorInterface::toggleMessageLog() {
+    messageLog_->setAutoHide(!messageLog_->getAutoHide());
 }
 
 bool EditorInterface::processEvent(const sf::Event& event) {
@@ -314,8 +324,9 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
         }
     };
 
+    auto menuBarPtr = menuBar.get();
     menuBar->onMenuItemClick.connect(
-        [chooseFileMenu,chooseEditMenu,chooseViewMenu,chooseRunMenu,chooseToolsMenu,chooseWireMenu,chooseGateMenu,chooseMiscMenu]
+        [menuBarPtr,chooseFileMenu,chooseEditMenu,chooseViewMenu,chooseRunMenu,chooseToolsMenu,chooseWireMenu,chooseGateMenu,chooseMiscMenu]
         (gui::Widget* /*w*/, const gui::MenuList& menu, size_t index) {
 
         const auto& item = menu.items[index].leftText;
@@ -335,6 +346,13 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
             chooseGateMenu(item);
         } else if (menu.name == "Misc") {
             chooseMiscMenu(item);
+        }
+        menuBarPtr->setFocused(false);
+    });
+
+    menuBar->onClick.connect([menuBarPtr]() {
+        if (!menuBarPtr->isMenuOpen()) {
+            menuBarPtr->setFocused(false);
         }
     });
 

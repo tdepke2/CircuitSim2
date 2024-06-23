@@ -34,7 +34,6 @@ int main() {
 
     DebugScreen::init(Locator::getResource()->getFont("resources/consolas.ttf"), 16, window.getSize());
     DebugScreen::instance()->setVisible(true);
-    DebugScreen::instance()->setBorders({2, 25}, {2, 2});    // FIXME: adding the status bar changed the size we need to set here.
 
     Board board;
     board.debugSetDrawChunkBorder(true);

@@ -5,6 +5,7 @@
 #include <SFML/Graphics.hpp>
 
 namespace gui {
+    class ChatBox;
     class Gui;
     class Label;
     class MenuBar;
@@ -26,6 +27,7 @@ public:
 
     void setCursorVisible(bool visible);
     void updateCursorCoords(const sf::Vector2i& coords);
+    void toggleMessageLog();
 
     // Returns true if event was consumed (and should not be processed further).
     bool processEvent(const sf::Event& event);
@@ -38,5 +40,6 @@ private:
     Editor& editor_;
     std::unique_ptr<gui::Gui> gui_;
     std::unique_ptr<gui::Theme> theme_;
+    std::shared_ptr<gui::ChatBox> messageLog_;
     std::shared_ptr<gui::Label> cursorLabel_;
 };

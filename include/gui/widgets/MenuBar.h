@@ -157,6 +157,8 @@ public:
 
     const MenuList& findMenu(const sf::String& name) const;
     size_t findMenuIndex(const sf::String& name) const;
+    bool isMenuOpen() const;
+    void closeAllMenus();
 
     void setStyle(std::shared_ptr<MenuBarStyle> style);
     // Getting the style makes a local copy. Changes to this style will therefore not effect the theme.
