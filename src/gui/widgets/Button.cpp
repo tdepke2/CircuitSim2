@@ -118,6 +118,12 @@ std::shared_ptr<ButtonStyle> ButtonStyle::clone() const {
 
 
 std::shared_ptr<Button> Button::create(const Theme& theme, const sf::String& name) {
+    // Note that we do not use `std::make_shared` here due to the protected
+    // constructor. A workaround is adding a private empty class as a parameter
+    // to a public constructor (to ensure construction is still actually
+    // private), but that should be unnecessary. Using the call to `new` here
+    // does not cause any exception safety problems or possible leaks.
+    // For details see: https://herbsutter.com/gotw/_102/
     return std::shared_ptr<Button>(new Button(theme.getStyle<ButtonStyle>("Button"), name));
 }
 std::shared_ptr<Button> Button::create(std::shared_ptr<ButtonStyle> style, const sf::String& name) {

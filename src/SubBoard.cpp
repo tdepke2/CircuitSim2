@@ -1,5 +1,6 @@
 #include <Board.h>
 #include <DebugScreen.h>
+#include <MakeUnique.h>
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
@@ -55,7 +56,7 @@ SubBoard::SubBoard() :
     size_(),
     lastSize_(),
     chunks_(),
-    emptyChunk_(new Chunk(nullptr, LodRenderer::EMPTY_CHUNK_COORDS)),
+    emptyChunk_(details::make_unique<Chunk>(nullptr, LodRenderer::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
     visibleArea_(0, 0, 0, 0),
     lastVisibleArea_(0, 0, 0, 0),

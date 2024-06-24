@@ -69,6 +69,7 @@ add_library(cs2_src
     Locator.h
     LodRenderer.cpp
     LodRenderer.h
+    MakeUnique.h
     MessageLogSink.h
     OffsetView.cpp
     OffsetView.h

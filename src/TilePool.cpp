@@ -1,3 +1,4 @@
+#include <MakeUnique.h>
 #include <Tile.h>
 #include <TilePool.h>
 #include <tiles/Blank.h>
@@ -27,7 +28,7 @@ size_t TilePool::allocateSector() {
     /*++upperId_;
     const auto itemIndex = static_cast<size_t>((upperId_ - baseId_) / CHUNK_AREA);
     if (itemIndex == items_.size()) {
-        items_.emplace_back(new PoolItem());
+        items_.emplace_back(details::make_unique<PoolItem>());
     }
     //spdlog::debug("TilePool allocating id {} at index {} (items size is {}).", upperId_, itemIndex, items_.size());
 
@@ -51,7 +52,7 @@ size_t TilePool::allocateSector() {
             }
         }
     }
-    items_.emplace_back(new PoolItem());
+    items_.emplace_back(details::make_unique<PoolItem>());
     items_.back()->allocated.set(0);
     itemsAllocatedCount_.push_back(1);
     spdlog::debug("TilePool allocating sector {} at end (items size is {}).", (items_.size() - 1) * SECTORS_PER_CHUNK, items_.size());

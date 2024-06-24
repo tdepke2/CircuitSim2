@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <MakeUnique.h>
 #include <tiles/Gate.h>
 
 #include <cassert>
@@ -8,8 +9,12 @@
 namespace tiles {
 
 Gate* Gate::instance() {
-    static std::unique_ptr<Gate> gate(new Gate());
+    static auto gate = details::make_unique<Gate>(Private());
     return gate.get();
+}
+
+Gate::Gate(Private) {
+    spdlog::debug("Gate class has been constructed.");
 }
 
 void Gate::setDirection(Chunk& chunk, unsigned int tileIndex, Direction::t direction) {
@@ -43,10 +48,6 @@ void Gate::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
 void Gate::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
     const auto& tileData = getTileData(chunk, tileIndex);
     init(target.getChunk(), target.getIndex(), tileData.id, tileData.dir, tileData.state1);
-}
-
-Gate::Gate() {
-    spdlog::debug("Gate class has been constructed.");
 }
 
 void Gate::init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Direction::t direction, State::t state) {

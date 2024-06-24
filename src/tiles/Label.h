@@ -12,8 +12,14 @@ namespace entities {
 namespace tiles {
 
 class Label : public TileType {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     static Label* instance();
+    Label(Private);
     virtual ~Label() = default;
     Label(const Label& label) = delete;
     Label(Label&& label) = delete;
@@ -28,8 +34,6 @@ public:
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
 private:
-    Label();
-
     void init(Chunk& chunk, unsigned int tileIndex, const entities::Label* labelToCopy = nullptr);
     virtual void destroy(Chunk& chunk, unsigned int tileIndex) override;
 

@@ -3,6 +3,7 @@
 #include <Editor.h>
 #include <LegacyFileFormat.h>
 #include <Locator.h>
+#include <MakeUnique.h>
 #include <OffsetView.h>
 #include <RegionFileFormat.h>
 #include <ResourceBase.h>
@@ -101,12 +102,12 @@ Board::StaticInit::StaticInit() {
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
-    fileStorage_(new LegacyFileFormat()),
+    fileStorage_(details::make_unique<LegacyFileFormat>()),
     maxSize_(0, 0),
     extraLogicStates_(false),
     notesText_(),
     chunks_(),
-    emptyChunk_(new Chunk(this, LodRenderer::EMPTY_CHUNK_COORDS)),
+    emptyChunk_(details::make_unique<Chunk>(static_cast<LodRenderer*>(this), LodRenderer::EMPTY_CHUNK_COORDS)),
     chunkDrawables_(),
     chunkRenderCache_(),
     lastVisibleArea_(0, 0, 0, 0),
@@ -339,12 +340,12 @@ void Board::loadFromFile(const fs::path& filename) {
     }
     while (!fileStorage_->validateFileVersion(version)) {
         spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
-        fileStorage_.reset(new LegacyFileFormat());
+        fileStorage_ = details::make_unique<LegacyFileFormat>();
         if (fileStorage_->validateFileVersion(version)) {
             break;
         }
         spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
-        fileStorage_.reset(new RegionFileFormat());
+        fileStorage_ = details::make_unique<RegionFileFormat>();
         if (fileStorage_->validateFileVersion(version)) {
             break;
         }
@@ -358,7 +359,7 @@ void Board::saveToFile() {
     spdlog::info("Saving file.");
 
 
-    fileStorage_.reset(new RegionFileFormat());
+    fileStorage_ = details::make_unique<RegionFileFormat>();
 
 
     fileStorage_->saveToFile(*this);

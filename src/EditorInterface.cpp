@@ -10,6 +10,7 @@
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/Panel.h>
 #include <Locator.h>
+#include <MakeUnique.h>
 #include <MessageLogSink.h>
 #include <ResourceBase.h>
 #include <Tile.h>
@@ -20,8 +21,8 @@
 
 EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
     editor_(editor),
-    gui_(new gui::Gui(window)),
-    theme_(new gui::DefaultTheme(*gui_, Locator::getResource()->getFont("resources/consolas.ttf"))) {
+    gui_(details::make_unique<gui::Gui>(window)),
+    theme_(details::make_unique<gui::DefaultTheme>(*gui_, Locator::getResource()->getFont("resources/consolas.ttf"))) {
 
     auto menuBar = createMenuBar();
     gui_->addChild(menuBar);

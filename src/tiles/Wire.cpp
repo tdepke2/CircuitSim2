@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <MakeUnique.h>
 #include <tiles/Wire.h>
 
 #include <cassert>
@@ -8,8 +9,12 @@
 namespace tiles {
 
 Wire* Wire::instance() {
-    static std::unique_ptr<Wire> wire(new Wire());
+    static auto wire = details::make_unique<Wire>(Private());
     return wire.get();
+}
+
+Wire::Wire(Private) {
+    spdlog::debug("Wire class has been constructed.");
 }
 
 void Wire::setState2(Chunk& chunk, unsigned int tileIndex, State::t state) {
@@ -75,10 +80,6 @@ void Wire::alternativeTile(Chunk& chunk, unsigned int tileIndex) {
 void Wire::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
     const auto& tileData = getTileData(chunk, tileIndex);
     init(target.getChunk(), target.getIndex(), tileData.id, tileData.dir, tileData.state1, tileData.state2);
-}
-
-Wire::Wire() {
-    spdlog::debug("Wire class has been constructed.");
 }
 
 void Wire::init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Direction::t direction, State::t state1, State::t state2) {

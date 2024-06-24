@@ -8,8 +8,14 @@ class Chunk;
 namespace tiles {
 
 class Input : public TileType {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     static Input* instance();
+    Input(Private);
     virtual ~Input() = default;
     Input(const Input& input) = delete;
     Input(Input&& input) = delete;
@@ -24,8 +30,6 @@ public:
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
 private:
-    Input();
-
     void init(Chunk& chunk, unsigned int tileIndex, TileId::t inputId, State::t state, char keycode);
 
     friend class ::Tile;

@@ -2,6 +2,7 @@
 #include <entities/Label.h>
 #include <Locator.h>
 #include <LodRenderer.h>
+#include <MakeUnique.h>
 #include <ResourceBase.h>
 
 #include <spdlog/spdlog.h>
@@ -55,7 +56,7 @@ const sf::String& Label::getString() const {
 }
 
 std::unique_ptr<Entity> Label::clone(Chunk& chunk, unsigned int tileIndex) const {
-    return std::unique_ptr<Entity>(new Label(chunk, tileIndex, *this));
+    return details::make_unique<Label>(chunk, tileIndex, *this);
 }
 
 void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {

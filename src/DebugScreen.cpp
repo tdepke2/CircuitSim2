@@ -1,4 +1,5 @@
 #include <DebugScreen.h>
+#include <MakeUnique.h>
 
 #include <algorithm>
 #include <cassert>
@@ -8,7 +9,7 @@ std::unique_ptr<DebugScreen> DebugScreen::instance_;
 
 void DebugScreen::init(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) {
     assert(!instance_);
-    instance_.reset(new DebugScreen(font, characterSize, windowSize));
+    instance_ = details::make_unique<DebugScreen>(Private(), font, characterSize, windowSize);
 }
 
 DebugScreen* DebugScreen::instance() {
@@ -24,6 +25,26 @@ struct DebugScreen::NamedTexture {
         texture(texture) {
     }
 };
+
+DebugScreen::DebugScreen(Private, const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) :
+    mode_(Mode::def),
+    modeStates_(),
+    visible_(false),
+    font_(font),
+    characterSize_(characterSize),
+    windowSize_(windowSize),
+    nextFieldPos_(2.0f, 0.0f),
+    fields_(),
+    customFields_(),
+    textures_(),
+    profilerEvents_() {
+
+    modeStates_.fill(0);
+    fields_.reserve(static_cast<size_t>(Field::count));
+    for (size_t i = 0; i < static_cast<size_t>(Field::count); ++i) {
+        fields_.emplace_back(addField(false));
+    }
+}
 
 bool DebugScreen::processEvent(const sf::Event& event) {
     if (event.type == sf::Event::TextEntered) {
@@ -119,26 +140,6 @@ void DebugScreen::registerTexture(const std::string& name, const sf::Texture* te
 
 void DebugScreen::profilerEvent(const std::string& name) {
     profilerEvents_[name] = std::chrono::high_resolution_clock::now();
-}
-
-DebugScreen::DebugScreen(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize) :
-    mode_(Mode::def),
-    modeStates_(),
-    visible_(false),
-    font_(font),
-    characterSize_(characterSize),
-    windowSize_(windowSize),
-    nextFieldPos_(2.0f, 0.0f),
-    fields_(),
-    customFields_(),
-    textures_(),
-    profilerEvents_() {
-
-    modeStates_.fill(0);
-    fields_.reserve(static_cast<size_t>(Field::count));
-    for (size_t i = 0; i < static_cast<size_t>(Field::count); ++i) {
-        fields_.emplace_back(addField(false));
-    }
 }
 
 sf::Text DebugScreen::addField(bool isCustom) {

@@ -8,8 +8,14 @@ class Chunk;
 namespace tiles {
 
 class Led : public TileType {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     static Led* instance();
+    Led(Private);
     virtual ~Led() = default;
     Led(const Led& led) = delete;
     Led(Led&& led) = delete;
@@ -21,8 +27,6 @@ public:
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
 private:
-    Led();
-
     void init(Chunk& chunk, unsigned int tileIndex, State::t state);
 
     friend class ::Tile;

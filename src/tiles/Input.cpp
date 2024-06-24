@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <MakeUnique.h>
 #include <tiles/Input.h>
 
 #include <memory>
@@ -7,8 +8,12 @@
 namespace tiles {
 
 Input* Input::instance() {
-    static std::unique_ptr<Input> input(new Input());
+    static auto input = details::make_unique<Input>(Private());
     return input.get();
+}
+
+Input::Input(Private) {
+    spdlog::debug("Input class has been constructed.");
 }
 
 void Input::setKeycode(Chunk& chunk, unsigned int tileIndex, char keycode) {
@@ -31,10 +36,6 @@ void Input::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {
 void Input::cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) {
     const auto& tileData = getTileData(chunk, tileIndex);
     init(target.getChunk(), target.getIndex(), tileData.id, tileData.state1, tileData.meta);
-}
-
-Input::Input() {
-    spdlog::debug("Input class has been constructed.");
 }
 
 void Input::init(Chunk& chunk, unsigned int tileIndex, TileId::t inputId, State::t state, char keycode) {

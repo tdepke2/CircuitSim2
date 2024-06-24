@@ -1,4 +1,5 @@
 #include <Chunk.h>
+#include <MakeUnique.h>
 #include <tiles/Blank.h>
 
 #include <memory>
@@ -7,18 +8,18 @@
 namespace tiles {
 
 Blank* Blank::instance() {
-    static std::unique_ptr<Blank> blank(new Blank());
+    static auto blank = details::make_unique<Blank>(Private());
     return blank.get();
+}
+
+Blank::Blank(Private) {
+    spdlog::debug("Blank class has been constructed.");
 }
 
 void Blank::alternativeTile(Chunk& /*chunk*/, unsigned int /*tileIndex*/) {}
 
 void Blank::cloneTo(const Chunk& /*chunk*/, unsigned int /*tileIndex*/, Tile target) {
     init(target.getChunk(), target.getIndex());
-}
-
-Blank::Blank() {
-    spdlog::debug("Blank class has been constructed.");
 }
 
 void Blank::init(Chunk& chunk, unsigned int tileIndex) {

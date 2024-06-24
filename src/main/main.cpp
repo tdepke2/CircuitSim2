@@ -3,6 +3,7 @@
 #include <Editor.h>
 #include <entities/Label.h>
 #include <Locator.h>
+#include <MakeUnique.h>
 #include <MessageLogSink.h>
 #include <OffsetView.h>
 #include <ResourceManager.h>
@@ -30,7 +31,7 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
     //window.setVerticalSyncEnabled(true);
 
-    Locator::provide(std::unique_ptr<ResourceManager>(new ResourceManager()));
+    Locator::provide(details::make_unique<ResourceManager>());
 
     DebugScreen::init(Locator::getResource()->getFont("resources/consolas.ttf"), 16, window.getSize());
     DebugScreen::instance()->setVisible(true);

@@ -1,6 +1,7 @@
 #include <Chunk.h>
 #include <FileStorage.h>
 #include <LodRenderer.h>
+#include <MakeUnique.h>
 #include <tiles/Blank.h>
 #include <tiles/Gate.h>
 #include <tiles/Input.h>
@@ -207,7 +208,7 @@ void Chunk::allocateEntity(unsigned int tileIndex, std::unique_ptr<Entity>&& ent
 
     size_t newCapacity = std::max(entitiesCapacity_ * 2, entitiesCapacity_ + 1);
     spdlog::debug("Chunk::allocateEntity() increasing capacity from {} to {}.", entitiesCapacity_, newCapacity);
-    auto newEntities = EntityArray(new std::unique_ptr<Entity>[newCapacity]);
+    EntityArray newEntities = details::make_unique<std::unique_ptr<Entity>[]>(newCapacity);
     for (size_t i = 0; i < entitiesCapacity_; ++i) {
         newEntities[i] = std::move(entities_[i]);
     }

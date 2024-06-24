@@ -8,8 +8,14 @@ class Chunk;
 namespace tiles {
 
 class Gate : public TileType {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     static Gate* instance();
+    Gate(Private);
     virtual ~Gate() = default;
     Gate(const Gate& gate) = delete;
     Gate(Gate&& gate) = delete;
@@ -23,8 +29,6 @@ public:
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
 private:
-    Gate();
-
     void init(Chunk& chunk, unsigned int tileIndex, TileId::t gateId, Direction::t direction, State::t state);
 
     friend class ::Tile;

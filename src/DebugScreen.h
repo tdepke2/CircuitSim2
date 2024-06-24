@@ -20,6 +20,11 @@
  * pressing P.
  */
 class DebugScreen : public sf::Drawable {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     enum class Mode {
         def = 0,
@@ -37,6 +42,7 @@ public:
 
     static void init(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize);
     static DebugScreen* instance();
+    DebugScreen(Private, const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize);
     ~DebugScreen() = default;
     DebugScreen(const DebugScreen& rhs) = delete;
     DebugScreen(DebugScreen&& rhs) noexcept = delete;
@@ -60,7 +66,6 @@ private:
 
     struct NamedTexture;
 
-    DebugScreen(const sf::Font& font, unsigned int characterSize, const sf::Vector2u& windowSize);
     sf::Text addField(bool isCustom);
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 

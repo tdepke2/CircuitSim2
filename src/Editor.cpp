@@ -11,6 +11,7 @@
 #include <Editor.h>
 #include <Locator.h>
 #include <LodRenderer.h>
+#include <MakeUnique.h>
 #include <ResourceBase.h>
 #include <Tile.h>
 #include <tiles/Blank.h>
@@ -745,7 +746,7 @@ std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
         // could use a string instead, then we don't need an enum that is aware of all the commands.
         // the command-type id could be passed as first argument to command ctor?
     }
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    return details::make_unique<T>(std::forward<Args>(args)...);
 }
 
 void Editor::executeCommand(std::unique_ptr<Command>&& command) {

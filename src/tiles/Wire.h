@@ -8,8 +8,14 @@ class Chunk;
 namespace tiles {
 
 class Wire : public TileType {
+private:
+    struct Private {
+        explicit Private() = default;
+    };
+
 public:
     static Wire* instance();
+    Wire(Private);
     virtual ~Wire() = default;
     Wire(const Wire& wire) = delete;
     Wire(Wire&& wire) = delete;
@@ -26,8 +32,6 @@ public:
     virtual void cloneTo(const Chunk& chunk, unsigned int tileIndex, Tile target) override;
 
 private:
-    Wire();
-
     void init(Chunk& chunk, unsigned int tileIndex, TileId::t wireId, Direction::t direction, State::t state1, State::t state2);
 
     friend class ::Tile;
