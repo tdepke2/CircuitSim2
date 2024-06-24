@@ -83,6 +83,7 @@ private:
     OffsetView editView_;
     float zoomLevel_;
     sf::Vector2i mousePos_;
+    bool mouseIsDragging_;
     bool mouseOnScreen_;
     sf::Vector2u windowSize_;
 

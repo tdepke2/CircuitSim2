@@ -102,6 +102,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), window.getDefaultView()),
     zoomLevel_(1.0f),
     mousePos_(),
+    mouseIsDragging_(false),
     mouseOnScreen_(false),
     windowSize_(window.getDefaultView().getSize()),
     cursor_({static_cast<float>(TileWidth::TEXELS), static_cast<float>(TileWidth::TEXELS)}),
@@ -145,13 +146,17 @@ bool Editor::processEvent(const sf::Event& event) {
     }
 
     if (event.type == sf::Event::MouseMoved) {
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-            editView_.setCenter({
-                editView_.getCenter().x + (mousePos_.x - event.mouseMove.x) * zoomLevel_,
-                editView_.getCenter().y + (mousePos_.y - event.mouseMove.y) * zoomLevel_
-            });
-            editView_.clampToView(findTileView(board_.getTileLowerBound()), std::less<float>());
-            editView_.clampToView(findTileView(board_.getTileUpperBound()), std::greater<float>());
+        if (mouseIsDragging_) {
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+                editView_.setCenter({
+                    editView_.getCenter().x + (mousePos_.x - event.mouseMove.x) * zoomLevel_,
+                    editView_.getCenter().y + (mousePos_.y - event.mouseMove.y) * zoomLevel_
+                });
+                editView_.clampToView(findTileView(board_.getTileLowerBound()), std::less<float>());
+                editView_.clampToView(findTileView(board_.getTileUpperBound()), std::greater<float>());
+            }
+        } else {
+            mouseIsDragging_ = false;
         }
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
@@ -178,7 +183,9 @@ bool Editor::processEvent(const sf::Event& event) {
         }
     } else if (event.type == sf::Event::MouseButtonPressed) {
         const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
-        if (event.mouseButton.button == sf::Mouse::Right) {
+        if (event.mouseButton.button == sf::Mouse::Left) {
+            mouseIsDragging_ = true;
+        } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) {
                 if (cursorCoords.second) {
                     pasteToBoard(cursorCoords.first, false);
@@ -196,6 +203,7 @@ bool Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseButtonReleased) {
         const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
+            mouseIsDragging_ = false;
             cursorVisible_ = mouseOnScreen_ && cursorCoords_.second;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (selectionStart_.second) {

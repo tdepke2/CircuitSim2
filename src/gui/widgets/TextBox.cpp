@@ -143,6 +143,9 @@ std::shared_ptr<TextBox> TextBox::create(std::shared_ptr<TextBoxStyle> style, co
 }
 
 void TextBox::setWidthCharacters(size_t widthCharacters) {
+    if (widthCharacters_ == widthCharacters) {
+        return;
+    }
     widthCharacters_ = widthCharacters;
 
     std::string textBounds(widthCharacters, 'A');

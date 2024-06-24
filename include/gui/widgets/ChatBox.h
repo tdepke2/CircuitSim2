@@ -111,6 +111,7 @@ public:
     virtual ~ChatBox() = default;
 
     void setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters);
+    void setSizeWithinBounds(const sf::Vector2f& size);
     void setMaxLines(size_t maxLines);
     void setAutoHide(bool autoHide);
     const sf::Vector2f& getSize() const;

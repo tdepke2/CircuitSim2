@@ -87,6 +87,9 @@ std::shared_ptr<MultilineTextBox> MultilineTextBox::create(std::shared_ptr<Multi
 }
 
 void MultilineTextBox::setSizeCharacters(const sf::Vector2<size_t>& sizeCharacters) {
+    if (sizeCharacters_ == sizeCharacters) {
+        return;
+    }
     sizeCharacters_ = sizeCharacters;
 
     std::string textBounds(sizeCharacters.x, 'A');

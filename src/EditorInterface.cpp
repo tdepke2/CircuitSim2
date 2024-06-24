@@ -30,10 +30,8 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     statusBar->setFocusable(false);
     gui_->addChild(statusBar);
 
-    // FIXME: have the message log stretch to fit the screen?
-
     messageLog_ = gui::ChatBox::create(*theme_, "messageLog");
-    messageLog_->setSizeCharacters({80, 15});
+    messageLog_->setSizeCharacters({80, 12});
     messageLog_->setMaxLines(500);
     messageLog_->setAutoHide(true);
     messageLog_->getStyle()->setFillColor({12, 12, 12});
@@ -60,11 +58,14 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     cursorLabel_->setVisible(false);
     statusBar->addChild(cursorLabel_);
 
+    messageLogToggle->sendToFront();
+
     gui_->onWindowResized.connect([this,menuBar,statusBar](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
         statusBar->setSize({static_cast<float>(size.x), menuBar->getSize().y});
         statusBar->setPosition(0.0f, size.y - statusBar->getSize().y);
+        messageLog_->setSizeWithinBounds({static_cast<float>(size.x), messageLog_->getSize().y});
         messageLog_->setPosition(0.0f, statusBar->getPosition().y - messageLog_->getSize().y);
         cursorLabel_->setPosition(statusBar->getSize().x - cursorLabel_->getSize().x, 2.0f);
 
@@ -111,10 +112,6 @@ void EditorInterface::update() {
 }
 
 std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
-    // FIXME: need to resolve some issues with menu bar and other widgets event handling.
-    // 1. menu bar eats mouse move events, but open message log doesn't?
-    // 2. clicking menu option keeps focus on it, same for some other widgets. have to press esc an extra time to deselect something.
-    // 3. clicking menu option does not pass a mouse move event to cursor, user moves cursor and sees it "jump". minor issue though.
     auto menuBar = gui::MenuBar::create(*theme_, "menuBar");
     menuBar->setPosition(0.0f, 0.0f);
 
