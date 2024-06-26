@@ -103,7 +103,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), window.getDefaultView()),
     zoomLevel_(1.0f),
     mousePos_(),
-    mouseIsDragging_(false),
+    mouseLeftIsDragging_(false),
     mouseOnScreen_(false),
     windowSize_(window.getDefaultView().getSize()),
     cursor_({static_cast<float>(TileWidth::TEXELS), static_cast<float>(TileWidth::TEXELS)}),
@@ -112,6 +112,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
+    wireToolStart_(),
     tileSubBoard_(),
     copySubBoard_(),
     tilePool_(),
@@ -147,7 +148,7 @@ bool Editor::processEvent(const sf::Event& event) {
     }
 
     if (event.type == sf::Event::MouseMoved) {
-        if (mouseIsDragging_) {
+        if (mouseLeftIsDragging_) {
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                 editView_.setCenter({
                     editView_.getCenter().x + (mousePos_.x - event.mouseMove.x) * zoomLevel_,
@@ -157,7 +158,7 @@ bool Editor::processEvent(const sf::Event& event) {
                 editView_.clampToView(findTileView(board_.getTileUpperBound()), std::greater<float>());
             }
         } else {
-            mouseIsDragging_ = false;
+            mouseLeftIsDragging_ = false;
         }
         mousePos_.x = event.mouseMove.x;
         mousePos_.y = event.mouseMove.y;
@@ -185,7 +186,7 @@ bool Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseButtonPressed) {
         const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
-            mouseIsDragging_ = true;
+            mouseLeftIsDragging_ = true;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (cursorState_ == CursorState::pickTile || cursorState_ == CursorState::pasteArea) {
                 if (cursorCoords.second) {
@@ -204,7 +205,7 @@ bool Editor::processEvent(const sf::Event& event) {
     } else if (event.type == sf::Event::MouseButtonReleased) {
         const auto cursorCoords = mapMouseToNearestTile({event.mouseButton.x, event.mouseButton.y});
         if (event.mouseButton.button == sf::Mouse::Left) {
-            mouseIsDragging_ = false;
+            mouseLeftIsDragging_ = false;
             cursorVisible_ = mouseOnScreen_ && cursorCoords_.second;
         } else if (event.mouseButton.button == sf::Mouse::Right) {
             if (selectionStart_.second) {
@@ -248,6 +249,12 @@ void Editor::update() {
     } else if (cursorState_ == CursorState::pasteArea) {
         copySubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
         copySubBoard_.drawChunks(tileset);
+    } else if (cursorState_ == CursorState::wireTool) {
+        tileSubBoard_.setRenderArea(editView_, zoomLevel_, {
+            std::min(wireToolStart_.x, cursorCoords_.first.x),
+            std::min(wireToolStart_.y, cursorCoords_.first.y)
+        });
+        tileSubBoard_.drawChunks(tileset);
     }
 }
 
@@ -539,7 +546,17 @@ void Editor::deleteArea() {
     board_.removeAllHighlights();
 }
 void Editor::wireTool() {
-    spdlog::warn("Editor::wireTool() NYI");
+    if (cursorState_ != CursorState::wireTool) {
+        if (!cursorCoords_.second) {
+            return;
+        }
+        wireToolStart_ = cursorCoords_.first;
+        tileSubBoard_.accessTile(0, 0).setType(tiles::Wire::instance());
+        tileSubBoard_.setVisibleSize({0, 0});
+        setCursorState(CursorState::wireTool);
+    } else {
+        setCursorState(CursorState::empty);
+    }
 }
 void Editor::queryTool() {
     spdlog::warn("Editor::queryTool() NYI");
@@ -612,16 +629,17 @@ std::pair<sf::Vector2i, bool> Editor::mapMouseToNearestTile(const sf::Vector2i& 
 }
 
 void Editor::updateCursor() {
-    const auto cursorCoords = mapMouseToNearestTile(mousePos_);
-    if (cursorCoords_.first != cursorCoords.first) {
-        //spdlog::debug("Cursor coords = {}, {}.", cursorCoords.first.x, cursorCoords.first.y);
-        interface_.updateCursorCoords(cursorCoords.first);
-    }
+    auto cursorCoords = mapMouseToNearestTile(mousePos_);
     if (!cursorCoords.second) {
         cursorVisible_ = false;
     }
-    cursorCoords_ = cursorCoords;
-    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(TileWidth::TEXELS)));
+    cursorCoords_.swap(cursorCoords);
+    if (cursorCoords_.first != cursorCoords.first) {
+        //spdlog::debug("Cursor coords = {}, {}.", cursorCoords_.first.x, cursorCoords_.first.y);
+        interface_.updateCursorCoords(cursorCoords_.first);
+        updateWireTool(cursorCoords.first);
+    }
+    cursor_.setPosition(static_cast<sf::Vector2f>((cursorCoords_.first - editView_.getCenterOffset() * Chunk::WIDTH) * static_cast<int>(TileWidth::TEXELS)));
     // For reference below: drawing a shape that ignores the Editor view transforms.
     //cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     //cursorLabel_.setScale(zoomLevel_, zoomLevel_);
@@ -724,6 +742,16 @@ void Editor::highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight) {
 
     forEachTile(board_, a, b, [highlight](Chunk& chunk, int i, int, int) {
         chunk.accessTile(i).setHighlight(highlight);
+    });
+}
+
+void Editor::updateWireTool(const sf::Vector2i& lastCursorCoords) {
+    if (cursorState_ != CursorState::wireTool) {
+        return;
+    }
+    tileSubBoard_.setVisibleSize({
+        1 + static_cast<unsigned int>(std::abs(wireToolStart_.x - cursorCoords_.first.x)),
+        1 + static_cast<unsigned int>(std::abs(wireToolStart_.y - cursorCoords_.first.y))
     });
 }
 
@@ -843,10 +871,11 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
 }
 
 void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if (!cursorVisible_) {
+    if (cursorState_ == CursorState::wireTool) {
+        target.draw(tileSubBoard_, states);
+    } else if (!cursorVisible_) {
         return;
-    }
-    if (cursorState_ == CursorState::empty) {
+    } else if (cursorState_ == CursorState::empty) {
         target.draw(cursor_, states);
     } else if (cursorState_ == CursorState::pickTile) {
         target.draw(tileSubBoard_, states);

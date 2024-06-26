@@ -72,6 +72,7 @@ private:
     void updateCursor();
     void updateSelection(const sf::Vector2i& newSelectionEnd);
     void highlightArea(sf::Vector2i a, sf::Vector2i b, bool highlight);
+    void updateWireTool(const sf::Vector2i& lastCursorCoords);
     template<typename T, typename... Args>
     std::unique_ptr<T> makeCommand(Args&&... args);
     void executeCommand(std::unique_ptr<Command>&& command);
@@ -83,7 +84,7 @@ private:
     OffsetView editView_;
     float zoomLevel_;
     sf::Vector2i mousePos_;
-    bool mouseIsDragging_;
+    bool mouseLeftIsDragging_;
     bool mouseOnScreen_;
     sf::Vector2u windowSize_;
 
@@ -93,6 +94,7 @@ private:
     bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
+    sf::Vector2i wireToolStart_;
     SubBoard tileSubBoard_, copySubBoard_;
 
     TilePool tilePool_;
