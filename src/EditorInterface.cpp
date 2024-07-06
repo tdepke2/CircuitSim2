@@ -72,7 +72,7 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
 
         int menuBarHeight = static_cast<int>(menuBar->getSize().y);
         int statusBarHeight = static_cast<int>(statusBar->getSize().y);
-        DebugScreen::instance()->setBorders({2, menuBarHeight + 2}, {2, statusBarHeight + 2});
+        DebugScreen::instance()->setBorders({0, menuBarHeight + 0}, {0, statusBarHeight + 1});
     });
 
     // Trigger a fake event to initialize the size.

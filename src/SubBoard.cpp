@@ -261,6 +261,7 @@ void SubBoard::clear() {
     chunkDrawables_.clear();
     chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
     setVisibleSize({0, 0});
+    resetChunkDraw();
 }
 
 void SubBoard::copyFromBoard(Board& board, sf::Vector2i first, sf::Vector2i second, bool highlightsOnly) {
