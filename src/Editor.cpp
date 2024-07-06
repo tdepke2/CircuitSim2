@@ -113,6 +113,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
     wireToolStart_(),
+    wireToolVerticalFirst_(false),
     tileSubBoard_(),
     copySubBoard_(),
     tilePool_(),
@@ -551,7 +552,6 @@ void Editor::wireTool() {
             return;
         }
         wireToolStart_ = cursorCoords_.first;
-        tileSubBoard_.accessTile(0, 0).setType(tiles::Wire::instance());
         tileSubBoard_.setVisibleSize({0, 0});
         setCursorState(CursorState::wireTool);
     } else {
@@ -584,6 +584,9 @@ void Editor::pickTile(TileId::t id) {
 void Editor::setCursorState(CursorState state) {
     if (selectionStart_.second) {
         selectionStart_.second = false;
+    }
+    if (cursorState_ == CursorState::wireTool) {
+        tileSubBoard_.clear();
     }
     cursorState_ = state;
 }
@@ -749,10 +752,63 @@ void Editor::updateWireTool(const sf::Vector2i& lastCursorCoords) {
     if (cursorState_ != CursorState::wireTool) {
         return;
     }
+    tileSubBoard_.clear();
     tileSubBoard_.setVisibleSize({
         1 + static_cast<unsigned int>(std::abs(wireToolStart_.x - cursorCoords_.first.x)),
         1 + static_cast<unsigned int>(std::abs(wireToolStart_.y - cursorCoords_.first.y))
     });
+    const sf::Vector2i wireStartLocal = {
+        std::max(wireToolStart_.x - cursorCoords_.first.x, 0),
+        std::max(wireToolStart_.y - cursorCoords_.first.y, 0)
+    };
+    sf::Vector2i wireVerticalEnd, wireHorizontalEnd;
+    int wireVerticalCorner = std::numeric_limits<int>::max();
+    int wireHorizontalCorner = std::numeric_limits<int>::max();
+
+    if (lastCursorCoords == wireToolStart_) {
+        wireToolVerticalFirst_ = (std::abs(cursorCoords_.first.x - lastCursorCoords.x) <= std::abs(cursorCoords_.first.y - lastCursorCoords.y));
+    }
+    if (wireToolVerticalFirst_) {
+        wireHorizontalEnd = cursorCoords_.first - wireToolStart_;
+        wireVerticalEnd = {0, cursorCoords_.first.y - wireToolStart_.y};
+        if (wireHorizontalEnd.x != 0 && wireHorizontalEnd.y != 0) {
+            wireVerticalCorner = wireVerticalEnd.y;
+            if (cursorCoords_.first.x < wireToolStart_.x) {
+                tileSubBoard_.accessTile(wireStartLocal.x, wireStartLocal.y + wireVerticalCorner).setType(tiles::Wire::instance(), TileId::wireCorner, (cursorCoords_.first.y < wireToolStart_.y) ? Direction::south : Direction::west);
+            } else {
+                tileSubBoard_.accessTile(wireStartLocal.x, wireStartLocal.y + wireVerticalCorner).setType(tiles::Wire::instance(), TileId::wireCorner, (cursorCoords_.first.y < wireToolStart_.y) ? Direction::east : Direction::north);
+            }
+        }
+    } else {
+        wireVerticalEnd = cursorCoords_.first - wireToolStart_;
+        wireHorizontalEnd = {cursorCoords_.first.x - wireToolStart_.x, 0};
+        if (wireVerticalEnd.x != 0 && wireVerticalEnd.y != 0) {
+            wireHorizontalCorner = wireHorizontalEnd.x;
+            if (cursorCoords_.first.y < wireToolStart_.y) {
+                tileSubBoard_.accessTile(wireStartLocal.x + wireHorizontalCorner, wireStartLocal.y).setType(tiles::Wire::instance(), TileId::wireCorner, (cursorCoords_.first.x < wireToolStart_.x) ? Direction::north : Direction::west);
+            } else {
+                tileSubBoard_.accessTile(wireStartLocal.x + wireHorizontalCorner, wireStartLocal.y).setType(tiles::Wire::instance(), TileId::wireCorner, (cursorCoords_.first.x < wireToolStart_.x) ? Direction::east : Direction::south);
+            }
+        }
+    }
+    const int xStart = std::min(0, wireHorizontalEnd.x), xStop = std::max(0, wireHorizontalEnd.x);
+    for (int x = xStart; x <= xStop; ++x) {
+        if (x != 0 && x != wireHorizontalCorner) {
+            Tile tile = board_.accessTile(wireToolStart_.x + x, wireToolStart_.y + wireHorizontalEnd.y);
+            TileId::t id = tile.getId();
+            TileId::t wireTileId = ((id == TileId::wireStraight && tile.getDirection() == Direction::north) || id == TileId::wireJunction || id == TileId::wireCrossover) ? TileId::wireCrossover : TileId::wireStraight;
+            tileSubBoard_.accessTile(wireStartLocal.x + x, wireStartLocal.y + wireHorizontalEnd.y).setType(tiles::Wire::instance(), wireTileId, Direction::east);
+        }
+    }
+    const int yStart = std::min(0, wireVerticalEnd.y), yStop = std::max(0, wireVerticalEnd.y);
+    for (int y = yStart; y <= yStop; ++y) {
+        if (y != 0 && y != wireVerticalCorner) {
+            Tile tile = board_.accessTile(wireToolStart_.x + wireVerticalEnd.x, wireToolStart_.y + y);
+            TileId::t id = tile.getId();
+            TileId::t wireTileId = ((id == TileId::wireStraight && tile.getDirection() == Direction::east) || id == TileId::wireJunction || id == TileId::wireCrossover) ? TileId::wireCrossover : TileId::wireStraight;
+            tileSubBoard_.accessTile(wireStartLocal.x + wireVerticalEnd.x, wireStartLocal.y + y).setType(tiles::Wire::instance(), wireTileId, Direction::north);
+        }
+    }
 }
 
 template<typename T, typename... Args>
