@@ -96,6 +96,7 @@ private:
     sf::Vector2i selectionEnd_;
     sf::Vector2i wireToolStart_;
     bool wireToolVerticalFirst_;
+    State::t wireToolWireState_;
     SubBoard tileSubBoard_, copySubBoard_;
 
     TilePool tilePool_;
