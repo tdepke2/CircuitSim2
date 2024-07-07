@@ -194,6 +194,8 @@ bool Editor::processEvent(const sf::Event& event) {
                 if (cursorCoords.second) {
                     pasteToBoard(cursorCoords.first, false);
                 }
+            } else if (cursorState_ == CursorState::wireTool) {
+                pasteToBoard(cursorCoords.first, false);
             } else if (!selectionStart_.second) {
                 if (!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) && !sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
                     board_.removeAllHighlights();
@@ -256,7 +258,7 @@ void Editor::update() {
             std::min(wireToolStart_.x, cursorCoords_.first.x),
             std::min(wireToolStart_.y, cursorCoords_.first.y)
         });
-        tileSubBoard_.drawChunks(tileset);
+        tileSubBoard_.drawChunks(staticInit_->tilesetBrightNoBlanks);
     }
 }
 
@@ -853,6 +855,18 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
         return;
     }
     lastTilePos = tilePos;
+
+    if (cursorState_ == CursorState::wireTool) {
+        auto command = makeCommand<commands::PlaceTiles>(board_, tilePool_);
+        tileSubBoard_.pasteToBoard(*command, {
+            std::min(wireToolStart_.x, tilePos.x),
+            std::min(wireToolStart_.y, tilePos.y)
+        }, true);
+        executeCommand(std::move(command));
+        setCursorState(CursorState::empty);
+        board_.removeAllHighlights();
+        return;
+    }
 
     const bool forcePaste = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift);
     const bool ignoreBlanks = sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl);
