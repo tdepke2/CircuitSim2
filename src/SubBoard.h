@@ -27,7 +27,7 @@ public:
     void setVisibleSize(const sf::Vector2u& size);
     const sf::Vector2f& getRenderPosition() const;
     const sf::Vector2u& getVisibleSize() const;
-    void drawChunks(const sf::Texture* tileset);
+    void drawChunks(const sf::Texture* tileset, bool skipEmptyChunks = false);
     Chunk& accessChunk(ChunkCoords::repr coords);
     Tile accessTile(int x, int y);
     Tile accessTile(const sf::Vector2i& pos);

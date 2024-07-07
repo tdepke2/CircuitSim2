@@ -114,7 +114,7 @@ const sf::Vector2u& SubBoard::getVisibleSize() const {
     return size_;
 }
 
-void SubBoard::drawChunks(const sf::Texture* tileset) {
+void SubBoard::drawChunks(const sf::Texture* tileset, bool skipEmptyChunks) {
     if (lastVisibleArea_.getFirst() != visibleArea_.getFirst() || lastTileset_ != tileset) {
         resetChunkDraw();
     }
@@ -143,8 +143,8 @@ void SubBoard::drawChunks(const sf::Texture* tileset) {
         auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(visibleArea_.left - 1, y));
         for (int x = visibleArea_.left; x < visibleArea_.left + visibleArea_.width && x * Chunk::WIDTH < static_cast<int>(size_.x); ++x) {
             if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != ChunkCoords::pack(x, y)) {
-                if (!lastVisibleArea_.contains(x, y)) {
-                    drawChunk(emptyChunkDrawable, tileset, textureDirty, x, y);    // FIXME: we can skip drawing empty chunks when using the noblanks texture, should help with wire-tool performance.
+                if (!skipEmptyChunks && !lastVisibleArea_.contains(x, y)) {
+                    drawChunk(emptyChunkDrawable, tileset, textureDirty, x, y);
                 }
             } else {
                 if (chunkDrawable->second.isRenderDirty(getLevelOfDetail()) || !lastVisibleArea_.contains(x, y)) {

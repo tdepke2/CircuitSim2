@@ -243,14 +243,14 @@ void Editor::update() {
     interface_.update();
     updateCursor();
 
-    const sf::Texture* tileset = staticInit_->tilesetBright;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
-        tileset = staticInit_->tilesetBrightNoBlanks;
-    }
     if (cursorState_ == CursorState::pickTile) {
         tileSubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
-        tileSubBoard_.drawChunks(tileset);
+        tileSubBoard_.drawChunks(staticInit_->tilesetBright);
     } else if (cursorState_ == CursorState::pasteArea) {
+        const sf::Texture* tileset = staticInit_->tilesetBright;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) {
+            tileset = staticInit_->tilesetBrightNoBlanks;
+        }
         copySubBoard_.setRenderArea(editView_, zoomLevel_, cursorCoords_.first);
         copySubBoard_.drawChunks(tileset);
     } else if (cursorState_ == CursorState::wireTool) {
@@ -258,7 +258,7 @@ void Editor::update() {
             std::min(wireToolStart_.x, cursorCoords_.first.x),
             std::min(wireToolStart_.y, cursorCoords_.first.y)
         });
-        tileSubBoard_.drawChunks(staticInit_->tilesetBrightNoBlanks);
+        tileSubBoard_.drawChunks(staticInit_->tilesetBrightNoBlanks, true);
     }
 }
 
