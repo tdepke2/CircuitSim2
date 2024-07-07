@@ -112,6 +112,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     cursorVisible_(false),
     selectionStart_({sf::Vector2i(), false}),
     selectionEnd_(),
+    wireToolLabel_("", Locator::getResource()->getFont("resources/consolas.ttf"), 22),
     wireToolStart_(),
     wireToolVerticalFirst_(false),
     wireToolWireState_(State::low),
@@ -125,6 +126,8 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     staticInit_ = &staticInit;
 
     cursor_.setFillColor({255, 80, 255, 100});
+    wireToolLabel_.setOutlineColor(sf::Color::Black);
+    wireToolLabel_.setOutlineThickness(2.0f);
 }
 
 const sf::Drawable& Editor::getGraphicalInterface() const {
@@ -553,6 +556,7 @@ void Editor::wireTool() {
         if (!cursorCoords_.second) {
             return;
         }
+        wireToolLabel_.setString(" 0, 0 ");
         wireToolStart_ = cursorCoords_.first;
         wireToolWireState_ = State::low;
         tileSubBoard_.accessTile(0, 0).setType(tiles::Blank::instance());
@@ -650,6 +654,8 @@ void Editor::updateCursor() {
     // For reference below: drawing a shape that ignores the Editor view transforms.
     //cursorLabel_.setPosition(editView_.getCenter() + editView_.getSize() * 0.5f - cursorLabel_.getLocalBounds().getSize() * zoomLevel_);
     //cursorLabel_.setScale(zoomLevel_, zoomLevel_);
+    wireToolLabel_.setPosition(cursor_.getPosition() + cursor_.getSize());
+    wireToolLabel_.setScale(zoomLevel_, zoomLevel_);
     interface_.setCursorVisible(cursorVisible_);
 }
 
@@ -756,6 +762,11 @@ void Editor::updateWireTool(const sf::Vector2i& lastCursorCoords) {
     if (cursorState_ != CursorState::wireTool) {
         return;
     }
+    wireToolLabel_.setString(
+        " " + std::to_string(cursorCoords_.first.x - wireToolStart_.x) +
+        ", " + std::to_string(cursorCoords_.first.y - wireToolStart_.y) + " "
+    );
+
     tileSubBoard_.clear();
     tileSubBoard_.setVisibleSize({
         1 + static_cast<unsigned int>(std::abs(wireToolStart_.x - cursorCoords_.first.x)),
@@ -945,6 +956,7 @@ void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {
 void Editor::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     if (cursorState_ == CursorState::wireTool) {
         target.draw(tileSubBoard_, states);
+        target.draw(wireToolLabel_, states);
     } else if (!cursorVisible_) {
         return;
     } else if (cursorState_ == CursorState::empty) {

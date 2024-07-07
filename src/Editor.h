@@ -94,11 +94,13 @@ private:
     bool cursorVisible_;
     std::pair<sf::Vector2i, bool> selectionStart_;
     sf::Vector2i selectionEnd_;
+
+    sf::Text wireToolLabel_;
     sf::Vector2i wireToolStart_;
     bool wireToolVerticalFirst_;
     State::t wireToolWireState_;
-    SubBoard tileSubBoard_, copySubBoard_;
 
+    SubBoard tileSubBoard_, copySubBoard_;
     TilePool tilePool_;
     std::deque<std::unique_ptr<Command>> editHistory_;
     size_t lastEditSize_;
