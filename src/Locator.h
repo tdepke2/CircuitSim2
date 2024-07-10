@@ -4,6 +4,9 @@
 
 #include <memory>
 
+/**
+ * Common access point for services (for the service locator pattern).
+ */
 class Locator {
 public:
     static ResourceBase* getResource();

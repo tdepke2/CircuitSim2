@@ -16,6 +16,18 @@ class Board;
 class OffsetView;
 class Tile;
 
+/**
+ * A smaller version of a `Board`, specialized for rendering pieces of a circuit
+ * and for applying edits.
+ * 
+ * Tiles and chunks can be accessed just like for a `Board`, but no file
+ * loading/saving is provided in this case. Rendering is also done differently,
+ * with all chunks drawing to a single texture here. All of the chunks will
+ * redraw when the visible area or LOD changes. The size of the `SubBoard` can
+ * be specified as an exact number of tiles and any tiles outside this range
+ * will not render. Note that tiles with any negative coordinates can still be
+ * accessed, but will never be visible.
+ */
 class SubBoard : public sf::Drawable, LodRenderer {
 public:
     SubBoard();

@@ -4,6 +4,9 @@
 
 #include <SFML/Graphics.hpp>
 
+/**
+ * Base class for a resource manager (for the service locator pattern).
+ */
 class ResourceBase {
 public:
     virtual ~ResourceBase() = default;

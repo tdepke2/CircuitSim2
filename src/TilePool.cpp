@@ -8,6 +8,15 @@
 #include <numeric>
 #include <spdlog/spdlog.h>
 
+// The below is an old comment prior to some redesign, some of the old code is
+// still here and commented out.
+// Note: the TilePool operates somewhat like a std::deque, meaning it is
+// efficient to free tiles in a similar order to the order of allocation. The
+// internal vector will grow as new chunks need to be allocated for tiles. If
+// all tiles in a chunk are freed, the chunk is moved to the last element of the
+// vector for reuse. This creates holes in the vector, but the holes get removed
+// when there are no allocated tiles in a previous element.
+
 namespace {
 
 constexpr int CHUNK_AREA = Chunk::WIDTH * Chunk::WIDTH;

@@ -8,6 +8,15 @@
 
 class OffsetView;
 
+/**
+ * Provides some operations that chunk renderers need for drawing chunks at
+ * different levels-of-detail.
+ * 
+ * The `markChunkDrawDirty()` function can be used by chunks to notify that a
+ * redraw is needed for that chunk. Also, some functions are available for
+ * managing decorations (items that draw on top of the rendered tiles in a
+ * chunk).
+ */
 class LodRenderer {
 public:
     // Max number of detail levels, the first level is at zero.
