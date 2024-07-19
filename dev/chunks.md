@@ -108,6 +108,18 @@ The `board.txt` file is similar to the legacy format, only storing version and s
 
 Each region file is a binary file containing a 4096 byte header followed by data for each chunk. The header is a lookup table matching each of the 1024 chunks in the region to a 1024 byte sector offset in the file (follows an X -> Y ordering starting from zero, offset is 32 bits). This is based very similarly to the MC Region file format: https://minecraft.wiki/w/Region_file_format
 
+## File Save/Load ##
+
+Save-as and rename needs to confirm that no duplicate board name (`<name>.txt` or `<name>` folder) exists.
+
+When saving the board, the file format stays the same. The format can only change when loading a different board or resizing and choosing a different format (a resize may force a specific format). A change in the format should save the new board file, and then remove the old format files.
+
+Need a chunk-purge thread to periodically remove saved chunks that have been sitting around for a while. The thread will keep a counter for each chunk that decrements when the thread ticks and the chunk is saved, or resets if the chunk is unsaved.
+
+An autosave interval could be provided in the config (disabled by default), this would periodically save the board file and all unsaved chunks. This autosave feature could be problematic for the user if simulation is not an undoable operation, so maybe have a tooltip to warn about this.
+
+Perhaps these two processes could be the same thread, we'll just need to run the chunk-purge before autosave.
+
 ## Undo and Redo ##
 
 The editor needs the ability to undo/redo edits made to the board, use the command design pattern to accomplish this.
@@ -122,6 +134,7 @@ The following should be undoable operations:
 * Running the simulation.
     * This could be undone by caching recently modified chunks when the sim pauses. If we track modification times for each chunk it should be easy, using the save state of a chunk may be an alternative option but probably has drawbacks.
     * What if an edit is made while the sim is running? How can the edit be undone without reverting back to when it was paused?
+    * Maybe instead cache a copy of chunks that tick or load during the sim, and restore these on undo? We could keep only one copy to reduce memory (meaning only one sim run can be undone, undoing edits across multiple sim runs may get wonky).
 
 The following should not be undoable:
 * Selections (with the exceptions that undo/redo should deselect everything, and delete should re-select the area).
@@ -160,6 +173,10 @@ Stick with the .ini format, and have the following fields:
 2. Use tri-state logic rules for new boards.
 3. Pause the simulation when a state conflict is detected.
 4. Edit history size.
+
+Some fields are needed for the specific board too:
+
+1. Use tri-state logic rules for this board.
 
 Could implement config with subject-observer, we may or may not want a dedicated Subject class.
 
