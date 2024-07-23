@@ -22,7 +22,7 @@
 int main() {
     std::shared_ptr<MessageLogSinkMt> messageLogSink;
     messageLogSink = std::make_shared<MessageLogSinkMt>();
-    spdlog::default_logger()->sinks().push_back(messageLogSink);
+    //spdlog::default_logger()->sinks().push_back(messageLogSink);
 
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);

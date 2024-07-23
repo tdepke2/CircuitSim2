@@ -256,8 +256,8 @@ void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, s
     boardFile << "}\n";
 }
 
-LegacyFileFormat::LegacyFileFormat() :
-    filename_("boards/NewBoard.txt") {
+LegacyFileFormat::LegacyFileFormat(const fs::path& filename) :
+    FileStorage(filename) {
 }
 
 bool LegacyFileFormat::validateFileVersion(float version) {
@@ -266,7 +266,7 @@ bool LegacyFileFormat::validateFileVersion(float version) {
 
 void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
     // Reset all members to ensure a clean state.
-    filename_ = filename;
+    setFilename(filename);
 
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
@@ -314,14 +314,14 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
 }
 
 void LegacyFileFormat::saveToFile(Board& board) {
-    if (filename_.has_parent_path()) {
-        fs::create_directories(filename_.parent_path());
+    if (getFilename().has_parent_path()) {
+        fs::create_directories(getFilename().parent_path());
     }
-    fs::ofstream boardFile(filename_);
+    fs::ofstream boardFile(getFilename());
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
+        throw std::runtime_error("\"" + getFilename().string() + "\": unable to open file for writing.");
     }
-    writeHeader(board, filename_, boardFile, 1.0f);
+    writeHeader(board, getFilename(), boardFile, 1.0f);
 
     boardFile << "\n";
     boardFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";

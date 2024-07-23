@@ -51,7 +51,7 @@ public:
     static constexpr int REGION_WIDTH = 32;
     static constexpr int SECTOR_SIZE = 256;
 
-    RegionFileFormat();
+    RegionFileFormat(const fs::path& filename = "boards/NewBoard/board.txt");
 
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
@@ -83,7 +83,6 @@ private:
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);
 
-    fs::path filename_;
     std::map<RegionCoords, Region> savedRegions_;
     ChunkCoordsRange lastVisibleChunks_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;

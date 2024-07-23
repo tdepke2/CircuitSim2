@@ -127,9 +127,9 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
     fileMenu.items.emplace_back("Exit");
     menuBar->insertMenu(fileMenu);
 
-    auto chooseFileMenu = [](const sf::String& item) {
+    auto chooseFileMenu = [this](const sf::String& item) {
         if (item == "New") {
-
+            editor_.newBoard();
         } else if (item == "Open...") {
 
         } else if (item == "Save") {

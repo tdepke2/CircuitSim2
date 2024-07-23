@@ -338,7 +338,7 @@ bool Editor::handleTextEntered(uint32_t unicode) {
 bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
     if (key.control) {
         if (key.code == sf::Keyboard::N) {
-            //fileOption(0);
+            newBoard();
         } else if (key.code == sf::Keyboard::O) {
             //fileOption(1);
         } else if (key.code == sf::Keyboard::S) {
@@ -378,6 +378,9 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
     return true;
 }
 
+void Editor::newBoard() {
+    board_.newBoard();
+}
 void Editor::undoEdit() {
     spdlog::warn("Editor::undoEdit(), edit history has {} commands, lastEditSize is {}.", editHistory_.size(), lastEditSize_);
     if (lastEditSize_ == 0) {

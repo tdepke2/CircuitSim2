@@ -18,8 +18,8 @@ constexpr int constLog2(int x) {
 constexpr int RegionFileFormat::REGION_WIDTH;
 constexpr int RegionFileFormat::SECTOR_SIZE;
 
-RegionFileFormat::RegionFileFormat() :
-    filename_("boards/NewBoard/board.txt"),
+RegionFileFormat::RegionFileFormat(const fs::path& filename) :
+    FileStorage(filename),
     savedRegions_(),
     lastVisibleChunks_(0, 0, 0, 0),
     chunkCache_(),
@@ -32,7 +32,7 @@ bool RegionFileFormat::validateFileVersion(float version) {
 
 void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
     // Reset all members to ensure a clean state.
-    filename_ = filename;
+    setFilename(filename);
     savedRegions_.clear();
     lastVisibleChunks_ = ChunkCoordsRange(0, 0, 0, 0);
     chunkCache_.clear();
@@ -84,7 +84,7 @@ void RegionFileFormat::saveToFile(Board& board) {
         }
     }
 
-    spdlog::debug("save file: {}", filename_);
+    spdlog::debug("save file: {}", getFilename());
     spdlog::debug("unsavedRegions:");
     for (auto& region : unsavedRegions) {
         spdlog::debug("  ({}, {}) ->", region.first.first, region.first.second);
@@ -97,19 +97,19 @@ void RegionFileFormat::saveToFile(Board& board) {
         return;
     }
 
-    if (filename_.has_parent_path()) {
-        fs::create_directories(filename_.parent_path());
+    if (getFilename().has_parent_path()) {
+        fs::create_directories(getFilename().parent_path());
     }
-    fs::create_directory(filename_.parent_path() / "region");
+    fs::create_directory(getFilename().parent_path() / "region");
     for (const auto& region : unsavedRegions) {
         saveRegion(board, region.first, region.second);
     }
 
-    fs::ofstream boardFile(filename_);
+    fs::ofstream boardFile(getFilename());
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + filename_.string() + "\": unable to open file for writing.");
+        throw std::runtime_error("\"" + getFilename().string() + "\": unable to open file for writing.");
     }
-    LegacyFileFormat::writeHeader(board, filename_, boardFile, 2.0f);
+    LegacyFileFormat::writeHeader(board, getFilename(), boardFile, 2.0f);
     boardFile << "regions: {\n";
     for (const auto& region : savedRegions_) {
         boardFile << region.first.first << "," << region.first.second << "\n";
@@ -152,7 +152,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     }
 
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = filename_.parent_path() / "region" / regionFilename;
+    regionFilename = getFilename().parent_path() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
         throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for reading.");
@@ -300,7 +300,7 @@ void RegionFileFormat::writeChunk(ChunkHeader header[], int headerIndex, const c
 
 void RegionFileFormat::loadRegion(Board& /*board*/, const RegionCoords& regionCoords) {
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = filename_.parent_path() / "region" / regionFilename;
+    regionFilename = getFilename().parent_path() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
         throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for reading.");
@@ -318,7 +318,7 @@ void RegionFileFormat::loadRegion(Board& /*board*/, const RegionCoords& regionCo
 
 void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region) {
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = filename_.parent_path() / "region" / regionFilename;
+    regionFilename = getFilename().parent_path() / "region" / regionFilename;
     fs::fstream regionFile(regionFilename, std::ios::in | std::ios::out | std::ios::binary);
     spdlog::debug("Saving chunks for region {}, {}.", regionCoords.first, regionCoords.second);
 

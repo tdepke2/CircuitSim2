@@ -61,8 +61,13 @@ public:
      * returned lower bound will be greater than the upper bound.
      */
     std::pair<sf::Vector2i, sf::Vector2i> getHighlightedBounds();
+    void clear();
+    void newBoard(const sf::Vector2u& size = {64, 64});
     void loadFromFile(const fs::path& filename);
     void saveToFile();
+    void saveAsFile(const fs::path& filename);
+    void rename();
+    void resize();
     void debugPrintChunk(ChunkCoords::repr i) {
         chunks_.at(i).debugPrintChunk();
     }

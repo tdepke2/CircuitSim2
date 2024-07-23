@@ -16,7 +16,7 @@ class Board;
 class ChunkCoordsRange;
 
 /**
- * Abstract interface for circuit file formats.
+ * Abstract class for circuit file formats.
  * 
  * The `boardFile` parameters refer to the top-level text file that defines the
  * board properties (it begins with the "version" field).
@@ -28,12 +28,22 @@ public:
 
     static float getFileVersion(const fs::path& filename, fs::ifstream& boardFile);
 
+    FileStorage(const fs::path& filename);
+
+    // FIXME: where is my virtual dtor huh?
+
+    void setFilename(const fs::path& filename);
+    const fs::path& getFilename() const;
+
     virtual bool validateFileVersion(float version) = 0;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) = 0;
     virtual void saveToFile(Board& board) = 0;
 
     virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks);
     virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords);
+
+private:
+    fs::path filename_;
 };
 
 // Reverses bytes in the given integral type to convert endianness.

@@ -34,7 +34,7 @@ public:
     static void parseHeader(Board& board, const std::string& line, int lineNumber, HeaderState& state);
     static void writeHeader(Board& board, const fs::path& filename, std::ostream& boardFile, float version);
 
-    LegacyFileFormat();
+    LegacyFileFormat(const fs::path& filename = "boards/NewBoard.txt");
 
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
@@ -47,6 +47,4 @@ private:
     };
 
     static void parseTiles(Board& board, const std::string& line, int lineNumber, ParseState& state);
-
-    fs::path filename_;
 };

@@ -331,6 +331,29 @@ std::pair<sf::Vector2i, sf::Vector2i> Board::getHighlightedBounds() {
     return {firstTile, secondTile};
 }
 
+void Board::clear() {
+    chunks_.clear();
+    chunkDrawables_.clear();
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    extraLogicStates_ = false;    // FIXME: need to be set from config.
+    notesText_.setString("");
+
+    // FIXME: clear does not force redraw the deleted chunks, need to fix.
+}
+
+void Board::newBoard(const sf::Vector2u& size) {
+    if (size != sf::Vector2u(0, 0)) {
+        fileStorage_ = details::make_unique<LegacyFileFormat>();
+    } else {
+        fileStorage_ = details::make_unique<RegionFileFormat>();
+    }
+    maxSize_ = {
+        ((size.x - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH,
+        ((size.y - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH
+    };
+    clear();
+}
+
 void Board::loadFromFile(const fs::path& filename) {
     spdlog::info("Loading file \"{}\".", filename);
     fs::ifstream boardFile(filename);
@@ -363,6 +386,18 @@ void Board::saveToFile() {
 
 
     fileStorage_->saveToFile(*this);
+}
+
+void Board::saveAsFile(const fs::path& filename) {
+
+}
+
+void Board::rename() {
+
+}
+
+void Board::resize() {
+
 }
 
 void Board::debugSetDrawChunkBorder(bool enabled) {

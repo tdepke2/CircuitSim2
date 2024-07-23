@@ -51,6 +51,7 @@ private:
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
     // now the question remains: should these be private? maybe so
+    void newBoard();
     void undoEdit();
     void redoEdit();
     void selectAll();

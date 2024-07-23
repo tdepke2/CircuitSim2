@@ -27,6 +27,18 @@ float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardF
     return -1.0;
 }
 
+FileStorage::FileStorage(const fs::path& filename) :
+    filename_(filename) {
+}
+
+void FileStorage::setFilename(const fs::path& filename) {
+    filename_ = filename;
+}
+
+const fs::path& FileStorage::getFilename() const {
+    return filename_;
+}
+
 void FileStorage::updateVisibleChunks(Board& /*board*/, const ChunkCoordsRange& /*visibleChunks*/) {
 
 }
