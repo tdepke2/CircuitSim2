@@ -38,6 +38,7 @@ public:
     Board& operator=(const Board& rhs) = delete;
 
     void setRenderArea(const OffsetView& offsetView, float zoom);
+    // The max size is rounded up to a multiple of `Chunk::WIDTH` when setting.
     void setMaxSize(const sf::Vector2u& size);
     void setExtraLogicStates(bool extraLogicStates);
     void setNotesString(const sf::String& notes);

@@ -228,14 +228,7 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     } else if (state.lastField == "notes: {") {
         state.lastField = "headerEnd";
 
-        if (state.width > 0 && state.height > 0) {
-            board.setMaxSize({
-                ((state.width - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH,
-                ((state.height - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH
-            });
-        } else {
-            board.setMaxSize({0, 0});
-        }
+        board.setMaxSize({state.width, state.height});
         board.setExtraLogicStates(state.extraLogicStates);
         board.setNotesString(state.notesString);
 

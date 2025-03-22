@@ -177,7 +177,14 @@ void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
 }
 
 void Board::setMaxSize(const sf::Vector2u& size) {
-    maxSize_ = size;
+    if (size.x == 0 || size.y == 0) {
+        maxSize_ = {0, 0};
+    } else {
+        maxSize_ = {
+            (size.x + Chunk::WIDTH - 1) / Chunk::WIDTH * Chunk::WIDTH,
+            (size.y + Chunk::WIDTH - 1) / Chunk::WIDTH * Chunk::WIDTH
+        };
+    }
 
     // FIXME: trim chunks that are now outside the max area?
 }
@@ -342,16 +349,13 @@ void Board::clear() {
 }
 
 void Board::newBoard(const sf::Vector2u& size) {
-    if (size != sf::Vector2u(0, 0)) {
-        fileStorage_ = details::make_unique<LegacyFileFormat>();
-    } else {
-        fileStorage_ = details::make_unique<RegionFileFormat>();
-    }
-    maxSize_ = {
-        ((size.x - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH,
-        ((size.y - 1) / Chunk::WIDTH + 1) * Chunk::WIDTH
-    };
     clear();
+    setMaxSize(size);
+    if (maxSize_.x == 0) {
+        fileStorage_ = details::make_unique<RegionFileFormat>();
+    } else {
+        fileStorage_ = details::make_unique<LegacyFileFormat>();
+    }
 }
 
 void Board::loadFromFile(const fs::path& filename) {

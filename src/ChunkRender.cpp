@@ -107,7 +107,7 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     }
 
     for (auto& renderBlock : renderBlocks_) {
-        chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);
+        chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);    // FIXME: crash if the chunkDrawables have been cleared! To repro, create new board and make window larger.
     }
     renderIndexPool_.resize(maxChunkArea_.x * maxChunkArea_.y);
     std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
@@ -117,7 +117,7 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
 
 void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea) {
     if (visibleArea.contains(coords)) {
-        bufferDirty_ = true;
+        bufferDirty_ = true;    // FIXME: we mark the buffer dirty when nothing changed in the buffer? this check should be needed, but it's in the wrong place maybe.
     }
 
     if (renderBlocks_.size() < renderIndexPool_.size()) {
