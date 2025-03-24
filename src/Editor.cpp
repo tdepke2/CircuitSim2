@@ -377,6 +377,8 @@ void Editor::newBoard() {
     deselectAll();
     board_.newBoard();
     defaultZoom();
+    editHistory_.clear();
+    lastEditSize_ = 0;
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
 void Editor::undoEdit() {
