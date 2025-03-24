@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-02-25T02:58:51.361Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="-b3BaSNzMdBt9gu03cC_" version="22.1.18" type="device" pages="2">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0" version="26.1.1" pages="2">
   <diagram name="Rendering" id="5COAI83WerfBTpbnbK-L">
-    <mxGraphModel dx="2074" dy="1106" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1114" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -796,11 +796,11 @@
             <mxPoint x="410" y="160" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-167" value="Chunks in Board&lt;br&gt;std::unordered_map&amp;lt;ChunkCoords, Chunk&amp;gt; chunks_;&lt;br&gt;Empty spots in the map are unloaded or empty chunks. A chunk may be unloaded if it is not visible or processing updates." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-167" value="Chunks in Board&lt;br&gt;std::unordered_map&amp;lt;ChunkCoords, Chunk&amp;gt; chunks_;&lt;br&gt;Empty spots in the map are unloaded or empty chunks. A chunk may be unloaded if it is not visible or not processing updates." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="250" y="10" width="365" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-168" value="WIDTH = 8" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-90;" parent="1" vertex="1">
-          <mxGeometry x="-20" y="140" width="90" height="30" as="geometry" />
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-168" value="&lt;div&gt;WIDTH = 32&amp;nbsp;&lt;/div&gt;&lt;div&gt;(only 8 shown here)&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-90;" parent="1" vertex="1">
+          <mxGeometry x="-70" y="140" width="185" height="30" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-171" value="" style="shape=table;startSize=0;container=1;collapsible=0;childLayout=tableLayout;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
           <mxGeometry x="40" y="400" width="160" height="160" as="geometry" />
@@ -1760,8 +1760,8 @@
             <mxPoint x="960" y="680" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-407" value="Level of detail (LOD) specific data.&lt;br&gt;There are five instances of these, chosen based on the zoom level of the view. For this LOD, we assume it was allocated to 8 by 8 (which coincidentally matches the Chunk WIDTH)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="680" y="270" width="330" height="100" as="geometry" />
+        <mxCell id="SPPW-IRCVoIIrB0qk-Ap-407" value="Level of detail (LOD) specific data.&lt;br&gt;There are five instances of these, chosen based on the zoom level of the view. For this LOD, we assume it was allocated to 8 by 8." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="640" y="270" width="380" height="100" as="geometry" />
         </mxCell>
         <mxCell id="SPPW-IRCVoIIrB0qk-Ap-408" value="A RenderBlock can correspond to a Chunk that is not loaded (the visual data is still cached in texture)." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="640" y="920" width="170" height="70" as="geometry" />
