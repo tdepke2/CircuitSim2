@@ -62,6 +62,9 @@ private:
     void copyArea();
     void pasteArea();
     void deleteArea();
+    void toggleEditMode();
+    void changeZoom(float zoomDelta);
+    void defaultZoom();
     void wireTool();
     void queryTool();
     void pickTile(TileId::t id);

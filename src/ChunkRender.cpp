@@ -72,6 +72,22 @@ int ChunkRender::getLod() const {
     return levelOfDetail_;
 }
 
+void ChunkRender::clear() {
+    lastVisibleArea_ = {0, 0, 0, 0};
+    lastTopLeft_ = 0;
+
+    if (texture_.getSize() != sf::Vector2u(0, 0)) {
+        texture_.clear(sf::Color::Black);
+        texture_.setSmooth(true);
+        textureDirty_ = true;
+    }
+
+    renderIndexPool_.resize(maxChunkArea_.x * maxChunkArea_.y);
+    std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
+    renderBlocks_.clear();
+    renderBlocks_.reserve(renderIndexPool_.size());
+}
+
 void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea) {
     constexpr int chunkWidthTexels = Chunk::WIDTH * static_cast<int>(TileWidth::TEXELS);
     const int textureSubdivisionSize = chunkWidthTexels / (1 << levelOfDetail_);
@@ -90,15 +106,10 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
 
     spdlog::debug("Resizing LOD {} area to {} by {} chunks.", levelOfDetail_, pow2ChunkArea.x, pow2ChunkArea.y);
     maxChunkArea_ = pow2ChunkArea;
-    lastVisibleArea_ = {0, 0, 0, 0};
-    lastTopLeft_ = 0;
 
     if (!texture_.create(textureSize.x, textureSize.y)) {
         spdlog::error("Failed to create texture for LOD {} (size {} by {}).", levelOfDetail_, textureSize.x, textureSize.y);
     }
-    texture_.clear(sf::Color::Black);
-    texture_.setSmooth(true);
-    textureDirty_ = true;
     DebugScreen::instance()->registerTexture("chunkRender LOD " + std::to_string(levelOfDetail_), &texture_.getTexture());
 
     const unsigned int bufferSize = maxChunkArea_.x * maxChunkArea_.y * (staticInit_->chunkShader != nullptr ? 1 : 6);
@@ -107,12 +118,9 @@ void ChunkRender::resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawabl
     }
 
     for (auto& renderBlock : renderBlocks_) {
-        chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);    // FIXME: crash if the chunkDrawables have been cleared! To repro, create new board and make window larger.
+        chunkDrawables.at(renderBlock.coords).setRenderIndex(levelOfDetail_, -1);
     }
-    renderIndexPool_.resize(maxChunkArea_.x * maxChunkArea_.y);
-    std::iota(renderIndexPool_.begin(), renderIndexPool_.end(), 0);
-    renderBlocks_.clear();
-    renderBlocks_.reserve(renderIndexPool_.size());
+    clear();
 }
 
 void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea) {

@@ -131,7 +131,10 @@ sf::Text& DebugScreen::getField(const std::string& customName) {
 void DebugScreen::registerTexture(const std::string& name, const sf::Texture* texture) {
     for (auto& t : textures_) {
         if (t.name == name) {
-            t.texture = texture;
+            if (t.texture != texture) {
+                spdlog::error("Registered different texture for existing texture \"{}\".", name);
+                t.texture = texture;
+            }
             return;
         }
     }

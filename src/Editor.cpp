@@ -100,7 +100,7 @@ Editor::StaticInit::StaticInit() {
 Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
     interface_(*this, window, messageLogSink),
     board_(board),
-    editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH), window.getDefaultView()),
+    editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH)),
     zoomLevel_(1.0f),
     mousePos_(),
     mouseLeftIsDragging_(false),
@@ -125,6 +125,7 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     static StaticInit staticInit;
     staticInit_ = &staticInit;
 
+    defaultZoom();
     cursor_.setFillColor({255, 80, 255, 100});
     wireToolLabel_.setOutlineColor(sf::Color::Black);
     wireToolLabel_.setOutlineThickness(2.0f);
@@ -223,13 +224,7 @@ bool Editor::processEvent(const sf::Event& event) {
         return true;
     } else if (event.type == sf::Event::MouseWheelScrolled) {
         float zoomMult = 1.0f + (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) * 5.0f;
-        float zoomDelta = event.mouseWheelScroll.delta * zoomMult * zoomLevel_ * -0.04f;
-        constexpr float minZoom = 0.2f, maxZoom = 32.0f;
-        static_assert(maxZoom <= (1 << LodRenderer::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
-
-        zoomLevel_ += zoomDelta;
-        zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);
-        editView_.setSize(windowSize_.x * zoomLevel_, windowSize_.y * zoomLevel_);
+        changeZoom(event.mouseWheelScroll.delta * zoomMult);
     } else if (event.type == sf::Event::TextEntered) {
         return handleTextEntered(event.text.unicode);
     } else if (event.type == sf::Event::KeyPressed) {
@@ -379,7 +374,10 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
 }
 
 void Editor::newBoard() {
+    deselectAll();
     board_.newBoard();
+    defaultZoom();
+    spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
 void Editor::undoEdit() {
     spdlog::warn("Editor::undoEdit(), edit history has {} commands, lastEditSize is {}.", editHistory_.size(), lastEditSize_);
@@ -553,6 +551,24 @@ void Editor::deleteArea() {
     });
     executeCommand(std::move(command));
     board_.removeAllHighlights();
+}
+void Editor::toggleEditMode() {
+    spdlog::warn("Editor::toggleEditMode() NYI");
+}
+void Editor::changeZoom(float zoomDelta) {
+    zoomDelta *= zoomLevel_ * -0.04f;
+    constexpr float minZoom = 0.2f, maxZoom = 32.0f;
+    static_assert(maxZoom <= (1 << LodRenderer::LEVELS_OF_DETAIL), "Maximum zoom level must not exceed the total levels of detail.");
+
+    zoomLevel_ += zoomDelta;
+    zoomLevel_ = std::min(std::max(zoomLevel_, minZoom), maxZoom);
+    editView_.setSize(windowSize_.x * zoomLevel_, windowSize_.y * zoomLevel_);
+}
+void Editor::defaultZoom() {
+    editView_.setSize(static_cast<sf::Vector2f>(windowSize_));
+    editView_.setCenter(static_cast<sf::Vector2f>(windowSize_) * 0.5f);
+    editView_.setCenterOffset(0, 0);
+    zoomLevel_ = 1.0f;
 }
 void Editor::wireTool() {
     if (cursorState_ != CursorState::wireTool) {

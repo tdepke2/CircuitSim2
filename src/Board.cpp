@@ -102,7 +102,7 @@ Board::StaticInit::StaticInit() {
 }
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
-    fileStorage_(details::make_unique<LegacyFileFormat>()),
+    fileStorage_(),
     maxSize_(0, 0),
     extraLogicStates_(false),
     notesText_(),
@@ -118,10 +118,7 @@ Board::Board() :    // FIXME we really should be doing member initialization lis
     static StaticInit staticInit;
     staticInit_ = &staticInit;
 
-    for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
-        chunkRenderCache_[i].setLod(i);
-    }
-    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    newBoard();
 }
 
 void Board::setRenderArea(const OffsetView& offsetView, float zoom) {
@@ -338,24 +335,24 @@ std::pair<sf::Vector2i, sf::Vector2i> Board::getHighlightedBounds() {
     return {firstTile, secondTile};
 }
 
-void Board::clear() {
-    chunks_.clear();
-    chunkDrawables_.clear();
-    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
-    extraLogicStates_ = false;    // FIXME: need to be set from config.
-    notesText_.setString("");
-
-    // FIXME: clear does not force redraw the deleted chunks, need to fix.
-}
-
 void Board::newBoard(const sf::Vector2u& size) {
-    clear();
     setMaxSize(size);
     if (maxSize_.x == 0) {
         fileStorage_ = details::make_unique<RegionFileFormat>();
     } else {
         fileStorage_ = details::make_unique<LegacyFileFormat>();
     }
+
+    extraLogicStates_ = false;    // FIXME: need to be set from config.
+    notesText_.setString("");
+
+    chunks_.clear();
+    chunkDrawables_.clear();
+    for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
+        chunkRenderCache_[i].setLod(i);
+        chunkRenderCache_[i].clear();
+    }
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void Board::loadFromFile(const fs::path& filename) {

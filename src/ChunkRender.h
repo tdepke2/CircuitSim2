@@ -34,6 +34,7 @@ public:
 
     void setLod(int levelOfDetail);
     int getLod() const;
+    void clear();
     void resize(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, const sf::Vector2u& maxChunkArea);
     void allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunkDrawables, ChunkCoords::repr coords, const ChunkCoordsRange& visibleArea);
     void drawChunk(const ChunkDrawable& chunkDrawable, sf::RenderStates states);
