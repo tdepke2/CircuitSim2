@@ -29,8 +29,7 @@ public:
     static float getFileVersion(const fs::path& filename, fs::ifstream& boardFile);
 
     FileStorage(const fs::path& filename);
-
-    // FIXME: where is my virtual dtor huh?
+    virtual ~FileStorage() = default;
 
     void setFilename(const fs::path& filename);
     const fs::path& getFilename() const;

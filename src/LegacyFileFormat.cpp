@@ -270,7 +270,7 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     if (symbolLookup.empty()) {
         spdlog::debug("First time init symbolLookup.");
         for (size_t i = 0; i < TILE_SYMBOLS.size(); ++i) {
-            symbolLookup.emplace(TILE_SYMBOLS[i], i);
+            symbolLookup.emplace(TILE_SYMBOLS[i], static_cast<unsigned int>(i));
         }
     }
 

@@ -406,7 +406,7 @@ void MenuBar::mouseUpdate(bool mouseClick, bool mouseDown, const sf::Vector2f& m
         selectMenuItem(-1);
         for (size_t i = 0; i < menus_.size(); ++i) {
             if (mouseLocal.x + getOrigin().x < menus_[i].labelPosition_.x + menus_[i].labelWidth_ + style_->barTextPadding_.x) {
-                selectMenu(i, mouseDown != menuIsOpen_);
+                selectMenu(static_cast<int>(i), mouseDown != menuIsOpen_);
                 return;
             }
         }
@@ -416,14 +416,14 @@ void MenuBar::mouseUpdate(bool mouseClick, bool mouseDown, const sf::Vector2f& m
     } else if (menuIsOpen_) {
         // Mouse is in a menu.
         const auto& menu = menus_[selectedMenu_];
-        int selectedMenuItem = menu.items.size() - 1;
+        size_t selectedMenuItem = menu.items.size() - 1;
         for (size_t i = 1; i < menu.items.size(); ++i) {
             if (mouseLocal.y + getOrigin().y < menu.items[i].leftPosition_.y - style_->menuTextPadding_.y) {
                 selectedMenuItem = i - 1;
                 break;
             }
         }
-        selectMenuItem(selectedMenuItem);
+        selectMenuItem(static_cast<int>(selectedMenuItem));
         if (mouseClick && !mouseDown && menu.items[selectedMenuItem].enabled) {
             onMenuItemClick.emit(this, menu, selectedMenuItem);
             selectMenu(-1, false);

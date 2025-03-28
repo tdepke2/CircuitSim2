@@ -129,7 +129,7 @@ void ChunkRender::allocateBlock(FlatMap<ChunkCoords::repr, ChunkDrawable>& chunk
     }
 
     if (renderBlocks_.size() < renderIndexPool_.size()) {
-        unsigned int poolIndex = renderBlocks_.size();
+        unsigned int poolIndex = static_cast<unsigned int>(renderBlocks_.size());
         renderBlocks_.emplace_back(coords, poolIndex);
         chunkDrawables.at(coords).setRenderIndex(levelOfDetail_, renderIndexPool_[poolIndex]);
         spdlog::debug("Allocated new block (LOD {} at chunk {}) with render index {}.",

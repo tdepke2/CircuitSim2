@@ -28,14 +28,14 @@ public:
     ChatBoxLine() :
         str(), color(), style(sf::Text::Regular), id(0) {
     }
-    ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style, unsigned int id = 0) :
+    ChatBoxLine(const sf::String& str, const sf::Color& color, uint32_t style, size_t id = 0) :
         str(str), color(color), style(style), id(id) {
     }
 
     sf::String str;
     sf::Color color;
     uint32_t style;
-    unsigned int id;
+    size_t id;
 };
 
 /**

@@ -349,7 +349,7 @@ void Board::newBoard(const sf::Vector2u& size) {
     chunks_.clear();
     chunkDrawables_.clear();
     for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
-        chunkRenderCache_[i].setLod(i);
+        chunkRenderCache_[i].setLod(static_cast<int>(i));
         chunkRenderCache_[i].clear();
     }
     chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());

@@ -29,8 +29,7 @@ class Tile;
  * uses different levels-of-detail based on the zoom level. Boards can also
  * save/load to a file and work with different file formats.
  */
-class Board : public sf::Drawable, LodRenderer {
-    // FIXME: forgot access specifier above, it should be public but did it default to something else and did this cause any issues? ###############################################################
+class Board : public sf::Drawable, private LodRenderer {
 public:
     Board();
     ~Board() = default;

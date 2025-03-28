@@ -278,14 +278,14 @@ std::vector<char> RegionFileFormat::readChunk(ChunkHeader header[], int headerIn
 }
 
 void RegionFileFormat::writeChunk(ChunkHeader header[], int headerIndex, const char emptySector[], uint32_t& lastOffset, const std::vector<char>& chunkData, const fs::path& /*filename*/, std::ostream& regionFile) {
-    const uint32_t serializedSize = chunkData.size() + sizeof(serializedSize);
-    const unsigned int sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+    const uint32_t serializedSize = static_cast<uint32_t>(chunkData.size() + sizeof(serializedSize));
+    const uint32_t sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
     if (header[headerIndex].sectors > 0) {
         assert(header[headerIndex].sectors >= sectorCount);
         regionFile.seekp(header[headerIndex].offset * SECTOR_SIZE, std::ios::beg);
     } else {
         header[headerIndex].offset = lastOffset;
-        header[headerIndex].sectors = sectorCount;
+        header[headerIndex].sectors = static_cast<uint8_t>(sectorCount);
         regionFile.seekp(lastOffset * SECTOR_SIZE, std::ios::beg);
         lastOffset += header[headerIndex].sectors;
     }
@@ -361,14 +361,14 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         if (regionFileLength > 0) {
             const auto regionOffset = toRegionOffset(chunkCoords);
             const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
-            const uint32_t serializedSize = serialized->second.size() + sizeof(serializedSize);
-            const unsigned int sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+            const uint32_t serializedSize = static_cast<uint32_t>(serialized->second.size() + sizeof(serializedSize));
+            const uint32_t sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
             if (header[headerIndex].sectors > 0) {
                 if (serialized->second.empty()) {
                     spdlog::debug("Chunk {} requires 0 sectors, removing.", ChunkCoords::toPair(chunkCoords));
                     reallocationRequired = true;
                 } else if (header[headerIndex].sectors < sectorCount) {
-                    const unsigned int currentSectors = header[headerIndex].sectors;
+                    const uint32_t currentSectors = header[headerIndex].sectors;
                     spdlog::debug("Chunk {} requires {} sectors but only {} are allocated.", ChunkCoords::toPair(chunkCoords), sectorCount, currentSectors);
                     reallocationRequired = true;
                 }
@@ -394,7 +394,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         }
     } else if (regionFileLength == 0) {
         // Write empty header.
-        for (unsigned int i = 0; i < lastOffset; ++i) {
+        for (uint32_t i = 0; i < lastOffset; ++i) {
             regionFile.write(emptySector, SECTOR_SIZE);
         }
     } else {
@@ -405,14 +405,15 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
     for (const auto& serialized : serializedChunks) {
         const auto regionOffset = toRegionOffset(serialized.first);
         const int headerIndex = regionOffset.first + regionOffset.second * REGION_WIDTH;
-        const uint32_t serializedSize = serialized.second.size() + sizeof(serializedSize);
+        const uint32_t serializedSize = static_cast<uint32_t>(serialized.second.size() + sizeof(serializedSize));
         if (serialized.second.empty()) {
             savedRegions_[regionCoords].erase(serialized.first);
             continue;
-        } else if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<unsigned int>(SECTOR_SIZE)) {
+        } else if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<uint32_t>(SECTOR_SIZE)) {
             savedRegions_[regionCoords].insert(serialized.first);
         } else {
             // FIXME unable to save this chunk, too much data
+            // FIXME this check should be moved into writeChunk().
             spdlog::error("Failed to save chunk at {} (serialized to {} bytes).", ChunkCoords::toPair(serialized.first), serialized.second.size());
             continue;
         }

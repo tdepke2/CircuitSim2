@@ -28,7 +28,7 @@ class Tile;
  * will not render. Note that tiles with any negative coordinates can still be
  * accessed, but will never be visible.
  */
-class SubBoard : public sf::Drawable, LodRenderer {
+class SubBoard : public sf::Drawable, private LodRenderer {
 public:
     SubBoard();
     ~SubBoard() = default;
