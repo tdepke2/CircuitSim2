@@ -28,6 +28,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <portable-file-dialogs.h>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -100,6 +101,7 @@ Editor::StaticInit::StaticInit() {
 Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
     interface_(*this, window, messageLogSink),
     board_(board),
+    workingDirectory_(fs::current_path()),
     editView_(static_cast<float>(TileWidth::TEXELS * Chunk::WIDTH)),
     zoomLevel_(1.0f),
     mousePos_(),
@@ -120,7 +122,9 @@ Editor::Editor(Board& board, sf::RenderWindow& window, MessageLogSinkMt* message
     copySubBoard_(),
     tilePool_(),
     editHistory_(),
-    lastEditSize_(0) {
+    maxEditHistory_(0),
+    lastEditSize_(0),
+    savedEditSize_(0) {
 
     static StaticInit staticInit;
     staticInit_ = &staticInit;
@@ -141,6 +145,37 @@ const OffsetView& Editor::getEditView() const {
 
 float Editor::getZoom() const {
     return zoomLevel_;
+}
+
+void Editor::setMaxEditHistory(size_t maxEditHistory) {
+    maxEditHistory_ = maxEditHistory;
+
+    // Remove any future history exceeding the max.
+    while (editHistory_.size() > maxEditHistory_ && lastEditSize_ < editHistory_.size()) {
+        editHistory_.pop_back();
+    }
+    if (savedEditSize_ > editHistory_.size()) {
+        savedEditSize_ = std::numeric_limits<size_t>::max();
+    }
+
+    // Remove any past history exceeding the max.
+    while (editHistory_.size() > maxEditHistory_) {
+        editHistory_.pop_front();
+        --lastEditSize_;
+        if (savedEditSize_ != std::numeric_limits<size_t>::max() && savedEditSize_ > 0) {
+            --savedEditSize_;
+        } else {
+            savedEditSize_ = std::numeric_limits<size_t>::max();
+        }
+    }
+}
+
+size_t Editor::getMaxEditHistory() const {
+    return maxEditHistory_;
+}
+
+bool Editor::isEditUnsaved() const {
+    return lastEditSize_ != savedEditSize_;
 }
 
 void Editor::goToTile(int x, int y) {
@@ -335,9 +370,13 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
         if (key.code == sf::Keyboard::N) {
             newBoard();
         } else if (key.code == sf::Keyboard::O) {
-            //fileOption(1);
+            openBoard();
         } else if (key.code == sf::Keyboard::S) {
-            //fileOption(2);
+            if (!key.shift) {
+                saveBoard();
+            } else {
+                saveAsBoard();
+            }
         } else if (key.code == sf::Keyboard::A) {
             selectAll();
         } else if (key.code == sf::Keyboard::Z) {
@@ -374,12 +413,51 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
 }
 
 void Editor::newBoard() {
+    // TODO: check for existing file with name, and if it exists do something like newboard(2).txt?
     deselectAll();
     board_.newBoard();
     defaultZoom();
     editHistory_.clear();
     lastEditSize_ = 0;
+    savedEditSize_ = 0;
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
+}
+void Editor::openBoard() {
+    auto openDialog = pfd::open_file("Open Board File", (workingDirectory_ / "boards").string(), {
+        "Plain Text (*.txt)", "*.txt",
+        "All Files (*.*)", "*"
+    }, pfd::opt::none).result();
+
+    if (!openDialog.empty()) {
+        spdlog::info("{}", openDialog[0]);
+    } else {
+        spdlog::info("No file selected.");
+    }
+}
+void Editor::saveBoard() {
+    // TODO: What if the file doesn't exist?
+    spdlog::warn("Editor::saveBoard() NYI");
+
+    savedEditSize_ = lastEditSize_;
+}
+void Editor::saveAsBoard() {
+    // TODO: File exists: ask if user wants to replace it.
+    spdlog::warn("Editor::saveAsBoard() NYI");
+    // call saveBoard() here to reduce duplication?
+}
+void Editor::renameBoard() {
+    // TODO: Allow dir separator in name to change path?
+    // File with old name exists: move it.
+    // File with new name exists: fail.
+    // Does not save the board, just moves files and sets name.
+    spdlog::warn("Editor::renameBoard() NYI");
+}
+void Editor::resizeBoard() {
+    // TODO: If size truncates: warn about this? We just forced size to change in old sim.
+    // Maybe have option to truncate, and if not set then allow chunks outside area to save next time and load again if the size increases? I don't like this...
+    // Perhaps force truncate, and just make sure the resize is an undoable operation (have this function return any deleted chunks?).
+    // Allow option to choose different file format, and warn in gui if attempting to use legacy format with large size.
+    spdlog::warn("Editor::resizeBoard() NYI");
 }
 void Editor::undoEdit() {
     spdlog::warn("Editor::undoEdit(), edit history has {} commands, lastEditSize is {}.", editHistory_.size(), lastEditSize_);
@@ -856,6 +934,9 @@ std::unique_ptr<T> Editor::makeCommand(Args&&... args) {
         Command& lastCommand = *editHistory_.back();
         if (lastCommand.isGroupingAllowed() && lastCommand.getTimeSinceLastExecute().count() < 1000 && typeid(lastCommand) == typeid(T)) {
             spdlog::debug("Last command has same type, returning it.");
+            if (savedEditSize_ == lastEditSize_) {
+                savedEditSize_ = std::numeric_limits<size_t>::max();
+            }
             auto lastCommandPtr = static_cast<T*>(editHistory_.back().release());
             editHistory_.pop_back();
             --lastEditSize_;
@@ -873,12 +954,14 @@ void Editor::executeCommand(std::unique_ptr<Command>&& command) {
     command->execute();
     if (lastEditSize_ < editHistory_.size()) {
         editHistory_.resize(lastEditSize_);
+        if (savedEditSize_ > lastEditSize_) {
+            savedEditSize_ = std::numeric_limits<size_t>::max();
+        }
     }
-
-    // FIXME: need to check if we reached the max history amount (will need to be specified in config).
 
     editHistory_.emplace_back(std::move(command));
     lastEditSize_ = editHistory_.size();
+    setMaxEditHistory(maxEditHistory_);
 }
 
 void Editor::pasteToBoard(const sf::Vector2i& tilePos, bool deltaCheck) {

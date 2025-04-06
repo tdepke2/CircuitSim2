@@ -104,6 +104,7 @@ target_include_directories(cs2_src PUBLIC .)
 target_link_libraries(cs2_src PUBLIC
     cs2_gui
     sfml-graphics
+    portable_file_dialogs
     spdlog::spdlog
     ghc_filesystem
 )

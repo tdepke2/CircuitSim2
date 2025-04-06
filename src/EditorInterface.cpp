@@ -120,7 +120,7 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
     fileMenu.items.emplace_back("New", "Ctrl+N");
     fileMenu.items.emplace_back("Open...", "Ctrl+O");
     fileMenu.items.emplace_back("Save", "Ctrl+S");
-    fileMenu.items.emplace_back("Save As...");
+    fileMenu.items.emplace_back("Save As...", "Ctrl+Shift+S");
     fileMenu.items.emplace_back("Rename...");
     fileMenu.items.emplace_back("Resize...");
     fileMenu.items.emplace_back("Configuration...");
@@ -131,15 +131,15 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
         if (item == "New") {
             editor_.newBoard();
         } else if (item == "Open...") {
-
+            editor_.openBoard();
         } else if (item == "Save") {
-
+            editor_.saveBoard();
         } else if (item == "Save As...") {
-
+            editor_.saveAsBoard();
         } else if (item == "Rename...") {
-
+            editor_.renameBoard();
         } else if (item == "Resize...") {
-
+            editor_.resizeBoard();
         } else if (item == "Configuration...") {
 
         } else if (item == "Exit") {

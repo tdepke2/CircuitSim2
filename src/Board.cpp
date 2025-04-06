@@ -376,6 +376,7 @@ void Board::loadFromFile(const fs::path& filename) {
         throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
     }
     fileStorage_->loadFromFile(*this, filename, boardFile);
+    // FIXME: if there is an error during load, we may need to reset to a new board. If no fileStorage could be found for the version then maybe just keep the current board.
     boardFile.close();
 }
 

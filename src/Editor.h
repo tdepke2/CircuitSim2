@@ -1,6 +1,7 @@
 #pragma once
 
 #include <EditorInterface.h>
+#include <Filesystem.h>
 #include <OffsetView.h>
 #include <SubBoard.h>
 #include <Tile.h>
@@ -29,6 +30,9 @@ public:
     const sf::Drawable& getGraphicalInterface() const;
     const OffsetView& getEditView() const;
     float getZoom() const;
+    void setMaxEditHistory(size_t maxEditHistory);
+    size_t getMaxEditHistory() const;
+    bool isEditUnsaved() const;
     void goToTile(int x, int y);
     // Returns true if event was consumed (and should not be processed further).
     bool processEvent(const sf::Event& event);
@@ -52,6 +56,11 @@ private:
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
     // now the question remains: should these be private? maybe so
     void newBoard();
+    void openBoard();
+    void saveBoard();
+    void saveAsBoard();
+    void renameBoard();
+    void resizeBoard();
     void undoEdit();
     void redoEdit();
     void selectAll();
@@ -85,6 +94,7 @@ private:
 
     EditorInterface interface_;
     Board& board_;
+    fs::path workingDirectory_;
     OffsetView editView_;
     float zoomLevel_;
     sf::Vector2i mousePos_;
@@ -107,7 +117,9 @@ private:
     SubBoard tileSubBoard_, copySubBoard_;
     TilePool tilePool_;
     std::deque<std::unique_ptr<Command>> editHistory_;
+    size_t maxEditHistory_;
     size_t lastEditSize_;
+    size_t savedEditSize_;
 
     friend class EditorInterface;
 };

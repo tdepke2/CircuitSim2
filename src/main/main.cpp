@@ -15,19 +15,27 @@
 
 #include <cmath>
 #include <memory>
+#include <portable-file-dialogs.h>
 #include <SFML/Graphics.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 
 int main() {
-    std::shared_ptr<MessageLogSinkMt> messageLogSink;
-    messageLogSink = std::make_shared<MessageLogSinkMt>();
-    //spdlog::default_logger()->sinks().push_back(messageLogSink);
-
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
     spdlog::info("Logging level set to {}.", spdlog::level::to_string_view(spdlog::get_level()));
-    spdlog::info("Initializing RenderWindow.");
+
+    std::shared_ptr<MessageLogSinkMt> messageLogSink;
+    messageLogSink = std::make_shared<MessageLogSinkMt>();
+    messageLogSink->set_level(spdlog::level::info);
+    spdlog::default_logger()->sinks().push_back(messageLogSink);
+
+    if (spdlog::get_level() <= spdlog::level::debug) {
+        // Enable debug output in portable file dialogs.
+        // Not all dialog backends show output even with this enabled.
+        pfd::settings::verbose(true);
+    }
+
     sf::RenderWindow window(sf::VideoMode(800, 600), "Test", sf::Style::Default, sf::ContextSettings(0, 0, 4));
     //window.setVerticalSyncEnabled(true);
 
@@ -40,6 +48,7 @@ int main() {
     board.debugSetDrawChunkBorder(true);
 
     Editor editor(board, window, messageLogSink.get());
+    editor.setMaxEditHistory(5);    // FIXME: will need to be set from the config.
 
     try {
         board.loadFromFile("boards/NewBoard/board.txt");
@@ -147,6 +156,8 @@ int main() {
         }
         DebugScreen::instance()->profilerEvent("main process_events_done");
 
+        std::string changesMadeIndicator = editor.isEditUnsaved() ? "*" : "";
+        window.setTitle("[CircuitSim2] [" + changesMadeIndicator + "] [Size: " + std::to_string(0) + " x " + std::to_string(0) + "] [FPS: " + std::to_string(0) + ", TPS: " + std::to_string(0) + "]");
         editor.update();
 
         /*static auto state = State::low;
