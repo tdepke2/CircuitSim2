@@ -62,7 +62,7 @@ public:
      */
     std::pair<sf::Vector2i, sf::Vector2i> getHighlightedBounds();
     void newBoard(const sf::Vector2u& size = {64, 64});
-    void loadFromFile(const fs::path& filename);
+    bool loadFromFile(const fs::path& filename);
     void saveToFile();
     void saveAsFile(const fs::path& filename);
     void rename();
@@ -81,6 +81,7 @@ private:
     };
     static StaticInit* staticInit_;
 
+    void clearChunks();
     void pruneChunkDrawables();
     void updateRender();
     virtual void markChunkDrawDirty(ChunkCoords::repr coords) override;

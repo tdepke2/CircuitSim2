@@ -414,6 +414,7 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
 
 void Editor::newBoard() {
     // TODO: check for existing file with name, and if it exists do something like newboard(2).txt?
+    // the logic for this may need to be in Board::newBoard() instead of here.
     deselectAll();
     board_.newBoard();
     defaultZoom();
@@ -423,24 +424,34 @@ void Editor::newBoard() {
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
 void Editor::openBoard() {
+    // TODO: need to prompt if unsaved.
+
     auto openDialog = pfd::open_file("Open Board File", (workingDirectory_ / "boards").string(), {
         "Plain Text (*.txt)", "*.txt",
         "All Files (*.*)", "*"
     }, pfd::opt::none).result();
 
     if (!openDialog.empty()) {
-        spdlog::info("{}", openDialog[0]);
+        deselectAll();
+        spdlog::info("Loading board file \"{}\"...", openDialog[0]);
+        board_.loadFromFile(openDialog[0]);
+        defaultZoom();
+        editHistory_.clear();
+        lastEditSize_ = 0;
+        savedEditSize_ = 0;
     } else {
         spdlog::info("No file selected.");
     }
 }
 void Editor::saveBoard() {
+    spdlog::info("Saving file...");
     // TODO: What if the file doesn't exist?
     spdlog::warn("Editor::saveBoard() NYI");
 
     savedEditSize_ = lastEditSize_;
 }
 void Editor::saveAsBoard() {
+    spdlog::info("Saving to \"{}\"...", "???");
     // TODO: File exists: ask if user wants to replace it.
     spdlog::warn("Editor::saveAsBoard() NYI");
     // call saveBoard() here to reduce duplication?

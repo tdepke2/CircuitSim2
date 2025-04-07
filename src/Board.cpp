@@ -346,44 +346,41 @@ void Board::newBoard(const sf::Vector2u& size) {
     extraLogicStates_ = false;    // FIXME: need to be set from config.
     notesText_.setString("");
 
-    chunks_.clear();
-    chunkDrawables_.clear();
-    for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
-        chunkRenderCache_[i].setLod(static_cast<int>(i));
-        chunkRenderCache_[i].clear();
-    }
-    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
+    clearChunks();
 }
 
-void Board::loadFromFile(const fs::path& filename) {
-    spdlog::info("Loading file \"{}\".", filename);
-    fs::ifstream boardFile(filename);
-    float version = FileStorage::getFileVersion(filename, boardFile);
-    if (version < 0.0) {
-        throw std::runtime_error("\"" + filename.string() + "\": unknown file version.");
-    }
-    while (!fileStorage_->validateFileVersion(version)) {
-        spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
-        fileStorage_ = details::make_unique<LegacyFileFormat>();
-        if (fileStorage_->validateFileVersion(version)) {
-            break;
+bool Board::loadFromFile(const fs::path& filename) {
+    try {
+        fs::ifstream boardFile(filename);
+        float version = FileStorage::getFileVersion(filename, boardFile);
+        if (version < 0.0) {
+            throw std::runtime_error("\"" + filename.string() + "\": unknown file version.");
         }
-        spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
-        fileStorage_ = details::make_unique<RegionFileFormat>();
-        if (fileStorage_->validateFileVersion(version)) {
-            break;
+        while (!fileStorage_->validateFileVersion(version)) {
+            spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
+            fileStorage_ = details::make_unique<LegacyFileFormat>();
+            if (fileStorage_->validateFileVersion(version)) {
+                break;
+            }
+            spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
+            fileStorage_ = details::make_unique<RegionFileFormat>();
+            if (fileStorage_->validateFileVersion(version)) {
+                break;
+            }
+            throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
         }
-        throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
+
+        clearChunks();
+        fileStorage_->loadFromFile(*this, filename, boardFile);
+    } catch (std::exception& ex) {
+        spdlog::error(ex.what());
+        newBoard();
+        return false;
     }
-    fileStorage_->loadFromFile(*this, filename, boardFile);
-    // FIXME: if there is an error during load, we may need to reset to a new board. If no fileStorage could be found for the version then maybe just keep the current board.
-    boardFile.close();
+    return true;
 }
 
 void Board::saveToFile() {
-    spdlog::info("Saving file.");
-
-
     fileStorage_ = details::make_unique<RegionFileFormat>();
 
 
@@ -408,6 +405,16 @@ void Board::debugSetDrawChunkBorder(bool enabled) {
 
 unsigned int Board::debugGetChunksDrawn() const {
     return lastVisibleArea_.width * lastVisibleArea_.height;
+}
+
+void Board::clearChunks() {
+    chunks_.clear();
+    chunkDrawables_.clear();
+    for (size_t i = 0; i < chunkRenderCache_.size(); ++i) {
+        chunkRenderCache_[i].setLod(static_cast<int>(i));
+        chunkRenderCache_[i].clear();
+    }
+    chunkDrawables_[LodRenderer::EMPTY_CHUNK_COORDS].setChunk(emptyChunk_.get());
 }
 
 void Board::pruneChunkDrawables() {
