@@ -188,6 +188,17 @@ bool Editor::processEvent(const sf::Event& event) {
         return true;
     }
 
+    // Process window resize events regardless of any modal dialog that may be
+    // active in the interface.
+    if (event.type == sf::Event::Resized) {
+        windowSize_.x = event.size.width;
+        windowSize_.y = event.size.height;
+        editView_.setSize(static_cast<sf::Vector2f>(windowSize_) * zoomLevel_);
+        return false;
+    } else if (interface_.isModalDialogOpen()) {
+        return true;
+    }
+
     if (event.type == sf::Event::MouseMoved) {
         if (mouseLeftIsDragging_) {
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
@@ -264,10 +275,6 @@ bool Editor::processEvent(const sf::Event& event) {
         return handleTextEntered(event.text.unicode);
     } else if (event.type == sf::Event::KeyPressed) {
         return handleKeyPressed(event.key);
-    } else if (event.type == sf::Event::Resized) {
-        windowSize_.x = event.size.width;
-        windowSize_.y = event.size.height;
-        editView_.setSize(static_cast<sf::Vector2f>(windowSize_) * zoomLevel_);
     }
     return false;
 }
@@ -424,7 +431,12 @@ void Editor::newBoard() {
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
 void Editor::openBoard() {
-    // TODO: need to prompt if unsaved.
+    if (isEditUnsaved()) {
+        interface_.showSaveDialog([]() {
+            spdlog::info("Editor::openBoard() custom func");
+        });
+        return;
+    }
 
     auto openDialog = pfd::open_file("Open Board File", (workingDirectory_ / "boards").string(), {
         "Plain Text (*.txt)", "*.txt",

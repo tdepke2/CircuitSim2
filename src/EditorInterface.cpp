@@ -4,8 +4,10 @@
 #include <gui/Gui.h>
 #include <gui/themes/DefaultTheme.h>
 #include <gui/Timer.h>
+#include <gui/Widget.h>
 #include <gui/widgets/Button.h>
 #include <gui/widgets/ChatBox.h>
+#include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
 #include <gui/widgets/Panel.h>
@@ -15,35 +17,37 @@
 #include <ResourceBase.h>
 #include <Tile.h>
 
+#include <cassert>
 #include <limits>
 #include <spdlog/spdlog.h>
 #include <string>
 
 EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, MessageLogSinkMt* messageLogSink) :
     editor_(editor),
+    debugWidgets_(),
     gui_(details::make_unique<gui::Gui>(window)),
     theme_(details::make_unique<gui::DefaultTheme>(*gui_, Locator::getResource()->getFont("resources/consolas.ttf"))) {
 
     auto menuBar = createMenuBar();
     gui_->addChild(menuBar);
 
-    auto statusBar = gui::Panel::create(*theme_, "statusBar");
+    auto statusBar = debugWidgetCreation(gui::Panel::create(*theme_, "statusBar"));
     statusBar->setFocusable(false);
     gui_->addChild(statusBar);
 
-    messageLog_ = gui::ChatBox::create(*theme_, "messageLog");
-    messageLog_->setSizeCharacters({80, 12});
-    messageLog_->setMaxLines(500);
-    messageLog_->setAutoHide(true);
-    messageLog_->getStyle()->setFillColor({12, 12, 12});
-    gui_->addChild(messageLog_);
+    auto messageLog = debugWidgetCreation(gui::ChatBox::create(*theme_, "messageLog"));
+    messageLog->setSizeCharacters({80, 12});
+    messageLog->setMaxLines(500);
+    messageLog->setAutoHide(true);
+    messageLog->getStyle()->setFillColor({12, 12, 12});
+    gui_->addChild(messageLog);
 
     // Register the message log with the spdlog sink so we can see debug log messages show up.
     if (messageLogSink != nullptr) {
-        messageLogSink->registerChatBox(messageLog_);
+        messageLogSink->registerChatBox(messageLog);
     }
 
-    auto messageLogToggle = gui::Button::create(*theme_, "messageLogToggle");
+    auto messageLogToggle = debugWidgetCreation(gui::Button::create(*theme_, "messageLogToggle"));
     messageLogToggle->setFocusable(false);
     messageLogToggle->setLabel("Messages (Ctrl+M)");
     messageLogToggle->setPosition(2.0f, 2.0f);
@@ -52,7 +56,7 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     });
     statusBar->addChild(messageLogToggle);
 
-    cursorLabel_ = gui::Label::create(*theme_, "cursorLabel_");
+    cursorLabel_ = debugWidgetCreation(gui::Label::create(*theme_, "cursorLabel_"));
     cursorLabel_->setFocusable(false);
     // Initialize label text with the longest coords possible.
     cursorLabel_->setLabel("(" + std::to_string(std::numeric_limits<int>::min()) + ", " + std::to_string(std::numeric_limits<int>::min()) + ")");
@@ -61,14 +65,25 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
 
     messageLogToggle->sendToFront();
 
-    gui_->onWindowResized.connect([this,menuBar,statusBar](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
+    modalBackground_ = debugWidgetCreation(gui::Panel::create(*theme_, "modalBackground_"));
+    modalBackground_->setVisible(false);
+    modalBackground_->setFocusable(false);
+    modalBackground_->getStyle()->setFillColor({0, 0, 0, 175});
+    modalBackground_->getStyle()->setOutlineThickness(0.0f);
+    gui_->addChild(modalBackground_);
+
+    auto saveDialog = createSaveDialog();
+    modalBackground_->addChild(saveDialog);
+
+    gui_->onWindowResized.connect([this,menuBar,statusBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
         menuBar->setWidth(static_cast<float>(size.x));
         statusBar->setSize({static_cast<float>(size.x), menuBar->getSize().y});
         statusBar->setPosition(0.0f, size.y - statusBar->getSize().y);
-        messageLog_->setSizeWithinBounds({static_cast<float>(size.x), messageLog_->getSize().y});
-        messageLog_->setPosition(0.0f, statusBar->getPosition().y - messageLog_->getSize().y);
+        messageLog->setSizeWithinBounds({static_cast<float>(size.x), messageLog->getSize().y});
+        messageLog->setPosition(0.0f, statusBar->getPosition().y - messageLog->getSize().y);
         cursorLabel_->setPosition(statusBar->getSize().x - cursorLabel_->getSize().x, 2.0f);
+        modalBackground_->setSize(static_cast<sf::Vector2f>(size));
 
         int menuBarHeight = static_cast<int>(menuBar->getSize().y);
         int statusBarHeight = static_cast<int>(statusBar->getSize().y);
@@ -83,9 +98,31 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     gui_->processEvent(initSizeEvent);
 }
 
-// Must declare the dtor here instead of header file so that the unique_ptr does
-// not need to know how to delete `gui_` in the header.
-EditorInterface::~EditorInterface() = default;
+// Even if the dtor was just `~EditorInterface() = default`, we must declare it
+// here instead of header file so that the unique_ptr does not need to know how
+// to delete `gui_` in the header.
+EditorInterface::~EditorInterface() {
+    modalBackground_.reset();
+    cursorLabel_.reset();
+    theme_.reset();
+    gui_.reset();
+
+    unsigned int numLeakedWidgets = 0;
+    for (const auto& widget : debugWidgets_) {
+        if (!widget.second.expired()) {
+            ++numLeakedWidgets;
+        }
+    }
+
+    if (numLeakedWidgets > 0) {
+        spdlog::warn("EditorInterface detected {} memory leaks out of {} registered widgets:", numLeakedWidgets, debugWidgets_.size());
+        for (const auto& widget : debugWidgets_) {
+            if (!widget.second.expired()) {
+                spdlog::warn("  Widget \"{}\" not cleaned up! (ref count {}).", widget.first, widget.second.use_count());
+            }
+        }
+    }
+}
 
 void EditorInterface::setCursorVisible(bool visible) {
     cursorLabel_->setVisible(visible);
@@ -101,7 +138,23 @@ void EditorInterface::updateCursorCoords(const sf::Vector2i& coords) {
 }
 
 void EditorInterface::toggleMessageLog() {
-    messageLog_->setAutoHide(!messageLog_->getAutoHide());
+    auto messageLog = gui_->getChild<gui::ChatBox>("messageLog");
+    messageLog->setAutoHide(!messageLog->getAutoHide());
+}
+
+void EditorInterface::showSaveDialog(const std::function<void()>& action) {
+    modalBackground_->sendToFront();
+    modalBackground_->setVisible(true);
+    auto saveDialog = modalBackground_->getChild<gui::DialogBox>("saveDialog");
+    saveDialog->setVisible(true);
+    saveDialog->setPosition(
+        std::min(80.0f, modalBackground_->getSize().x / 2.0f),
+        std::min(80.0f, modalBackground_->getSize().y / 2.0f)
+    );
+}
+
+bool EditorInterface::isModalDialogOpen() {
+    return modalBackground_->isVisible();
 }
 
 bool EditorInterface::processEvent(const sf::Event& event) {
@@ -112,8 +165,23 @@ void EditorInterface::update() {
     gui::Timer::updateTimers();
 }
 
+template<typename T>
+std::shared_ptr<T> EditorInterface::debugWidgetCreation(std::shared_ptr<T> widget) const {
+    if (spdlog::get_level() > spdlog::level::debug) {    // FIXME: probably not ideal to check this way. check the cmake build type instead? if so, then set spdlog::level with that too.
+        return widget;
+    }
+
+    const auto foundWidget = debugWidgets_.find(widget->getName());
+    if (foundWidget != debugWidgets_.end() && !foundWidget->second.expired()) {
+        spdlog::warn("Created widget with name \"{}\" which already exists.", foundWidget->first);
+    }
+
+    debugWidgets_[widget->getName()] = std::dynamic_pointer_cast<gui::Widget>(widget);
+    return widget;
+}
+
 std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
-    auto menuBar = gui::MenuBar::create(*theme_, "menuBar");
+    auto menuBar = debugWidgetCreation(gui::MenuBar::create(*theme_, "menuBar"));
     menuBar->setPosition(0.0f, 0.0f);
 
     gui::MenuList fileMenu("File");
@@ -355,6 +423,31 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
     });
 
     return menuBar;
+}
+
+std::shared_ptr<gui::DialogBox> EditorInterface::createSaveDialog() const {
+    auto saveDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "saveDialog"));
+    saveDialog->setSize({200.0f, 100.0f});
+
+    auto saveTitle = debugWidgetCreation(gui::Label::create(*theme_, "saveTitle"));
+    saveTitle->setLabel("ya sure? changes unsaved");
+    saveDialog->setTitle(saveTitle);
+
+    auto saveCancelButton = debugWidgetCreation(gui::Button::create(*theme_, "saveCancelButton"));
+    saveCancelButton->setLabel("Cancel");
+    saveCancelButton->onClick.connect([]() {
+        spdlog::info("saveCancel clicked");
+    });
+    saveDialog->setCancelButton(0, saveCancelButton);
+
+    auto saveSubmitButton = debugWidgetCreation(gui::Button::create(*theme_, "saveSubmitButton"));
+    saveSubmitButton->setLabel("Yes");
+    saveSubmitButton->onClick.connect([]() {
+        spdlog::info("saveSubmit clicked");
+    });
+    saveDialog->setSubmitButton(1, saveSubmitButton);
+
+    return saveDialog;
 }
 
 void EditorInterface::draw(sf::RenderTarget& target, sf::RenderStates states) const {
