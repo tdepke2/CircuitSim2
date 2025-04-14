@@ -151,7 +151,9 @@ int main() {
                 fullWindowView.reset({0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)});
                 //boardView.setSize(event.size.width * zoomLevel, event.size.height * zoomLevel);
             } else if (event.type == sf::Event::Closed) {
-                window.close();
+                editor.windowCloseRequested([&window]() {
+                    window.close();
+                });
             }
         }
         DebugScreen::instance()->profilerEvent("main process_events_done");

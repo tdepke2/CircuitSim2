@@ -151,6 +151,24 @@ void EditorInterface::showSaveDialog(const std::function<void()>& action) {
         std::min(80.0f, modalBackground_->getSize().x / 2.0f),
         std::min(80.0f, modalBackground_->getSize().y / 2.0f)
     );
+    auto saveDialogPtr = saveDialog.get();
+
+    auto saveSubmitButton = saveDialog->getChild<gui::Button>("saveSubmitButton");
+    saveSubmitButton->onClick.disconnectAll();
+    saveSubmitButton->onClick.connect([this,saveDialogPtr,action]() {
+        saveDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
+        editor_.saveBoard();
+        action();    // FIXME: the action runs immediately and doesn't give gui time to update, do we want to run this in a Timer instance instead? Could that cause issues? (someone clears the timers, or we happen to run that in a different thread)
+    });
+
+    auto saveRefuseButton = saveDialog->getChild<gui::Button>("saveRefuseButton");
+    saveRefuseButton->onClick.disconnectAll();
+    saveRefuseButton->onClick.connect([this,saveDialogPtr,action]() {
+        saveDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
+        action();
+    });
 }
 
 bool EditorInterface::isModalDialogOpen() {
@@ -427,25 +445,33 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
 
 std::shared_ptr<gui::DialogBox> EditorInterface::createSaveDialog() const {
     auto saveDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "saveDialog"));
-    saveDialog->setSize({200.0f, 100.0f});
+    saveDialog->setSize({300.0f, 100.0f});
+    auto saveDialogPtr = saveDialog.get();
 
     auto saveTitle = debugWidgetCreation(gui::Label::create(*theme_, "saveTitle"));
-    saveTitle->setLabel("ya sure? changes unsaved");
+    saveTitle->setLabel("Save Changes?");
     saveDialog->setTitle(saveTitle);
+
+    auto saveLabel = debugWidgetCreation(gui::Label::create(*theme_, "saveLabel"));
+    saveLabel->setLabel("Board has been modified.");
+    saveLabel->setPosition(10.0f, 30.0f);
+    saveDialog->addChild(saveLabel);
+
+    auto saveSubmitButton = debugWidgetCreation(gui::Button::create(*theme_, "saveSubmitButton"));
+    saveSubmitButton->setLabel("Save");
+    saveDialog->setSubmitButton(0, saveSubmitButton);
+
+    auto saveRefuseButton = debugWidgetCreation(gui::Button::create(*theme_, "saveRefuseButton"));
+    saveRefuseButton->setLabel("Don\'t Save");
+    saveDialog->setOptionButton(1, saveRefuseButton);
 
     auto saveCancelButton = debugWidgetCreation(gui::Button::create(*theme_, "saveCancelButton"));
     saveCancelButton->setLabel("Cancel");
-    saveCancelButton->onClick.connect([]() {
-        spdlog::info("saveCancel clicked");
+    saveCancelButton->onClick.connect([this,saveDialogPtr]() {
+        saveDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
     });
-    saveDialog->setCancelButton(0, saveCancelButton);
-
-    auto saveSubmitButton = debugWidgetCreation(gui::Button::create(*theme_, "saveSubmitButton"));
-    saveSubmitButton->setLabel("Yes");
-    saveSubmitButton->onClick.connect([]() {
-        spdlog::info("saveSubmit clicked");
-    });
-    saveDialog->setSubmitButton(1, saveSubmitButton);
+    saveDialog->setCancelButton(2, saveCancelButton);
 
     return saveDialog;
 }

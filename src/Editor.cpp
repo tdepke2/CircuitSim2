@@ -183,6 +183,14 @@ void Editor::goToTile(int x, int y) {
     editView_ = findTileView(x, y);
 }
 
+void Editor::windowCloseRequested(const std::function<void()>& action) {
+    if (isEditUnsaved()) {
+        interface_.showSaveDialog(action);
+    } else {
+        action();
+    }
+}
+
 bool Editor::processEvent(const sf::Event& event) {
     if (interface_.processEvent(event)) {
         return true;
@@ -419,7 +427,14 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
     return true;
 }
 
-void Editor::newBoard() {
+void Editor::newBoard(bool ignoreUnsaved) {
+    if (!ignoreUnsaved && isEditUnsaved()) {
+        interface_.showSaveDialog([this]() {
+            newBoard(true);
+        });
+        return;
+    }
+
     // TODO: check for existing file with name, and if it exists do something like newboard(2).txt?
     // the logic for this may need to be in Board::newBoard() instead of here.
     deselectAll();
@@ -430,10 +445,10 @@ void Editor::newBoard() {
     savedEditSize_ = 0;
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
-void Editor::openBoard() {
-    if (isEditUnsaved()) {
-        interface_.showSaveDialog([]() {
-            spdlog::info("Editor::openBoard() custom func");
+void Editor::openBoard(bool ignoreUnsaved) {
+    if (!ignoreUnsaved && isEditUnsaved()) {
+        interface_.showSaveDialog([this]() {
+            openBoard(true);
         });
         return;
     }
@@ -457,7 +472,7 @@ void Editor::openBoard() {
 }
 void Editor::saveBoard() {
     spdlog::info("Saving file...");
-    // TODO: What if the file doesn't exist?
+    // TODO: What if the file doesn't exist? I think we should just create or overwrite it.
     spdlog::warn("Editor::saveBoard() NYI");
 
     savedEditSize_ = lastEditSize_;

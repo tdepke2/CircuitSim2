@@ -8,6 +8,7 @@
 #include <TilePool.h>
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <SFML/Graphics.hpp>
@@ -34,6 +35,7 @@ public:
     size_t getMaxEditHistory() const;
     bool isEditUnsaved() const;
     void goToTile(int x, int y);
+    void windowCloseRequested(const std::function<void()>& action);
     // Returns true if event was consumed (and should not be processed further).
     bool processEvent(const sf::Event& event);
     void update();
@@ -55,8 +57,8 @@ private:
 
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
     // now the question remains: should these be private? maybe so
-    void newBoard();
-    void openBoard();
+    void newBoard(bool ignoreUnsaved = false);
+    void openBoard(bool ignoreUnsaved = false);
     void saveBoard();
     void saveAsBoard();
     void renameBoard();
