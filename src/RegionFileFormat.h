@@ -51,8 +51,9 @@ public:
     static constexpr int REGION_WIDTH = 32;
     static constexpr int SECTOR_SIZE = 256;
 
-    RegionFileFormat(const fs::path& filename = "boards/NewBoard/board.txt");
+    RegionFileFormat(const fs::path& filename);
 
+    virtual fs::path getDefaultFileExtension() const override;
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;

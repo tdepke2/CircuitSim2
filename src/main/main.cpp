@@ -51,7 +51,7 @@ int main() {
     editor.setMaxEditHistory(5);    // FIXME: will need to be set from the config.
 
     try {
-        board.loadFromFile("boards/NewBoard/board.txt");
+        board.loadFromFile(fs::absolute("boards/NewBoard/board.txt"));    // FIXME: path must be absolute for save-as to work.
         //board.loadFromFile("boards/Calculator.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
 
     } catch (std::exception& ex) {
@@ -159,7 +159,7 @@ int main() {
         DebugScreen::instance()->profilerEvent("main process_events_done");
 
         std::string changesMadeIndicator = editor.isEditUnsaved() ? "*" : "";
-        window.setTitle("[CircuitSim2] [" + changesMadeIndicator + "] [Size: " + std::to_string(0) + " x " + std::to_string(0) + "] [FPS: " + std::to_string(0) + ", TPS: " + std::to_string(0) + "]");
+        window.setTitle("[CircuitSim2] [" + changesMadeIndicator + board.getFilename().string() + "] [Size: " + std::to_string(0) + " x " + std::to_string(0) + "] [FPS: " + std::to_string(0) + ", TPS: " + std::to_string(0) + "]");
         editor.update();
 
         /*static auto state = State::low;

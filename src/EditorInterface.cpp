@@ -10,6 +10,7 @@
 #include <gui/widgets/DialogBox.h>
 #include <gui/widgets/Label.h>
 #include <gui/widgets/MenuBar.h>
+#include <gui/widgets/MultilineTextBox.h>
 #include <gui/widgets/Panel.h>
 #include <Locator.h>
 #include <MakeUnique.h>
@@ -72,8 +73,9 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     modalBackground_->getStyle()->setOutlineThickness(0.0f);
     gui_->addChild(modalBackground_);
 
-    auto saveDialog = createSaveDialog();
-    modalBackground_->addChild(saveDialog);
+    modalBackground_->addChild(createFileDialog());
+    modalBackground_->addChild(createSaveDialog());
+    modalBackground_->addChild(createOverwriteDialog());
 
     gui_->onWindowResized.connect([this,menuBar,statusBar,messageLog](gui::Gui* gui, sf::RenderWindow& /*window*/, const sf::Vector2u& size) {
         gui->setSize(size);
@@ -142,15 +144,50 @@ void EditorInterface::toggleMessageLog() {
     messageLog->setAutoHide(!messageLog->getAutoHide());
 }
 
+void EditorInterface::showFileDialog(bool openFile, const fs::path& filename) {
+    modalBackground_->sendToFront();
+    modalBackground_->setVisible(true);
+    auto fileDialog = modalBackground_->getChild<gui::DialogBox>("fileDialog");
+    auto fileDialogPtr = fileDialog.get();
+    auto fileTitle = fileDialog->getChild<gui::Label>("fileTitle");
+    auto fileTextBox = fileDialog->getChild<gui::MultilineTextBox>("fileTextBox");
+    auto fileSubmitButton = fileDialog->getChild<gui::Button>("fileSubmitButton");
+
+    if (openFile) {
+        fileTitle->setLabel("Open File");
+        fileTextBox->setText(filename.string());
+        fileSubmitButton->onClick.disconnectAll();
+        fileSubmitButton->onClick.connect([this,fileDialogPtr,fileTextBox]() {
+            fileDialogPtr->setVisible(false);
+            modalBackground_->setVisible(false);
+            if (!fileTextBox->getText().isEmpty()) {
+                editor_.openBoard(true, fileTextBox->getText().toAnsiString());
+            }
+        });
+    } else {
+        fileTitle->setLabel("Save As File");
+        fileTextBox->setText(filename.string());
+        fileSubmitButton->onClick.disconnectAll();
+        fileSubmitButton->onClick.connect([this,fileDialogPtr,fileTextBox]() {
+            fileDialogPtr->setVisible(false);
+            modalBackground_->setVisible(false);
+            if (!fileTextBox->getText().isEmpty()) {
+                editor_.saveAsBoard(fileTextBox->getText().toAnsiString());
+            }
+        });
+    }
+
+    fileDialog->setVisible(true);
+    fileDialog->setPosition(
+        std::min(80.0f, modalBackground_->getSize().x / 2.0f),
+        std::min(80.0f, modalBackground_->getSize().y / 2.0f)
+    );
+}
+
 void EditorInterface::showSaveDialog(const std::function<void()>& action) {
     modalBackground_->sendToFront();
     modalBackground_->setVisible(true);
     auto saveDialog = modalBackground_->getChild<gui::DialogBox>("saveDialog");
-    saveDialog->setVisible(true);
-    saveDialog->setPosition(
-        std::min(80.0f, modalBackground_->getSize().x / 2.0f),
-        std::min(80.0f, modalBackground_->getSize().y / 2.0f)
-    );
     auto saveDialogPtr = saveDialog.get();
 
     auto saveSubmitButton = saveDialog->getChild<gui::Button>("saveSubmitButton");
@@ -169,6 +206,33 @@ void EditorInterface::showSaveDialog(const std::function<void()>& action) {
         modalBackground_->setVisible(false);
         action();
     });
+
+    saveDialog->setVisible(true);
+    saveDialog->setPosition(
+        std::min(80.0f, modalBackground_->getSize().x / 2.0f),
+        std::min(80.0f, modalBackground_->getSize().y / 2.0f)
+    );
+}
+
+void EditorInterface::showOverwriteDialog(const fs::path& filename) {
+    modalBackground_->sendToFront();
+    modalBackground_->setVisible(true);
+    auto overwriteDialog = modalBackground_->getChild<gui::DialogBox>("overwriteDialog");
+    auto overwriteDialogPtr = overwriteDialog.get();
+
+    auto overwriteSubmitButton = overwriteDialog->getChild<gui::Button>("overwriteSubmitButton");
+    overwriteSubmitButton->onClick.disconnectAll();
+    overwriteSubmitButton->onClick.connect([this,overwriteDialogPtr,filename]() {
+        overwriteDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
+        editor_.saveAsBoard(filename, true);
+    });
+
+    overwriteDialog->setVisible(true);
+    overwriteDialog->setPosition(
+        std::min(80.0f, modalBackground_->getSize().x / 2.0f),
+        std::min(80.0f, modalBackground_->getSize().y / 2.0f)
+    );
 }
 
 bool EditorInterface::isModalDialogOpen() {
@@ -443,9 +507,40 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
     return menuBar;
 }
 
+std::shared_ptr<gui::DialogBox> EditorInterface::createFileDialog() const {
+    auto fileDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "fileDialog"));
+    fileDialog->setSize({300.0f, 100.0f});
+    fileDialog->setVisible(false);
+    auto fileDialogPtr = fileDialog.get();
+
+    auto fileTitle = debugWidgetCreation(gui::Label::create(*theme_, "fileTitle"));
+    fileDialog->setTitle(fileTitle);
+
+    auto fileTextBox = debugWidgetCreation(gui::MultilineTextBox::create(*theme_, "fileTextBox"));
+    fileTextBox->setSizeCharacters({8, 1});
+    fileTextBox->setMaxLines(1);
+    fileTextBox->setTabPolicy(gui::MultilineTextBox::TabPolicy::ignoreTab);
+    fileTextBox->setPosition(10.0f, 30.0f);
+    fileDialog->addChild(fileTextBox);
+
+    auto fileSubmitButton = debugWidgetCreation(gui::Button::create(*theme_, "fileSubmitButton"));
+    fileDialog->setSubmitButton(0, fileSubmitButton);
+
+    auto fileCancelButton = debugWidgetCreation(gui::Button::create(*theme_, "fileCancelButton"));
+    fileCancelButton->setLabel("Cancel");
+    fileCancelButton->onClick.connect([this,fileDialogPtr]() {
+        fileDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
+    });
+    fileDialog->setCancelButton(1, fileCancelButton);
+
+    return fileDialog;
+}
+
 std::shared_ptr<gui::DialogBox> EditorInterface::createSaveDialog() const {
     auto saveDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "saveDialog"));
     saveDialog->setSize({300.0f, 100.0f});
+    saveDialog->setVisible(false);
     auto saveDialogPtr = saveDialog.get();
 
     auto saveTitle = debugWidgetCreation(gui::Label::create(*theme_, "saveTitle"));
@@ -474,6 +569,36 @@ std::shared_ptr<gui::DialogBox> EditorInterface::createSaveDialog() const {
     saveDialog->setCancelButton(2, saveCancelButton);
 
     return saveDialog;
+}
+
+std::shared_ptr<gui::DialogBox> EditorInterface::createOverwriteDialog() const {
+    auto overwriteDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "overwriteDialog"));
+    overwriteDialog->setSize({300.0f, 100.0f});
+    overwriteDialog->setVisible(false);
+    auto overwriteDialogPtr = overwriteDialog.get();
+
+    auto overwriteTitle = debugWidgetCreation(gui::Label::create(*theme_, "overwriteTitle"));
+    overwriteTitle->setLabel("Overwrite File?");
+    overwriteDialog->setTitle(overwriteTitle);
+
+    auto overwriteLabel = debugWidgetCreation(gui::Label::create(*theme_, "overwriteLabel"));
+    overwriteLabel->setLabel("The file already exists, do you want to replace it?");
+    overwriteLabel->setPosition(10.0f, 30.0f);
+    overwriteDialog->addChild(overwriteLabel);
+
+    auto overwriteSubmitButton = debugWidgetCreation(gui::Button::create(*theme_, "overwriteSubmitButton"));
+    overwriteSubmitButton->setLabel("Overwrite");
+    overwriteDialog->setSubmitButton(0, overwriteSubmitButton);
+
+    auto overwriteCancelButton = debugWidgetCreation(gui::Button::create(*theme_, "overwriteCancelButton"));
+    overwriteCancelButton->setLabel("Cancel");
+    overwriteCancelButton->onClick.connect([this,overwriteDialogPtr]() {
+        overwriteDialogPtr->setVisible(false);
+        modalBackground_->setVisible(false);
+    });
+    overwriteDialog->setCancelButton(1, overwriteCancelButton);
+
+    return overwriteDialog;
 }
 
 void EditorInterface::draw(sf::RenderTarget& target, sf::RenderStates states) const {

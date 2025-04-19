@@ -253,6 +253,10 @@ LegacyFileFormat::LegacyFileFormat(const fs::path& filename) :
     FileStorage(filename) {
 }
 
+fs::path LegacyFileFormat::getDefaultFileExtension() const {
+    return ".txt";
+}
+
 bool LegacyFileFormat::validateFileVersion(float version) {
     return version == 1.0;
 }
@@ -260,6 +264,7 @@ bool LegacyFileFormat::validateFileVersion(float version) {
 void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
     // Reset all members to ensure a clean state.
     setFilename(filename);
+    setNewFile(false);
 
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
@@ -314,6 +319,7 @@ void LegacyFileFormat::saveToFile(Board& board) {
     if (!boardFile.is_open()) {
         throw std::runtime_error("\"" + getFilename().string() + "\": unable to open file for writing.");
     }
+    setNewFile(false);
     writeHeader(board, getFilename(), boardFile, 1.0f);
 
     boardFile << "\n";

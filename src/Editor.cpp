@@ -429,14 +429,11 @@ bool Editor::handleKeyPressed(const sf::Event::KeyEvent& key) {
 
 void Editor::newBoard(bool ignoreUnsaved) {
     if (!ignoreUnsaved && isEditUnsaved()) {
-        interface_.showSaveDialog([this]() {
+        return interface_.showSaveDialog([this]() {
             newBoard(true);
         });
-        return;
     }
 
-    // TODO: check for existing file with name, and if it exists do something like newboard(2).txt?
-    // the logic for this may need to be in Board::newBoard() instead of here.
     deselectAll();
     board_.newBoard();
     defaultZoom();
@@ -445,23 +442,34 @@ void Editor::newBoard(bool ignoreUnsaved) {
     savedEditSize_ = 0;
     spdlog::info("Created new board with size {} by {}.", board_.getMaxSize().x, board_.getMaxSize().y);
 }
-void Editor::openBoard(bool ignoreUnsaved) {
+void Editor::openBoard(bool ignoreUnsaved, const fs::path& filename) {
     if (!ignoreUnsaved && isEditUnsaved()) {
-        interface_.showSaveDialog([this]() {
+        return interface_.showSaveDialog([this]() {
             openBoard(true);
         });
-        return;
     }
 
-    auto openDialog = pfd::open_file("Open Board File", (workingDirectory_ / "boards").string(), {
-        "Plain Text (*.txt)", "*.txt",
-        "All Files (*.*)", "*"
-    }, pfd::opt::none).result();
+    fs::path openFilename;
+    if (!filename.empty()) {
+        openFilename = filename;
+    } else if (pfd::settings::available()) {
+        auto openResult = pfd::open_file("Open", (workingDirectory_ / "boards").string(), {
+            "Plain Text (*.txt)", "*.txt",
+            "All Files (*.*)", "*"
+        }, pfd::opt::none).result();
 
-    if (!openDialog.empty()) {
+        if (!openResult.empty()) {
+            openFilename = openResult[0];
+        }
+    } else {
+        spdlog::warn("Portable File Dialogs is not available on this platform (or a component is missing). Using fallback file dialog.");
+        interface_.showFileDialog(true, workingDirectory_ / "boards");
+    }
+
+    if (!openFilename.empty()) {
         deselectAll();
-        spdlog::info("Loading board file \"{}\"...", openDialog[0]);
-        board_.loadFromFile(openDialog[0]);
+        spdlog::info("Loading file \"{}\"...", openFilename);
+        board_.loadFromFile(openFilename);
         defaultZoom();
         editHistory_.clear();
         lastEditSize_ = 0;
@@ -471,23 +479,57 @@ void Editor::openBoard(bool ignoreUnsaved) {
     }
 }
 void Editor::saveBoard() {
-    spdlog::info("Saving file...");
-    // TODO: What if the file doesn't exist? I think we should just create or overwrite it.
-    spdlog::warn("Editor::saveBoard() NYI");
+    if (board_.isNewBoard()) {
+        return saveAsBoard();
+    }
 
+    spdlog::info("Saving file...");
+    board_.saveToFile();
     savedEditSize_ = lastEditSize_;
 }
-void Editor::saveAsBoard() {
-    spdlog::info("Saving to \"{}\"...", "???");
-    // TODO: File exists: ask if user wants to replace it.
-    spdlog::warn("Editor::saveAsBoard() NYI");
-    // call saveBoard() here to reduce duplication?
+void Editor::saveAsBoard(const fs::path& filename, bool overwriteFile) {
+    fs::path saveFilename;
+    if (!filename.empty()) {
+        saveFilename = filename;
+    } else if (pfd::settings::available()) {
+        if (board_.getDefaultFileExtension() == ".txt") {
+            saveFilename = pfd::save_file("Save As", board_.getFilename().string(), {
+                "Plain Text (*.txt)", "*.txt",
+                "All Files (*.*)", "*"
+            }, pfd::opt::none).result();
+        } else if (board_.getDefaultFileExtension() == "") {
+            saveFilename = pfd::save_file("Save As", board_.getFilename().parent_path().string(), {
+                "All Files (*.*)", "*"
+            }, pfd::opt::none).result();
+        } else {
+            assert(false);
+        }
+
+        // The pfd call will prompt the user if overwriting, so skip our check for existing file.
+        overwriteFile = true;
+    } else {
+        spdlog::warn("Portable File Dialogs is not available on this platform (or a component is missing). Using fallback file dialog.");
+        interface_.showFileDialog(false, board_.getFilename());
+    }
+
+    if (!saveFilename.empty()) {
+        if (!overwriteFile && fs::exists(saveFilename)) {
+            interface_.showOverwriteDialog(saveFilename);
+        }
+
+        spdlog::info("Saving to \"{}\"...", saveFilename);
+        spdlog::warn("Editor::saveAsBoard() NYI");
+        // TODO call saveBoard() here to reduce duplication?
+    } else {
+        spdlog::info("No file selected.");
+    }
 }
 void Editor::renameBoard() {
     // TODO: Allow dir separator in name to change path?
     // File with old name exists: move it.
     // File with new name exists: fail.
     // Does not save the board, just moves files and sets name.
+    // No need to check existing files if FileStorage::isNewBoard().
     spdlog::warn("Editor::renameBoard() NYI");
 }
 void Editor::resizeBoard() {

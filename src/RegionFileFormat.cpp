@@ -19,11 +19,15 @@ constexpr int RegionFileFormat::REGION_WIDTH;
 constexpr int RegionFileFormat::SECTOR_SIZE;
 
 RegionFileFormat::RegionFileFormat(const fs::path& filename) :
-    FileStorage(filename),
+    FileStorage(filename.filename() == "board.txt" ? filename.parent_path() : filename),
     savedRegions_(),
     lastVisibleChunks_(0, 0, 0, 0),
     chunkCache_(),
     chunkCacheTimes_() {
+}
+
+fs::path RegionFileFormat::getDefaultFileExtension() const {
+    return "";
 }
 
 bool RegionFileFormat::validateFileVersion(float version) {
@@ -32,14 +36,16 @@ bool RegionFileFormat::validateFileVersion(float version) {
 
 void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) {
     // Reset all members to ensure a clean state.
-    setFilename(filename);
+    setFilename(filename.filename() == "board.txt" ? filename.parent_path() : filename);
+    setNewFile(false);
     savedRegions_.clear();
     lastVisibleChunks_ = ChunkCoordsRange(0, 0, 0, 0);
     chunkCache_.clear();
     chunkCacheTimes_.clear();
 
+    const fs::path boardFilename = getFilename() / "board.txt";
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
+        throw std::runtime_error("\"" + boardFilename.string() + "\": unable to open file for reading.");
     }
     boardFile.clear();
     boardFile.seekg(0, std::ios::beg);
@@ -47,7 +53,7 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     std::string line;
     int lineNumber = 0;
     ParseState state;
-    state.filename = filename;
+    state.filename = boardFilename;
     try {
         while (state.lastField != "headerEnd" && std::getline(boardFile, line)) {
             if (!line.empty() && line.back() == '\r') {
@@ -65,7 +71,7 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
             throw std::runtime_error("missing data, end of file reached.");
         }
     } catch (std::exception& ex) {
-        throw std::runtime_error("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
+        throw std::runtime_error("\"" + boardFilename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
 
     for (const auto& regionCoords : state.regions) {
@@ -97,19 +103,19 @@ void RegionFileFormat::saveToFile(Board& board) {
         return;
     }
 
-    if (getFilename().has_parent_path()) {
-        fs::create_directories(getFilename().parent_path());
-    }
-    fs::create_directory(getFilename().parent_path() / "region");
+    fs::create_directories(getFilename());
+    fs::create_directory(getFilename() / "region");
     for (const auto& region : unsavedRegions) {
         saveRegion(board, region.first, region.second);
     }
 
-    fs::ofstream boardFile(getFilename());
+    const fs::path boardFilename = getFilename() / "board.txt";
+    fs::ofstream boardFile(boardFilename);
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + getFilename().string() + "\": unable to open file for writing.");
+        throw std::runtime_error("\"" + boardFilename.string() + "\": unable to open file for writing.");
     }
-    LegacyFileFormat::writeHeader(board, getFilename(), boardFile, 2.0f);
+    setNewFile(false);
+    LegacyFileFormat::writeHeader(board, boardFilename, boardFile, 2.0f);
     boardFile << "regions: {\n";
     for (const auto& region : savedRegions_) {
         boardFile << region.first.first << "," << region.first.second << "\n";
@@ -152,7 +158,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     }
 
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = getFilename().parent_path() / "region" / regionFilename;
+    regionFilename = getFilename() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
         throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for reading.");
@@ -300,7 +306,7 @@ void RegionFileFormat::writeChunk(ChunkHeader header[], int headerIndex, const c
 
 void RegionFileFormat::loadRegion(Board& /*board*/, const RegionCoords& regionCoords) {
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = getFilename().parent_path() / "region" / regionFilename;
+    regionFilename = getFilename() / "region" / regionFilename;
     fs::ifstream regionFile(regionFilename, std::ios::binary);
     if (!regionFile.is_open()) {
         throw std::runtime_error("\"" + regionFilename.string() + "\": unable to open file for reading.");
@@ -318,7 +324,7 @@ void RegionFileFormat::loadRegion(Board& /*board*/, const RegionCoords& regionCo
 
 void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region) {
     fs::path regionFilename = std::to_string(regionCoords.first) + "." + std::to_string(regionCoords.second) + ".dat";
-    regionFilename = getFilename().parent_path() / "region" / regionFilename;
+    regionFilename = getFilename() / "region" / regionFilename;
     fs::fstream regionFile(regionFilename, std::ios::in | std::ios::out | std::ios::binary);
     spdlog::debug("Saving chunks for region {}, {}.", regionCoords.first, regionCoords.second);
 

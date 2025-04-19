@@ -41,6 +41,9 @@ public:
     void setMaxSize(const sf::Vector2u& size);
     void setExtraLogicStates(bool extraLogicStates);
     void setNotesString(const sf::String& notes);
+    const fs::path& getFilename() const;
+    bool isNewBoard() const;
+    fs::path getDefaultFileExtension() const;
     // A max size of zero indicates no size limit.
     const sf::Vector2u& getMaxSize() const;
     sf::Vector2i getTileLowerBound() const;
@@ -63,8 +66,8 @@ public:
     std::pair<sf::Vector2i, sf::Vector2i> getHighlightedBounds();
     void newBoard(const sf::Vector2u& size = {64, 64});
     bool loadFromFile(const fs::path& filename);
-    void saveToFile();
-    void saveAsFile(const fs::path& filename);
+    bool saveToFile();
+    bool saveAsFile(const fs::path& filename);
     void rename();
     void resize();
     void debugPrintChunk(ChunkCoords::repr i) {
@@ -88,6 +91,7 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     std::unique_ptr<FileStorage> fileStorage_;
+    const fs::path workingDirectory_;
     sf::Vector2u maxSize_;
     bool extraLogicStates_;
     sf::Text notesText_;

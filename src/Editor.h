@@ -58,9 +58,9 @@ private:
     // FIXME: the following should not get bound to gui callbacks, instead have a shared callback that checks for the corresponding menu item.
     // now the question remains: should these be private? maybe so
     void newBoard(bool ignoreUnsaved = false);
-    void openBoard(bool ignoreUnsaved = false);
+    void openBoard(bool ignoreUnsaved = false, const fs::path& filename = "");
     void saveBoard();
-    void saveAsBoard();
+    void saveAsBoard(const fs::path& filename = "", bool overwriteFile = false);
     void renameBoard();
     void resizeBoard();
     void undoEdit();
@@ -96,7 +96,7 @@ private:
 
     EditorInterface interface_;
     Board& board_;
-    fs::path workingDirectory_;
+    const fs::path workingDirectory_;
     OffsetView editView_;
     float zoomLevel_;
     sf::Vector2i mousePos_;

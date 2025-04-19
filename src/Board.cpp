@@ -103,6 +103,7 @@ Board::StaticInit::StaticInit() {
 
 Board::Board() :    // FIXME we really should be doing member initialization list for all members (needs to be fixed in other classes).
     fileStorage_(),
+    workingDirectory_(fs::current_path()),
     maxSize_(0, 0),
     extraLogicStates_(false),
     notesText_(),
@@ -192,6 +193,18 @@ void Board::setExtraLogicStates(bool extraLogicStates) {
 
 void Board::setNotesString(const sf::String& notes) {
     notesText_.setString(notes);
+}
+
+const fs::path& Board::getFilename() const {
+    return fileStorage_->getFilename();
+}
+
+bool Board::isNewBoard() const {
+    return fileStorage_->isNewFile();
+}
+
+fs::path Board::getDefaultFileExtension() const {
+    return fileStorage_->getDefaultFileExtension();
 }
 
 const sf::Vector2u& Board::getMaxSize() const {
@@ -338,9 +351,9 @@ std::pair<sf::Vector2i, sf::Vector2i> Board::getHighlightedBounds() {
 void Board::newBoard(const sf::Vector2u& size) {
     setMaxSize(size);
     if (maxSize_.x == 0) {
-        fileStorage_ = details::make_unique<RegionFileFormat>();
+        fileStorage_ = details::make_unique<RegionFileFormat>(workingDirectory_ / "boards/NewBoard");
     } else {
-        fileStorage_ = details::make_unique<LegacyFileFormat>();
+        fileStorage_ = details::make_unique<LegacyFileFormat>(workingDirectory_ / "boards/NewBoard.txt");
     }
 
     extraLogicStates_ = false;    // FIXME: need to be set from config.
@@ -358,12 +371,12 @@ bool Board::loadFromFile(const fs::path& filename) {
         }
         while (!fileStorage_->validateFileVersion(version)) {
             spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
-            fileStorage_ = details::make_unique<LegacyFileFormat>();
+            fileStorage_ = details::make_unique<LegacyFileFormat>("");
             if (fileStorage_->validateFileVersion(version)) {
                 break;
             }
             spdlog::debug("FileStorage not compatible with current version, trying RegionFileFormat.");
-            fileStorage_ = details::make_unique<RegionFileFormat>();
+            fileStorage_ = details::make_unique<RegionFileFormat>("");
             if (fileStorage_->validateFileVersion(version)) {
                 break;
             }
@@ -380,15 +393,24 @@ bool Board::loadFromFile(const fs::path& filename) {
     return true;
 }
 
-void Board::saveToFile() {
-    fileStorage_ = details::make_unique<RegionFileFormat>();
-
-
-    fileStorage_->saveToFile(*this);
+bool Board::saveToFile() {
+    try {
+        fileStorage_->saveToFile(*this);
+    } catch (std::exception& ex) {
+        spdlog::error(ex.what());
+        return false;
+    }
+    return true;
 }
 
-void Board::saveAsFile(const fs::path& filename) {
-
+bool Board::saveAsFile(const fs::path& filename) {
+    try {
+        fileStorage_->saveAsFile(*this, filename);
+    } catch (std::exception& ex) {
+        spdlog::error(ex.what());
+        return false;
+    }
+    return true;
 }
 
 void Board::rename() {

@@ -31,18 +31,25 @@ public:
     FileStorage(const fs::path& filename);
     virtual ~FileStorage() = default;
 
-    void setFilename(const fs::path& filename);
     const fs::path& getFilename() const;
+    bool isNewFile() const;
 
+    virtual fs::path getDefaultFileExtension() const = 0;
     virtual bool validateFileVersion(float version) = 0;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) = 0;
     virtual void saveToFile(Board& board) = 0;
+    void saveAsFile(Board& board, const fs::path& filename);
 
     virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks);
     virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords);
 
+protected:
+    void setFilename(const fs::path& filename);
+    void setNewFile(bool newFile);
+
 private:
     fs::path filename_;
+    bool newFile_;
 };
 
 // Reverses bytes in the given integral type to convert endianness.

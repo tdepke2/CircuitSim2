@@ -28,15 +28,22 @@ float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardF
 }
 
 FileStorage::FileStorage(const fs::path& filename) :
-    filename_(filename) {
-}
-
-void FileStorage::setFilename(const fs::path& filename) {
-    filename_ = filename;
+    filename_(filename),
+    newFile_(true) {
 }
 
 const fs::path& FileStorage::getFilename() const {
     return filename_;
+}
+
+bool FileStorage::isNewFile() const {
+    return newFile_;
+}
+
+void FileStorage::saveAsFile(Board& board, const fs::path& filename) {
+    filename_ = filename;
+    newFile_ = true;
+    saveToFile(board);
 }
 
 void FileStorage::updateVisibleChunks(Board& /*board*/, const ChunkCoordsRange& /*visibleChunks*/) {
@@ -45,4 +52,12 @@ void FileStorage::updateVisibleChunks(Board& /*board*/, const ChunkCoordsRange& 
 
 bool FileStorage::loadChunk(Board& /*board*/, ChunkCoords::repr /*chunkCoords*/) {
     return false;
+}
+
+void FileStorage::setFilename(const fs::path& filename) {
+    filename_ = filename;
+}
+
+void FileStorage::setNewFile(bool newFile) {
+    newFile_ = newFile;
 }
