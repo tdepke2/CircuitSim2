@@ -5,7 +5,6 @@
 #include <gui/widgets/ChatBox.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <limits>
 
@@ -214,6 +213,9 @@ void ChatBox::setAutoHide(bool autoHide) {
         updateVisibleLines();
     }
 }
+void ChatBox::setHideTime(std::chrono::milliseconds duration) {
+    hideTime_ = duration;
+}
 const sf::Vector2f& ChatBox::getSize() const {
     return size_;
 }
@@ -225,6 +227,9 @@ size_t ChatBox::getMaxLines() const {
 }
 bool ChatBox::getAutoHide() const {
     return autoHide_;
+}
+std::chrono::milliseconds ChatBox::getHideTime() const {
+    return hideTime_;
 }
 void ChatBox::addLines(const sf::String& str) {
     addLines(str, style_->textColor_, style_->textStyle_);
@@ -255,7 +260,7 @@ void ChatBox::addLines(const sf::String& str, const sf::Color& color, uint32_t s
     }
     if (autoHide_) {
         ++hideCounter_;
-        Timer::create(hideCallback_, std::chrono::milliseconds(2000));
+        Timer::create(hideCallback_, hideTime_);
     }
 
     if (str.isEmpty() || foundNewline >= str.getSize() - 1) {
@@ -416,7 +421,8 @@ ChatBox::ChatBox(std::shared_ptr<ChatBoxStyle> style, const sf::String& name) :
     selectionStart_(0, false),
     selectionEnd_(0),
     hideCallback_(),
-    hideCounter_(0) {
+    hideCounter_(0),
+    hideTime_(2000) {
 }
 
 void ChatBox::updateVisibleLines(bool applyUpdate) const {

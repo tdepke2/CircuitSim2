@@ -40,6 +40,7 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     messageLog->setSizeCharacters({80, 12});
     messageLog->setMaxLines(500);
     messageLog->setAutoHide(true);
+    messageLog->setHideTime(static_cast<std::chrono::milliseconds>(5000));
     messageLog->getStyle()->setFillColor({12, 12, 12});
     gui_->addChild(messageLog);
 

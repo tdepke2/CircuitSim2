@@ -27,6 +27,7 @@ int main() {
 
     std::shared_ptr<MessageLogSinkMt> messageLogSink;
     messageLogSink = std::make_shared<MessageLogSinkMt>();
+    messageLogSink->set_pattern("[%l] %v");
     messageLogSink->set_level(spdlog::level::info);
     spdlog::default_logger()->sinks().push_back(messageLogSink);
 

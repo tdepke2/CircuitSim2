@@ -4,6 +4,7 @@
 #include <gui/Style.h>
 #include <gui/Widget.h>
 
+#include <chrono>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -114,10 +115,12 @@ public:
     void setSizeWithinBounds(const sf::Vector2f& size);
     void setMaxLines(size_t maxLines);
     void setAutoHide(bool autoHide);
+    void setHideTime(std::chrono::milliseconds duration);
     const sf::Vector2f& getSize() const;
     const sf::Vector2<size_t>& getSizeCharacters() const;
     size_t getMaxLines() const;
     bool getAutoHide() const;
+    std::chrono::milliseconds getHideTime() const;
     void addLines(const sf::String& str);
     void addLines(const sf::String& str, const sf::Color& color);
     void addLines(const sf::String& str, uint32_t style);
@@ -171,6 +174,7 @@ private:
     size_t selectionEnd_;
     std::function<void()> hideCallback_;
     size_t hideCounter_;
+    std::chrono::milliseconds hideTime_;
 };
 
 } // namespace gui
