@@ -463,12 +463,12 @@ void Editor::openBoard(bool ignoreUnsaved, const fs::path& filename) {
         }
     } else {
         spdlog::warn("Portable File Dialogs is not available on this platform (or a component is missing). Using fallback file dialog.");
-        interface_.showFileDialog(true, workingDirectory_ / "boards");
+        return interface_.showFileDialog(true, workingDirectory_ / "boards");
     }
 
     if (!openFilename.empty()) {
         deselectAll();
-        spdlog::info("Loading file \"{}\"...", openFilename);
+        spdlog::info("Loading \"{}\"...", openFilename);
         board_.loadFromFile(openFilename);
         defaultZoom();
         editHistory_.clear();
@@ -483,7 +483,7 @@ void Editor::saveBoard() {
         return saveAsBoard();
     }
 
-    spdlog::info("Saving file...");
+    spdlog::info("Saving...");
     board_.saveToFile();
     savedEditSize_ = lastEditSize_;
 }
@@ -498,7 +498,7 @@ void Editor::saveAsBoard(const fs::path& filename, bool overwriteFile) {
                 "All Files (*.*)", "*"
             }, pfd::opt::none).result();
         } else if (board_.getDefaultFileExtension() == "") {
-            saveFilename = pfd::save_file("Save As", board_.getFilename().parent_path().string(), {
+            saveFilename = pfd::save_file("Save As", board_.getFilename().string(), {
                 "All Files (*.*)", "*"
             }, pfd::opt::none).result();
         } else {
@@ -509,17 +509,17 @@ void Editor::saveAsBoard(const fs::path& filename, bool overwriteFile) {
         overwriteFile = true;
     } else {
         spdlog::warn("Portable File Dialogs is not available on this platform (or a component is missing). Using fallback file dialog.");
-        interface_.showFileDialog(false, board_.getFilename());
+        return interface_.showFileDialog(false, board_.getFilename());
     }
 
     if (!saveFilename.empty()) {
         if (!overwriteFile && fs::exists(saveFilename)) {
-            interface_.showOverwriteDialog(saveFilename);
+            return interface_.showOverwriteDialog(saveFilename);
         }
 
         spdlog::info("Saving to \"{}\"...", saveFilename);
-        spdlog::warn("Editor::saveAsBoard() NYI");
-        // TODO call saveBoard() here to reduce duplication?
+        board_.saveAsFile(saveFilename);
+        savedEditSize_ = lastEditSize_;
     } else {
         spdlog::info("No file selected.");
     }

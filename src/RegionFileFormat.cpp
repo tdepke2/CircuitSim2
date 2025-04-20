@@ -83,6 +83,9 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
 void RegionFileFormat::saveToFile(Board& board) {
     std::map<RegionCoords, Region> unsavedRegions;
 
+    // FIXME: saving has three scenarios: save existing file, save as existing file to new one, and save as new file.
+    // need to check isNewFile() and handle these cases appropriately.
+
     for (const auto& chunk : board.getLoadedChunks()) {
         const auto savedRegion = savedRegions_.find(toRegionCoords(chunk.first));
         if (savedRegion == savedRegions_.end() || savedRegion->second.count(chunk.first) == 0 || chunk.second.isUnsaved()) {

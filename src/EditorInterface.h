@@ -47,7 +47,7 @@ public:
 private:
     template<typename T>
     std::shared_ptr<T> debugWidgetCreation(std::shared_ptr<T> widget) const;
-    std::shared_ptr<gui::MenuBar> createMenuBar() const;
+    std::shared_ptr<gui::MenuBar> createMenuBar(sf::RenderWindow& window) const;
     std::shared_ptr<gui::DialogBox> createFileDialog() const;
     std::shared_ptr<gui::DialogBox> createSaveDialog() const;
     std::shared_ptr<gui::DialogBox> createOverwriteDialog() const;

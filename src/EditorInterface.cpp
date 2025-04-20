@@ -29,7 +29,7 @@ EditorInterface::EditorInterface(Editor& editor, sf::RenderWindow& window, Messa
     gui_(details::make_unique<gui::Gui>(window)),
     theme_(details::make_unique<gui::DefaultTheme>(*gui_, Locator::getResource()->getFont("resources/consolas.ttf"))) {
 
-    auto menuBar = createMenuBar();
+    auto menuBar = createMenuBar(window);
     gui_->addChild(menuBar);
 
     auto statusBar = debugWidgetCreation(gui::Panel::create(*theme_, "statusBar"));
@@ -156,6 +156,7 @@ void EditorInterface::showFileDialog(bool openFile, const fs::path& filename) {
     if (openFile) {
         fileTitle->setLabel("Open File");
         fileTextBox->setText(filename.string());
+        fileSubmitButton->setLabel("Open");
         fileSubmitButton->onClick.disconnectAll();
         fileSubmitButton->onClick.connect([this,fileDialogPtr,fileTextBox]() {
             fileDialogPtr->setVisible(false);
@@ -165,8 +166,9 @@ void EditorInterface::showFileDialog(bool openFile, const fs::path& filename) {
             }
         });
     } else {
-        fileTitle->setLabel("Save As File");
+        fileTitle->setLabel("Save As");
         fileTextBox->setText(filename.string());
+        fileSubmitButton->setLabel("Save");
         fileSubmitButton->onClick.disconnectAll();
         fileSubmitButton->onClick.connect([this,fileDialogPtr,fileTextBox]() {
             fileDialogPtr->setVisible(false);
@@ -176,6 +178,9 @@ void EditorInterface::showFileDialog(bool openFile, const fs::path& filename) {
             }
         });
     }
+
+    // Force dialog to reposition widgets since labels changed.
+    fileDialog->setSize(fileDialog->getSize());
 
     fileDialog->setVisible(true);
     fileDialog->setPosition(
@@ -262,7 +267,7 @@ std::shared_ptr<T> EditorInterface::debugWidgetCreation(std::shared_ptr<T> widge
     return widget;
 }
 
-std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
+std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar(sf::RenderWindow& window) const {
     auto menuBar = debugWidgetCreation(gui::MenuBar::create(*theme_, "menuBar"));
     menuBar->setPosition(0.0f, 0.0f);
 
@@ -277,7 +282,7 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
     fileMenu.items.emplace_back("Exit");
     menuBar->insertMenu(fileMenu);
 
-    auto chooseFileMenu = [this](const sf::String& item) {
+    auto chooseFileMenu = [this,&window](const sf::String& item) {
         if (item == "New") {
             editor_.newBoard();
         } else if (item == "Open...") {
@@ -293,7 +298,9 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
         } else if (item == "Configuration...") {
 
         } else if (item == "Exit") {
-
+            editor_.windowCloseRequested([&window]() {
+                window.close();
+            });
         }
     };
 
@@ -509,7 +516,7 @@ std::shared_ptr<gui::MenuBar> EditorInterface::createMenuBar() const {
 
 std::shared_ptr<gui::DialogBox> EditorInterface::createFileDialog() const {
     auto fileDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "fileDialog"));
-    fileDialog->setSize({300.0f, 100.0f});
+    fileDialog->setSize({520.0f, 100.0f});
     fileDialog->setVisible(false);
     auto fileDialogPtr = fileDialog.get();
 
@@ -517,7 +524,7 @@ std::shared_ptr<gui::DialogBox> EditorInterface::createFileDialog() const {
     fileDialog->setTitle(fileTitle);
 
     auto fileTextBox = debugWidgetCreation(gui::MultilineTextBox::create(*theme_, "fileTextBox"));
-    fileTextBox->setSizeCharacters({8, 1});
+    fileTextBox->setSizeCharacters({60, 1});
     fileTextBox->setMaxLines(1);
     fileTextBox->setTabPolicy(gui::MultilineTextBox::TabPolicy::ignoreTab);
     fileTextBox->setPosition(10.0f, 30.0f);
@@ -573,7 +580,7 @@ std::shared_ptr<gui::DialogBox> EditorInterface::createSaveDialog() const {
 
 std::shared_ptr<gui::DialogBox> EditorInterface::createOverwriteDialog() const {
     auto overwriteDialog = debugWidgetCreation(gui::DialogBox::create(*theme_, "overwriteDialog"));
-    overwriteDialog->setSize({300.0f, 100.0f});
+    overwriteDialog->setSize({450.0f, 100.0f});
     overwriteDialog->setVisible(false);
     auto overwriteDialogPtr = overwriteDialog.get();
 
