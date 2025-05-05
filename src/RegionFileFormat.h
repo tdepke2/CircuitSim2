@@ -8,6 +8,7 @@
 #include <FlatMap.h>
 #include <LegacyFileFormat.h>
 
+#include <array>
 #include <chrono>
 #include <fstream>
 #include <map>
@@ -50,6 +51,13 @@ class RegionFileFormat : public FileStorage {
 public:
     static constexpr int REGION_WIDTH = 32;
     static constexpr int SECTOR_SIZE = 256;
+    static constexpr int HEADER_SIZE = 4 * REGION_WIDTH * REGION_WIDTH;
+
+    struct ChunkHeaderEntry {
+        uint32_t offset : 24;
+        uint8_t sectors : 8;
+    };
+    using ChunkHeader = std::array<ChunkHeaderEntry, REGION_WIDTH * REGION_WIDTH>;
 
     RegionFileFormat(const fs::path& filename);
 
@@ -57,6 +65,7 @@ public:
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
+    virtual void saveAsFile(Board& board, const fs::path& filename) override;
 
     virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks) override;
     virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords) override;
@@ -68,18 +77,14 @@ private:
     struct ParseState : public LegacyFileFormat::HeaderState {
         std::set<RegionCoords> regions;
     };
-    struct ChunkHeader {
-        uint32_t offset : 24;
-        uint8_t sectors : 8;
-    };
 
-    static RegionCoords toRegionCoords(ChunkCoords::repr chunkCoords);
+    static RegionCoords toRegionCoords(ChunkCoords::repr chunkCoords);    // FIXME: move these out of header file?
     static std::pair<int, int> toRegionOffset(ChunkCoords::repr chunkCoords);
     static void parseRegionList(Board& board, const std::string& line, int lineNumber, ParseState& state);
-    static void readRegionHeader(ChunkHeader header[], const fs::path& filename, std::istream& regionFile);
-    static void writeRegionHeader(ChunkHeader header[], const fs::path& filename, std::ostream& regionFile);
-    static std::vector<char> readChunk(ChunkHeader header[], int headerIndex, const fs::path& filename, std::istream& regionFile);
-    static void writeChunk(ChunkHeader header[], int headerIndex, const char emptySector[], uint32_t& lastOffset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
+    static void readRegionHeader(ChunkHeader& header, const fs::path& filename, std::istream& regionFile);
+    static void writeRegionHeader(const ChunkHeader& header, const fs::path& filename, std::ostream& regionFile);
+    static std::vector<char> readChunk(const ChunkHeaderEntry& headerEntry, const fs::path& filename, std::istream& regionFile);
+    static void writeChunk(ChunkHeaderEntry& headerEntry, const char emptySector[], uint32_t& lastOffset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);
@@ -88,4 +93,28 @@ private:
     ChunkCoordsRange lastVisibleChunks_;
     std::unordered_map<ChunkCoords::repr, Chunk> chunkCache_;
     FlatMap<ChunkCoords::repr, std::chrono::time_point<std::chrono::steady_clock>> chunkCacheTimes_;
+};
+
+/**
+ * Keeps track of sector offsets in region file and the corresponding number of
+ * contiguous free sectors.
+ * 
+ * When sectors are allocated, we just pick the first space that will fit them.
+ * To keep things simple, allocated sectors don't move around once their space
+ * is reserved (there is no proactive defragmentation). If a chunk changed size
+ * and we free and reallocate its sectors, this may result in a lower sector
+ * offset than before to prevent our region file from turning into Swiss cheese.
+ */
+class RegionSectorPool {
+public:
+    using SectorOffset = decltype(RegionFileFormat::ChunkHeaderEntry::offset);
+
+    RegionSectorPool(const RegionFileFormat::ChunkHeader& header);
+
+    const std::map<SectorOffset, unsigned int>& getFreeSectors() const;
+    SectorOffset allocateSectors(unsigned int count);
+    void freeSectors(SectorOffset offset, unsigned int count);
+
+private:
+    std::map<SectorOffset, unsigned int> freeSectors_;
 };

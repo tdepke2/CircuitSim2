@@ -470,7 +470,7 @@ void Board::updateRender() {    // FIXME move this whole piece into ChunkRender?
         // within the loop. This works since the x-coordinate (as unsigned value
         // in ChunkCoords) is in the lower significant bits, and the ChunkCoords
         // value is always increasing in the loop.
-        auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(lastVisibleArea_.left - 1, y));
+        auto chunkDrawable = chunkDrawables_.upper_bound(ChunkCoords::pack(lastVisibleArea_.left - 1, y));    // FIXME: why upper bound with x - 1? just use lower?
         for (int x = lastVisibleArea_.left; x < lastVisibleArea_.left + lastVisibleArea_.width; ++x) {
             if (chunkDrawable == chunkDrawables_.end() || chunkDrawable->first != ChunkCoords::pack(x, y)) {
                 emptyChunkVisible = true;

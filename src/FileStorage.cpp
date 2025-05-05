@@ -40,12 +40,6 @@ bool FileStorage::isNewFile() const {
     return newFile_;
 }
 
-void FileStorage::saveAsFile(Board& board, const fs::path& filename) {
-    filename_ = filename;
-    newFile_ = true;
-    saveToFile(board);
-}
-
 void FileStorage::updateVisibleChunks(Board& /*board*/, const ChunkCoordsRange& /*visibleChunks*/) {
 
 }

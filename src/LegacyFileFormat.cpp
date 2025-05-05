@@ -337,6 +337,12 @@ void LegacyFileFormat::saveToFile(Board& board) {
     spdlog::debug("Save completed.");
 }
 
+void LegacyFileFormat::saveAsFile(Board& board, const fs::path& filename) {
+    setFilename(filename);
+    setNewFile(true);
+    saveToFile(board);
+}
+
 void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*lineNumber*/, ParseState& state) {
     //std::cout << "Parse line [" << line << "]\n";
 

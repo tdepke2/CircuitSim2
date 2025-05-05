@@ -40,6 +40,7 @@ public:
     virtual bool validateFileVersion(float version) override;
     virtual void loadFromFile(Board& board, const fs::path& filename, fs::ifstream& boardFile) override;
     virtual void saveToFile(Board& board) override;
+    virtual void saveAsFile(Board& board, const fs::path& filename) override;
 
 private:
     struct ParseState : public HeaderState {

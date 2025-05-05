@@ -52,14 +52,15 @@ int main() {
     editor.setMaxEditHistory(5);    // FIXME: will need to be set from the config.
 
     try {
-        board.loadFromFile(fs::absolute("boards/NewBoard/board.txt"));    // FIXME: path must be absolute for save-as to work.
+        //board.loadFromFile(fs::absolute("boards/NewBoard/board.txt"));    // FIXME: path must be absolute for save-as to work.
+        board.newBoard({0, 0});
         //board.loadFromFile("boards/Calculator.txt");//"boards/AllTexStates.txt");//"boards/components/Add3Module.txt");
 
     } catch (std::exception& ex) {
         spdlog::error(ex.what());
     }
 
-    auto tile = board.accessTile(0, 0);
+    /*auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
     //tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     //std::cout << "dir=" << static_cast<int>(tile.getDirection()) << ", state=" << static_cast<int>(tile.getState()) << "\n";
@@ -69,7 +70,7 @@ int main() {
 
     auto labelTile = board.accessTile(-8, -8);
     labelTile.setType(tiles::Label::instance());
-    labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("hello!");
+    labelTile.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("hello!");*/
 
     /*board.accessTile(-2, -2).setType(tiles::Input::instance(), TileId::inButton, State::high, 'G');
 
@@ -100,7 +101,7 @@ int main() {
     //board.accessTile(1, 1).swapWith(board.accessTile(2, 2));
     */
 
-    board.debugPrintChunk(0x8000000080000000);
+    //board.debugPrintChunk(0x8000000080000000);
 
     sf::View fullWindowView(window.getDefaultView());
     //OffsetView boardView(TILE_WIDTH * Chunk::WIDTH, window.getDefaultView());
