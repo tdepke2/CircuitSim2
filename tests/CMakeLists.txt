@@ -14,6 +14,7 @@ include(Catch)
 add_executable(cs2_src_test
     CatchMain.cpp
     FlatMap.test.cpp
+    RegionFileFormat.test.cpp
     TilePool.test.cpp
 )
 target_link_libraries(cs2_src_test PRIVATE
