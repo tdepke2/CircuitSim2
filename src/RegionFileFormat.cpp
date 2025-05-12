@@ -93,6 +93,8 @@ void RegionFileFormat::saveToFile(Board& board) {
             (chunkInSavedRegions && chunk.second.isUnsaved())) {
 
             unsavedRegions[toRegionCoords(chunk.first)].insert(chunk.first);
+        } else if (chunk.second.isEmpty()) {
+            chunk.second.markAsSaved();
         }
     }
 
@@ -379,8 +381,77 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
     }
     regionFile.seekp(0, std::ios::beg);
 
-    bool reallocationRequired = false;
-    std::map<ChunkCoords::repr, std::vector<char>> serializedChunks;
+    RegionSectorPool regionSectorPool(header);
+
+    struct SerializeInfo {
+        SerializeInfo(uint8_t oldSectorCount, uint8_t newSectorCount, ChunkCoords::repr coords, const std::vector<char>& data) :
+            oldSectorCount(oldSectorCount),
+            newSectorCount(newSectorCount),
+            coords(coords),
+            data(data) {
+        }
+
+        uint8_t oldSectorCount;
+        uint8_t newSectorCount;
+        ChunkCoords::repr coords;
+        std::vector<char> data;
+    };
+
+    std::map<RegionSectorPool::SectorOffset, SerializeInfo> serializedChunks;
+    for (const auto& chunkCoords : region) {
+        const auto regionOffset = toRegionOffset(chunkCoords);
+        const auto& headerEntry = header[regionOffset.first + regionOffset.second * REGION_WIDTH];
+
+        auto chunkSerialized = board.getLoadedChunks().at(chunkCoords).serialize();
+        const uint32_t serializedSize = static_cast<uint32_t>(chunkSerialized.size() + sizeof(serializedSize));
+        const uint32_t sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
+
+        // FIXME: confirm sectorCount within range?
+
+        RegionSectorPool::SectorOffset offset = headerEntry.offset;
+        uint8_t oldSectorCount = headerEntry.sectors;
+        uint8_t newSectorCount = sectorCount;
+        if (oldSectorCount > 0) {
+            if (chunkSerialized.empty()) {
+                spdlog::debug("Chunk {} is now empty, removing.", ChunkCoords::toPair(chunkCoords));
+                newSectorCount = 0;
+            } else if (newSectorCount != oldSectorCount) {
+                spdlog::debug("Chunk {} has {} allocated sectors and now requires {}, reallocating.", ChunkCoords::toPair(chunkCoords), oldSectorCount, newSectorCount);
+                regionSectorPool.freeSectors(offset, oldSectorCount);
+                offset = regionSectorPool.allocateSectors(newSectorCount);
+            }
+        } else {
+            offset = regionSectorPool.allocateSectors(newSectorCount);
+        }
+        const auto emplaceResult = serializedChunks.emplace(
+            offset,
+            SerializeInfo(oldSectorCount, newSectorCount, chunkCoords, std::move(chunkSerialized))
+        );
+        assert(emplaceResult.second);
+    }
+
+    // go through serializedChunks and write them (marking dead sectors along the way). this should write to file (mostly) in order.
+    // it's possible chunk A shrinks, and a new chunk B allocates after it. in this case we mark dead sectors for A and then go back and overwrite them, that's fine.
+    // where do we update the header for the chunk? perhaps do it in writeChunk()?
+
+    for (const auto& serialized : serializedChunks) {
+        if (serialized.second.data.empty()) {
+            savedRegions_[regionCoords].erase(serialized.first);
+            board.getLoadedChunks().at(serialized.first).markAsSaved();
+            continue;
+            // ???
+        }
+    }
+
+
+
+
+
+
+
+
+
+    /*std::map<ChunkCoords::repr, std::vector<char>> serializedChunks;
     for (const auto& chunkCoords : region) {
         const auto serialized = serializedChunks.emplace(chunkCoords, board.getLoadedChunks().at(chunkCoords).serialize()).first;
         if (regionFileLength > 0) {
@@ -433,6 +504,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         const uint32_t serializedSize = static_cast<uint32_t>(serialized.second.size() + sizeof(serializedSize));
         if (serialized.second.empty()) {
             savedRegions_[regionCoords].erase(serialized.first);
+            board.getLoadedChunks().at(serialized.first).markAsSaved();
             continue;
         } else if (serializedSize <= std::numeric_limits<uint8_t>::max() * static_cast<uint32_t>(SECTOR_SIZE)) {
             savedRegions_[regionCoords].insert(serialized.first);
@@ -447,7 +519,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         board.getLoadedChunks().at(serialized.first).debugPrintChunk();
         writeChunk(header[headerIndex], emptySector, lastOffset, serialized.second, regionFilename, regionFile);
         board.getLoadedChunks().at(serialized.first).markAsSaved();
-    }
+    }*/
 
     // Write (filled) header.
     writeRegionHeader(header, regionFilename, regionFile);
