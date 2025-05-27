@@ -84,7 +84,7 @@ private:
     static void readRegionHeader(ChunkHeader& header, const fs::path& filename, std::istream& regionFile);
     static void writeRegionHeader(const ChunkHeader& header, const fs::path& filename, std::ostream& regionFile);
     static std::vector<char> readChunk(const ChunkHeaderEntry& headerEntry, const fs::path& filename, std::istream& regionFile);
-    static void writeChunk(ChunkHeaderEntry& headerEntry, const char emptySector[], uint32_t& lastOffset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
+    static void writeChunk(ChunkHeaderEntry& headerEntry, uint32_t offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);

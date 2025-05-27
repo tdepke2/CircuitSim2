@@ -1,7 +1,6 @@
 #include <ChunkCoordsRange.h>
 #include <FileStorage.h>
 
-#include <stdexcept>
 #include <string>
 
 float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardFile) {

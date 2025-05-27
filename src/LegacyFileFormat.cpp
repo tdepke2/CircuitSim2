@@ -87,7 +87,7 @@ void setTileFromSymbol(Board& board, int x, int y, const TileSymbol& symbol) {
             std::string s;
             s.push_back(symbol.a);
             s.push_back(symbol.b);
-            throw std::runtime_error("invalid symbols \"" + s + "\" at position (" + std::to_string(x) + ", " + std::to_string(y) + ").");
+            throw FileStorageError("invalid symbols \"" + s + "\" at position (" + std::to_string(x) + ", " + std::to_string(y) + ").");
         }
     }
 
@@ -201,14 +201,14 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
         state.lastField = "width:";
         int width = std::stoi(line.substr(state.lastField.length()));
         if (width < 0) {
-            throw std::runtime_error("board dimensions cannot be negative.");
+            throw FileStorageError("board dimensions cannot be negative.");
         }
         state.width = width;
     } else if (state.lastField == "width:" && line.find("height:") == 0) {
         state.lastField = "height:";
         int height = std::stoi(line.substr(state.lastField.length()));
         if (height < 0) {
-            throw std::runtime_error("board dimensions cannot be negative.");
+            throw FileStorageError("board dimensions cannot be negative.");
         }
         state.height = height;
     } else if (state.lastField == "height:" && line == "data: {") {
@@ -233,7 +233,7 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
         board.setNotesString(state.notesString);
 
     } else {
-        throw std::runtime_error("unexpected board file data.");
+        throw FileStorageError("unexpected board file data.");
     }
 }
 
@@ -267,7 +267,7 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
     setNewFile(false);
 
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
+        throw FileStorageError("unable to open file for reading.", filename);
     }
     boardFile.clear();
     boardFile.seekg(0, std::ios::beg);
@@ -297,10 +297,10 @@ void LegacyFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
             parseTiles(board, line, ++lineNumber, state);
         }
         if (state.lastField != "done") {
-            throw std::runtime_error("missing data, end of file reached.");
+            throw FileStorageError("missing data, end of file reached.");
         }
-    } catch (std::exception& ex) {
-        throw std::runtime_error("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
+    } catch (FileStorageError& ex) {
+        throw FileStorageError("\"" + filename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
 
     spdlog::debug("Load completed.");
@@ -317,7 +317,7 @@ void LegacyFileFormat::saveToFile(Board& board) {
     }
     fs::ofstream boardFile(getFilename());
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + getFilename().string() + "\": unable to open file for writing.");
+        throw FileStorageError("unable to open file for writing.", getFilename());
     }
     setNewFile(false);
     writeHeader(board, getFilename(), boardFile, 1.0f);
@@ -353,7 +353,7 @@ void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*l
             //std::cout << "========== START OF TILES ==========\n";
         }
         if (line.length() != state.width * 2 + 2) {
-            throw std::runtime_error("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
+            throw FileStorageError("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
         }
         state.x = 0;
         while (state.x < static_cast<int>(state.width)) {
@@ -369,7 +369,7 @@ void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*l
         }
     } else if (state.lastField == "headerEnd" || state.lastField == "tilesEnd") {
         if (line.length() != state.width * 2 + 2) {
-            throw std::runtime_error("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
+            throw FileStorageError("incorrect length of line (expected " + std::to_string(state.width * 2 + 2) + ", got " + std::to_string(line.length()) + ").");
         }
         if (state.lastField == "headerEnd") {
             state.lastField = "tiles";
@@ -377,6 +377,6 @@ void LegacyFileFormat::parseTiles(Board& board, const std::string& line, int /*l
             state.lastField = "done";
         }
     } else {
-        throw std::runtime_error("unexpected board file data.");
+        throw FileStorageError("unexpected board file data.");
     }
 }

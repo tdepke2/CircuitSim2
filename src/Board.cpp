@@ -396,7 +396,7 @@ bool Board::loadFromFile(const fs::path& filename) {
 bool Board::saveToFile() {
     try {
         fileStorage_->saveToFile(*this);
-    } catch (std::exception& ex) {
+    } catch (FileStorageError& ex) {
         spdlog::error(ex.what());
         return false;
     }
@@ -406,7 +406,7 @@ bool Board::saveToFile() {
 bool Board::saveAsFile(const fs::path& filename) {
     try {
         fileStorage_->saveAsFile(*this, filename);
-    } catch (std::exception& ex) {
+    } catch (FileStorageError& ex) {
         spdlog::error(ex.what());
         return false;
     }

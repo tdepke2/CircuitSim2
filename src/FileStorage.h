@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <stdexcept>
 #include <type_traits>
 #ifdef _MSC_VER
     #include <intrin.h>
@@ -14,6 +15,26 @@
 
 class Board;
 class ChunkCoordsRange;
+
+/**
+ * Error involving file I/O. Similar to `fs::filesystem_error` but without the
+ * error code.
+ * 
+ * In order to ensure that copy ctor and copy assignment can be noexcept, we
+ * inherit from `std::runtime_error` to make use of its cow string member.
+ */
+class FileStorageError : public std::runtime_error {
+public:
+    FileStorageError(const std::string& what) :
+        std::runtime_error(what) {
+    }
+    FileStorageError(const std::string& what, const fs::path& path) :
+        std::runtime_error("\"" + path.string() + "\": " + what) {
+    }
+    virtual ~FileStorageError() = default;
+    FileStorageError(const FileStorageError& rhs) noexcept = default;
+    FileStorageError& operator=(const FileStorageError& rhs) noexcept = default;
+};
 
 /**
  * Abstract class for circuit file formats.
