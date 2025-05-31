@@ -76,7 +76,6 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
             throw FileStorageError("missing data, end of file reached.");
         }
     } catch (FileStorageError& ex) {
-        // FIXME: a lot of exceptions need to be replaced with the new FileStorageError, also need to check for fstreams in a bad state more.
         // FIXME: should be using fmt::format() in more places.
         throw FileStorageError("\"" + boardFilename.string() + "\" at line " + std::to_string(lineNumber) + ": " + ex.what());
     }
@@ -134,15 +133,28 @@ void RegionFileFormat::saveToFile(Board& board) {
     }
     boardFile << "}\n";
     boardFile.close();
+    if (!boardFile) {
+        throw FileStorageError("file I/O error while writing.", boardFilename);
+    }
 }
 
 void RegionFileFormat::saveAsFile(Board& board, const fs::path& filename) {
     const fs::path filenameTrimmed = (filename.filename() == "board.txt" ? filename.parent_path() : filename);
 
-    // If the files already exist, copy them into the new path.
-    if (!isNewFile()) {
-        fs::create_directories(filenameTrimmed);
-        fs::copy(getFilename(), filenameTrimmed, fs::copy_options::recursive);
+    if (getFilename() != filenameTrimmed) {
+        // Remove any existing files we may be overwriting.
+        if (fs::exists(filenameTrimmed / "region")) {
+            fs::remove_all(filenameTrimmed / "region");
+        }
+        if (fs::exists(filenameTrimmed / "board.txt")) {
+            fs::remove(filenameTrimmed / "board.txt");
+        }
+
+        // If the files already exist, copy them into the new path.
+        if (!isNewFile()) {
+            fs::create_directories(filenameTrimmed);
+            fs::copy(getFilename(), filenameTrimmed, fs::copy_options::recursive);
+        }
     }
 
     setFilename(filenameTrimmed);
@@ -418,6 +430,9 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         constexpr const char emptySector[SECTOR_SIZE] = {};
         for (int i = 0; i < HEADER_SIZE / SECTOR_SIZE; ++i) {
             regionFile.write(emptySector, SECTOR_SIZE);
+        }
+        if (!regionFile) {
+            throw FileStorageError("file I/O error while writing header.", regionFilename);
         }
     } else {
         throw FileStorageError("unable to open file for reading.", regionFilename);

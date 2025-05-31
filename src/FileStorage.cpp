@@ -5,7 +5,7 @@
 
 float FileStorage::getFileVersion(const fs::path& filename, fs::ifstream& boardFile) {
     if (!boardFile.is_open()) {
-        throw std::runtime_error("\"" + filename.string() + "\": unable to open file for reading.");
+        throw FileStorageError("unable to open file for reading.", filename);
     }
     boardFile.clear();
     boardFile.seekg(0, std::ios::beg);

@@ -367,7 +367,7 @@ bool Board::loadFromFile(const fs::path& filename) {
         fs::ifstream boardFile(filename);
         float version = FileStorage::getFileVersion(filename, boardFile);
         if (version < 0.0) {
-            throw std::runtime_error("\"" + filename.string() + "\": unknown file version.");
+            throw FileStorageError("unknown file version.", filename);
         }
         while (!fileStorage_->validateFileVersion(version)) {
             spdlog::debug("FileStorage not compatible with current version, trying LegacyFileFormat.");
@@ -380,12 +380,16 @@ bool Board::loadFromFile(const fs::path& filename) {
             if (fileStorage_->validateFileVersion(version)) {
                 break;
             }
-            throw std::runtime_error("\"" + filename.string() + "\": invalid file version " + std::to_string(version) + ".");
+            throw FileStorageError("invalid file version " + std::to_string(version) + ".", filename);
         }
 
         clearChunks();
         fileStorage_->loadFromFile(*this, filename, boardFile);
-    } catch (std::exception& ex) {
+    } catch (FileStorageError& ex) {
+        spdlog::error(ex.what());
+        newBoard();
+        return false;
+    } catch (fs::filesystem_error& ex) {
         spdlog::error(ex.what());
         newBoard();
         return false;
@@ -399,6 +403,9 @@ bool Board::saveToFile() {
     } catch (FileStorageError& ex) {
         spdlog::error(ex.what());
         return false;
+    } catch (fs::filesystem_error& ex) {
+        spdlog::error(ex.what());
+        return false;
     }
     return true;
 }
@@ -407,6 +414,9 @@ bool Board::saveAsFile(const fs::path& filename) {
     try {
         fileStorage_->saveAsFile(*this, filename);
     } catch (FileStorageError& ex) {
+        spdlog::error(ex.what());
+        return false;
+    } catch (fs::filesystem_error& ex) {
         spdlog::error(ex.what());
         return false;
     }

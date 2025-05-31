@@ -237,8 +237,9 @@ void LegacyFileFormat::parseHeader(Board& board, const std::string& line, int li
     }
 }
 
-void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, std::ostream& boardFile, float version) {
-    boardFile << "version: " << version << "\n";
+void LegacyFileFormat::writeHeader(Board& board, const fs::path& filename, std::ostream& boardFile, float version) {
+    std::streamsize defaultPrecision = boardFile.precision();
+    boardFile << "version: " << std::fixed << std::setprecision(1) << version << std::defaultfloat << std::setprecision(defaultPrecision) << "\n";
     boardFile << "width: " << board.getMaxSize().x << "\n";
     boardFile << "height: " << board.getMaxSize().y << "\n";
     boardFile << "data: {\n";
@@ -247,6 +248,9 @@ void LegacyFileFormat::writeHeader(Board& board, const fs::path& /*filename*/, s
     boardFile << "notes: {\n";
     boardFile << board.getNotesString().toAnsiString();
     boardFile << "}\n";
+    if (!boardFile) {
+        throw FileStorageError("file I/O error while writing.", filename);
+    }
 }
 
 LegacyFileFormat::LegacyFileFormat(const fs::path& filename) :
@@ -333,6 +337,9 @@ void LegacyFileFormat::saveToFile(Board& board) {
     }
     boardFile << std::setfill('*') << std::setw(board.getMaxSize().x * 2 + 2) << "*" << std::setfill(' ') << "\n";
     boardFile.close();
+    if (!boardFile) {
+        throw FileStorageError("file I/O error while writing.", getFilename());
+    }
 
     spdlog::debug("Save completed.");
 }

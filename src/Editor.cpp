@@ -469,7 +469,9 @@ void Editor::openBoard(bool ignoreUnsaved, const fs::path& filename) {
     if (!openFilename.empty()) {
         deselectAll();
         spdlog::info("Loading \"{}\"...", openFilename);
-        board_.loadFromFile(openFilename);
+        if (!board_.loadFromFile(openFilename)) {
+            spdlog::error("Failed to load board.");
+        }
         defaultZoom();
         editHistory_.clear();
         lastEditSize_ = 0;
@@ -484,8 +486,11 @@ void Editor::saveBoard() {
     }
 
     spdlog::info("Saving...");
-    board_.saveToFile();
-    savedEditSize_ = lastEditSize_;
+    if (board_.saveToFile()) {
+        savedEditSize_ = lastEditSize_;
+    } else {
+        spdlog::error("Failed to save board.");
+    }
 }
 void Editor::saveAsBoard(const fs::path& filename, bool overwriteFile) {
     fs::path saveFilename;
@@ -518,8 +523,11 @@ void Editor::saveAsBoard(const fs::path& filename, bool overwriteFile) {
         }
 
         spdlog::info("Saving to \"{}\"...", saveFilename);
-        board_.saveAsFile(saveFilename);
-        savedEditSize_ = lastEditSize_;
+        if (board_.saveAsFile(saveFilename)) {
+            savedEditSize_ = lastEditSize_;
+        } else {
+            spdlog::error("Failed to save board.");
+        }
     } else {
         spdlog::info("No file selected.");
     }
