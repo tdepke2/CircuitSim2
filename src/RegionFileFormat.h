@@ -58,6 +58,7 @@ public:
         uint8_t sectors : 8;
     };
     using ChunkHeader = std::array<ChunkHeaderEntry, REGION_WIDTH * REGION_WIDTH>;
+    using SectorOffset = decltype(ChunkHeaderEntry::offset);
 
     RegionFileFormat(const fs::path& filename);
 
@@ -84,7 +85,7 @@ private:
     static void readRegionHeader(ChunkHeader& header, const fs::path& filename, std::istream& regionFile);
     static void writeRegionHeader(const ChunkHeader& header, const fs::path& filename, std::ostream& regionFile);
     static std::vector<char> readChunk(const ChunkHeaderEntry& headerEntry, const fs::path& filename, std::istream& regionFile);
-    static void writeChunk(ChunkHeaderEntry& headerEntry, uint32_t offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
+    static uint8_t writeChunk(ChunkHeaderEntry& headerEntry, SectorOffset offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);
@@ -107,7 +108,7 @@ private:
  */
 class RegionSectorPool {
 public:
-    using SectorOffset = decltype(RegionFileFormat::ChunkHeaderEntry::offset);
+    using SectorOffset = RegionFileFormat::SectorOffset;
 
     RegionSectorPool(const RegionFileFormat::ChunkHeader& header);
 

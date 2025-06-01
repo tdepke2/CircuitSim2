@@ -87,8 +87,8 @@ void RegionFileFormat::loadFromFile(Board& board, const fs::path& filename, fs::
 }
 
 void RegionFileFormat::saveToFile(Board& board) {
+    // Collect the loaded chunks that are new to a region, have been modified, or have been removed from a region.
     std::map<RegionCoords, Region> unsavedRegions;
-
     for (const auto& chunk : board.getLoadedChunks()) {
         const auto savedRegion = savedRegions_.find(toRegionCoords(chunk.first));
         bool chunkInSavedRegions = (savedRegion != savedRegions_.end() && savedRegion->second.count(chunk.first) > 0);
@@ -345,7 +345,7 @@ std::vector<char> RegionFileFormat::readChunk(const ChunkHeaderEntry& headerEntr
     return chunkData;
 }
 
-void RegionFileFormat::writeChunk(ChunkHeaderEntry& headerEntry, uint32_t offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile) {
+uint8_t RegionFileFormat::writeChunk(ChunkHeaderEntry& headerEntry, SectorOffset offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile) {
     const uint32_t serializedSize = static_cast<uint32_t>(chunkData.size() + sizeof(serializedSize));
     const uint32_t sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
     // By this point, the sector count should already be verified to be within range.
@@ -366,6 +366,7 @@ void RegionFileFormat::writeChunk(ChunkHeaderEntry& headerEntry, uint32_t offset
     if (!regionFile) {
         throw FileStorageError("file I/O error while writing chunk.", filename);
     }
+    return static_cast<uint8_t>(sectorCount);
 }
 
 void RegionFileFormat::loadRegion(Board& /*board*/, const RegionCoords& regionCoords) {
@@ -442,20 +443,23 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
     RegionSectorPool regionSectorPool(header);
 
     struct SerializeInfo {
-        SerializeInfo(uint8_t oldSectorCount, uint8_t newSectorCount, ChunkCoords::repr coords, const std::vector<char>& data) :
+        SerializeInfo(uint8_t oldSectorCount, uint8_t newSectorCount, bool isReallocation, ChunkCoords::repr coords, const std::vector<char>& data) :
             oldSectorCount(oldSectorCount),
             newSectorCount(newSectorCount),
+            isReallocation(isReallocation),
             coords(coords),
             data(data) {
         }
 
         uint8_t oldSectorCount;
         uint8_t newSectorCount;
+        bool isReallocation;
         ChunkCoords::repr coords;
         std::vector<char> data;
     };
 
-    std::map<RegionSectorPool::SectorOffset, SerializeInfo> serializedChunks;
+    // Serialize the data for each of the chunks and calculate the offset the data will be written at after performing (re)allocations.
+    std::map<SectorOffset, SerializeInfo> serializedChunks;
     for (const auto& chunkCoords : region) {
         const auto regionOffset = toRegionOffset(chunkCoords);
         const auto& headerEntry = header[regionOffset.first + regionOffset.second * REGION_WIDTH];
@@ -469,9 +473,10 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
             continue;
         }
 
-        RegionSectorPool::SectorOffset offset = headerEntry.offset;
+        SectorOffset offset = headerEntry.offset;
         uint8_t oldSectorCount = headerEntry.sectors;
         uint8_t newSectorCount = static_cast<uint8_t>(sectorCount);
+        bool isReallocation = false;
         if (oldSectorCount > 0) {
             if (chunkSerialized.empty()) {
                 spdlog::debug("Chunk {} is now empty, removing.", ChunkCoords::toPair(chunkCoords));
@@ -480,41 +485,65 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
             } else if (newSectorCount != oldSectorCount) {
                 spdlog::debug("Chunk {} has {} allocated sectors and now requires {}, reallocating.", ChunkCoords::toPair(chunkCoords), oldSectorCount, newSectorCount);
                 regionSectorPool.freeSectors(offset, oldSectorCount);
+                const auto emplaceResult = serializedChunks.emplace(
+                    offset,
+                    SerializeInfo(oldSectorCount, 0, true, chunkCoords, {})
+                );
+                assert(emplaceResult.second);
                 offset = regionSectorPool.allocateSectors(newSectorCount);
-                // FIXME: this isn't going to work, if the offset changes then oldSectorCount doesn't even correspond to this offset anymore and we may free the wrong sectors.
-                // if offset changed, treat the old offset like removing an empty chunk?
+                oldSectorCount = 0;
+                isReallocation = true;
             }
         } else {
             spdlog::debug("Chunk {} is new to this region, allocating.", ChunkCoords::toPair(chunkCoords));
             offset = regionSectorPool.allocateSectors(newSectorCount);
         }
+
+        const auto serialized = serializedChunks.find(offset);
+        if (serialized == serializedChunks.end()) {
+            serializedChunks.emplace(
+                offset,
+                SerializeInfo(oldSectorCount, newSectorCount, isReallocation, chunkCoords, std::move(chunkSerialized))
+            );
+        } else {
+            // Insertion would fail if an allocated or reallocated chunk moves to the offset of a removed one.
+            assert(serialized->second.oldSectorCount > 0 && serialized->second.newSectorCount == 0);
+            serialized->second.newSectorCount = newSectorCount;
+            serialized->second.isReallocation = isReallocation;
+            serialized->second.coords = chunkCoords;
+            serialized->second.data = std::move(chunkSerialized);
+        }
+
         // FIXME: issue with here. try saving region with only chunk (0,0) then remove that chunk and save something in chunk (1,0). the new chunk tries to save to the removed chunk's offset and assertion fails.
-        const auto emplaceResult = serializedChunks.emplace(
-            offset,
-            SerializeInfo(oldSectorCount, newSectorCount, chunkCoords, std::move(chunkSerialized))
-        );
-        assert(emplaceResult.second);
+        // should be fixed now after changes? need to test
     }
 
     // Write the chunks and mark any freed sectors as dead.
     // Since the keys in serializedChunks are the sector offsets, we will write to the file (mostly) in order.
+    SectorOffset pastLastOccupiedSector = HEADER_SIZE / SECTOR_SIZE;
     for (const auto& serialized : serializedChunks) {
         const auto regionOffset = toRegionOffset(serialized.second.coords);
         auto& headerEntry = header[regionOffset.first + regionOffset.second * REGION_WIDTH];
-        if (serialized.second.data.empty()) {
+        if (!serialized.second.data.empty()) {
+            spdlog::debug("Writing chunk {} at sector offset {}.", ChunkCoords::toPair(serialized.second.coords), serialized.first);
+            board.getLoadedChunks().at(serialized.second.coords).debugPrintChunk();
+            assert(writeChunk(headerEntry, serialized.first, serialized.second.data, regionFilename, regionFile) == serialized.second.newSectorCount);
+            pastLastOccupiedSector = serialized.first + serialized.second.newSectorCount;
+            assert(savedRegions_[regionCoords].insert(serialized.second.coords).second == !serialized.second.isReallocation);
+        } else if (!serialized.second.isReallocation) {
             headerEntry.offset = 0;
             headerEntry.sectors = 0;
             assert(savedRegions_[regionCoords].erase(serialized.second.coords) > 0);
-        } else {
-            spdlog::debug("Writing chunk {} at sector offset {}.", ChunkCoords::toPair(serialized.second.coords), serialized.first);
-            board.getLoadedChunks().at(serialized.second.coords).debugPrintChunk();
-            writeChunk(headerEntry, serialized.first, serialized.second.data, regionFilename, regionFile);
-            assert(savedRegions_[regionCoords].insert(serialized.second.coords).second == (serialized.second.oldSectorCount == 0));
         }
 
-        // We mark all of the last used sectors dead, which may not be correct if another chunk allocated in some of that space, this is fine.
+        // We mark all of the last used sectors dead as long as they are not within a written chunk.
+        // This may not be totally correct if one of the next chunks allocated in some of that space, this is fine.
         // Since we write the chunks in order of increasing sector offsets, the other chunk will overwrite the dead sectors it now uses.
         for (uint8_t deadSector = serialized.second.newSectorCount; deadSector < serialized.second.oldSectorCount; ++deadSector) {
+            if (pastLastOccupiedSector > serialized.first + deadSector) {
+                spdlog::debug("Marking sector {} dead skipped (sector is occupied).", serialized.first + deadSector);
+                continue;
+            }
             spdlog::debug("Marking sector {} dead.", serialized.first + deadSector);
             regionFile.seekp((serialized.first + deadSector) * SECTOR_SIZE, std::ios::beg);
             auto deadbeefSwapped = byteswap(static_cast<uint32_t>(0xdeadbeef));
@@ -530,10 +559,14 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
     regionFile.close();
 
     // If the file has dead sectors at the end, the file can be truncated.
-    uint32_t truncateSector = HEADER_SIZE / SECTOR_SIZE;
+    SectorOffset truncateSector = HEADER_SIZE / SECTOR_SIZE;
     for (const auto& entry : header) {
-        truncateSector = std::max(truncateSector, static_cast<uint32_t>(entry.offset + entry.sectors));
+        truncateSector = std::max(truncateSector, static_cast<SectorOffset>(entry.offset + entry.sectors));
     }
+
+    // FIXME: assuming this is good, we can just use pastLastOccupiedSector instead.
+    assert(truncateSector == pastLastOccupiedSector);
+
     if (truncateSector < initialFileSize / SECTOR_SIZE) {
         spdlog::debug("File has {} dead sectors at end, truncating size.", initialFileSize / SECTOR_SIZE - truncateSector);
         fs::resize_file(regionFilename, truncateSector * SECTOR_SIZE);
