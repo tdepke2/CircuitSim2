@@ -100,6 +100,10 @@ TileData Tile::getRawData() const {
     return tileType_->getRawData(chunk_, tileIndex_);
 }
 
+bool Tile::isTileEntity() const {
+    return tileType_->isTileEntity();
+}
+
 void Tile::flip(bool acrossVertical) {
     tileType_->flip(chunk_, tileIndex_, acrossVertical);
 }

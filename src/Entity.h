@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 class Chunk;
 
@@ -18,6 +19,8 @@ public:
     const Chunk& getChunk() const;
     unsigned int getIndex() const;
 
+    virtual std::vector<char> serialize() const = 0;
+    virtual void deserialize(const std::vector<char>& data) = 0;
     virtual std::unique_ptr<Entity> clone(Chunk& chunk, unsigned int tileIndex) const = 0;
 
 private:

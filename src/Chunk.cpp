@@ -143,29 +143,64 @@ Tile Chunk::accessTile(unsigned int tileIndex) {
     return {staticInit_->tileIdToType[tiles_[tileIndex].id], *this, tileIndex};
 }
 
-std::vector<char> Chunk::serialize() const {
+uint32_t Chunk::serializeLength() const {
     if (isEmpty()) {
-        return {};
+        return 0;
     }
-    std::vector<char> data(sizeof(tiles_));
+    uint32_t length = sizeof(length) + WIDTH * WIDTH * sizeof(TileData);
+    if (entitiesCapacity_ == 0) {
+        return length;
+    }
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
-        // FIXME: it may be just as efficient to create tileSwapped with bitwise ops instead of relying on a fragile reinterpret cast (which could be platform dependent).
-        uint32_t tileSwapped = FileStorage::byteswap(*reinterpret_cast<const uint32_t*>(tiles_ + i));
-        std::memcpy(data.data() + i * sizeof(TileData), &tileSwapped, sizeof(TileData));
+        if (staticInit_->tileIdToType[tiles_[i].id]->isTileEntity()) {
+            length += 0;//entities_[tiles_[i].meta]->serializeLength();    // FIXME: need to finish up entity serialization.
+        }
     }
-    return data;
+    return length;
 }
 
-void Chunk::deserialize(const std::vector<char>& data) {
-    assert(data.size() == sizeof(tiles_));
+void Chunk::serialize(std::ostream& out) const {
+    if (isEmpty()) {
+        return;
+    }
+    uint32_t length = serializeLength();
+    auto lengthBE = FileStorage::byteswap(length);
+    out.write(reinterpret_cast<char*>(&lengthBE), sizeof(lengthBE));
+
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
-        uint32_t tileSwapped;
-        std::memcpy(&tileSwapped, data.data() + i * sizeof(TileData), sizeof(TileData));
-        tileSwapped = FileStorage::byteswap(tileSwapped);
-        tiles_[i] = *reinterpret_cast<TileData*>(&tileSwapped);
+        // FIXME: For entities, we may need to update the tile's meta to point to a new index.
+        TileData tile = tiles_[i];
+        auto tileBE = FileStorage::byteswap(*reinterpret_cast<uint32_t*>(&tile));
+        out.write(reinterpret_cast<char*>(&tileBE), sizeof(tileBE));
+    }
+    /*if (entitiesCapacity_ == 0) {
+        return data;
+    }
+    for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
+        Tile tile = accessTile(i);
+        if (tile.isTileEntity()) {
+            std::vector<char> entityData = entities_[tiles_[i].meta]->serialize();
+
+        }
+    }
+    return data;*/
+}
+
+void Chunk::deserialize(std::istream& in) {
+    uint32_t length;
+    in.read(reinterpret_cast<char*>(&length), sizeof(length));
+    length = FileStorage::byteswap(length);
+
+    //assert(length >= sizeof(length) + WIDTH * WIDTH * sizeof(TileData));    // FIXME: assert or throw exception?
+    for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
+        uint32_t tile;
+        in.read(reinterpret_cast<char*>(&tile), sizeof(tile));
+        tile = FileStorage::byteswap(tile);
+        tiles_[i] = *reinterpret_cast<TileData*>(&tile);
     }
     dirtyFlags_.set(ChunkDirtyFlag::emptyIsStale);
     dirtyFlags_.set(ChunkDirtyFlag::highlightedIsStale);
+    // FIXME: this should reset all state in the Chunk, no? should clear any entities and set capacity to zero beforehand.
 }
 
 void Chunk::markAsSaved() const {

@@ -72,6 +72,8 @@ public:
     bool getHighlight() const;
     State::t getState() const;
     TileData getRawData() const;
+    bool isTileEntity() const;
+
     void flip(bool acrossVertical);
     void alternativeTile();
     // Overloads on r-value references are provided for cases where the target

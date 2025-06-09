@@ -243,7 +243,7 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
                 auto chunk = chunkCache_.emplace(std::piecewise_construct, std::forward_as_tuple(cacheChunkCoords), std::forward_as_tuple(nullptr, cacheChunkCoords)).first;
                 chunkCacheTimes_.emplace(cacheChunkCoords, std::chrono::steady_clock::now());
                 try {
-                    chunk->second.deserialize(readChunk(header[headerIndex], regionFilename, regionFile));
+                    //chunk->second.deserialize(readChunk(header[headerIndex], regionFilename, regionFile));    // FIXME: disabled to rework serialization.
                 } catch (FileStorageError& ex) {
                     // If the chunk fails to load, just leave it empty and move on.
                     spdlog::error("Failed to load chunk at {}: {}", ChunkCoords::toPair(cacheChunkCoords), ex.what());
@@ -464,7 +464,7 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
         const auto regionOffset = toRegionOffset(chunkCoords);
         const auto& headerEntry = header[regionOffset.first + regionOffset.second * REGION_WIDTH];
 
-        auto chunkSerialized = board.getLoadedChunks().at(chunkCoords).serialize();
+        auto chunkSerialized = std::vector<char>();//board.getLoadedChunks().at(chunkCoords).serialize();    // FIXME: disabled to rework serialization.
         const uint32_t serializedSize = static_cast<uint32_t>(chunkSerialized.size() + sizeof(serializedSize));
         const uint32_t sectorCount = (serializedSize + SECTOR_SIZE - 1) / SECTOR_SIZE;
 

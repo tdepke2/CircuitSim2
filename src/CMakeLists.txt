@@ -110,6 +110,20 @@ target_link_libraries(cs2_src PUBLIC
 )
 cs2_add_cxx_properties(cs2_src)
 
+# Write version to config header and determine host endianness.
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+    message(STATUS "Configuring for big endian.")
+else()
+    message(STATUS "Configuring for little endian.")
+endif()
+configure_file(
+    "${PROJECT_SOURCE_DIR}/src/Config.h.in"
+    "${PROJECT_BINARY_DIR}/src/Config.h"
+)
+target_include_directories(cs2_src PUBLIC "${PROJECT_BINARY_DIR}/src")
+
 add_executable(CircuitSim2_experimental
     main/main.cpp
     $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Windows>:main/MainWin32.cpp>

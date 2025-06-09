@@ -45,6 +45,12 @@ public:
 class FileStorage {
 public:
     template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
+    static inline T swapHostBigEndian(T n) noexcept;
+
+    template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
+    static inline T swapHostLittleEndian(T n) noexcept;
+
+    template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type = true>
     static inline T byteswap(T n) noexcept;
 
     static float getFileVersion(const fs::path& filename, fs::ifstream& boardFile);
@@ -72,6 +78,18 @@ private:
     fs::path filename_;
     bool newFile_;
 };
+
+// Convert between host endian and big endian.
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type>
+inline T FileStorage::swapHostBigEndian(T n) noexcept {
+    return byteswap(n);    // FIXME: need to conditionally set based on endianness, also need to replace byteswap() calls with these. Also, the cmake function I was using to test endianness is deprecated. Fix the cmake logic so that newer method is used if available?
+}
+
+// Convert between host endian and little endian.
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type>
+inline T FileStorage::swapHostLittleEndian(T n) noexcept {
+    return n;
+}
 
 // Reverses bytes in the given integral type to convert endianness.
 // Based on code found here (and improved to use intrinsics):

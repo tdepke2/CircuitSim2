@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <vector>
 
 namespace entities {
 
@@ -17,6 +18,8 @@ public:
     void setString(const sf::String& str);
     const sf::String& getString() const;
 
+    virtual std::vector<char> serialize() const override;
+    virtual void deserialize(const std::vector<char>& data) override;
     virtual std::unique_ptr<Entity> clone(Chunk& chunk, unsigned int tileIndex) const override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 

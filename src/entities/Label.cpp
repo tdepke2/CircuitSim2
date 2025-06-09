@@ -55,6 +55,15 @@ const sf::String& Label::getString() const {
     return text_.getString();
 }
 
+std::vector<char> Label::serialize() const {
+    std::string s = text_.getString().toAnsiString();    // FIXME: may want to use toUtf32() instead, so that we don't try to convert the chars and wide chars still work?
+    return {s.begin(), s.end()};
+}
+
+void Label::deserialize(const std::vector<char>& data) {
+    text_.setString(std::string(data.begin(), data.end()));
+}
+
 std::unique_ptr<Entity> Label::clone(Chunk& chunk, unsigned int tileIndex) const {
     return details::make_unique<Label>(chunk, tileIndex, *this);
 }

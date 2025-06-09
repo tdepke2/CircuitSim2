@@ -1,4 +1,5 @@
 #include <Board.h>
+#include <Config.h>
 #include <DebugScreen.h>
 #include <Editor.h>
 #include <entities/Label.h>
@@ -22,6 +23,7 @@
 
 int main() {
     spdlog::set_level(spdlog::level::debug);
+    spdlog::info("CircuitSim2 v{}", CIRCUITSIM2_VERSION);
     spdlog::info("Using spdlog v{}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
     spdlog::info("Logging level set to {}.", spdlog::level::to_string_view(spdlog::get_level()));
 

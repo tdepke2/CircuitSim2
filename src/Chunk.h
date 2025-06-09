@@ -8,9 +8,9 @@
 #include <bitset>
 #include <cassert>
 #include <cstdint>
+#include <istream>
 #include <memory>
 #include <ostream>
-#include <vector>
 
 class LodRenderer;
 
@@ -84,8 +84,9 @@ public:
     bool isEmpty() const;
     bool isHighlighted() const;
     Tile accessTile(unsigned int tileIndex);
-    std::vector<char> serialize() const;
-    void deserialize(const std::vector<char>& data);
+    uint32_t serializeLength() const;
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
     void markAsSaved() const;
     void markAsDrawn() const;
     void debugPrintChunk() const;
