@@ -301,9 +301,9 @@ void RegionFileFormat::parseRegionList(Board& /*board*/, const std::string& line
 
 void RegionFileFormat::readRegionHeader(ChunkHeader& header, const fs::path& filename, std::istream& regionFile) {
     for (auto& entry : header) {
-        uint32_t offset;
-        regionFile.read(reinterpret_cast<char*>(&offset), 3);
-        entry.offset = byteswap(offset) >> 8;
+        uint32_t offsetBE;
+        regionFile.read(reinterpret_cast<char*>(&offsetBE), 3);
+        entry.offset = swapHostBigEndian(offsetBE) >> 8;
         uint8_t sectors;
         regionFile.read(reinterpret_cast<char*>(&sectors), 1);
         entry.sectors = sectors;
@@ -316,8 +316,8 @@ void RegionFileFormat::readRegionHeader(ChunkHeader& header, const fs::path& fil
 void RegionFileFormat::writeRegionHeader(const ChunkHeader& header, const fs::path& filename, std::ostream& regionFile) {
     regionFile.seekp(0, std::ios::beg);
     for (const auto& entry : header) {
-        uint32_t offset = byteswap(entry.offset << 8);
-        regionFile.write(reinterpret_cast<char*>(&offset), 3);
+        uint32_t offsetBE = swapHostBigEndian(entry.offset << 8);
+        regionFile.write(reinterpret_cast<char*>(&offsetBE), 3);
         uint8_t sectors = entry.sectors;
         regionFile.write(reinterpret_cast<char*>(&sectors), 1);
     }
@@ -330,7 +330,7 @@ std::vector<char> RegionFileFormat::readChunk(const ChunkHeaderEntry& headerEntr
     regionFile.seekg(headerEntry.offset * SECTOR_SIZE, std::ios::beg);
     uint32_t chunkPayloadSize;
     regionFile.read(reinterpret_cast<char*>(&chunkPayloadSize), sizeof(chunkPayloadSize));
-    chunkPayloadSize = byteswap(chunkPayloadSize);
+    chunkPayloadSize = swapHostBigEndian(chunkPayloadSize);
     if ((chunkPayloadSize + SECTOR_SIZE - 1) / SECTOR_SIZE != headerEntry.sectors) {
         throw FileStorageError(fmt::format(
             "chunk at sector {} with size {} has unexpected payload size of {} bytes.",
@@ -355,8 +355,8 @@ uint8_t RegionFileFormat::writeChunk(ChunkHeaderEntry& headerEntry, SectorOffset
     headerEntry.sectors = static_cast<uint8_t>(sectorCount);
     regionFile.seekp(offset * SECTOR_SIZE, std::ios::beg);
 
-    auto serializedSizeSwapped = byteswap(serializedSize);
-    regionFile.write(reinterpret_cast<char*>(&serializedSizeSwapped), sizeof(serializedSizeSwapped));
+    auto serializedSizeBE = swapHostBigEndian(serializedSize);
+    regionFile.write(reinterpret_cast<char*>(&serializedSizeBE), sizeof(serializedSizeBE));
     regionFile.write(chunkData.data(), chunkData.size());
 
     constexpr const char emptySector[SECTOR_SIZE] = {};
@@ -546,8 +546,8 @@ void RegionFileFormat::saveRegion(Board& board, const RegionCoords& regionCoords
             }
             spdlog::debug("Marking sector {} dead.", serialized.first + deadSector);
             regionFile.seekp((serialized.first + deadSector) * SECTOR_SIZE, std::ios::beg);
-            auto deadbeefSwapped = byteswap(static_cast<uint32_t>(0xdeadbeef));
-            regionFile.write(reinterpret_cast<char*>(&deadbeefSwapped), sizeof(deadbeefSwapped));
+            auto deadbeefBE = swapHostBigEndian(static_cast<uint32_t>(0xdeadbeef));
+            regionFile.write(reinterpret_cast<char*>(&deadbeefBE), sizeof(deadbeefBE));
         }
 
         board.getLoadedChunks().at(serialized.second.coords).markAsSaved();

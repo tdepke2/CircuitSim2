@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ChunkCoords.h>
+#include <Config.h>
 #include <Filesystem.h>
 
 #include <algorithm>
@@ -82,13 +83,21 @@ private:
 // Convert between host endian and big endian.
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type>
 inline T FileStorage::swapHostBigEndian(T n) noexcept {
-    return byteswap(n);    // FIXME: need to conditionally set based on endianness, also need to replace byteswap() calls with these. Also, the cmake function I was using to test endianness is deprecated. Fix the cmake logic so that newer method is used if available?
+#if IS_BIG_ENDIAN
+    return n;
+#else
+    return byteswap(n);
+#endif
 }
 
 // Convert between host endian and little endian.
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value, bool>::type>
 inline T FileStorage::swapHostLittleEndian(T n) noexcept {
+#if IS_BIG_ENDIAN
+    return byteswap(n);
+#else
     return n;
+#endif
 }
 
 // Reverses bytes in the given integral type to convert endianness.

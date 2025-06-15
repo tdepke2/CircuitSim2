@@ -164,13 +164,13 @@ void Chunk::serialize(std::ostream& out) const {
         return;
     }
     uint32_t length = serializeLength();
-    auto lengthBE = FileStorage::byteswap(length);
+    auto lengthBE = FileStorage::swapHostBigEndian(length);
     out.write(reinterpret_cast<char*>(&lengthBE), sizeof(lengthBE));
 
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
         // FIXME: For entities, we may need to update the tile's meta to point to a new index.
         TileData tile = tiles_[i];
-        auto tileBE = FileStorage::byteswap(*reinterpret_cast<uint32_t*>(&tile));
+        auto tileBE = FileStorage::swapHostBigEndian(*reinterpret_cast<uint32_t*>(&tile));
         out.write(reinterpret_cast<char*>(&tileBE), sizeof(tileBE));
     }
     /*if (entitiesCapacity_ == 0) {
@@ -189,13 +189,13 @@ void Chunk::serialize(std::ostream& out) const {
 void Chunk::deserialize(std::istream& in) {
     uint32_t length;
     in.read(reinterpret_cast<char*>(&length), sizeof(length));
-    length = FileStorage::byteswap(length);
+    length = FileStorage::swapHostBigEndian(length);
 
     //assert(length >= sizeof(length) + WIDTH * WIDTH * sizeof(TileData));    // FIXME: assert or throw exception?
     for (unsigned int i = 0; i < WIDTH * WIDTH; ++i) {
         uint32_t tile;
         in.read(reinterpret_cast<char*>(&tile), sizeof(tile));
-        tile = FileStorage::byteswap(tile);
+        tile = FileStorage::swapHostBigEndian(tile);
         tiles_[i] = *reinterpret_cast<TileData*>(&tile);
     }
     dirtyFlags_.set(ChunkDirtyFlag::emptyIsStale);

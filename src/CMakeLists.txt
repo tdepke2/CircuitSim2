@@ -111,8 +111,14 @@ target_link_libraries(cs2_src PUBLIC
 cs2_add_cxx_properties(cs2_src)
 
 # Write version to config header and determine host endianness.
-include(TestBigEndian)
-TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(${CMAKE_VERSION} VERSION_LESS 3.20)
+    include(TestBigEndian)
+    TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+elseif(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+    set(IS_BIG_ENDIAN 1)
+else()
+    set(IS_BIG_ENDIAN 0)
+endif()
 if(IS_BIG_ENDIAN)
     message(STATUS "Configuring for big endian.")
 else()
