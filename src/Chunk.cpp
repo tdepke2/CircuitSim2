@@ -159,9 +159,9 @@ uint32_t Chunk::serializeLength() const {
     return length;
 }
 
-void Chunk::serialize(std::ostream& out) const {
+uint32_t Chunk::serialize(std::ostream& out) const {
     if (isEmpty()) {
-        return;
+        return 0;
     }
     uint32_t length = serializeLength();
     auto lengthBE = FileStorage::swapHostBigEndian(length);
@@ -173,6 +173,13 @@ void Chunk::serialize(std::ostream& out) const {
         auto tileBE = FileStorage::swapHostBigEndian(*reinterpret_cast<uint32_t*>(&tile));
         out.write(reinterpret_cast<char*>(&tileBE), sizeof(tileBE));
     }
+
+    uint32_t bytesWritten = sizeof(length) + WIDTH * WIDTH * sizeof(TileData);
+
+    // serialize entities and increment bytesWritten.
+
+    assert(length == bytesWritten);
+    return length;
     /*if (entitiesCapacity_ == 0) {
         return data;
     }

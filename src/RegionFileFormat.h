@@ -84,8 +84,8 @@ private:
     static void parseRegionList(Board& board, const std::string& line, int lineNumber, ParseState& state);
     static void readRegionHeader(ChunkHeader& header, const fs::path& filename, std::istream& regionFile);
     static void writeRegionHeader(const ChunkHeader& header, const fs::path& filename, std::ostream& regionFile);
-    static std::vector<char> readChunk(const ChunkHeaderEntry& headerEntry, const fs::path& filename, std::istream& regionFile);
-    static uint8_t writeChunk(ChunkHeaderEntry& headerEntry, SectorOffset offset, const std::vector<char>& chunkData, const fs::path& filename, std::ostream& regionFile);
+    static void readChunk(const ChunkHeaderEntry& headerEntry, Chunk& chunk, const fs::path& filename, std::istream& regionFile);
+    static uint8_t writeChunk(ChunkHeaderEntry& headerEntry, SectorOffset offset, const Chunk& chunk, const fs::path& filename, std::ostream& regionFile);
 
     void loadRegion(Board& board, const RegionCoords& regionCoords);
     void saveRegion(Board& board, const RegionCoords& regionCoords, const Region& region);

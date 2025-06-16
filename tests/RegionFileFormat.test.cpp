@@ -420,3 +420,15 @@ TEST_CASE("Randomly allocate and free", "[RegionFileFormat]") {
         {16, std::numeric_limits<unsigned int>::max() - 16}
     }));
 }
+
+/**
+ * add some file test cases?
+ * failing case:
+ * 1. add tiles in 0,0 and save
+ * 2. add more tiles in 0,0 and save
+ * 3. add tiles in 1,1 and save
+ * 4. remove tiles in 1,1 and add tiles in 2,1 and save
+ * 5. load, and we have duplicate chunks...
+ * 
+ * Issue is that we don't update the offset/sector count when deleting a chunk?
+ */

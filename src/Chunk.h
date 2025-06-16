@@ -85,7 +85,7 @@ public:
     bool isHighlighted() const;
     Tile accessTile(unsigned int tileIndex);
     uint32_t serializeLength() const;
-    void serialize(std::ostream& out) const;
+    uint32_t serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     void markAsSaved() const;
     void markAsDrawn() const;
