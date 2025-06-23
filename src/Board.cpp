@@ -43,11 +43,8 @@ void clampImageToEdge(sf::Image& image, const sf::Vector2u& topLeft, const sf::V
     }
 }
 
-void loadTileset(const fs::path& filename, sf::Texture* target, unsigned int tileWidth) {
-    sf::Image tileset;
-    if (!tileset.loadFromFile(filename.string())) {
-        throw std::runtime_error("\"" + filename.string() + "\": unable to load texture file.");
-    }
+void buildTileset(sf::Texture* target, unsigned int tileWidth) {
+    sf::Image tileset = target->copyToImage();
     target->create(tileset.getSize().x * 2, tileset.getSize().y * 4);
     sf::Image fullTileset;
     fullTileset.create(tileset.getSize().x * 2, tileset.getSize().y * 2, sf::Color::Red);
@@ -84,16 +81,16 @@ Board::StaticInit::StaticInit() {
     const fs::path& filenameGrid = "resources/texturePackGrid.png";
     const fs::path& filenameNoGrid = "resources/texturePackNoGrid.png";
 
-    tilesetGrid = &resource->getTexture(filenameGrid, true);
-    loadTileset(filenameGrid, tilesetGrid, TileWidth::TEXELS);
+    tilesetGrid = &resource->getTexture(filenameGrid);
+    buildTileset(tilesetGrid, TileWidth::TEXELS);
     tilesetGrid->setSmooth(true);
     if (!tilesetGrid->generateMipmap()) {
         spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameGrid);
     }
     DebugScreen::instance()->registerTexture("tilesetGrid", tilesetGrid);
 
-    tilesetNoGrid = &resource->getTexture(filenameNoGrid, true);
-    loadTileset(filenameNoGrid, tilesetNoGrid, TileWidth::TEXELS);
+    tilesetNoGrid = &resource->getTexture(filenameNoGrid);
+    buildTileset(tilesetNoGrid, TileWidth::TEXELS);
     tilesetNoGrid->setSmooth(true);
     if (!tilesetNoGrid->generateMipmap()) {
         spdlog::warn("\"{}\": Unable to generate mipmap for texture.", filenameNoGrid);

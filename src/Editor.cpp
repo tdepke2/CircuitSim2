@@ -71,7 +71,7 @@ Editor::StaticInit::StaticInit() {
     sf::Image tilesetCopy = tilesetGrid->copyToImage();
     const auto highlightStartOffset = tilesetCopy.getSize().x * tilesetCopy.getSize().y * 2;
 
-    tilesetBright = &resource->getTexture("tilesetBright", true);
+    tilesetBright = &resource->getTexture("tilesetBright", ResourceBase::initEmpty);
     if (!tilesetBright->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBright texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }
@@ -86,7 +86,7 @@ Editor::StaticInit::StaticInit() {
     transparentBlank.create(TileWidth::TEXELS * 2, TileWidth::TEXELS * 2, {0, 0, 0, 0});
     tilesetCopy.copy(transparentBlank, 0, tilesetCopy.getSize().y / 2);
 
-    tilesetBrightNoBlanks = &resource->getTexture("tilesetBrightNoBlanks", true);
+    tilesetBrightNoBlanks = &resource->getTexture("tilesetBrightNoBlanks", ResourceBase::initEmpty);
     if (!tilesetBrightNoBlanks->create(tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2)) {
         spdlog::error("Failed to create tilesetBrightNoBlanks texture (size {} by {}).", tilesetCopy.getSize().x, tilesetCopy.getSize().y / 2);
     }

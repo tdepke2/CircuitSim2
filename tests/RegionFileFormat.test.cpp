@@ -1,4 +1,11 @@
+#include <Board.h>
+#include <DebugScreen.h>
+#include <Locator.h>
+#include <MakeUnique.h>
 #include <RegionFileFormat.h>
+#include <ResourceNull.h>
+#include <Tile.h>
+#include <tiles/Wire.h>
 
 #include <algorithm>
 #include <iostream>
@@ -419,6 +426,17 @@ TEST_CASE("Randomly allocate and free", "[RegionFileFormat]") {
     REQUIRE(pool.getFreeSectors() == SectorMap({
         {16, std::numeric_limits<unsigned int>::max() - 16}
     }));
+}
+
+TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
+    Locator::provide(details::make_unique<ResourceNull>());
+    DebugScreen::init(Locator::getResource()->getFont("sample_font"), 16, {800, 600});
+    Board board;
+    auto tile = board.accessTile(0, 0);
+    tile.setHighlight(true);
+    tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
+    board.saveAsFile(fs::absolute("board_save_as_file_test"));
+    Locator::provide(std::unique_ptr<ResourceNull>(nullptr));
 }
 
 /**

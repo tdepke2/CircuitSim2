@@ -78,6 +78,8 @@ add_library(cs2_src
     ResourceBase.h
     ResourceManager.cpp
     ResourceManager.h
+    ResourceNull.cpp
+    ResourceNull.h
     SubBoard.cpp
     SubBoard.h
     Tile.cpp

@@ -9,14 +9,14 @@ ResourceManager::ResourceManager() :
     shaders_() {
 }
 
-sf::Texture& ResourceManager::getTexture(const fs::path& filename, bool initEmpty) {
+sf::Texture& ResourceManager::getTexture(const fs::path& filename, uint32_t flags) {
     auto tex = textures_.find(filename);
     if (tex != textures_.end()) {
         return tex->second;
     }
-    spdlog::debug("ResourceManager loading texture {} (initEmpty {}).", filename, initEmpty);
+    spdlog::debug("ResourceManager loading texture {} (initEmpty {}).", filename, (flags & TextureFlags::initEmpty) > 0);
     sf::Texture& newTex = textures_[filename];
-    if (!initEmpty && !newTex.loadFromFile(filename.string())) {
+    if ((flags & TextureFlags::initEmpty) == 0 && !newTex.loadFromFile(filename.string())) {
         throw std::runtime_error("\"" + filename.string() + "\": unable to load texture file.");
     }
     return newTex;

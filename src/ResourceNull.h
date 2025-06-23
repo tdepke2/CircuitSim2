@@ -7,16 +7,15 @@
 #include <SFML/Graphics.hpp>
 
 /**
- * Provides a common access point for SFML resources. This helps prevent
- * expensive resources like textures and fonts from loading multiple times from
- * a file.
+ * Provides null access to SFML resources (allows unit testing to work without
+ * file system access).
  */
-class ResourceManager : public ResourceBase {
+class ResourceNull : public ResourceBase {
 public:
-    ResourceManager();
-    virtual ~ResourceManager() = default;
-    ResourceManager(const ResourceManager& rhs) = delete;
-    ResourceManager& operator=(const ResourceManager& rhs) = delete;
+    ResourceNull();
+    virtual ~ResourceNull() = default;
+    ResourceNull(const ResourceNull& rhs) = delete;
+    ResourceNull& operator=(const ResourceNull& rhs) = delete;
 
     virtual sf::Texture& getTexture(const fs::path& filename, uint32_t flags = 0) override;
     virtual sf::Font& getFont(const fs::path& filename) override;
@@ -26,5 +25,5 @@ public:
 private:
     std::map<fs::path, sf::Texture> textures_;
     std::map<fs::path, sf::Font> fonts_;
-    std::map<fs::path, sf::Shader> shaders_;
+    sf::Image missingTexture_;
 };
