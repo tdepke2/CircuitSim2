@@ -23,7 +23,13 @@ public:
     virtual void deserialize(const std::vector<char>& data) = 0;
     virtual std::unique_ptr<Entity> clone(Chunk& chunk, unsigned int tileIndex) const = 0;
 
+protected:
+    virtual bool equals(const Entity& rhs) const = 0;
+
 private:
     Chunk* chunk_;
     unsigned int tileIndex_;
+
+    friend bool operator==(const Entity& lhs, const Entity& rhs);
+    friend bool operator!=(const Entity& lhs, const Entity& rhs);
 };

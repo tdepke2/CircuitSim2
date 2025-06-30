@@ -47,6 +47,10 @@ bool FileStorage::loadChunk(Board& /*board*/, ChunkCoords::repr /*chunkCoords*/)
     return false;
 }
 
+void FileStorage::loadAllChunks(Board& /*board*/) {
+
+}
+
 void FileStorage::setFilename(const fs::path& filename) {
     filename_ = filename;
 }

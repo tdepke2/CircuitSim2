@@ -70,6 +70,7 @@ public:
 
     virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks);
     virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords);
+    virtual void loadAllChunks(Board& board);
 
 protected:
     void setFilename(const fs::path& filename);

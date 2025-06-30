@@ -116,5 +116,8 @@ private:
     friend class ChunkDrawable;
     friend class TileType;
 
+    // For simplicity, equality requires that any entities have the same ordering in the entity array for both chunks.
+    friend bool operator==(const Chunk& lhs, const Chunk& rhs);
+    friend bool operator!=(const Chunk& lhs, const Chunk& rhs);
     friend std::ostream& operator<<(std::ostream& out, const Chunk& chunk);
 };

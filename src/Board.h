@@ -52,6 +52,7 @@ public:
     const sf::String& getNotesString() const;
     const std::unordered_map<ChunkCoords::repr, Chunk>& getLoadedChunks() const;
 
+    void forceLoadAllChunks();
     bool isChunkLoaded(ChunkCoords::repr coords) const;
     void loadChunk(Chunk&& chunk);
     Chunk& accessChunk(ChunkCoords::repr coords);

@@ -70,6 +70,7 @@ public:
 
     virtual void updateVisibleChunks(Board& board, const ChunkCoordsRange& visibleChunks) override;
     virtual bool loadChunk(Board& board, ChunkCoords::repr chunkCoords) override;
+    virtual void loadAllChunks(Board& board) override;
 
 private:
     using Region = std::set<ChunkCoords::repr>;

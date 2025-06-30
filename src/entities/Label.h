@@ -23,6 +23,9 @@ public:
     virtual std::unique_ptr<Entity> clone(Chunk& chunk, unsigned int tileIndex) const override;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+protected:
+    virtual bool equals(const Entity& rhs) const override;
+
 private:
     sf::Text text_;
 };

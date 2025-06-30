@@ -72,4 +72,9 @@ void Label::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(text_, states);
 }
 
+bool Label::equals(const Entity& rhs) const {
+    auto& rhsLabel = static_cast<const Label&>(rhs);
+    return text_.getString() == rhsLabel.text_.getString();
+}
+
 } // namespace entities

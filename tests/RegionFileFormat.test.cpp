@@ -1,5 +1,6 @@
 #include <Board.h>
 #include <DebugScreen.h>
+#include <Filesystem.h>
 #include <Locator.h>
 #include <MakeUnique.h>
 #include <RegionFileFormat.h>
@@ -12,6 +13,7 @@
 #include <limits>
 #include <map>
 #include <random>
+#include <spdlog/spdlog.h>
 #include <vector>
 
 // Must specify stream converters before including catch2.
@@ -429,13 +431,17 @@ TEST_CASE("Randomly allocate and free", "[RegionFileFormat]") {
 }
 
 TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
+    spdlog::set_level(spdlog::level::debug);
+    fs::path tempDir = details::fs_mktemp(true, fs::absolute("RegionFileFormat.test.XXX"));
+
     Locator::provide(details::make_unique<ResourceNull>());
     DebugScreen::init(Locator::getResource()->getFont("sample_font"), 16, {800, 600});
     Board board;
+    board.newBoard({0, 0});
     auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
     tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
-    board.saveAsFile(fs::absolute("board_save_as_file_test"));
+    board.saveAsFile(tempDir / "test1");
     Locator::provide(std::unique_ptr<ResourceNull>(nullptr));
 }
 

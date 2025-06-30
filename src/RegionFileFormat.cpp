@@ -263,6 +263,14 @@ bool RegionFileFormat::loadChunk(Board& board, ChunkCoords::repr chunkCoords) {
     return true;
 }
 
+void RegionFileFormat::loadAllChunks(Board& board) {
+    for (const auto& region : savedRegions_) {
+        for (auto& chunkCoords : region.second) {
+            loadChunk(board, chunkCoords);
+        }
+    }
+}
+
 RegionFileFormat::RegionCoords RegionFileFormat::toRegionCoords(ChunkCoords::repr chunkCoords) {
     constexpr int widthLog2 = constLog2(REGION_WIDTH);
     return {

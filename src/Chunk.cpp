@@ -267,6 +267,34 @@ void Chunk::freeEntity(unsigned int tileIndex) {
     // FIXME: as an improvement, we could track the number of allocated entities and choose to reduce the capacity if needed.
 }
 
+bool operator==(const Chunk& lhs, const Chunk& rhs) {
+    for (size_t i = 0; i < static_cast<size_t>(Chunk::WIDTH * Chunk::WIDTH); ++i) {
+        if (lhs.tiles_[i] != rhs.tiles_[i]) {
+            return false;
+        }
+    }
+    size_t i = 0;
+    while (i < lhs.entitiesCapacity_) {
+        if (lhs.entities_[i] != nullptr &&
+            (i >= rhs.entitiesCapacity_ || rhs.entities_[i] == nullptr || *lhs.entities_[i] != *rhs.entities_[i])) {
+            return false;
+        }
+        ++i;
+    }
+    while (i < rhs.entitiesCapacity_) {
+        if (rhs.entities_[i] != nullptr &&
+            (i >= lhs.entitiesCapacity_ || lhs.entities_[i] == nullptr || *lhs.entities_[i] != *rhs.entities_[i])) {
+            return false;
+        }
+        ++i;
+    }
+    return true;
+}
+
+bool operator!=(const Chunk& lhs, const Chunk& rhs) {
+    return !(lhs == rhs);
+}
+
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};
 std::ostream& operator<<(std::ostream& out, const Chunk& chunk) {
     for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {

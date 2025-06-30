@@ -21,3 +21,14 @@ struct fmt::formatter<fs::path> {
         return format_to(ctx.out(), "{}", path.string());
     }
 };
+
+namespace details {
+
+/**
+ * Implementation of the unix mktemp program which creates a temporary file or
+ * directory. If provided, the pattern must contain at least 3 consecutive 'X's
+ * in last component. Returns the path to the new file or directory.
+ */
+fs::path fs_mktemp(bool createDirectory = false, const fs::path& pattern = "tmp.XXXXXXXXXX");
+
+}

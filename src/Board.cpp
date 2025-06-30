@@ -236,6 +236,10 @@ const std::unordered_map<ChunkCoords::repr, Chunk>& Board::getLoadedChunks() con
     return chunks_;
 }
 
+void Board::forceLoadAllChunks() {
+    fileStorage_->loadAllChunks(*this);
+}
+
 bool Board::isChunkLoaded(ChunkCoords::repr coords) const {
     auto chunkDrawable = chunkDrawables_.find(coords);
     return chunkDrawable != chunkDrawables_.end() && chunkDrawable->second.getChunk() != nullptr;
