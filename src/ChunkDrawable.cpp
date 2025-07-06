@@ -205,8 +205,8 @@ void ChunkDrawable::draw(sf::RenderTarget& target, sf::RenderStates states) cons
                 label.setString(static_cast<char>(tileData.meta));
             }
             label.setPosition({
-                static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * TileWidth::TEXELS + 9),
-                static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * TileWidth::TEXELS - 2)
+                static_cast<float>(static_cast<unsigned int>(tileIndex % Chunk::WIDTH) * TileWidth::TEXELS) + 9.0f,
+                static_cast<float>(static_cast<unsigned int>(tileIndex / Chunk::WIDTH) * TileWidth::TEXELS) - 2.0f
             });
             target.draw(label, states);
         }

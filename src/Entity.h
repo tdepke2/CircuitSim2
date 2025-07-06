@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <vector>
 
 class Chunk;
@@ -25,6 +26,7 @@ public:
 
 protected:
     virtual bool equals(const Entity& rhs) const = 0;
+    virtual void print(std::ostream& out) const = 0;
 
 private:
     Chunk* chunk_;
@@ -32,4 +34,5 @@ private:
 
     friend bool operator==(const Entity& lhs, const Entity& rhs);
     friend bool operator!=(const Entity& lhs, const Entity& rhs);
+    friend std::ostream& operator<<(std::ostream& out, const Entity& entity);
 };

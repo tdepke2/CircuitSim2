@@ -1,11 +1,17 @@
 #include <Board.h>
 #include <DebugScreen.h>
+#include <entities/Label.h>
 #include <Filesystem.h>
 #include <Locator.h>
 #include <MakeUnique.h>
 #include <RegionFileFormat.h>
 #include <ResourceNull.h>
 #include <Tile.h>
+#include <tiles/Blank.h>
+#include <tiles/Gate.h>
+#include <tiles/Input.h>
+#include <tiles/Label.h>
+#include <tiles/Led.h>
 #include <tiles/Wire.h>
 
 #include <algorithm>
@@ -13,8 +19,19 @@
 #include <limits>
 #include <map>
 #include <random>
-#include <spdlog/spdlog.h>
+#include <unordered_set>
 #include <vector>
+
+// Disable a false-positive warning issue with gcc:
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+    #include <spdlog/fmt/ranges.h>
+    #include <spdlog/spdlog.h>
+#if defined(__GNUC__) && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
 // Must specify stream converters before including catch2.
 template<typename Key, typename Value, typename Compare>
@@ -430,18 +447,126 @@ TEST_CASE("Randomly allocate and free", "[RegionFileFormat]") {
     }));
 }
 
+void requireBoardsEqual(Board& left, Board& right) {
+    left.forceLoadAllChunks();
+    right.forceLoadAllChunks();
+    REQUIRE(left.getMaxSize() == right.getMaxSize());
+    REQUIRE(left.getExtraLogicStates() == right.getExtraLogicStates());
+    REQUIRE(left.getNotesString() == right.getNotesString());
+
+    // Ensure each chunk in left matches the chunk in right, and vice versa.
+    std::unordered_set<ChunkCoords::repr> scannedChunks;
+    auto compareChunks = [&scannedChunks](const Board& left, const Board& right, bool flipLabels) {
+        bool chunksEqual = true;
+        for (const auto& chunk : left.getLoadedChunks()) {
+            if (!scannedChunks.insert(chunk.first).second) {
+                continue;
+            }
+            auto otherChunk = right.getLoadedChunks().find(chunk.first);
+            if (otherChunk == right.getLoadedChunks().end() || chunk.second != otherChunk->second) {
+                spdlog::error("Chunks at {} are different.", ChunkCoords::toPair(chunk.first));
+                std::string label = "Left";
+                if (!flipLabels) {
+                    spdlog::debug("{} board chunk:", label);
+                    chunk.second.debugPrintChunk();
+                    label = "Right";
+                }
+                if (otherChunk == right.getLoadedChunks().end()) {
+                    spdlog::debug("{} board chunk:\nno chunk\n", label);
+                } else {
+                    spdlog::debug("{} board chunk:", label);
+                    otherChunk->second.debugPrintChunk();
+                }
+                if (flipLabels) {
+                    spdlog::debug("Right board chunk:");
+                    chunk.second.debugPrintChunk();
+                }
+                chunksEqual = false;
+            }
+        }
+        return chunksEqual;
+    };
+
+    bool chunksEqual1 = compareChunks(left, right, false);
+    bool chunksEqual2 = compareChunks(right, left, true);
+    REQUIRE(chunksEqual1);
+    REQUIRE(chunksEqual2);
+}
+
 TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
     spdlog::set_level(spdlog::level::debug);
     fs::path tempDir = details::fs_mktemp(true, fs::absolute("RegionFileFormat.test.XXX"));
 
     Locator::provide(details::make_unique<ResourceNull>());
     DebugScreen::init(Locator::getResource()->getFont("sample_font"), 16, {800, 600});
-    Board board;
+
+    {
+        fs::path singleTile = tempDir / "simple/board.txt";
+        Board b1;
+        b1.newBoard({0, 0});
+        b1.setExtraLogicStates(true);
+        b1.setNotesString("these are my\nsample notes\nthe end.\n");
+        b1.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireTee, Direction::east, State::high);
+        b1.saveAsFile(singleTile);
+
+        Board b2;
+        b2.loadFromFile(singleTile);
+        requireBoardsEqual(b1, b2);
+    }
+
+    {
+        fs::path addToRemovedSector = tempDir / "addToRemovedSector/board.txt";
+        Board b1;
+        b1.newBoard({0, 0});
+        b1.accessTile(0, 0).setType(tiles::Wire::instance(), TileId::wireStraight, Direction::east, State::high);
+        b1.saveAsFile(addToRemovedSector);
+
+        b1.accessTile(1, 0).setType(tiles::Input::instance(), TileId::inSwitch, State::low, 'A');
+        b1.saveToFile();
+
+        b1.accessTile(32, 32).setType(tiles::Led::instance(), State::high);
+        b1.saveToFile();
+
+        b1.accessTile(32, 32).setType(tiles::Blank::instance());
+        b1.accessTile(64, 32).setType(tiles::Gate::instance(), TileId::gateDiode, Direction::west, State::middle);
+        b1.saveToFile();
+
+        Board b2;
+        b2.loadFromFile(addToRemovedSector);
+        requireBoardsEqual(b1, b2);
+    }
+
+
+    /*Board board;
     board.newBoard({0, 0});
-    auto tile = board.accessTile(0, 0);
+
+    auto t1 = board.accessTile(0, 0);
+    t1.setType(tiles::Label::instance());
+    t1.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("my label");
+
+
+    Board board2;
+    board2.newBoard({0, 0});
+
+    auto t2 = board2.accessTile(32, 32);
+    t2.setType(tiles::Label::instance());
+    t2.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("my label");
+    auto t3 = board2.accessTile(1, 0);
+    t3.setType(tiles::Label::instance());
+    t3.call<tiles::Label>(&tiles::Label::modifyEntity)->setString("what the");
+    t3.setType(tiles::Blank::instance());
+
+    requireBoardsEqual(board, board2);
+
+    //board2.accessTile(32, 32);
+
+    //requireBoardsEqual(board, board2);
+
+
+    /*auto tile = board.accessTile(0, 0);
     tile.setHighlight(true);
     tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
-    board.saveAsFile(tempDir / "test1");
+    board.saveAsFile(tempDir / "test1");*/
     Locator::provide(std::unique_ptr<ResourceNull>(nullptr));
 }
 

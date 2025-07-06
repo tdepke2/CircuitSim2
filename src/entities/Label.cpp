@@ -77,4 +77,8 @@ bool Label::equals(const Entity& rhs) const {
     return text_.getString() == rhsLabel.text_.getString();
 }
 
+void Label::print(std::ostream& out) const {
+    out << "Label (text = \"" << text_.getString().toAnsiString() << "\")";
+}
+
 } // namespace entities

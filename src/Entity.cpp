@@ -40,3 +40,8 @@ bool operator==(const Entity& lhs, const Entity& rhs) {
 bool operator!=(const Entity& lhs, const Entity& rhs) {
     return !(lhs == rhs);
 }
+
+std::ostream& operator<<(std::ostream& out, const Entity& entity) {
+    entity.print(out);
+    return out;
+}

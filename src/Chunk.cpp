@@ -219,7 +219,7 @@ void Chunk::markAsDrawn() const {
 }
 
 void Chunk::debugPrintChunk() const {
-    spdlog::debug("chunk:\n{}", *this);
+    spdlog::debug("{}", *this);
 }
 
 void Chunk::markTileDirty(unsigned int /*tileIndex*/) {
@@ -297,11 +297,20 @@ bool operator!=(const Chunk& lhs, const Chunk& rhs) {
 
 template<> struct fmt::formatter<Chunk> : fmt::ostream_formatter {};
 std::ostream& operator<<(std::ostream& out, const Chunk& chunk) {
+    out << "-- tiles --\n";
     for (unsigned int y = 0; y < Chunk::WIDTH; ++y) {
         for (unsigned int x = 0; x < Chunk::WIDTH; ++x) {
             out << std::setw(8) << std::hex << *reinterpret_cast<const uint32_t*>(&chunk.tiles_[y * Chunk::WIDTH + x]) << std::dec << " ";
         }
         out << "\n";
+    }
+    out << "-- entities --\n";
+    for (size_t i = 0; i < chunk.entitiesCapacity_; ++i) {
+        if (chunk.entities_[i] == nullptr) {
+            out << i << ": null\n";
+        } else {
+            out << i << ": " << *chunk.entities_[i] << "\n";
+        }
     }
     return out;
 }

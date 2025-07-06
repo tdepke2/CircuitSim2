@@ -25,6 +25,7 @@ public:
 
 protected:
     virtual bool equals(const Entity& rhs) const override;
+    virtual void print(std::ostream& out) const override;
 
 private:
     sf::Text text_;
