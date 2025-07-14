@@ -19,6 +19,7 @@
 #include <limits>
 #include <map>
 #include <random>
+#include <stdexcept>
 #include <unordered_set>
 #include <vector>
 
@@ -27,6 +28,7 @@
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wdangling-reference"
 #endif
+    #include <spdlog/fmt/fmt.h>
     #include <spdlog/fmt/ranges.h>
     #include <spdlog/spdlog.h>
 #if defined(__GNUC__) && !defined(__clang__)
@@ -43,6 +45,9 @@ std::ostream& operator<<(std::ostream& out, const std::map<Key, Value, Compare>&
     }
     return out << " }";
 }
+
+// Required for the TestRunListener.
+#define CATCH_CONFIG_EXTERNAL_INTERFACES
 
 #include <catch2/catch.hpp>
 
@@ -447,12 +452,40 @@ TEST_CASE("Randomly allocate and free", "[RegionFileFormat]") {
     }));
 }
 
-void requireBoardsEqual(Board& left, Board& right) {
+
+
+/**
+ * Event listener to hook into Catch's test run setup and teardown. This
+ * provides the service locator for SFML resources used in the below tests.
+ */
+struct TestRunListener : public Catch::TestEventListenerBase {
+    using TestEventListenerBase::TestEventListenerBase;
+
+    virtual void testRunStarting(const Catch::TestRunInfo& /*testRunInfo*/) override {
+        spdlog::info("testRunStarting: providing ResourceNull instance to resource locator.");
+        Locator::provide(details::make_unique<ResourceNull>());
+    }
+
+    virtual void testRunEnded(const Catch::TestRunStats& /*testRunStats*/) override {
+        spdlog::info("testRunEnded: deleting ResourceNull instance.");
+        Locator::provide(std::unique_ptr<ResourceNull>(nullptr));
+    }
+};
+
+CATCH_REGISTER_LISTENER(TestRunListener)
+
+void assertBoardsEqual(Board& left, Board& right) {
     left.forceLoadAllChunks();
     right.forceLoadAllChunks();
-    REQUIRE(left.getMaxSize() == right.getMaxSize());
-    REQUIRE(left.getExtraLogicStates() == right.getExtraLogicStates());
-    REQUIRE(left.getNotesString() == right.getNotesString());
+    if (left.getMaxSize() != right.getMaxSize()) {
+        throw std::runtime_error(fmt::format("Board getMaxSize() differs (left is {}, {} and right is {}, {}).", left.getMaxSize().x, left.getMaxSize().y, right.getMaxSize().x, right.getMaxSize().y));
+    }
+    if (left.getExtraLogicStates() != right.getExtraLogicStates()) {
+        throw std::runtime_error(fmt::format("Board getExtraLogicStates() differs (left is {} and right is {}).", left.getExtraLogicStates(), right.getExtraLogicStates()));
+    }
+    if (left.getNotesString() != right.getNotesString()) {
+        throw std::runtime_error(fmt::format("Board getNotesString() differs (left is \"{}\" and right is \"{}\").", left.getNotesString().toAnsiString(), right.getNotesString().toAnsiString()));
+    }
 
     // Ensure each chunk in left matches the chunk in right, and vice versa.
     std::unordered_set<ChunkCoords::repr> scannedChunks;
@@ -489,19 +522,19 @@ void requireBoardsEqual(Board& left, Board& right) {
 
     bool chunksEqual1 = compareChunks(left, right, false);
     bool chunksEqual2 = compareChunks(right, left, true);
-    REQUIRE(chunksEqual1);
-    REQUIRE(chunksEqual2);
+    if (!chunksEqual1 || !chunksEqual2) {
+        throw std::runtime_error("Board chunks are not equivalent.");
+    }
 }
 
 TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
     spdlog::set_level(spdlog::level::debug);
     fs::path tempDir = details::fs_mktemp(true, fs::absolute("RegionFileFormat.test.XXX"));
 
-    Locator::provide(details::make_unique<ResourceNull>());
     DebugScreen::init(Locator::getResource()->getFont("sample_font"), 16, {800, 600});
 
     {
-        fs::path singleTile = tempDir / "simple/board.txt";
+        fs::path singleTile = tempDir / "singleTile/board.txt";
         Board b1;
         b1.newBoard({0, 0});
         b1.setExtraLogicStates(true);
@@ -511,7 +544,37 @@ TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
 
         Board b2;
         b2.loadFromFile(singleTile);
-        requireBoardsEqual(b1, b2);
+        REQUIRE_NOTHROW(assertBoardsEqual(b1, b2));
+    }
+
+    {
+        fs::path fillTiles = tempDir / "fillTiles/board.txt";
+        Board b1;
+        b1.newBoard({0, 0});
+        for (int y = 0; y < 32; ++y) {
+            for (int x = 0; x < 32; ++x) {
+                b1.accessTile(x, y).setType(tiles::Wire::instance(), TileId::wireCorner, static_cast<Direction::t>(x % 4), static_cast<State::t>(y % 4));
+            }
+        }
+        for (int y = 0; y < 32; ++y) {
+            for (int x = 0; x < 32; ++x) {
+                b1.accessTile(x + 32, y).setType(tiles::Wire::instance(), TileId::wireTee, static_cast<Direction::t>(x % 4), static_cast<State::t>(y % 4));
+            }
+        }
+        b1.saveAsFile(fillTiles);
+
+        Board b2;
+        b2.loadFromFile(fillTiles);
+        REQUIRE_NOTHROW(assertBoardsEqual(b1, b2));
+
+        for (int y = 0; y < 32; ++y) {
+            for (int x = 0; x < 32; ++x) {
+                b1.accessTile(x, y + 32).setType(tiles::Gate::instance(), TileId::gateDiode, static_cast<Direction::t>(x % 4), static_cast<State::t>(y % 4));
+            }
+        }
+        b1.saveAsFile(fillTiles);
+        b2.loadFromFile(fillTiles);
+        REQUIRE_NOTHROW(assertBoardsEqual(b1, b2));
     }
 
     {
@@ -533,7 +596,7 @@ TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
 
         Board b2;
         b2.loadFromFile(addToRemovedSector);
-        requireBoardsEqual(b1, b2);
+        REQUIRE_NOTHROW(assertBoardsEqual(b1, b2));
     }
 
 
@@ -567,7 +630,6 @@ TEST_CASE("Test save/load chunks", "[.][RegionFileFormat]") {
     tile.setHighlight(true);
     tile.setType(tiles::Wire::instance(), TileId::wireCrossover, Direction::north, State::high, State::middle);
     board.saveAsFile(tempDir / "test1");*/
-    Locator::provide(std::unique_ptr<ResourceNull>(nullptr));
 }
 
 /**
